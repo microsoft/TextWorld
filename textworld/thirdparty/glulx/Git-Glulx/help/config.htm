@@ -1,0 +1,71 @@
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" type="text/css" href="Git.css">
+ </head>
+ <body>
+<h1>Configuration Files</h1>
+Windows Git can load a configuration file with the game that sets various attributes of
+the interpreter window. The configuration file should have the same name as the game except
+for an extension of <b>.cfg</b>.
+<p>
+The configuration file is a text file where each line contains a key name, followed by an
+equals sign, then a value, e.g. <b>WindowBorders=no</b>. Possible keys are:<br>
+<p>
+<table border="0" cellpadding="4" cellspacing="0">
+  <tr>
+    <td nowrap><strong>WindowBorders=[yes/no]</strong></td>
+    <td>Turns on or off borders between windows.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>WindowFrame=[yes/no]</strong></td>
+    <td>Turns on or off the interpreter window's frame, that is, the title bar and the
+        border around the whole window.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>WindowMask=[number]</strong></td>
+    <td>Uses the given Blorb resource number to set the mask for the window from the
+        graphic. If a particular pixel in the graphic is white then the window is
+        transparent at that point, else it is opaque. This key only takes effect if
+        "WindowFrame=no".</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>WindowWidth=[width]</strong></td>
+    <td>Sets the width of the interpreter's window so that a single, full-size Glk window
+        will have a width of the given value.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>WindowHeight=[height]</strong></td>
+    <td>Sets the height of the interpreter's window so that a single, full-size Glk window
+        will have a height of the given value.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>FullScreen=[yes/no]</strong></td>
+    <td>If set to "yes", the interpreter's window opens filling the entire screen.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>FontName=[font]</strong></td>
+    <td>Sets the font used for proportional text to the given font name,
+        e.g. <b>Times New Roman</b>.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>FontSize=[size]</strong></td>
+    <td>Sets the size of the font used for proportional text to the given value,
+        measured in points.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>FixedFontName=[font]</strong></td>
+    <td>Sets the font used for fixed width text to the given font name.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>FixedFontSize=[size]</strong></td>
+    <td>Sets the size of the font used for fixed width text to the given value.</td>
+  </tr>
+  <tr>
+    <td nowrap><strong>FontFile=[filename]</strong></td>
+    <td>The name of a font file (usually ending in ".ttf") to load fonts from.</td>
+  </tr>
+</table>
+ </body>
+</html>
+

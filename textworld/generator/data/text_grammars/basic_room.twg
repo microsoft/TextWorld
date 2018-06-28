@@ -1,0 +1,41 @@
+#-------------------------
+#Room Descriptor Grammar
+#-------------------------
+# Inform7 snippets
+i7_closed/open:[if (obj) is open]an open[otherwise]a closed[end if]
+i7_list_in:[a list of things in the (obj)]
+i7_list_on:[a list of things on the (obj)]
+i7_empty:[if (obj) contains nothing]an empty[otherwise]a[end if]
+inform7:[if (obj) is locked]a locked[else if (obj) is open]an open[otherwise]a closed[end if]
+inform7noa:[if (obj) is locked]a locked[else if (obj) is open]an open[otherwise]a closed[end if]
+inform7noun:[if (obj) is locked]locked[else if (obj) is open]unlocked[otherwise]closed[end if]
+inform7nounnoa:[if (obj) is locked]locked[else if (obj) is open]unlocked[otherwise]closed[end if]
+#Room Intro#
+#----------
+dec:You are in the (name).
+#Container Descriptions
+#----------------------
+room_desc_(c):#room_desc_(c)_1_name##room_desc_(c)_content#
+room_desc_(c)_1_name:#reg-a#;
+reg-a:There is #i7_closed/open# (name) here.
+room_desc_(c)_content:[if (obj) is open] #reg-d#[end if]
+reg-d:The (name) contains #i7_list_in#.
+#Supporter Descriptions
+#----------------------
+room_desc_(s):#room_desc_(s)_1_name# #room_desc_(s)_content#
+room_desc_(s)_1_name:There is a (name) here.
+room_desc_(s)_content:The (name) holds #i7_list_on#.
+#Group Descriptions
+#------------------
+room_desc_group:There are (^) (val) here, (name).
+#Exit Descriptions
+#----------------
+room_desc_(d):There is #i7_closed/open# (name) leading (dir).
+room_desc_(dir):There is an exit to the (dir).
+room_desc_exits:#easy1#
+room_desc_doors_closed:There are (^) closed doors, (name-indefinite), here
+room_desc_doors_open:There are (^) open doors, (name-indefinite), here
+
+# 1 #
+
+easy1:There [is an|are] [exit|exits] to the (dir).

@@ -1,0 +1,9 @@
+# Player
+type P {
+    inform7 {
+        commands {
+            wait :: "wait" :: "waiting";
+            look :: "look" :: "looking";
+        }
+    }
+}

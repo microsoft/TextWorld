@@ -1,0 +1,45 @@
+#-------------------------
+#Instructions Grammar
+#-------------------------
+obj_types:(o|k|f)
+obj_types_no_key:(o|f)
+on_types:(c|s)
+lock_types:(c|d)
+eat_types:(f)
+close_open_types:(d|c)
+#actions
+take:take the #obj_types# in (r).
+take/s:take the #obj_types# from the #on_types#.
+take/c:take the #obj_types# from the #on_types#.
+insert:insert #obj_types# into (c).
+put:put #obj_types# on (s).
+drop:drop #obj_types# in (r).
+eat:eat (f).
+open:open #close_open_types#.
+close:close #close_open_types#.
+unlock:unlock #lock_types# with (k).
+lock:lock #lock_types# with (k).
+go/north:go north.
+go/south:go south.
+go/east:go east.
+go/west:go west.
+go/north/d:go through the north (d).
+go/south/d:go through the south (d).
+go/east/d:go through the east (d).
+go/west/d:go through the west (d).
+wait:Wait.
+#Compound Command Description Functions
+#----------------
+ig_unlock_open:open locked #lock_types# using (k).
+ig_unlock_open_take:Open locked #lock_types# using (k) and take #obj_types_no_key#.
+ig_open_take:Take the #obj_types# from (c).
+ig_take_unlock:Take (k) and use (k) to unlock #lock_types#.
+ig_open_insert:Open (c) and place #obj_types# in (c).
+ig_insert_close:Place the #obj_types# in (c) and close (c).
+ig_close_lock:Close #lock_types# and lock #lock_types#.
+#Flavour Text
+#----------------
+quest:#newsentence#, (list_of_actions)
+quest_one_action:The objective is to (action)
+newsentence:First;
+action_separator: Next, ;

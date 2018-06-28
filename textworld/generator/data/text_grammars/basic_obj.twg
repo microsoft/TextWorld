@@ -1,0 +1,86 @@
+#-------------------------
+#Object Names Grammar
+#-------------------------
+ordinary_adj:ordinary
+adj_stripped:adj#number#
+number:#digit#;#digit1##digit2#
+digit1:#digit#
+digit2:#digit#
+digit:0;1;2;3;4;5;6;7;8;9
+#Player
+# These values are typically empty
+(P):P
+#Rooms:
+# Each roomType must have specific rooms
+#-------------------
+(r):#(r)_adj#|#(r)_noun##number#
+(r)_noun:room
+(r)_adj:#adj_stripped#
+#Containers
+# Each roomType must has specific containers
+#-------------------
+(c):#(c)_adj#|#(c)_noun##number#
+(c)_noun:box
+(c)_adj:#adj_stripped#
+X_(c):#X_(c)_adj#|#X_(c)_noun##number#
+X_(c)_noun:box
+X_(c)_adj:#adj_stripped#
+#Doors
+# Each roomType must has specific doors
+#-------------------
+(d):#(d)_adj#|#(d)_noun##number#
+(d)_adj:#adj_stripped#
+(d)_noun:door
+#Supporters
+# Each roomType must has specific supporters
+#-------------------
+(s):#(s)_adj#|#(s)_noun##number#
+(s)_noun:stand
+(s)_adj:#adj_stripped#
+X_(s):#X_(s)_adj#|#X_(s)_noun##number#
+X_(s)_noun:stand
+X_(s)_adj:#adj_stripped#
+# Objects
+# Each roomType must have specific objects
+#-------------------
+(o):#(o)_adj#|#(o)_noun##number#
+(o)_noun:thing
+(o)_adj:#adj_stripped#
+#X objects
+X_(o):#X_(o)_adj_type_1#|#X_(o)_noun_type_1##number#
+X_(o)_noun:#X_(o)_noun_type_1#
+X_(o)_adj:#X_(o)_adj_type_1#
+#Type 1
+X_(o)_noun_type_1:thing
+X_(o)_adj_type_1:#adj_stripped#
+# Food
+# Each roomType must have specific food
+#-------------------
+(f):#(f)_adj#|#(f)_noun##number#
+(f)_adj:#adj_stripped#
+(f)_noun:snack
+# Key
+# Each roomType must have specific keys
+#-------------------
+(k):#(k)_adj#|#(k)_noun##number#
+(k)_adj:#adj_stripped#
+(k)_noun:key
+#Object Descriptor Functions
+#---------------------------
+(P)_desc:It's you.
+(c)_desc:It is what it is
+(s)_desc:It is what it is
+(o)_desc:It is what it is
+(f)_desc:It is what it is
+(k)_desc:It is what it is
+(d)_desc:It is what it is
+#State descriptors
+#-----------------
+openable_desc:[if open]It is open.[else if locked]It is closed.[otherwise]It is locked.
+on_desc:On the (name) is [a list of things on the (obj)].
+#Key Match Adjectives
+#These adjectives CANNOT be used elsewhere!
+#----------------
+letter:A;B;C;D;E;F;G;H;I;J;K;L;M;N;O;P;Q;R;S;T;U;V;W;X;Y;Z
+(k<->d)_match:#letter#-#(k)_noun# <-> #letter#-#(d)_noun#
+(k<->c)_match:#letter#-#(k)_noun# <-> #letter#-#(c)_noun#

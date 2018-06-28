@@ -1,0 +1,56 @@
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" type="text/css" href="Git.css">
+ </head>
+ <body>
+<h1>Graphics and Sound</h1>
+Windows Git can load graphics and sound resources either from within
+<a href="blorb.htm">Blorb</a> files or as separate files.
+<p>
+If a Blorb file is loaded into the interpreter, or a Blorb file exists with the same name
+as the Glulx game file, then graphics and sound resources will be looked for first in that
+Blorb file.
+<p>
+If Windows Git cannot find a requested resource in the Blorb file (or there is no Blorb
+file), it will look for a suitably named file in the same directory as the game file. The
+resource formats currently supported are shown below, along with the filename for which
+the interpreter will look if the resource is not in the Blorb file (as an example, the
+filename is for resource number 1):
+<blockquote>
+<table border="0" cellpadding="4" cellspacing="0">
+  <tr>
+    <td nowrap><strong>Format</strong></td>
+    <td nowrap><strong>Type</strong></td>
+    <td><strong>Example Filename</strong></td>
+  </tr>
+  <tr>
+    <td nowrap>PNG</td>
+    <td nowrap>image</td>
+    <td>pic1.png</td>
+  </tr>
+  <tr>
+    <td nowrap>JPEG</td>
+    <td nowrap>image</td>
+    <td>pic1.jpg</td>
+  </tr>
+  <tr>
+    <td nowrap>AIFF</td>
+    <td nowrap>sound</td>
+    <td>snd1.aif <strong>or</strong> snd1.aiff</td>
+  </tr>
+  <tr>
+    <td nowrap>MOD</td>
+    <td nowrap>music</td>
+    <td>mus1.mod</td>
+  </tr>
+  <tr>
+    <td nowrap>OGGV</td>
+    <td nowrap>music</td>
+    <td>mus1.ogg</td>
+  </tr>
+</table>
+</blockquote>
+ </body>
+</html>
+

@@ -1,0 +1,93 @@
+@@grammar :: GameLogic
+
+@@eol_comments :: ?"#.*$"
+
+
+str = ?'"[^"]*"' ;
+
+strBlock = ?'"""(.|\n)*?"""' ;
+
+name = ?"\w+" ;
+
+phName = ?"[\w']+" ;
+
+predName = ?"[\w/]+" ;
+
+ruleName = ?"[\w/]+" ;
+
+
+variable::VariableNode = name:name [":" type:name] ;
+
+signature::SignatureNode = name:predName "(" types:",".{name}* ")" ;
+
+proposition::PropositionNode = name:predName "(" arguments:",".{variable}* ")" ;
+
+actionPrecondition::ActionPreconditionNode = preserve:["$"] condition:proposition ;
+
+action::ActionNode = name:ruleName "::" preconditions:"&".{actionPrecondition}+ "->" postconditions:"&".{proposition}+ ;
+
+
+placeholder::PlaceholderNode = name:phName [":" type:name] ;
+
+predicate::PredicateNode = name:predName "(" parameters:",".{placeholder}* ")" ;
+
+rulePrecondition::RulePreconditionNode = preserve:["$"] condition:predicate ;
+
+rule::RuleNode = name:ruleName "::" preconditions:"&".{rulePrecondition}+ "->" postconditions:"&".{predicate}+ ;
+
+
+alias::AliasNode = lhs:predicate "=" rhs:"&".{predicate}+ ;
+
+signatureOrAlias = alias | signature ;
+
+
+reverseRule::ReverseRuleNode = lhs:ruleName "::" rhs:ruleName ;
+
+
+predicateDecls = {@+:signatureOrAlias ";"}* ;
+
+predicates::PredicatesNode = "predicates" "{" predicates:predicateDecls "}" ;
+
+
+ruleDecls = {@+:rule ";"}* ;
+
+rules::RulesNode = "rules" "{" rules:ruleDecls "}" ;
+
+
+reverseRuleDecls = {@+:reverseRule ";"}* ;
+
+reverseRules::ReverseRulesNode = "reverse_rules" "{" reverse_rules:reverseRuleDecls "}" ;
+
+
+constraints::ConstraintsNode = "constraints" "{" constraints:ruleDecls "}" ;
+
+
+inform7Type::Inform7TypeNode = "type" "{" "kind" "::" kind:str ";" ["definition" "::" definition:str ";"] "}" ;
+
+
+inform7Predicate::Inform7PredicateNode = predicate:predicate "::" source:str ";" ;
+
+inform7Predicates::Inform7PredicatesNode = "predicates" "{" predicates:{inform7Predicate}* "}" ;
+
+
+inform7Command::Inform7CommandNode = rule:ruleName "::" command:str "::" event:str ";" ;
+
+inform7Commands::Inform7CommandsNode = "commands" "{" commands:{inform7Command}* "}" ;
+
+
+inform7Code::Inform7CodeNode = "code" "::" code:strBlock ";" ;
+
+
+inform7Part = inform7Type | inform7Predicates | inform7Commands | inform7Code ;
+
+inform7::Inform7Node = "inform7" "{" parts:{inform7Part}* "}" ;
+
+
+typePart = predicates | rules | reverseRules | constraints | inform7 ;
+
+type::TypeNode = "type" name:name [":" supertypes:",".{name}+] "{" parts:{typePart}* "}" ;
+
+
+document::DocumentNode = types:{type}* $ ;
+
+start = document ;

@@ -1,0 +1,141 @@
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" type="text/css" href="Git.css">
+ </head>
+ <body>
+<h1>Revision History</h1>
+
+<b>Git 1.3.5 (Windows Glk 1.47)</b>
+<ul>
+<li>Updated to support Glk 0.7.5, which adds character input to graphics windows, clarifies
+the behaviour of zero-size windows, and specifies the encoding of Unicode text files as UTF-8.
+</ul>
+
+<b>Git 1.3.5 (Windows Glk 1.46)</b>
+<ul>
+<li>Fixed a bug when the streamnum opcode is called with the smallest possible negative number.
+<li>A new configuration file option, "FontFile", allows the game's font to be loaded from
+a font file in the same directory as the game.
+<li>Some of the Unicode characters above $FFFF (that is, those in the Supplementary Multilingual
+Plane) can now be output, provided that an appropriate font is available.
+<li>Unicode text files are now encoded as UTF-8, as specified in the latest draft of the Glk
+0.7.5 specification.
+</ul>
+
+<b>Git 1.3.4 (Windows Glk 1.45)</b>
+<ul>
+<li>Performance improvements from Peter De Wachter, which give approximately a 15% speed
+increase.
+</ul>
+
+<b>Git 1.3.3 (Windows Glk 1.45)</b>
+<ul>
+<li>The way in which colours are specified in the options dialog has been simplified: the
+"General" tab now contains three buttons that allow the overall text, background and hyperlink
+colours to be specified. Text and background colours are no longer specified in the "Styles"
+tab on a per-style basis.
+<li>The function glk_window_get_arrangement() no longer causes a crash if any of its output
+arguments are 0.
+<li>Added acceleration functions 8 through 13, which work correctly when the Inform 6 compiler
+setting NUM_ATTR_BYTES is changed, contributed by Andrew Plotkin.
+</ul>
+
+<b>Git 1.3.2 (Windows Glk 1.44)</b>
+<ul>
+<li>A further fix related to Glk call dispatching, following the similar fix added to
+Glulxe 0.5.1.
+<li>Increased the undo buffer size to 2Mb.
+</ul>
+
+<b>Git 1.3.1 (Windows Glk 1.44)</b>
+<ul>
+<li>Further fixes related to Glk call dispatching, following similar fixes added to
+Glulxe 0.5.0.
+</ul>
+
+<b>Git 1.3.0 (Windows Glk 1.44)</b>
+<ul>
+<li>Updated to Git 1.3.0, which fixes a bug related to Glk call dispatching,
+and a bug in the file restore logic.
+<li>Updated to support Glk 0.7.4, which introduces resource streams (i.e. access to
+read-only data held in the Blorb game file).
+</ul>
+
+<b>Git 1.2.9 (Windows Glk 1.43)</b>
+<ul>
+<li>Updated to support Glk 0.7.3, which includes more control when playing sounds.
+This revision of the Glk specification also now specifies the meaning of the volume argument to
+sound related Glk calls: as a result the handling of the volume has been changed to match the
+specification.
+<li>[More] prompts now function even if the game has exited, allowing any
+long amount of final text to be read.
+<li>Fixed a bug with file streams when reading and writing to the same file.
+<li>Updated to Git 1.2.9, which fixes bugs related to Glk call dispatching,
+following similar fixes in Glulxe.
+</ul>
+
+<b>Git 1.2.8 (Windows Glk 1.42)</b>
+<ul>
+<li>The accuracy of the time returned by glk_current_time() has been improved. Providing that the
+computer supports a sufficiently high resolution timer, the returned time is now correct to the
+nearest microsecond.
+</ul>
+
+<b>Git 1.2.8 (Windows Glk 1.41)</b>
+<ul>
+<li>Updated to support Glk 0.7.2, which includes functions for accessing the system's date and time.
+<li>Updated to support Glk 0.7.1, which includes functions for Unicode string decomposition and
+normalization, and control over line input echoing and terminator characters.
+<li>Unicode characters now appear correctly in the scrollback dialog, provided that the dialog
+font supports them.
+</ul>
+
+<b>Git 1.2.8 (Windows Glk 1.40)</b>
+<ul>
+<li>Updated to Git 1.2.8, which fixes a few obscure bugs.
+<li>Corrected problems with formatting and line input when margin images are present.
+<li>Corrected a mistake in the handling of alpha-blended images.
+</ul>
+
+<b>Git 1.2.7 (Windows Glk 1.39)</b>
+<ul>
+<li>Updated to Git 1.2.7, which implements the Glulx 3.1.2 specification (for floating point opcodes).
+<li>The window can be made to fill the entire screen; press <b>Alt+Enter</b> to toggle
+this full screen mode on and off.
+<li>A new configuration file option, "FullScreen", also makes the window fill the entire screen.
+<li>During line input, Ctrl+Left moves the cursor to the start of the current word, and Ctrl+Right
+moves to the end.
+<li>The logic when scaling alpha-blended images has been improved, so there should no longer be
+artifacts round the edges of such images.
+<li>Data being written to files is now flushed whenever input is requested from the user.
+This allows, for example, transcript files to update as a game is being played, and not only
+when the interpreter closes the file.
+<li>Corrected a problem which could result in the options dialog using the wrong font.
+</ul>
+
+<b>Git 1.2.6 (Windows Glk 1.38)</b>
+<ul>
+<li>Fixed a file creation bug in glk_stream_open_file().
+</ul>
+
+<b>Git 1.2.6 (Windows Glk 1.37)</b>
+<ul>
+<li>Updated to Git 1.2.6, which fixes a bug in retained Glk array handling.
+</ul>
+
+<b>Git 1.2.5 (Windows Glk 1.37)</b>
+<ul>
+<li>Updated to Git 1.2.5, which fixes several problems shown by Andrew Plotkin's
+glulxercise test cases.
+</ul>
+
+<b>Git 1.2.4 (Windows Glk 1.37)</b>
+<ul>
+<li>Clicking on a Glk window now only shifts the keyboard input focus to that window if the
+window is capable of text input: this means that after clicking on a graphics window, text can
+still be input in a text buffer window without having to click back to the text buffer window.
+<li>The implementation of the algorithm for scaling images has been sped up again.
+</ul>
+ </body>
+</html>

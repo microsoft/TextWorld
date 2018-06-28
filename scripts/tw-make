@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+
+import argparse
+import numpy as np
+
+import textworld
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(add_help=False)
+
+    general_group = parser.add_argument_group('General settings')
+    general_group.add_argument("--output", default="./gen_games/", metavar="PATH",
+                               help="Output folder to save generated game files.")
+    general_group.add_argument('--seed', type=int)
+    general_group.add_argument("--view", action="store_true",
+                               help="Display the resulting game.")
+    general_group.add_argument("-v", "--verbose", action="store_true")
+
+    cfg_group = parser.add_argument_group('Grammar settings')
+    cfg_group.add_argument("--theme", default="house",
+                           help="Theme to use for generating the text. Default: %(default)s")
+    cfg_group.add_argument("--include-adj", action="store_true",
+                           help="Turn on adjectives.")
+    cfg_group.add_argument("--blend-descriptions", action="store_true",
+                           help="Blend descriptions across consecutive sentences.")
+    cfg_group.add_argument("--ambiguous-instructions", action="store_true",
+                           help="Refer to an object using its type (e.g. red container vs. red chest).")
+    cfg_group.add_argument("--only-last-action", action="store_true",
+                           help="Intruction only describes the last action of quest.")
+    cfg_group.add_argument("--blend-instructions", action="store_true",
+                           help="Blend instructions across consecutive actions.")
+
+    general_parser = parser
+
+    parser = argparse.ArgumentParser(parents=[general_parser])
+    subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
+
+    custom_parser = subparsers.add_parser("custom", parents=[general_parser],
+                                          help='Make a custom game.')
+    custom_parser.add_argument("--world-size", type=int, default=5, metavar="SIZE",
+                               help="Nb. of rooms in the world.")
+    custom_parser.add_argument("--nb-objects", type=int, default=10, metavar="NB",
+                               help="Nb. of objects in the world.")
+    custom_parser.add_argument("--quest-length", type=int, default=5, metavar="LENGTH",
+                               help="Minimum nb. of actions the quest requires to be completed.")
+
+    challenge_parser = subparsers.add_parser("challenge", parents=[general_parser],
+                                             help='Generate a game for one of the challenges.')
+    challenge_parser.add_argument("challenge",
+                                  help="Name of the builtin challenges, e.g. `tw-coin_collector-level210`")
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    if args.seed is None:
+        args.seed = np.random.randint(65635)
+
+    print("Global seed: {}".format(args.seed))
+
+    grammar_flags = {
+        "theme": args.theme,
+        "include_adj": args.include_adj,
+        "only_last_action": args.only_last_action,
+        "blend_instructions": args.blend_instructions,
+        "blend_descriptions": args.blend_descriptions,
+        "ambiguous_instructions": args.ambiguous_instructions,
+    }
+
+    if args.subcommand == "custom":
+        game_file, game = textworld.make(args.world_size, args.nb_objects, args.quest_length, grammar_flags,
+                                         seed=args.seed, games_dir=args.output)
+
+    elif args.subcommand == "challenge":
+        _, challenge, level = args.challenge.split("-")
+        if challenge not in textworld.challenges.CHALLENGES:
+            raise ValueError("Unknown challenge: {}".format(args.challenge))
+
+        level = int(level.lstrip("level"))
+        make_game = textworld.challenges.CHALLENGES[challenge]
+        game = make_game(level=level, grammar_flags=grammar_flags, seeds=args.seed)
+        game_file = textworld.generator.compile_game(game, games_folder=args.output)
+
+    print("Game generated: {}".format(game_file))
+    if args.verbose:
+        print(game.quests[0].desc)
+
+    if args.view:
+        textworld.render.visualize(game, interactive=True)

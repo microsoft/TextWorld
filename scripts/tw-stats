@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+
+import sys
+import argparse
+
+from textworld.generator import Game
+from textworld.generator.logger import GameLogger
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="View statistics of generated games.")
+    parser.add_argument("games", metavar="game", nargs="+",
+                        help="JSON files containing infos about a game.")
+    parser.add_argument("--names-only", action="store_true",
+                        help="Only print out the objects' names.")
+    parser.add_argument("--objective-only", action="store_true",
+                        help="Only print out games' objective.")
+
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Verbose mode.")
+    args = parser.parse_args()
+
+    objectives = {}
+    names = set()
+    game_logger = GameLogger()
+    for game_filename in args.games:
+        try:
+            game = Game.load(game_filename.replace(".ulx", ".json"))
+        except Exception as e:
+            print("Cannot load {}.".format(game))
+            if args.verbose:
+                print(e)
+
+            continue
+
+        if len(game.quests) > 0:
+            objectives[game_filename] = game.quests[0].desc
+
+        names |= set(info.name for info in game.infos.values() if info.name is not None)
+        game_logger.collect(game)
+
+    if args.names_only:
+        print("\n".join(sorted(names)))
+        sys.exit()
+
+    if args.objective_only:
+        for game, objective in objectives.items():
+            print("-- {} --".format(game))
+            print(objective + "\n\n")
+        sys.exit()
+
+    game_logger.display_stats()

@@ -1,0 +1,221 @@
+{
+    "locations": [
+        {
+            "name" : "west of house",
+            "location" : 180,
+            "inventory" : [],
+            "actions" : ["north","west","south"],
+            "multistep_action" : ["open mailbox", "take leaflet"]
+        },
+        {
+            "name" : "behind house",
+            "location" : 79,
+            "inventory" : [],
+            "actions" : ["north","east","south"],
+            "multistep_action" : ["open window", "enter"]
+        },
+        {
+            "name" : "kitchen",
+            "location" : 203,
+            "inventory" : [],
+            "actions" : ["take bottle", "open window", "up", "west"],
+            "multistep_action" : ["take sack", "open sack", "take garlic", "take lunch"]
+        },
+        {
+            "name" : "attic",
+            "location" : 201,
+            "inventory" : [104],
+            "actions" : ["take knife", "take rope", "down"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "living room",
+            "location" : 193,
+            "inventory" : [],
+            "actions" : ["open case", "take lamp", "take sword"],
+            "multistep_action" : ["pull rug", "open trapdoor", "down"]
+        },
+        {
+            "name" : "troll room",
+            "location" : 102,
+            "inventory" : [104, 110],
+            "actions" : ["give sword to troll", "south"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "cyclops room",
+            "location" : 185,
+            "inventory" : [104],
+            "actions" : [],
+            "multistep_action" : ["odysseus", "east", "east"]
+        },
+        {
+            "name" : "maze",
+            "location" : 167,
+            "inventory" : [104],
+            "actions" : ["take rusty knife", "take key", "take bag", "take lantern"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "grating room",
+            "location" : 57,
+            "inventory" : [104, 122],
+            "actions" : ["southwest"],
+            "multistep_action" : ["southwest", "northeast", "unlock grating with key", "open grating", "up"]
+        },
+        {
+            "name" : "loud room",
+            "location" : 138,
+            "inventory" : [104],
+            "actions" : ["take bar"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "dam lobby",
+            "location" : 154,
+            "inventory" : [104],
+            "actions" : ["take matchbook"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "maintenance room",
+            "location" : 199,
+            "inventory" : [104, 91],
+            "actions" : ["take wrench", "take screwdriver", "take tube"],
+            "multistep_action" : ["push yellow button", "south", "south", "turn bolt with wrench"]
+        },
+        {
+            "name" : "reservoir north",
+            "location" : 172,
+            "inventory" : [104],
+            "actions" : ["take pump"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "studio",
+            "location" : 94,
+            "inventory" : [164, 149],
+            "actions" : [],
+            "multistep_action" : ["turn on lantern", "up"]
+        },
+        {
+            "name" : "dome room",
+            "location" : 133,
+            "inventory" : [104, 129],
+            "actions" : [],
+            "multistep_action" : ["tie rope to railing", "down"]
+        },
+        {
+            "name" : "egyptian room",
+            "location" : 175,
+            "inventory" : [104],
+            "actions" : [],
+            "multistep_action" : ["open coffin", "take sceptre"]
+        },
+        {
+            "name" : "temple",
+            "location" : 220,
+            "inventory" : [104],
+            "actions" : ["take bell", "north", "east", "south"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "altar",
+            "location" : 212,
+            "inventory" : [104],
+            "actions" : ["take candles", "take book", "pray", "down"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "entrance to hades",
+            "location" : 232,
+            "inventory" : [104, 147, 221, 155, 211],
+            "actions" : [],
+            "multistep_action" : ["ring bell", "take candles", "light match", "light candles with match", "read book"]
+        },
+        {
+            "name" : "land of the dead",
+            "location" : 230,
+            "inventory" : [104, 147, 221, 155],
+            "actions" : ["take skull"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "dam base",
+            "location" : 140,
+            "inventory" : [173],
+            "actions" : [],
+            "multistep_action" : ["inflate plastic with pump", "enter boat", "launch boat"]
+        },
+        {
+            "name" : "frigid river",
+            "location" : 130,
+            "inventory" : [104],
+            "actions" : [],
+            "multistep_action" : ["open buoy", "take emerald"]
+        },
+        {
+            "name" : "sandy beach",
+            "location" : 120,
+            "inventory" : [104],
+            "actions" : ["take shovel"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "sandy cave",
+            "location" : 126,
+            "inventory" : [104, 121],
+            "actions" : [],
+            "multistep_action" : ["dig sand with shovel","dig sand with shovel","dig sand with shovel","dig sand with shovel","take scarab"]
+        },
+        {
+            "name" : "aragain falls",
+            "location" : 29,
+            "inventory" : [209],
+            "actions" : [],
+            "multistep_action" : ["wave sceptre", "west", "west", "take gold"]
+        },
+        {
+            "name" : "mirror room",
+            "location" : 152,
+            "inventory" : [104],
+            "actions" : ["touch mirror"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "bat room",
+            "location" : 222,
+            "inventory" : [104, 189],
+            "actions" : ["take figurine"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "shaft room",
+            "location" : 226,
+            "inventory" : [104, 123],
+            "actions" : ["put torch in basket", "put screwdriver in basket", "lower basket"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "gas room",
+            "location" : 124,
+            "inventory" : [164],
+            "actions" : [],
+            "multistep_action" : ["turn on", "take bracelet"]
+        },
+        {
+            "name" : "dead end",
+            "location" : 118,
+            "inventory" : [104],
+            "actions" : ["get coal"],
+            "multistep_action" : []
+        },
+        {
+            "name" : "machine room",
+            "location" : 157,
+            "inventory" : [104, 119, 123],
+            "actions" : [],
+            "multistep_action" : ["open machine", "put coal in machine", "close machine", "turn switch with screwdriver", "open machine", "take diamond"]
+        }
+    ]
+}

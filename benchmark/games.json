@@ -1,0 +1,322 @@
+{
+  "905": {
+    "filename": "905.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=qzftg3j8nh5f34i2",
+    "md5": "4c5067169b834d247a30bb08d1039896"
+  },
+  "acorncourt": {
+    "filename": "acorncourt.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=tqvambr6vowym20v",
+    "md5": "a61400439aa76f8faba3b8f01edd4a72"
+  },
+  "actofmurder": {
+    "filename": "actofmurder.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=x43lndv5htzy38w0",
+    "md5": "d28a66499e394e40d9cab7effd34f486"
+  },
+  "advent": {
+    "filename": "advent.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=fft6pu91j85y4acv",
+    "md5": "ee2242e155fd8910921b0f8e04019a3a"
+  },
+  "adventureland": {
+    "filename": "adventureland.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=dy4ok8sdlut6ddj7",
+    "md5": "a42545bd17330ae5e6fed02270ccfb4a"
+  },
+  "afflicted": {
+    "filename": "afflicted.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=epl4q2933rczoo9x",
+    "md5": "064272be87de7106192b6fb743c4dfc4"
+  },
+  "anchor": {
+    "filename": "anchor.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=op0uw1gn1tjqmjt7",
+    "md5": "c043df8624e0e1e9fda92f1a74b6e402"
+  },
+  "asylum": {
+    "filename": "asylum.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=20uwjal4pcde6gfb",
+    "md5": "773e2cb46d3521e4f092568ae8d08c4b"
+  },
+  "awaken": {
+    "filename": "awaken.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=rwseuddvj1gbo481",
+    "md5": "9ba48c72d96ab3e7956a8570b12d34d6"
+  },
+  "balances": {
+    "filename": "balances.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=x6ne0bbd2oqm6h3a",
+    "md5": "f2cb8f94a7e8df3b850a758da26fa387"
+  },
+  "ballyhoo": {
+    "filename": "ballyhoo.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=b0i6bx7g4rkrekgg",
+    "md5": "5d54e326815b0ed3aff8efb8ff02ef2f"
+  },
+  "curses": {
+    "filename": "curses.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=plvzam05bmz3enh8",
+    "md5": "f06a42a29a5a4e6aa70958c9ae4c37cd"
+  },
+  "cutthroat": {
+    "filename": "cutthroat.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=4ao65o1u0xuvj8jf",
+    "md5": "ec7d273fd79d4a7dd69a9bf7001f6193"
+  },
+  "deephome": {
+    "filename": "deephome.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=x85otcikhwp8bwup",
+    "md5": "5e56a6e5cdeecded434a8fd8012fc2c6"
+  },
+  "detective": {
+    "filename": "detective.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=1po9rgq2xssupefw",
+    "md5": "822655c9be83e292e06d3d3b1d6a9734"
+  },
+  "dragon": {
+    "filename": "dragon.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=sjiyffz8n5patu8l",
+    "md5": "96d314997e5d3a5a793c83845977d44d"
+  },
+  "enchanter": {
+    "filename": "enchanter.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=vu4xhul3abknifcr",
+    "md5": "ad3cdea88d81033fe29167688bd98c31"
+  },
+  "enter": {
+    "filename": "enter.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=ld1f3t5epeagilfz",
+    "md5": "4c48ba2c5523d78c5f7f9b7809d16b1d"
+  },
+  "exterminate": {
+    "filename": "exterminate.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=4ygzc9qcj6rxhh1",
+    "md5": "c682a544a8d61b889841323c3478954f"
+  },
+  "failsafe": {
+    "filename": "failsafe.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=c6x835i6o9zqfc59",
+    "md5": "7ca7dc3fc085652b219a54cd0a0923da"
+  },
+  "gold": {
+    "filename": "gold.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=59ztsy9p01avd6wp",
+    "md5": "f275ddf32ce8a9e744d53c3b99c5a658"
+  },
+  "hhgg": {
+    "filename": "hhgg.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=ouv80gvsl32xlion",
+    "md5": "f7b84f101c1beb99e8b77218907f99c7"
+  },
+  "hollywood": {
+    "filename": "hollywood.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=jnfkbgdgopwfqist",
+    "md5": "1ea91a064941a3f612b20833f0a47df7"
+  },
+  "huntdark": {
+    "filename": "huntdark.z5",
+    "info": "http://ifdb.tads.org/viewgame=mh1a6hizgwjdbeg7",
+    "md5": "253b02c8012710577085b9fd3a155cb7"
+  },
+  "infidel": {
+    "filename": "infidel.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=anu79a4n1jedg5mm",
+    "md5": "2fe5b5693fa60b0cf8621402423994b1"
+  },
+  "inhumane": {
+    "filename": "inhumane.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=wvs2vmbigm9unlpd",
+    "md5": "84d3ce7ccfafb873736490811a0cc78c"
+  },
+  "jewel": {
+    "filename": "jewel.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=hu60gp1bgkhlo5yx",
+    "md5": "1eef9c0fa009ca4adf4872cfc5249d45"
+  },
+  "karn": {
+    "filename": "karn.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=bx8118ggp6j7nslo",
+    "md5": "ec55791be814db3663ad1aec0d6b7690"
+  },
+  "lgop": {
+    "filename": "lgop.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=3p9fdt4fxr2goctw",
+    "md5": "8241afdadbdcdb934ee06afc6ba59b67"
+  },
+  "library": {
+    "filename": "library.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=400zakqderzjnu1i",
+    "md5": "389acf3b617a40dc4848da3bda62ce06"
+  },
+  "loose": {
+    "filename": "loose.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=4wd3lyaxi4thp8qi",
+    "md5": "31a0c1e360dce94aa5bece5240691d17"
+  },
+  "lostpig": {
+    "filename": "lostpig.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=mohwfk47yjzii14w",
+    "md5": "aaf0b90fbb31717481c02832bf412070"
+  },
+  "ludicorp": {
+    "filename": "ludicorp.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=r6g7pflngn3uxbam",
+    "md5": "646a63307f77dcdcd011f330277ae262"
+  },
+  "lurking": {
+    "filename": "lurking.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=jhbd0kja1t57uop",
+    "md5": "5f42ff092a2f30471ae98150ef4da2e1"
+  },
+  "moonlit": {
+    "filename": "moonlit.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=10387w68qlwehbyq",
+    "md5": "bf75b9651cff0e2d04302f19c443588e"
+  },
+  "murdac": {
+    "filename": "murdac.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=q36lh5np0q9nak28",
+    "md5": "570179d4f21b2f600862dbffbb5afc3e"
+  },
+  "night": {
+    "filename": "night.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=ydhwa11st460g9u3",
+    "md5": "72125f159cccd581786ac16a2828d4e3"
+  },
+  "omniquest": {
+    "filename": "omniquest.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=mygqz9tzxqvryead",
+    "md5": "80ea198bca425b6d819c74bfa854236e"
+  },
+  "partyfoul": {
+    "filename": "partyfoul.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=cqwq699i9qiqdju",
+    "md5": "d221daa82708c4e54447f1a884c239ef"
+  },
+  "pentari": {
+    "filename": "pentari.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=llchvog0ukwrphih",
+    "md5": "f24c6863468823b744e910ccfe997c6d"
+  },
+  "piracy2": {
+    "filename": "piracy2.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=6uzu0u107mj4rbhd",
+    "md5": "a9e6b0b9fe78f954aa4a227342c0450c"
+  },
+  "planetfall": {
+    "filename": "planetfall.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=xe6kb3cuqwie2q38",
+    "md5": "6487dc814b280f5603c53155de378d27"
+  },
+  "plundered": {
+    "filename": "plundered.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=ddagftras22bnz8h",
+    "md5": "29fc7b270af2fbd406a0548a8298da7f"
+  },
+  "reverb": {
+    "filename": "reverb.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=dop7nbjl90r5zmf9",
+    "md5": "80d286fbfe624c621266b568c0076717"
+  },
+  "seastalker": {
+    "filename": "seastalker.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=56wb8hflec2isvzm",
+    "md5": "ee339dbdbb0792f67e20bd71bafe0ea5"
+  },
+  "sherbet": {
+    "filename": "sherbet.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=273o81yvg64m4pkz",
+    "md5": "4870ed634baf9a85b0a68369af92dfd3"
+  },
+  "sherlock": {
+    "filename": "sherlock.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=j8lmspy4iz73mx26",
+    "md5": "35240654d83f9e7073973d338f9657b8"
+  },
+  "snacktime": {
+    "filename": "snacktime.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=yr3y8s9k8e40hl5q",
+    "md5": "0ff228d12d7cb470dc1a8e9a5151769b"
+  },
+  "sorcerer": {
+    "filename": "sorcerer.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=lidg5nx9ig0bwk55",
+    "md5": "20f1468a058d0a6de016ae70022e651c"
+  },
+  "spellbrkr": {
+    "filename": "spellbrkr.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=wqsmrahzozosu3r",
+    "md5": "7a92ce19a39bedd970d0f1e296981f71"
+  },
+  "spirit": {
+    "filename": "spirit.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=tqpowvmdoemtooqf",
+    "md5": "808039c4e9554bdd15d7793539b3bd97"
+  },
+  "temple": {
+    "filename": "temple.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=kq9qgjkf2k6xn1c0",
+    "md5": "047842c7b25c3d477b728cf3412e33de"
+  },
+  "theatre": {
+    "filename": "theatre.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=bv8of8y9xeo7307g",
+    "md5": "33dcc5085acb290d1817e07653c13480"
+  },
+  "trinity": {
+    "filename": "trinity.z4",
+    "info": "http://ifdb.tads.org/viewgame?id=j18kjz80hxjtyayw",
+    "md5": "3bf1a444a1fc2057130ecb9806117233"
+  },
+  "tryst205": {
+    "filename": "tryst205.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=ic0ebhbi70bdmyc2",
+    "md5": "fc65ad8d4588da92fd39871f6f7463db"
+  },
+  "violet": {
+    "filename": "violet.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=4glrrfh7wrp9zz7b",
+    "md5": "8bbdea7fc901af316cb358d673c2359e"
+  },
+  "weapon": {
+    "filename": "weapon.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=tcebhl79rlxo3qrk",
+    "md5": "c632204be3849d6c5bb6f4eb5aca3cc0"
+  },
+  "wishbringer": {
+    "filename": "wishbringer.z3",
+    "info": "http://ifdb.tads.org/viewgame?id=z02joykzh66wfhcl",
+    "md5": "87ed53d854f7e57c36106fca3b9cf5a6"
+  },
+  "yomomma": {
+    "filename": "yomomma.z8",
+    "info": "http://ifdb.tads.org/viewgame?id=1iqmpkn009h9gbug",
+    "md5": "5b10162a7a134e7b4c381ecedfb4bc44"
+  },
+  "zenon": {
+    "filename": "zenon.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=rw7zv98mifbr3335",
+    "md5": "631cc926b4251f5a5f646d3a6bdac8c6"
+  },
+  "zork1": {
+    "filename": "zork1.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=0dbnusxunq7fw5ro",
+    "md5": "b732a93a6244ddd92a9b9a3e3a46c687"
+  },
+  "zork2": {
+    "filename": "zork2.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=yzzm4puxyjakk8c4",
+    "md5": "5bcd91ee055e9bd42812617571be227b"
+  },
+  "zork3": {
+    "filename": "zork3.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=vrsot1zgy1wfcdru",
+    "md5": "ffda9ee2d428fa2fa8e75a1914ff6959"
+  },
+  "ztuu": {
+    "filename": "ztuu.z5",
+    "info": "http://ifdb.tads.org/viewgame?id=40hswtkhap88gzvn",
+    "md5": "d8e1578470cbc676e013e03d72c93141"
+  }
+}

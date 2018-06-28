@@ -1,0 +1,20 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=Git.chm
+Contents file=Git.hhc
+Default Window=help
+Default topic=overview.htm
+Display compile progress=No
+Full-text search=Yes
+Language=0x809 English (United Kingdom)
+Title=Windows Git
+
+[WINDOWS]
+help=,"Git.hhc",,"overview.htm",,,,,,0x42520,,0x3006,[600,32,1200,632],,,,,,,0
+
+
+[FILES]
+overview.htm
+
+[INFOTYPES]
+

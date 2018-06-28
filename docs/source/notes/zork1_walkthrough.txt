@@ -1,0 +1,364 @@
+open mailbox
+read leaflet
+drop leaflet
+go south
+go east
+open window
+enter house
+go west
+take lamp
+move rug
+open trap door
+turn on lamp
+go down
+go south
+go east
+take painting
+go north
+go up chimney
+go up
+take knife
+take rope
+go down
+go west
+open case
+put painting inside case
+drop knife
+take sword
+open trap door
+go down
+go north
+kill troll with sword
+kill troll with sword
+kill troll with sword
+drop sword
+go east
+go east
+go southeast
+go east
+tie rope to railing
+go down
+go south
+go east
+take coffin
+go west
+go south
+pray
+turn off lamp
+go south
+go north
+go east
+go down
+go down
+go north
+drop coffin
+open coffin
+take sceptre
+wave sceptre
+take gold
+take coffin
+go southwest
+go up
+go up
+go northwest
+go west
+enter house
+open bag
+take garlic
+go west
+put coffin in case
+put gold in case
+put sceptre in case
+open trap door
+turn on lamp
+go down
+go north
+go east
+go north
+go northeast
+go east
+go north
+take matches
+go north
+take wrench
+take screwdriver
+push yellow button
+go south
+go south
+turn bolt with wrench
+drop wrench
+go south
+go down
+go down
+go southeast
+go east
+go down
+take torch
+turn off lamp
+go south
+take bell
+go south
+take candles
+take book
+go down
+go down
+ring bell
+take candles
+light match
+light candles with match
+read book
+drop book
+go south
+take skull
+go north
+go up
+go north
+rub mirror
+go north
+go west
+go north
+go west
+inventory
+go north
+go east
+put torch in basket
+put screwdriver in basket
+turn on lamp
+turn off candles
+go north
+go down
+go east
+go northeast
+go southeast
+go southwest
+go down
+go down
+go south
+take coal
+go north
+go up
+go up
+go north
+go east
+go south
+go north
+go up
+go south
+put coal in basket
+lower basket
+go north
+go down
+go east
+go northeast
+go southeast
+go southwest
+go down
+go down
+go west
+drop all
+go west
+take coal
+take screwdriver
+take torch
+go south
+open lid
+put coal in machine
+close lid
+turn switch with screwdriver
+drop screwdriver
+open lid
+take diamond
+go north
+put torch in basket
+put diamond in basket
+go east
+take skull
+take lamp
+take garlic
+go east
+go up
+go up
+go north
+go east
+go south
+go north
+take bracelet
+go up
+go south
+raise basket
+look in basket
+take diamond
+take torch
+turn off lamp
+go west
+take jade
+go south
+go east
+go south
+go down
+go up
+inventory
+put jade in case
+put diamond in case
+put bracelet in case
+turn on lamp
+go down
+go north
+go east
+go north
+go northeast
+go north
+take trunk
+go north
+take pump
+go north
+take trident
+inventory
+drop torch
+take trident
+go south
+go south
+go south
+go east
+go east
+inflate plastic with pump
+drop pump
+go inside boat
+launch
+wait
+wait
+wait
+wait
+take buoy
+go east
+leave boat
+inventory
+drop garlic
+drop buoy
+take shovel
+go northeast
+dig sand with shovel
+dig sand with shovel
+dig sand with shovel
+dig sand with shovel
+drop shovel
+take scarab
+go southwest
+open buoy
+take emerald
+take garlic
+go south
+go south
+cross rainbow
+turn off lamp
+go southwest
+go up
+go up
+go northwest
+go west
+enter house
+go west
+inventory
+put emerald in case
+put scarab in case
+put trident in case
+put jewels in case
+go east
+go east
+go north
+go north
+climb tree
+take egg
+climb down
+go south
+go east
+enter house
+go west
+turn on lamp
+go down
+go north
+go west
+go south
+go east
+go up
+take coins
+take key
+go southwest
+go east
+go south
+go southeast
+Ulysses
+go up
+give egg to thief
+go down
+go east
+go east
+take knife
+go west
+go west
+go up
+kill thief with knife
+kill thief with knife
+kill thief with knife
+kill thief with knife
+take all
+drop stiletto
+take chalice
+go down
+go northwest
+go south
+go west
+go up
+go down
+go northeast
+unlock grate
+open grate
+go up
+go south
+climb tree
+wind up canary
+go down
+take bauble
+drop knife
+take bauble
+go south
+go east
+enter house
+go west
+put coins in case
+put bauble in case
+put chalice in case
+take canary from egg
+put canary in case
+put egg in case
+put skull in case
+go down
+go north
+go east
+go east
+go east
+echo
+take bar
+go west
+go west
+go west
+go south
+go up
+put bar in case
+go west
+go west
+go up
+take torch
+go down
+go east
+go east
+put torch in case
+examine case
+take map
+examine map
+go east
+go east
+go south
+go west
+go southwest
+enter

@@ -1,0 +1,8 @@
+# thing
+type t {
+    inform7 {
+        type {
+            kind :: "thing";
+        }
+    }
+}

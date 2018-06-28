@@ -1,0 +1,35 @@
+# Makefile for Windows Git, compiled with MinGW GCC 2.95
+
+CC = gcc-2 -Wall -O3 -mwindows
+OPTIONS = -DUSE_INLINE -DUSE_DIRECT_THREADING -DUSE_OWN_POWF
+LIBS = -L. -lglk
+
+OUTPUT = ../Executables/Release/Git
+
+CFLAGS = $(OPTIONS) -I../Include
+
+OBJS =	git.o memory.o compiler.o opcodes.o operands.o peephole.o terp.o \
+	glkop.o search.o git_windows.o savefile.o saveundo.o gestalt.o \
+	accel.o heap.o glk.o res.o
+
+all: git chm
+
+git: $(OBJS) libglk.a
+	$(CC) -s -o $(OUTPUT) $(OBJS) $(LIBS)
+
+glk.o: ../glk.c
+	$(CC) $(CFLAGS) -c -o $@ $^
+
+res.o: win/git.rc
+	windres --preprocessor "gcc-2 -E -xc-header -DRC_INVOKED" $^ $@
+
+libglk.a:
+	dlltool --dllname=Glk.dll --def=../GlkDll/Glk.def --output-lib=libglk.a
+
+chm:
+	-C:\\Program\ Files\ \(x86\)\\HTML\ Help\ Workshop\\hhc help\\Git.hhp
+	copy help\\Git.chm ..\\Executables\\Release
+
+clean:
+	del *.o *.a
+

@@ -1,0 +1,40 @@
+<html>
+<head>
+    <title>TextWorld</title>
+
+    <!-- jquery -->
+    <script src="{{template_path}}/static/js/jquery-3.3.1.min.js" type="text/javascript"></script>
+    <!-- Bootstrap -->
+    <link href="{{template_path}}/static/bootstrap.min.css" rel="stylesheet">
+    <script src="{{template_path}}/static/js/bootstrap.min.js"></script>
+    <script src="{{template_path}}/static/js/d3.v5.min.js"></script>
+
+    <!-- style overrides -->
+    <link rel="stylesheet" href="{{template_path}}/static/style.css">
+</head>
+<body>
+
+<!-- our GRAPH goes here -->
+<div class="container">
+    <div class="sidebar">
+        <div id="command-scroll-div" class="command-scroll">
+            <div class="command">
+                <div class="history"></div>
+                <!--<button class="save-svg btn btn-primary">Download graph</button>-->
+            </div>
+        </div>
+        <div class="inventory-container"></div>
+    </div>
+
+    <svg id="graph2"></svg>
+</div>
+
+</body>
+<script
+        type="text/javascript"
+        src="{{template_path}}/static/js/visualization.js"
+        state="{{game_state}}"
+        template_path="{{template_path}}"
+><{{!}}/script>
+
+</html>

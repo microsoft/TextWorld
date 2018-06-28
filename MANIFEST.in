@@ -1,0 +1,12 @@
+include textworld/generator/data/logic/*.twl
+include textworld/generator/data/text_grammars/*.twg
+
+recursive-include textworld/render/tmpl *
+recursive-include textworld/thirdparty/glulx git-glulx-ml
+recursive-include textworld/thirdparty/frotz *
+recursive-include textworld/thirdparty/inform7-6M62/bin *
+recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Compilers *
+recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Internal *
+recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Interpreters *
+
+prune build

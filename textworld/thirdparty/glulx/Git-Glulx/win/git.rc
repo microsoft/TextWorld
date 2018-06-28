@@ -1,0 +1,6 @@
+100                     ICON    DISCARDABLE     "win/res/Glulx.ico"
+101                     ICON    DISCARDABLE     "win/res/Blorb.ico"
+102                     ICON    DISCARDABLE     "win/res/Ulx.ico"
+
+1                       24                      "win/res/Git.manifest"
+

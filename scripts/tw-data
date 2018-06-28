@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+
+"""
+Creates grammar files in the target directory.
+"""
+
+import argparse
+from os.path import join as pjoin
+
+from textworld.generator.data import create_data_files
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("destination", nargs='?', default="./")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-f", "--force", action="store_true")
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    path = pjoin(args.destination, "textworld_data")
+    print("Placing Textworld's customizable files in '{}'.".format(path))
+    create_data_files(path, verbose=args.verbose, force=args.force)
