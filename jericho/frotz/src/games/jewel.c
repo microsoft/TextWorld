@@ -35,7 +35,7 @@ int jewel_victory() {
 }
 
 int jewel_game_over() {
-  char *death_text = "****  You have died  ****";
+  char *death_text = "*** You have died ***";
   if (strstr(world, death_text)) {
     return 1;
   }
