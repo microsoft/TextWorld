@@ -10,7 +10,6 @@ import itertools
 import textworld
 import textworld.agents
 
-from textworld.envs.wrappers import HtmlViewer
 
 
 def parse_args():
@@ -52,6 +51,7 @@ def main():
 
     agent.reset(env)
     if args.viewer is not None:
+        from textworld.envs.wrappers import HtmlViewer
         env = HtmlViewer(env, port=args.viewer)
 
     if args.mode == "human" or args.very_verbose:
