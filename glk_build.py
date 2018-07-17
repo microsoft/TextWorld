@@ -8,7 +8,7 @@ ffibuilder = FFI()
 with open('src/glk_comm.c') as f:
     ffibuilder.set_source("glk",
                           f.read(),
-                          libraries=['rt', 'uuid'])
+                          libraries=['uuid'])
     ffibuilder.cdef(r"""
         struct sock_names {
             char* sock_name;

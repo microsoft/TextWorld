@@ -38,7 +38,7 @@ $(GLKLIB): $(CHEAPGLK_OBJS)
 
 Make.cheapglk:
 	echo LINKLIBS = $(LIBDIRS) $(LIBS) > Make.cheapglk
-	echo GLKLIB = -lcheapglk -lrt >> Make.cheapglk
+	echo GLKLIB = -lcheapglk >> Make.cheapglk
 
 $(CHEAPGLK_OBJS): glk.h $(CHEAPGLK_HEADERS)
 

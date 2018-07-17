@@ -51,8 +51,7 @@ void agent_init(char* sock_name)
 
     struct sockaddr_un sock_addr;
     sock_addr.sun_family = AF_UNIX;
-    memset(sock_addr.sun_path, 0, 108);
-    strncpy(sock_addr.sun_path, sock_name, 108);
+    snprintf(sock_addr.sun_path, sizeof(sock_addr.sun_path), "%s", sock_name);
 
     int conn_status = connect(sock_fh, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
     if(conn_status < 0) {
@@ -92,6 +91,7 @@ void agent_put_string(char* buf, glui32 len)
 glui32 agent_get_output(char* buf, glui32 len)
 {
     char* dest_buf = NULL; /* forward declare for goto; see para 6.8.6.1 */
+    glui32 dest_buf_len = 0;
      /*
      * write to out as one large packet
      */
@@ -136,7 +136,7 @@ glui32 agent_get_output(char* buf, glui32 len)
         }
     } while(restart);
 
-    glui32 dest_buf_len = ntohl(net_dest_buf_len);
+    dest_buf_len = ntohl(net_dest_buf_len);
     dest_buf = calloc(dest_buf_len+1, 1);
 
     do { //handle EINTR
