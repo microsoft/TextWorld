@@ -3,12 +3,18 @@
 
 
 from cffi import FFI
+import platform
+
+
 ffibuilder = FFI()
 
 with open('src/glk_comm.c') as f:
-    ffibuilder.set_source("glk",
-                          f.read(),
-                          libraries=['uuid'])
+    libraries = []
+    if platform.system() == 'Linux':
+        libraries.append("uuid")
+
+    ffibuilder.set_source("glk", f.read(), libraries=libraries)
+
     ffibuilder.cdef(r"""
         struct sock_names {
             char* sock_name;
