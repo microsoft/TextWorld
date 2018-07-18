@@ -16,7 +16,6 @@ from textworld.generator import Game, GameMaker
 import textworld.challenges
 import textworld.generator
 import textworld.agents
-import textworld.envs.wrappers
 
 from textworld.envs import FrotzEnvironment
 from textworld.envs import GlulxEnvironment

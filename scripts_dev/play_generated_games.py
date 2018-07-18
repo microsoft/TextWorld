@@ -11,7 +11,6 @@ import warnings
 import textworld
 import textworld.agents
 
-from textworld.envs.wrappers import HtmlViewer
 
 
 def parse_args():
@@ -104,6 +103,7 @@ def main():
         agent.reset(env)
 
         if args.vizu >= 0:
+            from textworld.envs.wrappers import HtmlViewer
             env = HtmlViewer(env, port=args.vizu)
 
         game_state = env.reset()

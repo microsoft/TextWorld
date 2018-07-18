@@ -11,10 +11,6 @@ from typing import Union, Dict, Optional
 import numpy as np
 import networkx as nx
 
-import webbrowser
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
 import textworld
 from textworld.logic import Variable, Proposition, Action
 from textworld.envs.glulx.git_glulx_ml import GlulxGameState
@@ -174,6 +170,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
 
         for exit, target in room.exits.items():
             if target in openset or target in closedset:
+                edges.append((room.name, target.name, room.doors.get(exit)))
                 continue
 
             openset.append(target)
@@ -321,6 +318,9 @@ def take_screenshot(url: str, id: str='graph2'):
     :return: Image object.
     """
     from PIL import Image
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
 
     options = Options()
     options.add_argument('headless')
@@ -355,6 +355,11 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
     :param interactive: Whether or not to visualize the state in the browser.
     :return: Image object of the visualization.
     """
+    try:
+        import webbrowser
+    except ImportError:
+        raise ImportError('Visualization dependencies not installed. Try running `pip install textworld[vis]`')
+
     if isinstance(world, Game):
         game = world
         state = load_state(game.world, game.infos)

@@ -3,10 +3,10 @@
 
 
 import threading
+import sys
 from typing import Tuple
 
 from textworld.core import Environment, GameState, Wrapper
-from textworld.render.serve import VisualizationService
 
 
 class HtmlViewer(Wrapper):
@@ -41,7 +41,7 @@ class HtmlViewer(Wrapper):
             self._server.stop_server()
             self._server = None
 
-    def _step(self, command: str) -> Tuple[GameState, float, bool]:
+    def step(self, command: str) -> Tuple[GameState, float, bool]:
         """
         Perform a game step.
 
@@ -75,8 +75,13 @@ class HtmlViewer(Wrapper):
         game_state = super().reset()
 
         self._stop_server()  # In case it is still running.
-        self._server = VisualizationService(game_state, self.open_automatically)
-        self._server.start(threading.current_thread(), port=self.port)
+        try:
+            from textworld.render.serve import VisualizationService
+            self._server = VisualizationService(game_state, self.open_automatically)
+            self._server.start(threading.current_thread(), port=self.port)
+        except ModuleNotFoundError:
+            print("Importing HtmlViewer without installed dependencies. Try running `pip install textworld[vis]`")
+
 
         return game_state
 
