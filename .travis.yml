@@ -1,0 +1,30 @@
+os: linux
+dist: trusty
+sudo: false
+
+language: python
+python:
+  - "3.5"
+  - "3.6"
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - chromium-chromedriver
+      - curl
+      - git
+      - libffi-dev
+      - uuid-dev
+      - wget
+      - xdot
+
+env:
+  - DISPLAY=:99 PATH=/usr/lib/chromium-browser:$PATH
+
+install:
+  - pip install -v .[prompt,vis]
+  - pip install nose coverage
+
+script:
+  - nosetests -sv --with-xunit --with-coverage --cover-xml --cover-html --cover-package textworld
