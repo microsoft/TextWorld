@@ -184,7 +184,7 @@ def try_decompose(val):
 
 for val in recdecomptable.keys():
     try_decompose(val)
-for val in decomptable.keys():
+for val in list(decomptable.keys()):
     if decomptable[val] == [ val ]:
         decomptable.pop(val)
 
@@ -289,7 +289,7 @@ if (output == 'c'):
 
     # The case-folding tables.
     
-    blockkeys = blocktable.keys()
+    blockkeys = list(blocktable.keys())
     blockkeys.sort()
 
     for blocknum in blockkeys:
@@ -329,7 +329,7 @@ if (output == 'c'):
     print('        *blockptr = NULL;  \\')
     print('}')
     
-    specialkeys = specialtable.keys()
+    specialkeys = list(specialtable.keys())
     specialkeys.sort()
     
     pos = 0
@@ -393,7 +393,7 @@ if (output == 'c'):
             usetable[blocknum][ent] = []
         usetable[blocknum][ent].append(val)
 
-    usels = usetable.keys()
+    usels = list(usetable.keys())
     usels.sort()
     
     print('#define RETURN_COMBINING_CLASS(ch)  \\')
@@ -401,7 +401,7 @@ if (output == 'c'):
     for blocknum in usels:
         print('  case %d:  \\' % (blocknum,))
         print('    switch (ch) {  \\')
-        entls = usetable[blocknum].keys()
+        entls = list(usetable[blocknum].keys())
         entls.sort()
         for ent in entls:
             valls = usetable[blocknum][ent]
@@ -426,7 +426,7 @@ if (output == 'c'):
             usetable[blocknum] = {}
         usetable[blocknum][val] = map
     
-    usels = usetable.keys()
+    usels = list(usetable.keys())
     usels.sort()
 
     print('#define RETURN_COMPOSITION(ch1, ch2)  \\')
@@ -435,12 +435,12 @@ if (output == 'c'):
         print('  case %d:  \\' % (blocknum,))
         print('    switch (ch1) {  \\')
         map = usetable[blocknum]
-        ls = map.keys()
+        ls = list(map.keys())
         ls.sort()
         for val in ls:
             print('      case %d:  \\' % (val,))
             print('        switch (ch2) {  \\')
-            subls = map[val].items()
+            subls = list(map[val].items())
             subls.sort()
             for (val2, ent) in subls:
                 print('          case %d: return %d;  \\' % (val2, ent))
@@ -467,7 +467,7 @@ if (output == 'c'):
     blocktable = {}
     extratable = {}
 
-    ls = decomptable.keys()
+    ls = list(decomptable.keys())
     ls.sort()
     offsets = []
     
@@ -503,7 +503,7 @@ if (output == 'c'):
     print('};')
     print()
             
-    blockkeys = blocktable.keys()
+    blockkeys = list(blocktable.keys())
     blockkeys.sort()
 
     for blocknum in blockkeys:
@@ -533,7 +533,7 @@ if (output == 'c'):
 
     print()
 
-    extrakeys = extratable.keys()
+    extrakeys = list(extratable.keys())
     extrakeys.sort()
     
     print('#define GET_DECOMP_SPECIAL(ch, countptr, posptr)  \\')
@@ -597,7 +597,7 @@ def generate_js_table_case(label, pairs, offsets):
     print('(function() {')
     print('  var ls, ix, val;')
     print('  var map = unicode_%s_table;' % (label,))
-    ls = offmaps.keys()
+    ls = list(offmaps.keys())
     ls.sort()
     for offset in ls:
         if (offset < 0):
@@ -638,7 +638,7 @@ def generate_js_table_case(label, pairs, offsets):
     print()
 
 def generate_js_table_decomp(label, table, runmin=16):
-    keys = table.keys()
+    keys = list(table.keys())
     keys.sort()
     (runs, extras) = find_runs(keys, runmin, True)
     
@@ -708,7 +708,7 @@ if (output == 'js'):
     tablelist = [ (upcasetable, 'upper'),
                   (downcasetable, 'lower') ]
     for (map, label) in tablelist:
-        keys = map.keys()
+        keys = list(map.keys())
         keys.sort()
 
         pairs = []
@@ -749,11 +749,11 @@ if (output == 'js'):
 
     print('/* list all of unicode_compo_table */')
     print('var unicode_compo_table = {')
-    ls = compotable.keys()
+    ls = list(compotable.keys())
     ls.sort()
     for key in ls:
         islast = (key == ls[-1])
-        subls = compotable[key].items()
+        subls = list(compotable[key].items())
         subls.sort()
         val = ', '.join([ '%d:%d' % (subkey, subval) for (subkey, subval) in subls ])
         print(' %d: { %s }%s' % (key, val, ('' if islast else ',')))
