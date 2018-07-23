@@ -46,7 +46,7 @@ if [ "${machine}" == 'Mac' ]; then
     echo "Copying Mac compiled inform files"
     current_dir="`pwd`"
     cd /Volumes/Inform/Inform.app/Contents/MacOS
-    /bin/cp -t "$current_dir/share/inform7/Compilers/" cBlorb inform6 Inform intest ni
+    /bin/cp cBlorb inform6 Inform intest ni "$current_dir/share/inform7/Compilers/"
     /bin/cp ./git "$current_dir/share/inform7/Interpreters/dumb-git"
     /bin/cp ./glulxe "$current_dir/share/inform7/Interpreters/dumb-glulxe"
 
