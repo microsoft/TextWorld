@@ -39,16 +39,16 @@ fi
 )
 
 # Mount DMG if we're using a Mac
-if [ "${machine}" == 'Mac' ]; then
+if [ "${machine}" == 'Mac' ] && [ -e inform7-6M62 ]; then
     echo "Mounting Inform for Mac"
     hdiutil attach ./I7-6M62-OSX.dmg
 
     echo "Copying Mac compiled inform files"
     current_dir="`pwd`"
     cd /Volumes/Inform/Inform.app/Contents/MacOS
-    /bin/cp cBlorb inform6 Inform intest ni "$current_dir/share/inform7/Compilers/"
-    /bin/cp ./git "$current_dir/share/inform7/Interpreters/dumb-git"
-    /bin/cp ./glulxe "$current_dir/share/inform7/Interpreters/dumb-glulxe"
+    /bin/cp cBlorb inform6 Inform intest ni "$current_dir/inform7-6M62/share/inform7/Compilers/"
+    /bin/cp ./git "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-git"
+    /bin/cp ./glulxe "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-glulxe"
 
     cd "$current_dir"
 
