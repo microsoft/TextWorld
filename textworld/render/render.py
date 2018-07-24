@@ -16,7 +16,7 @@ from textworld.logic import Variable, Proposition, Action
 from textworld.envs.glulx.git_glulx_ml import GlulxGameState
 from textworld.logic import State
 from textworld.generator import World, Game
-from textworld.utils import maybe_mkdir
+from textworld.utils import maybe_mkdir, get_driver
 
 from textworld.generator.game import EntityInfo
 from textworld.generator import data
@@ -318,18 +318,8 @@ def take_screenshot(url: str, id: str='graph2'):
     :return: Image object.
     """
     from PIL import Image
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
 
-
-    options = Options()
-    options.add_argument('headless')
-    options.add_argument('ignore-certificate-errors')
-    options.add_argument("test-type")
-    options.add_argument("no-sandbox")
-    options.add_argument("disable-gpu")
-
-    driver = webdriver.Chrome(chrome_options=options)
+    driver = get_driver()
 
     driver.get(url)
     svg = driver.find_element_by_id(id)
