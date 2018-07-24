@@ -4,18 +4,15 @@
 
 import textworld
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
 from textworld import g_rng
-from textworld.utils import make_temp_directory
+from textworld.utils import make_temp_directory, get_webdriver
 from textworld.generator import compile_game
 from textworld.envs.wrappers import HtmlViewer
 
 
 def test_html_viewer():
     # Integration test for visualization service
-    # requires geckodriver to be in PATH for selenium to work.
     num_nodes = 3
     num_items = 10
     g_rng.set_seed(1234)
@@ -30,15 +27,9 @@ def test_html_viewer():
         env = HtmlViewer(env, open_automatically=False, port=8080)
         env.reset()  # Cause rendering to occur.
 
-    options = Options()
-    options.add_argument('headless')
-    options.add_argument('ignore-certificate-errors')
-    options.add_argument("test-type")
-    options.add_argument("no-sandbox")
-    options.add_argument("disable-gpu")
     # options.binary_location = "/bin/chromium"
+    driver = get_webdriver()
 
-    driver = webdriver.Chrome(chrome_options=options)
     driver.get("http://127.0.0.1:8080")
     nodes = driver.find_elements_by_class_name("node")
     assert len(nodes) == num_nodes
