@@ -61,8 +61,8 @@ def which(program):
 def get_driver(path=None):
     """
     Get the driver and options objects.
-    :param x: name of driver
-    :return: (driver, Options)
+    :param path: path to browser binary.
+    :return: driver
     """
     from selenium import webdriver
 

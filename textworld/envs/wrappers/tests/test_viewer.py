@@ -13,7 +13,6 @@ from textworld.envs.wrappers import HtmlViewer
 
 def test_html_viewer():
     # Integration test for visualization service
-    # requires geckodriver to be in PATH for selenium to work.
     num_nodes = 3
     num_items = 10
     g_rng.set_seed(1234)
