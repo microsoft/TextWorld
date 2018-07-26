@@ -38,7 +38,15 @@ pip install .[prompt,vis]
 where
 
 - `[prompt]`: enables commands autocompletion (available for generated games only). To activate it, use the `--hint` option when running the `tw-play` script, and press TAB-TAB at the prompt.
-- `[vis]`: enables the game states viewer (available for generated games only). To activate it, use the `--html-render` option when running the `tw-play` script, and the current state of the game will be displayed in your browser.
+- `[vis]`: 
+    enables the game states viewer (available for generated games only). 
+    To activate it, use the `--html-render` option when running the `tw-play` script, 
+    and the current state of the game will be displayed in your browser.
+    
+    In order to use the `take_screenshot` or `visualize` functions in `textworld.render`,
+    you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) 
+    or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on whichever
+    browser you have installed).
 
 
 ## Usage
