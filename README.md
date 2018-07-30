@@ -3,7 +3,7 @@ A learning environment sandbox for training and testing reinforcement learning (
 
 ## Installation
 
-TextWorld requires __Python 3__ and only supports __Linux systems__ at the moment.
+TextWorld requires __Python 3__ and only supports __Linux__ and __Mac__ systems at the moment.
 
 ### Requirements
 
