@@ -9,7 +9,7 @@ TextWorld requires __Python 3__ and only supports __Linux__ and __Mac__ systems 
 
 The following system libraries are required to install and run TextWorld:
 ```
-sudo apt-get -y install uuid-dev libffi-dev build-essential curl xdot gcc make python3-dev
+sudo apt-get -y install uuid-dev libffi-dev build-essential curl gcc make python3-dev
 ```
 as well as some Python libraries that can be installed separately using
 ```
@@ -42,11 +42,6 @@ where
     enables the game states viewer (available for generated games only). 
     To activate it, use the `--html-render` option when running the `tw-play` script, 
     and the current state of the game will be displayed in your browser.
-    
-    In order to use the `take_screenshot` or `visualize` functions in `textworld.render`,
-    you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) 
-    or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on whichever
-    browser you have installed).
 
 
 ## Usage
