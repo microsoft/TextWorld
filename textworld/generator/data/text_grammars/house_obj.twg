@@ -291,7 +291,11 @@ on_desc:On the (name), is [a list of things on the (obj)].;You can see [list of 
 #These adjectives CANNOT be used elsewhere!
 #----------------
 letter:A;B;C;D;E;F;G;H;I;J;K;L;M;N;O;P;Q;R;S;T;U;V;W;X;Y;Z
-clearancelevel:type #number#;type #letter#
+clearancelevel:type #number#;type #letter#;#brand#;#brand#;#brand#;#shape#;#shape#;#shape#;#smell# scented;
+brand:#brandname# style;#brandname# limited edition;#brandname#
+brandname:Microsoft;American;Canadian;Henderson's;TextWorld
+shape:rectangular;cuboid;spherical;formless;non-euclidean
 colour:red;blue;chartreuse;purple;violet;orange;yellow;green;brown;teal;cyan
+smell:vanilla;lavender;cake;fudge;fresh laundry;soap
 (k<->d)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(d)_adj# | #clearancelevel# #(d)_noun#; #colour# | #(k)_noun# <-> #colour# | #(d)_noun#
 (k<->c)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(c)_adj# | #clearancelevel# #(c)_noun#; #colour# | #(k)_noun# <-> #colour# | #(c)_noun#
