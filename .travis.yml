@@ -17,7 +17,6 @@ addons:
       - libffi-dev
       - uuid-dev
       - wget
-      - xdot
 
 env:
   - DISPLAY=:99 PATH=/usr/lib/chromium-browser:$PATH

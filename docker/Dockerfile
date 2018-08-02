@@ -16,8 +16,7 @@ RUN apt-get install -qy \
     python3-dev \
     python3-pip \
     uuid-dev \
-    wget \
-    xdot
+    wget
 
 # set display name for x-server for selenium tests
 ENV DISPLAY=:99
