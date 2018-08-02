@@ -42,6 +42,12 @@ where
     enables the game states viewer (available for generated games only). 
     To activate it, use the `--html-render` option when running the `tw-play` script, 
     and the current state of the game will be displayed in your browser.
+    
+    In order to use the `take_screenshot` or `visualize` functions in `textworld.render`,
+    you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) 
+    or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on whichever
+    browser you have installed). If you have Chrome already installed you can use the following command to 
+    install chromedriver: `pip install chromedriver_installer`.
 
 
 ## Usage

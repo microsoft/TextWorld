@@ -73,7 +73,7 @@ setup(
         'nose==1.3.7',
     ],
     extras_require={
-        'vis': ['pybars3>=0.9.3', 'flask>=1.0.2', 'selenium>=3.12.0', 'gevent>=1.3.2', 'pillow>=5.1.0', 'chromedriver_installer'],
+        'vis': ['pybars3>=0.9.3', 'flask>=1.0.2', 'selenium>=3.12.0', 'gevent>=1.3.2', 'pillow>=5.1.0'],
         'prompt': ['prompt-toolkit<2.0.0,>=1.0.15'],
         'gym': ['gym_textworld'],
     },
