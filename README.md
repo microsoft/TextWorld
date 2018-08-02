@@ -78,3 +78,26 @@ For more information about TextWorld, check the [documentation](https://aka.ms/t
 
 ## Notebooks
 Check the notebooks provided with the framework to see how the framework can be used.
+
+## Citing TextWorld
+If you use TextWorld, please cite the following BibTex:
+```
+@Article{cote18textworld,
+  author = {Marc-Alexandre C\^ot\'e and
+            \'Akos K\'ad\'ar and
+            Xingdi Yuan and
+            Ben Kybartas and
+            Tavian Barnes and
+            Emery Fine and
+            James Moore and
+            Matthew Hausknecht and
+            Layla El Asri and
+            Mahmoud Adada and
+            Wendy Tay and
+            Adam Trischler},
+  title = {TextWorld: A Learning Environment for Text-based Games},
+  journal = {CoRR},
+  volume = {abs/1806.11532},
+  year = {2018}
+}
+```
