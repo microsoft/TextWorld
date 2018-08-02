@@ -6,7 +6,6 @@ language: python
 python:
   - "3.5"
   - "3.6"
-  - "3.7"
 
 addons:
   apt:
@@ -23,7 +22,7 @@ env:
   - DISPLAY=:99 PATH=/usr/lib/chromium-browser:$PATH
 
 install:
-  - pip install .[prompt,vis]
+  - pip install -v .[prompt,vis]
   - pip install nose coverage
 
 script:
