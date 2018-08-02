@@ -369,7 +369,8 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
 
     state["command"] = ""
     state["history"] = ""
-    html = textworld.render.serve.get_html_template(game_state=json.dumps(state))
+    from textworld.render.serve import get_html_template
+    html = get_html_template(game_state=json.dumps(state))
     tmpdir = maybe_mkdir(pjoin(tempfile.gettempdir(), "textworld"))
     fh, filename = tempfile.mkstemp(suffix=".html", dir=tmpdir, text=True)
     url = 'file://' + filename
