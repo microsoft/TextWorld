@@ -6,6 +6,7 @@
 // Created by james on 8/10/17.
 //
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -198,8 +199,19 @@ static void check_rlimit(void) {
         return; /* fail */
     }
 
-    if (limits.rlim_cur != RLIM_INFINITY && limits.rlim_cur < limits.rlim_max) {
-        limits.rlim_cur = limits.rlim_max;
+    // It's not likely we can really open infinity files.  macOS apparently
+    // recommends using the minimum of rlim_max and OPEN_MAX.
+    rlim_t max = limits.rlim_max;
+    if (max == RLIM_INFINITY) {
+#ifdef OPEN_MAX
+        max = OPEN_MAX;
+#else
+        max = _POSIX_OPEN_MAX;
+#endif
+    }
+
+    if (limits.rlim_cur != RLIM_INFINITY && limits.rlim_cur < max) {
+        limits.rlim_cur = max;
         status = setrlimit(RLIMIT_NOFILE, &limits);
         if (status == -1) {
             perror("glk_comm.c: Cannot set rlimit");
