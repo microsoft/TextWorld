@@ -9,7 +9,7 @@ TextWorld requires __Python 3__ and only supports __Linux__ and __Mac__ systems 
 
 The following system libraries are required to install and run TextWorld:
 ```
-sudo apt-get -y install uuid-dev libffi-dev build-essential curl xdot gcc make python3-dev
+sudo apt-get -y install uuid-dev libffi-dev build-essential curl gcc make python3-dev
 ```
 as well as some Python libraries that can be installed separately using
 ```
@@ -46,7 +46,8 @@ where
     In order to use the `take_screenshot` or `visualize` functions in `textworld.render`,
     you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) 
     or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on whichever
-    browser you have installed).
+    browser you have installed). If you have Chrome already installed you can use the following command to 
+    install chromedriver: `pip install chromedriver_installer`.
 
 
 ## Usage
@@ -77,3 +78,26 @@ For more information about TextWorld, check the [documentation](https://aka.ms/t
 
 ## Notebooks
 Check the notebooks provided with the framework to see how the framework can be used.
+
+## Citing TextWorld
+If you use TextWorld, please cite the following BibTex:
+```
+@Article{cote18textworld,
+  author = {Marc-Alexandre C\^ot\'e and
+            \'Akos K\'ad\'ar and
+            Xingdi Yuan and
+            Ben Kybartas and
+            Tavian Barnes and
+            Emery Fine and
+            James Moore and
+            Matthew Hausknecht and
+            Layla El Asri and
+            Mahmoud Adada and
+            Wendy Tay and
+            Adam Trischler},
+  title = {TextWorld: A Learning Environment for Text-based Games},
+  journal = {CoRR},
+  volume = {abs/1806.11532},
+  year = {2018}
+}
+```

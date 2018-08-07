@@ -16,7 +16,6 @@ addons:
       - libffi-dev
       - uuid-dev
       - wget
-      - xdot
 
 matrix:
   include:

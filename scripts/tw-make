@@ -11,9 +11,9 @@ import textworld
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(add_help=False)
+    general_parser = argparse.ArgumentParser(add_help=False)
 
-    general_group = parser.add_argument_group('General settings')
+    general_group = general_parser.add_argument_group('General settings')
     general_group.add_argument("--output", default="./gen_games/", metavar="PATH",
                                help="Output folder to save generated game files.")
     general_group.add_argument('--seed', type=int)
@@ -21,7 +21,7 @@ def parse_args():
                                help="Display the resulting game.")
     general_group.add_argument("-v", "--verbose", action="store_true")
 
-    cfg_group = parser.add_argument_group('Grammar settings')
+    cfg_group = general_parser.add_argument_group('Grammar settings')
     cfg_group.add_argument("--theme", default="house",
                            help="Theme to use for generating the text. Default: %(default)s")
     cfg_group.add_argument("--include-adj", action="store_true",
@@ -35,10 +35,10 @@ def parse_args():
     cfg_group.add_argument("--blend-instructions", action="store_true",
                            help="Blend instructions across consecutive actions.")
 
-    general_parser = parser
-
     parser = argparse.ArgumentParser(parents=[general_parser])
-    subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
+    subparsers = parser.add_subparsers(dest="subcommand",
+                                       required=True, 
+                                       help='Kind of game to make.')
 
     custom_parser = subparsers.add_parser("custom", parents=[general_parser],
                                           help='Make a custom game.')

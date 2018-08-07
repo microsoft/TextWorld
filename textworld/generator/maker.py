@@ -23,6 +23,7 @@ from textworld.generator.chaining import get_failing_constraints
 from textworld.generator.game import Game, World, Quest
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
+from textworld.envs.wrappers import Recorder
 
 
 class MissingPlayerError(ValueError):
@@ -511,7 +512,7 @@ class GameMaker:
         """
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "record_quest"))
-            recorder = textworld.envs.wrappers.Recorder()
+            recorder = Recorder()
             textworld.play(game_file, wrapper=recorder)
 
         # Skip "None" actions.
@@ -549,7 +550,7 @@ class GameMaker:
         with make_temp_directory() as tmpdir:
             try:
                 game_file = self.compile(pjoin(tmpdir, "record_quest"))
-                recorder = textworld.envs.wrappers.Recorder()
+                recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
                 textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
             except textworld.agents.WalkthroughDone:
