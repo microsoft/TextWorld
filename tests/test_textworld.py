@@ -32,7 +32,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_simultaneous_runs(self):
         envs = []
-        for i in range(1, 1024):
+        for i in range(1, 100):
             env = textworld.start(self.game_file)
             env.reset()
             envs.append(env)
