@@ -8,13 +8,18 @@ walkthrough = 'GET MASK/WEAR MASK/X MASK/X SELF/DOWN/X LIGHT/X LEAF/X KITE/X COM
 
 solution = walkthrough.split('/')
 
-ROM_PATH="/home/matthew/Desktop/Moonlit.z5"
+ROM_PATH="/home/matthew/workspace/TextWorld-baselines/games/moonlit.z5"
 
 def test_moonlit():
     env = FrotzEnv(ROM_PATH, seed=4)
     env.reset()
     for act in solution:
-        print(act, env.step(act))
+        print("{} {}".format(act, env.step(act)))
+        loc = env.get_player_location()
+        print("Loc {}-{}".format(loc.name, loc.num))
+        for i in env.get_inventory():
+            print("  {}-{}".format(i.name, i.num))
+        print('')
 
 def find_moves():
     env = FrotzEnv(ROM_PATH, seed=4)

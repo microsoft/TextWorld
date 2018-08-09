@@ -4,7 +4,7 @@
 
 from jericho import *
 
-walkthrough = 'drop biscuit/drop paper/south/get parcel from cupboard/unwrap parcel/north/north/west/south/examine sheets/turn wireless on/push wireless north/west/give box of chocolates to jemima/say yellow/e/w/get gloves/wear gloves/east/east/east/get wrench/west/south/south/southeast/east/examine rolls/open torch/empty torch/get new battery/put new battery in torch/close torch/south/take sack/north/open door/north/get all/turn handle/south/west/west'
+walkthrough = '/drop biscuit/drop paper/south/get parcel from cupboard/unwrap parcel/north/north/west/south/examine sheets/turn wireless on/push wireless north/west/give box of chocolates to jemima/say yellow/e/w/get gloves/wear gloves/east/east/east/get wrench/west/south/south/southeast/east/examine rolls/open torch/empty torch/get new battery/put new battery in torch/close torch/south/take sack/north/open door/north/get all/turn handle/south/west/west'
 solution = walkthrough.split('/')
 
 def test_curses():

@@ -9,7 +9,7 @@ walkthrough = 'open door/talk to alltext/3/g/3/g/1/1/talk to queenie/2/g/3/g/4/l
 solution = walkthrough.split('/')
 
 def test_enter():
-    env = FrotzEnv("../roms/enter.z5", seed=4)
+    env = FrotzEnv("../../TextWorld-baselines/games/enter.z5", seed=4)
     env.reset()
     for act in solution:
         print(act, env.step(act))

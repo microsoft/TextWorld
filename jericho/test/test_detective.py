@@ -9,7 +9,7 @@ walkthrough = 'n/w/e/e/take wood/w/n/w'
 solution = walkthrough.split('/')
 
 def test_detective():
-    env = FrotzEnv("../roms/detective.z5", seed=4)
+    env = FrotzEnv("../../TextWorld-baselines/games/detective.z5", seed=4)
     env.reset()
     for act in solution:
         print(act, env.step(act))

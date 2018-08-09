@@ -10,11 +10,26 @@ solution = walkthrough.split('/')
 
 ROM_PATH="/home/matthew/workspace/TextWorld-baselines/games/weapon.z5"
 
+def print_object_tree(root_obj, world_objs, indent=''):
+    for obj in world_objs:
+        if obj.parent == root_obj.num:
+            print("{}{}".format(indent, obj))
+            if obj.child != 0:
+                print_object_tree(obj, world_objs, indent+'  ')
+
+
 def test_weapon():
     env = FrotzEnv(ROM_PATH, seed=4)
     env.reset()
     for act in solution:
-        print(act, env.step(act))
+        print("{} {}".format(act, env.step(act)))
+        loc = env.get_player_location()
+        print("Loc {}-{}".format(loc.name, loc.num))
+        for i in env.get_inventory():
+            print("  {}-{}".format(i.name, i.num))
+        print_object_tree(loc, env.get_world_objects())
+        print(env.get_world_diff())
+        print('')
 
 def test_max_score():
     env = FrotzEnv(ROM_PATH, seed=4)

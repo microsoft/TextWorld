@@ -5,7 +5,7 @@
 from jericho import *
 
 #intro = 'ask Jacob about jewel/Ask him about Amylya/Ask him about druids/Ask him about Ariana/Ask him about dragons/Ask him about book'
-walkthrough = 'Drop all/W/NW/Pull quartz/u/u/Get book/Throw book at outcrop/d/d/se/w/w/n/Get moss/Clean dirty floor with spongy moss/Open trapdoor/d/Get lye/u/s/s/Put lye on moss/Clean skeleton with moss/Drop moss/Get bladder, crampons/n/e/e/nw/w/w/wear crampons/Climb porous wall/u/u/e/get lockpick/get crossbow/w/d/d/d/put bladder in geyser/z/z/z/drop crampons/get bladder/w/search refuse/get axe/e/e/e/se/w/w/w/chop ice with axe/g/g/g/g/drop axe/s/se'
+walkthrough = '/Drop all/W/NW/Pull quartz/u/u/Get book/Throw book at outcrop/d/d/se/w/w/n/Get moss/Clean dirty floor with spongy moss/Open trapdoor/d/Get lye/u/s/s/Put lye on moss/Clean skeleton with moss/Drop moss/Get bladder, crampons/n/e/e/nw/w/w/wear crampons/Climb porous wall/u/u/e/get lockpick/get crossbow/w/d/d/d/put bladder in geyser/z/z/z/drop crampons/get bladder/w/search refuse/get axe/e/e/e/se/w/w/w/chop ice with axe/g/g/g/g/drop axe/s/se'
 
 solution = walkthrough.split('/')
 

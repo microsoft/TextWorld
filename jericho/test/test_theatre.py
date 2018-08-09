@@ -9,7 +9,7 @@ walkthrough = 'NW/D/get all/examine panel/turn on switch/examine barrels/get pop
 solution = walkthrough.split('/')
 
 def test_theatre():
-    env = FrotzEnv("../roms/theatre.z5", seed=4)
+    env = FrotzEnv("../../TextWorld-baselines/games/theatre.z5", seed=4)
     env.reset()
     for act in solution:
         print(act, env.step(act))
