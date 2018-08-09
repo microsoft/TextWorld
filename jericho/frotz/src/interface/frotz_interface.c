@@ -52,9 +52,10 @@ void zstep() {
   next_opcode = get_next_opcode();
 }
 
-// Run the Z-Machine until it reaches a particular opcode
-void run_until_opcode(int opcode) {
-  while (next_opcode != opcode) {
+// Run the Z-Machine until it requires user input
+void run_free() {
+  // Opcode 228 (z_read) and 246 (z_read_char) indicate need for user input
+  while (next_opcode != 228 && next_opcode != 246) {
     zstep();
   }
 }
@@ -306,7 +307,7 @@ int save_str(unsigned char *s) {
     printf("Failed to save!\n");
     return -1;
   }
-  run_until_opcode(228);
+  run_free();
   dumb_clear_screen();
   return success;
 }
@@ -343,7 +344,7 @@ int restore_str(unsigned char *s) {
       && (h_screen_rows != old_screen_rows
           || h_screen_cols != old_screen_cols))
     erase_window (1);
-  run_until_opcode(228);
+  run_free();
 
   dumb_clear_screen();
   // Re-seed the RNG for determinism after a load
@@ -374,7 +375,7 @@ int save(char *filename) {
     print_string ("Error writing save file\n");
     return -1;
   }
-  run_until_opcode(228);
+  run_free();
   dumb_clear_screen();
   return success;
 }
@@ -417,7 +418,7 @@ int restore(char *filename) {
       && (h_screen_rows != old_screen_rows
           || h_screen_cols != old_screen_cols))
     erase_window (1);
-  run_until_opcode(228);
+  run_free();
   dumb_clear_screen();
   // Re-seed the RNG for determinism after a load
   seed_random(desired_seed);
@@ -1310,7 +1311,7 @@ void take_intro_actions() {
   for (i=0; i<num_actions; ++i) {
     dumb_set_next_action(intro_actions[i]);
     zstep();
-    run_until_opcode(228);
+    run_free();
   }
 }
 
@@ -1332,7 +1333,7 @@ char* setup(char *story_file, int seed) {
   next_opcode = get_next_opcode();
   dumb_set_next_action("\n");
   zstep();
-  run_until_opcode(228);
+  run_free();
   load_rom_bindings(story_file);
   take_intro_actions();
 
@@ -1341,14 +1342,14 @@ char* setup(char *story_file, int seed) {
     dumb_clear_screen();
     dumb_set_next_action("tree\n");
     zstep();
-    run_until_opcode(228);
+    run_free();
     char* text = dumb_get_screen();
     replace_newlines_with_spaces(text);
     textworld_parse_object_tree(text);
     dumb_clear_screen();
     dumb_set_next_action("scope\n");
     zstep();
-    run_until_opcode(228);
+    run_free();
     text = dumb_get_screen();
     replace_newlines_with_spaces(text);
     textworld_parse_player_object(text);
@@ -1356,7 +1357,7 @@ char* setup(char *story_file, int seed) {
     z_restart();
     next_opcode = get_next_opcode();
     zstep();
-    run_until_opcode(228);
+    run_free();
   }
 
   text = dumb_get_screen();
@@ -1377,7 +1378,7 @@ char* step(char *next_action) {
   dumb_set_next_action(next_action);
 
   zstep();
-  run_until_opcode(228);
+  run_free();
 
   text = dumb_get_screen();
   text = clean_observation(text);
