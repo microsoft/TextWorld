@@ -1,8 +1,12 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+
 #ifndef frotz_interface_h__
 #define frotz_interface_h__
 
 typedef struct {
-  int num;
+  unsigned int num;
   char name[64];
   int parent;
   int sibling;
