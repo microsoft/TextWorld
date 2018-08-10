@@ -91,3 +91,12 @@ type::TypeNode = "type" name:name [":" supertypes:",".{name}+] "{" parts:{typePa
 document::DocumentNode = types:{type}* $ ;
 
 start = document ;
+
+
+onlyVariable = @:variable $ ;
+onlySignature = @:signature $ ;
+onlyProposition = @:proposition $ ;
+onlyPlaceholder = @:placeholder $ ;
+onlyPredicate = @:predicate $ ;
+onlyAction = @:action $ ;
+onlyRule = @:rule $ ;

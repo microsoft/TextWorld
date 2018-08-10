@@ -557,6 +557,48 @@ class GameLogicParser(Parser):
     def _start_(self):  # noqa
         self._document_()
 
+    @tatsumasu()
+    def _onlyVariable_(self):  # noqa
+        self._variable_()
+        self.name_last_node('@')
+        self._check_eof()
+
+    @tatsumasu()
+    def _onlySignature_(self):  # noqa
+        self._signature_()
+        self.name_last_node('@')
+        self._check_eof()
+
+    @tatsumasu()
+    def _onlyProposition_(self):  # noqa
+        self._proposition_()
+        self.name_last_node('@')
+        self._check_eof()
+
+    @tatsumasu()
+    def _onlyPlaceholder_(self):  # noqa
+        self._placeholder_()
+        self.name_last_node('@')
+        self._check_eof()
+
+    @tatsumasu()
+    def _onlyPredicate_(self):  # noqa
+        self._predicate_()
+        self.name_last_node('@')
+        self._check_eof()
+
+    @tatsumasu()
+    def _onlyAction_(self):  # noqa
+        self._action_()
+        self.name_last_node('@')
+        self._check_eof()
+
+    @tatsumasu()
+    def _onlyRule_(self):  # noqa
+        self._rule_()
+        self.name_last_node('@')
+        self._check_eof()
+
 
 class GameLogicSemantics(object):
     def str(self, ast):  # noqa
@@ -670,15 +712,38 @@ class GameLogicSemantics(object):
     def start(self, ast):  # noqa
         return ast
 
+    def onlyVariable(self, ast):  # noqa
+        return ast
 
-def main(filename, start='str', **kwargs):
+    def onlySignature(self, ast):  # noqa
+        return ast
+
+    def onlyProposition(self, ast):  # noqa
+        return ast
+
+    def onlyPlaceholder(self, ast):  # noqa
+        return ast
+
+    def onlyPredicate(self, ast):  # noqa
+        return ast
+
+    def onlyAction(self, ast):  # noqa
+        return ast
+
+    def onlyRule(self, ast):  # noqa
+        return ast
+
+
+def main(filename, start=None, **kwargs):
+    if start is None:
+        start = 'str'
     if not filename or filename == '-':
         text = sys.stdin.read()
     else:
         with open(filename) as f:
             text = f.read()
     parser = GameLogicParser()
-    return parser.parse(text, start=start, filename=filename, **kwargs)
+    return parser.parse(text, rule_name=start, filename=filename, **kwargs)
 
 
 if __name__ == '__main__':

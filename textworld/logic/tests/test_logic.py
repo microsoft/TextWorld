@@ -4,6 +4,8 @@
 
 from nose.tools import assert_raises
 
+from tatsu.exceptions import ParseError
+
 from textworld.logic import Action, Rule, Placeholder, Predicate, Proposition, Signature, State, Variable
 
 
@@ -47,6 +49,10 @@ def test_logic_parsing():
 
     # Make sure the types match in the whole expression
     assert_raises(ValueError, Rule.parse, "take :: $at(P, r) & $in(c, r) & in(o: k, c) -> in(o, I)")
+
+
+def test_logic_parsing_eos():
+    assert_raises(ParseError, Predicate.parse, "at(P, r) & in(c, r)")
 
 
 def test_state():

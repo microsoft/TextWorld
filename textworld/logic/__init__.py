@@ -493,7 +493,7 @@ class Variable:
         expr :
             The string to parse, in the form `name` or `name: type`.
         """
-        return _parse_and_convert(expr, rule_name="variable")
+        return _parse_and_convert(expr, rule_name="onlyVariable")
 
     def serialize(self) -> Mapping:
         return {
@@ -561,7 +561,7 @@ class Signature:
         expr :
             The string to parse, in the form `name(type [, type]*)`.
         """
-        return _parse_and_convert(expr, rule_name="signature")
+        return _parse_and_convert(expr, rule_name="onlySignature")
 
 
 @total_ordering
@@ -649,7 +649,7 @@ class Proposition:
         expr :
             The string to parse, in the form `name(variable [, variable]*)`.
         """
-        return _parse_and_convert(expr, rule_name="proposition")
+        return _parse_and_convert(expr, rule_name="onlyProposition")
 
     def serialize(self) -> Mapping:
         return {
@@ -726,7 +726,7 @@ class Placeholder:
         expr :
             The string to parse, in the form `name` or `name: type`.
         """
-        return _parse_and_convert(expr, rule_name="placeholder")
+        return _parse_and_convert(expr, rule_name="onlyPlaceholder")
 
     def serialize(self) -> Mapping:
         return {
@@ -806,7 +806,7 @@ class Predicate:
         expr :
             The string to parse, in the form `name(placeholder [, placeholder]*)`.
         """
-        return _parse_and_convert(expr, rule_name="predicate")
+        return _parse_and_convert(expr, rule_name="onlyPredicate")
 
     def serialize(self) -> Mapping:
         return {
@@ -981,7 +981,7 @@ class Action:
         expr :
             The string to parse, in the form `name :: [$]proposition [& [$]proposition]* -> proposition [& proposition]*`.
         """
-        return _parse_and_convert(expr, "action")
+        return _parse_and_convert(expr, rule_name="onlyAction")
 
     def serialize(self) -> Mapping:
         return {
@@ -1086,7 +1086,7 @@ class Rule:
         expr :
             The string to parse, in the form `name :: [$]predicate [& [$]predicate]* -> predicate [& predicate]*`.
         """
-        return _parse_and_convert(expr, rule_name="rule")
+        return _parse_and_convert(expr, rule_name="onlyRule")
 
     def serialize(self) -> Mapping:
         return {
