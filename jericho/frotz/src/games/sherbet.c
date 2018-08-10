@@ -9,9 +9,11 @@
 
 // The Meteor, the Stone and a Long Glass of Sherbet: http://ifdb.tads.org/viewgame?id=273o81yvg64m4pkz
 
+const char *sherbet_intro[] = { " \n" };
+
 char** sherbet_intro_actions(int *n) {
-  *n = 0;
-  return NULL;
+  *n = 1;
+  return sherbet_intro;
 }
 
 char* sherbet_clean_observation(char* obs) {
