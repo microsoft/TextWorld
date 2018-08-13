@@ -1638,7 +1638,7 @@ class State:
         rule: Rule,
         mapping: Mapping[Placeholder, Optional[Variable]] = None,
         partial: bool = False,
-        constrained_types: Container[str] = (),
+        allow_partial: Callable[[Placeholder], bool] = None,
     ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
         """
         Find all possible placeholder assignments that would allow a rule to be instantiated in this state.
@@ -1651,8 +1651,8 @@ class State:
             An initial mapping to start from, constraining the possible instantiations.
         partial : optional
             Whether incomplete mappings, that would require new variables or propositions, are allowed.
-        constrained_types : optional
-            For partial matches, types for which new variables are not allowed.
+        allow_partial : optional
+            A callback function that returns whether a partial match may involve the given placeholder.
 
         Returns
         -------
@@ -1670,7 +1670,7 @@ class State:
 
         if partial:
             new_phs = [ph for ph in rule.placeholders if ph not in mapping]
-            return self._all_assignments(new_phs, mapping, used_vars, True, constrained_types)
+            return self._all_assignments(new_phs, mapping, used_vars, True, allow_partial)
         else:
             # Precompute the new placeholders at every depth to avoid wasted work
             seen_phs = set(mapping.keys())
@@ -1732,16 +1732,19 @@ class State:
         mapping: Dict[Placeholder, Variable],
         used_vars: Set[Variable],
         partial: bool,
-        constrained_types: Container[str] = (),
+        allow_partial: Callable[[Placeholder], bool] = None,
     ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
         """
         Find all possible assignments of the given placeholders, without regard to whether any predicates match.
         """
 
+        if allow_partial is None:
+            allow_partial = lambda ph: True
+
         candidates = []
         for ph in placeholders:
             matched_vars = list(self.variables_of_type(ph.type) - used_vars)
-            if partial and ph.type not in constrained_types:
+            if partial and allow_partial(ph):
                 # Allow new variables to be created
                 matched_vars.append(None)
             candidates.append(matched_vars)
