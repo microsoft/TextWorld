@@ -36,9 +36,7 @@ def parse_args():
                            help="Blend instructions across consecutive actions.")
 
     parser = argparse.ArgumentParser(parents=[general_parser])
-    subparsers = parser.add_subparsers(dest="subcommand",
-                                       required=True, 
-                                       help='Kind of game to make.')
+    subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
 
     custom_parser = subparsers.add_parser("custom", parents=[general_parser],
                                           help='Make a custom game.')
