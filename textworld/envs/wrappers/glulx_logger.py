@@ -1,4 +1,6 @@
-import sys
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
 from typing import Tuple, List, Optional, Iterable, Union, Sized, Any, Mapping
 
 from textworld.core import Environment, GameState, Wrapper
@@ -19,10 +21,8 @@ class GlulxLogger(Wrapper):
         self.activate_state_tracking()
 
         self.serialized_game = env.game.serialize()
-        self.gamefile = env.gamefile
+        self._gamefile = env.gamefile
 
-        self._logs = []
-        self.current_log = {'optional': []}
 
     def step(self, command: str) -> Tuple[GlulxGameState, float, bool]:
         """
@@ -32,20 +32,32 @@ class GlulxLogger(Wrapper):
         :return:
             GlulxGameState, score and done.
         """
-        if self.current_log:
-            self._logs.append(self.current_log)
-            self.current_log = {'optional': []}
+        self._logs.append(self._current)
+        self._current = {'optional': []}
 
-        self.current_log['command'] = command
+        self._current['command'] = command
 
         game_state, score, done = super().step(command)
-        self.current_log['feedback'] = game_state.feedback
-        self.current_log['score'] = score
-        self.current_log['done'] = done
-        self.current_log['action'] = game_state.action.serialize()
-        self.current_log['state'] = game_state.state.serialize()
+        self._current['feedback'] = game_state.feedback
+        self._current['score'] = score
+        self._current['done'] = done
+        self._current['action'] = game_state.action.serialize()
+        self._current['state'] = game_state.state.serialize()
 
         return game_state, score, done
+
+    def reset(self) -> GameState:
+        """
+        Reset the environment.
+        Also clears logs.
+        """
+        self._logs = []
+        game_state = super().reset()
+        self._current = {'optional': []}
+        self._current['done'] = False
+        self._current['state'] = game_state.state.serialize()
+
+        return game_state
 
     def add_commands(self, commands: List[str], scores: Optional[Union[Iterable[float], Sized]]=None) -> None:
         """
@@ -61,7 +73,7 @@ class GlulxLogger(Wrapper):
             assert len(scores) == len(commands)
             command_mapping = {a: p for a, p in zip(commands, scores)}
 
-        self.current_log['command_distribution'] = command_mapping
+        self._current['command_distribution'] = command_mapping
 
     def add(self, info: Any) -> None:
         """
@@ -69,7 +81,11 @@ class GlulxLogger(Wrapper):
         :param info:
             Additional information to log for the current game state.
         """
-        self.current_log['optional'].append(info)
+        self._current['optional'].append(info)
+
+    @property
+    def current(self) -> Mapping:
+        return self._current
 
     @property
     def logs(self) -> List[Mapping]:
@@ -78,8 +94,12 @@ class GlulxLogger(Wrapper):
         :return: List of all logs
         """
         logs = self._logs[:]
-        logs.append(self.current_log)
+        logs.append(self._current)
         return logs
+
+    @property
+    def gamefile(self):
+        return self._gamefile
 
     def __getitem__(self, index: int) -> Mapping:
         """
@@ -93,10 +113,10 @@ class GlulxLogger(Wrapper):
 
         if index < len(self._logs) - 1:
             return self._logs[index]
-        return self.current_log
+        return self._current
 
-    def __str__(self) -> Mapping:
-        return self.logs
+    def __str__(self) -> str:
+        return str(self.logs)
 
     def serialize(self) -> List[Mapping]:
         """
