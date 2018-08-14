@@ -425,6 +425,10 @@ class GitGlulxMLEnvironment(textworld.Environment):
         self.close()
 
     @property
+    def gamefile(self) -> str:
+        return self._gamefile
+
+    @property
     def game_running(self) -> bool:
         """ Determines if the game is still running. """
         return self._process is not None and self._process.poll() is None
