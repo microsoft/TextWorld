@@ -95,6 +95,9 @@ class GlulxLogger(Wrapper):
             return self._logs[index]
         return self.current_log
 
+    def __str__(self) -> Mapping:
+        return self.logs
+
     def serialize(self) -> List[Mapping]:
         """
         Get serialized mappings of logs.
