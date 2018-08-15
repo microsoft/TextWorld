@@ -27,15 +27,15 @@ def test_glulx_logger():
         game_state = env.reset()
 
     # test reset
-    assert hasattr(env.current, 'state')
+    assert 'state' in env.current
 
     # test step
     options = game_state.admissible_commands
     game_state, score, done = env.step(options[0])
     assert len(env.logs) > 1
-    assert hasattr(env.current, 'action')
-    assert hasattr(env.current, 'state')
-    assert hasattr(env.current, 'feedback')
+    assert 'action' in env.current
+    assert 'state' in env.current
+    assert 'feedback' in env.current
 
     # test add_commands
     option_scores = np.array([0.1] * len(options))
