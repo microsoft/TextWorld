@@ -25,6 +25,8 @@ def test_glulx_logger():
         env = GlulxLogger(env)
         env.activate_state_tracking()
         game_state = env.reset()
+        game_state = env.reset()
+        assert len(env.all_logs.logs) == 2
 
     # test reset
     assert 'state' in env.current
@@ -33,14 +35,14 @@ def test_glulx_logger():
     options = game_state.admissible_commands
     game_state, score, done = env.step(options[0])
     assert len(env.logs) > 1
-    assert 'action' in env.current
+    assert 'command' in env.current
     assert 'state' in env.current
     assert 'feedback' in env.current
 
     # test add_commands
     option_scores = np.array([0.1] * len(options))
     env.add_commands(options, option_scores)
-    assert len(env.current['command_distribution'].values()) == len(options)
+    assert len(env.current['commands']) == len(env.current['command_scores'])
 
     # test add
     additional_info = {'scores': option_scores}
