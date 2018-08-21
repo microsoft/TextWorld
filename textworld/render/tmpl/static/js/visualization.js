@@ -3,12 +3,15 @@ let template_path = document.currentScript.getAttribute('template_path');
 
 const evtSrc = new EventSource("/subscribe");
 evtSrc.onmessage = (e) => {
-    state = JSON.parse(e.data)
+    state = JSON.parse(e.data);
+
     rerender()
-}
+};
+
+
 const clicked = {};
 
-let rerendered = false
+let rerendered = false;
 
 const iconsMap = {
     anchor: 'Fixed.png',
@@ -251,11 +254,10 @@ function appendItemLabel(parent, p, n) {
     });
 }
 
-function calcRoomData(rooms) {
+function calcRoomData(rooms, spreadX, spreadY) {
 
     return rooms.map(function(room) {
-        const spreadX = 500;
-        const spreadY = -500;
+
         return {
             x: room.position[0] * spreadX,
             y: room.position[1] * spreadY,
@@ -505,7 +507,15 @@ function appendItemsLabel(p, j) {
 const Graph = (function(window, d3, rerendered) {
     render();
     function render() {
+        const spreadX = 500;
+        const spreadY = -500;
         $('.history').html(state.history);
+
+        console.log(state)
+
+        const positions = state.path.map((tup) => [tup[0] * spreadX, tup[1] * spreadY]);
+        console.log(positions)
+
         if (state.history == "") {
             $('.history').html('<p class="objective-text">' + state.objective + '</p>');
         }
@@ -519,7 +529,7 @@ const Graph = (function(window, d3, rerendered) {
 
         // wrapper g for everything in svg
         const g = svg.append('g').attr('class', 'wrapper');
-        let room_data = calcRoomData(state.rooms);
+        let room_data = calcRoomData(state.rooms, spreadX, spreadY);
 
         const rooms = renderRooms(room_data, g);
         const room_g = rooms.room_g;

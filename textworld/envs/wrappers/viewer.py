@@ -7,9 +7,10 @@ import sys
 from typing import Tuple
 
 from textworld.core import Environment, GameState, Wrapper
+from textworld.envs.wrappers.glulx_logger import GlulxLogger
 
 
-class HtmlViewer(Wrapper):
+class HtmlViewer(GlulxLogger):
     def __init__(self, env: Environment, open_automatically=True, port: int = 8080) -> None:
         """
         Wrap a TextWorld environment to provide visualization.

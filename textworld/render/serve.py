@@ -13,6 +13,7 @@ from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
 from threading import Thread
 from queue import Queue
+from typing import Mapping
 
 import webbrowser
 import flask
@@ -118,10 +119,13 @@ class VisualizationService(object):
         self.command = None
         self._process = None
         state_dict = load_state_from_game_state(game_state)
+        self._path = []
+        self._path.append(self.get_current(state_dict))
         self._history = '<p class="objective-text">{}</p>'.format(game_state.objective.strip().replace("\n", "<br/>"))
         self._history += '<p class="feedback-text">{}</p>'.format(game_state.description.strip().replace("\n", "<br/>"))
         state_dict["history"] = self._history
         state_dict["command"] = ""
+        state_dict["path"] = self._path
         self.parent_conn, self.child_conn = Pipe()
         self.game_state = state_dict
         self.open_automatically = open_automatically
@@ -159,6 +163,22 @@ class VisualizationService(object):
             with SupressStdStreams():
                 webbrowser.open("http://localhost:{}/".format(self.port))
 
+    @staticmethod
+    def get_current(state_dict: Mapping):
+        """
+        Returns the current room position the player is in.
+        Args:
+            state_dict: state dict of game_state
+
+        Returns:
+            Tuple representing position
+        """
+        for room in state_dict['rooms']:
+            for item in room['items']:
+                if item['type'] == 'P':
+                    return room['position']
+        return (0, 0)
+
     def update_state(self, game_state: GlulxGameState, command: str):
         """
         Propogate state update to server.
@@ -167,10 +187,14 @@ class VisualizationService(object):
         :param command: previous command
         """
         state_dict = load_state_from_game_state(game_state)
+        current_position = self.get_current(state_dict)
+        self._path.append(current_position)
+
         self._history += '<p class="command-text">> {}</p>'.format(command)
         self._history += '<p class="feedback-text">{}</p>'.format(game_state.feedback.strip().replace("\n", "<br/>"))
         state_dict["command"] = command
         state_dict["history"] = self._history
+        state_dict["path"] = self._path
         self.parent_conn.send(state_dict)
 
     def stop_server(self):

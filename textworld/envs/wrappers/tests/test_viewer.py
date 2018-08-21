@@ -8,7 +8,7 @@ import textworld
 from textworld import g_rng
 from textworld.utils import make_temp_directory, get_webdriver
 from textworld.generator import compile_game
-from textworld.envs.wrappers import HtmlViewer
+from textworld.envs.wrappers import HtmlViewer, GlulxLogger
 
 
 def test_html_viewer():
