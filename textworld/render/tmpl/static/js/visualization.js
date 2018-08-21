@@ -472,13 +472,26 @@ function renderEdges(edge_data, room_data, room_g, g) {
 }
 
 
+function gaussianRand() {
+  var rand = 0;
+
+  for (var i = 0; i < 6; i += 1) {
+    rand += Math.random();
+  }
+
+  return rand / 6 - 0.5;
+}
+
+
 function renderPaths(paths, room_data, g) {
 
-    const path_data = paths.map((name) => {
+    const path_data = paths.map((name, i) => {
         const found_room = room_data.find((room) => room.data.name == name);
+        const randomx = gaussianRand() * i * 40;
+        const randomy = gaussianRand() * i * 10;
         return {
-            x: found_room.x + 50,
-            y: found_room.y + 50
+            x: found_room.x + 50 + randomx,
+            y: found_room.y + 50 + randomy
         }
     });
 
@@ -511,6 +524,8 @@ function renderPaths(paths, room_data, g) {
         .attr('cy', (n) => n.y)
         .attr('r', 5)
         .attr('stroke', 'black')
+        .attr('stroke-opacity', 0.5)
+        .attr('fill-opacity', 0.5)
         .attr('fill', 'black');
 
     const historyLinks = historyLinkWrapper.append('line')
@@ -520,6 +535,8 @@ function renderPaths(paths, room_data, g) {
         .attr('y1', (link_data) => link_data.y1)
         .attr('y2', (link_data) => link_data.y2)
         .attr('fill', 'black')
+        .attr('stroke-width', 5)
+        .attr('stroke-opacity', 0.5)
         .attr('stroke', 'black');
 }
 
