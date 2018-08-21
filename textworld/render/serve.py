@@ -176,8 +176,7 @@ class VisualizationService(object):
         for room in state_dict['rooms']:
             for item in room['items']:
                 if item['type'] == 'P':
-                    return room['position']
-        return (0, 0)
+                    return room['name']
 
     def update_state(self, game_state: GlulxGameState, command: str):
         """

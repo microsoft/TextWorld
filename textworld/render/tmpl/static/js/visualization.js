@@ -472,6 +472,58 @@ function renderEdges(edge_data, room_data, room_g, g) {
 }
 
 
+function renderPaths(paths, room_data, g) {
+
+    const path_data = paths.map((name) => {
+        const found_room = room_data.find((room) => room.data.name == name);
+        return {
+            x: found_room.x + 50,
+            y: found_room.y + 50
+        }
+    });
+
+    const path_links_data = [];
+    for (let i = 0; i < path_data.length - 1; i++) {
+        path_links_data.push({
+            x1: path_data[i].x,
+            y1: path_data[i].y,
+            x2: path_data[i + 1].x,
+            y2: path_data[i + 1].y
+        })
+    }
+
+    console.log(room_data)
+    const historyWrapper = g.selectAll('historyPath')
+        .data(path_data)
+        .enter()
+        .append('g')
+        .attr('class', 'historyWrapper');
+
+    const historyLinkWrapper = g.selectAll('historyPathLinkWrapper')
+        .data(path_links_data)
+        .enter()
+        .append('g')
+        .attr('class', 'historyPathLinkWrapper');
+
+    const historyNodes = historyWrapper.append('circle')
+        .attr('class', 'historyNode')
+        .attr('cx', (n) => n.x)
+        .attr('cy', (n) => n.y)
+        .attr('r', 5)
+        .attr('stroke', 'black')
+        .attr('fill', 'black');
+
+    const historyLinks = historyLinkWrapper.append('line')
+        .attr('class', 'historyLink')
+        .attr('x1', (link_data) => link_data.x1)
+        .attr('x2', (link_data) => link_data.x2)
+        .attr('y1', (link_data) => link_data.y1)
+        .attr('y2', (link_data) => link_data.y2)
+        .attr('fill', 'black')
+        .attr('stroke', 'black');
+}
+
+
 function renderInventory(inventory) {
     // Here we initialize the data for our nodes
     const inventory_node = [{x: 0, y:0, name: 'inventory', data: {items: inventory}}];
@@ -513,8 +565,8 @@ const Graph = (function(window, d3, rerendered) {
 
         console.log(state)
 
-        const positions = state.path.map((tup) => [tup[0] * spreadX, tup[1] * spreadY]);
-        console.log(positions)
+        const path = state.path;
+        console.log(path)
 
         if (state.history == "") {
             $('.history').html('<p class="objective-text">' + state.objective + '</p>');
@@ -545,8 +597,9 @@ const Graph = (function(window, d3, rerendered) {
             };
         });
 
-        const links = renderEdges(edge_data, room_data, room_g, g)
+        const links = renderEdges(edge_data, room_data, room_g, g);
 
+        const paths = renderPaths(path, room_data, g);
 
         svg.attr('width', g.node().getBBox().width);
         svg.attr('height', g.node().getBBox().height);
