@@ -18,7 +18,7 @@ class GameLog:
         self._filename = ''
 
     def __getitem__(self, idx: int) -> list:
-        """A
+        """
         Gets a particular game log at index idx.
 
         Args:
