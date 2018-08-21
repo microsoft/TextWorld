@@ -51,7 +51,7 @@ class GameLog:
         """
         return self._logs
 
-    def new_game(self):
+    def new_game(self) -> list:
         """
         Start logs for a new game.
 
@@ -96,7 +96,7 @@ class GameLog:
         """
         self.current_game.append(log)
 
-    def save(self, filename):
+    def save(self, filename: str) -> None:
         """
         Save current logs to specified file name
 
@@ -111,7 +111,7 @@ class GameLog:
         except TypeError as e:
             raise TypeError('Log not serializable')
 
-    def load(self, filename):
+    def load(self, filename: str) -> None:
         """
         Loads a JSON object as logs
 
@@ -121,12 +121,12 @@ class GameLog:
         """
         self._filename = filename
         with open(filename) as f:
-            self._logs= json.load(f)
+            self._logs = json.load(f)
 
 
 class GlulxLogger(Wrapper):
     """
-    Wrap around a TextWorld GitGlulxML environment to provide logging capabilities.
+    Wrapper around a TextWorld GitGlulxML environment to provide logging capabilities.
 
     Args:
         env: The GitGlulxML environment to wrap.
@@ -138,7 +138,7 @@ class GlulxLogger(Wrapper):
         self.serialized_game = env.game.serialize()
         self._gamefile = env.gamefile
 
-        self._logs = GameLog()
+        self._game_log = GameLog()
 
     def step(self, command: str) -> Tuple[GlulxGameState, float, bool]:
         """
@@ -161,7 +161,7 @@ class GlulxLogger(Wrapper):
         new_log['description'] = game_state.description
         new_log['inventory'] = game_state.inventory
         new_log['state'] = game_state.state.serialize()
-        self._logs.add_log(new_log)
+        self._game_log.add_log(new_log)
 
         return game_state, score, done
 
@@ -174,7 +174,7 @@ class GlulxLogger(Wrapper):
             GameState
         """
         new_log = {}
-        self._logs.new_game()
+        self._game_log.new_game()
 
         game_state = super().reset()
         new_log['optional'] = []
@@ -182,23 +182,22 @@ class GlulxLogger(Wrapper):
         new_log['description'] = game_state.description
         new_log['inventory'] = game_state.inventory
         new_log['state'] = game_state.state.serialize()
-        self._logs.add_log(new_log)
+        self._game_log.add_log(new_log)
 
         return game_state
 
-    def add_commands(self, commands: List[str], scores: Optional[Union[Iterable[float], Sized]]=None) -> None:
+    def add_commands(self, commands: List[str], scores: Optional[Iterable[float]]=None) -> None:
         """
         Add custom commands to the logger. Optionally add scores for each command.
 
         Args:
             commands: A list of commands.
             scores: scores for each command. Must be same size as commands if provided.
-
         """
         if scores is not None:
-            self._logs.set('command_scores', scores)
+            self._game_log.set('command_scores', scores)
 
-        self._logs.set('commands', commands)
+        self._game_log.set('commands', commands)
 
     def add(self, info: Any) -> None:
         """
@@ -207,7 +206,7 @@ class GlulxLogger(Wrapper):
         Args:
             info: Additional information to log for the current game state.
         """
-        self._logs.append_optional(info)
+        self._game_log.append_optional(info)
 
     @property
     def current(self) -> Mapping:
@@ -215,21 +214,21 @@ class GlulxLogger(Wrapper):
         Returns:
             Current game state logs.
         """
-        return self._logs.current_game[-1]
+        return self._game_log.current_game[-1]
 
     @property
     def logs(self) -> List[Mapping]:
         """
         Returns: List of all logs from this game.
         """
-        return self._logs.current_game
+        return self._game_log.current_game
 
     @property
     def all_logs(self) -> GameLog:
         """
         Returns: GameLog object containing all logs.
         """
-        return self._logs
+        return self._game_log
 
     @property
     def gamefile(self) -> str:
@@ -249,12 +248,12 @@ class GlulxLogger(Wrapper):
         Returns:
             log at index
         """
-        assert index <= len(self._logs)
+        assert index <= len(self._game_log)
 
-        return self._logs.current_game[index]
+        return self._game_log.current_game[index]
 
     def __str__(self) -> str:
-        return str(self._logs.current_game)
+        return str(self._game_log.current_game)
 
     def serialize(self) -> List[Mapping]:
         """
@@ -263,26 +262,4 @@ class GlulxLogger(Wrapper):
         Returns:
             List of serialized mappings.
         """
-        return self._logs.logs
-
-    def save(self, filename) -> None:
-        """
-        Saves all logs given a filename
-
-        Returns: None
-        """
-        self._logs.save(filename)
-
-    def load(self, filename) -> None:
-        """
-        Loads logs from a file
-
-        Args:
-            filename:
-                string representing file location
-
-        Returns: None
-        """
-        self._logs.load(filename)
-
-
+        return self._game_log.logs
