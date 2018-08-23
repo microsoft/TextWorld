@@ -1,15 +1,12 @@
 # key
 type k : o {
     predicates {
-        match(k, c);
-        match(k, d);
+        match(k, x: lockable);
     }
 
     constraints {
-        k1 :: match(k, c) & match(k', c) -> fail();
-        k2 :: match(k, c) & match(k, c') -> fail();
-        k3 :: match(k, d) & match(k', d) -> fail();
-        k4 :: match(k, d) & match(k, d') -> fail();
+        k1 :: match(k, x: lockable) & match(k', x: lockable) -> fail();
+        k2 :: match(k, x: lockable) & match(k, x': lockable) -> fail();
     }
 
     inform7 {
@@ -18,8 +15,7 @@ type k : o {
         }
 
         predicates {
-            match(k, c) :: "The matching key of the {c} is the {k}";
-            match(k, d) :: "The matching key of the {d} is the {k}";
+            match(k, x: lockable) :: "The matching key of the {x} is the {k}";
         }
     }
 }

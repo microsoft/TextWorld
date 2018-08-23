@@ -1,11 +1,15 @@
 # door
-type d : t {
+type d : t, lockable {
     predicates {
-        open(d);
-        closed(d);
-        locked(d);
-
         link(r, d, r);
+
+        north_of/d(r, d, r);
+        west_of/d(r, d, r);
+
+        south_of/d(r, d, r') = north_of/d(r', d, r);
+        east_of/d(r, d, r') = west_of/d(r', d, r);
+
+        reachable(d) = at(P, r) & link(r, d, r') & link(r', d, r);
     }
 
     rules {
@@ -22,10 +26,6 @@ type d : t {
     }
 
     constraints {
-        d1 :: open(d)   & closed(d) -> fail();
-        d2 :: open(d)   & locked(d) -> fail();
-        d3 :: closed(d) & locked(d) -> fail();
-
         # A door can't be used to link more than two rooms.
         link1 :: link(r, d, r') & link(r, d, r'') -> fail();
         link2 :: link(r, d, r') & link(r'', d, r''') -> fail();
@@ -47,17 +47,10 @@ type d : t {
         }
 
         predicates {
-            open(d) :: "The {d} is open";
-            closed(d) :: "The {d} is closed";
-            locked(d) :: "The {d} is locked";
-        }
-
-        commands {
-            open/d :: "open {d}" :: "opening {d}";
-            close/d :: "close {d}" :: "closing {d}";
-
-            unlock/d :: "unlock {d} with {k}" :: "unlocking {d} with the {k}";
-            lock/d :: "lock {d} with {k}" :: "locking {d} with the {k}";
+            north_of/d(r, d, r') :: "South of {r} and north of {r'} is a door called {d}";
+            south_of/d(r, d, r') :: "North of {r} and south of {r'} is a door called {d}";
+            east_of/d(r, d, r') :: "West of {r} and east of {r'} is a door called {d}";
+            west_of/d(r, d, r') :: "East of {r} and west of {r'} is a door called {d}";
         }
     }
 }

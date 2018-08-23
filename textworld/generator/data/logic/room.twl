@@ -7,16 +7,10 @@ type r {
         north_of(r, r);
         west_of(r, r);
 
-        north_of/d(r, d, r);
-        west_of/d(r, d, r);
-
         free(r, r);
 
         south_of(r, r') = north_of(r', r);
         east_of(r, r') = west_of(r', r);
-
-        south_of/d(r, d, r') = north_of/d(r', d, r);
-        east_of/d(r, d, r') = west_of/d(r', d, r);
     }
 
     rules {
@@ -49,6 +43,9 @@ type r {
         nav_rrD :: south_of(r, r') & west_of(r, r') -> fail();
         nav_rrE :: south_of(r, r') & east_of(r, r') -> fail();
         nav_rrF :: west_of(r, r')  & east_of(r, r') -> fail();
+
+        # A room can have up to four exits
+        free5 :: free(r, r') & free(r, r'') & free(r, r''') & free(r, r'''') & free(r, r''''') -> fail();
     }
 
     inform7 {
@@ -66,11 +63,6 @@ type r {
             south_of(r, r') :: "The {r} is mapped south of {r'}";
             east_of(r, r') :: "The {r} is mapped east of {r'}";
             west_of(r, r') :: "The {r} is mapped west of {r'}";
-
-            north_of/d(r, d, r') :: "South of {r} and north of {r'} is a door called {d}";
-            south_of/d(r, d, r') :: "North of {r} and south of {r'} is a door called {d}";
-            east_of/d(r, d, r') :: "West of {r} and east of {r'} is a door called {d}";
-            west_of/d(r, d, r') :: "East of {r} and west of {r'} is a door called {d}";
         }
 
         commands {

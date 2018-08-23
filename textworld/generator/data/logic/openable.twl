@@ -1,0 +1,38 @@
+type openable {
+    predicates {
+        open(x: openable);
+        closed(x: openable);
+
+        reachable(x: openable) = at(P, r) & at(x: openable, r);
+    }
+
+    rules {
+        open  :: $reachable(x: openable) & closed(x: openable) -> open(x: openable);
+        close :: $reachable(x: openable) & open(x: openable) -> closed(x: openable);
+    }
+
+    reverse_rules {
+        open :: close;
+    }
+
+    constraints {
+        open_and_closed :: open(x: openable) & closed(x: openable) -> fail();
+    }
+
+    inform7 {
+        type {
+            #kind :: "door";
+            #definition :: "door is openable and lockable.";
+        }
+
+        predicates {
+            open(x: openable) :: "The {x} is open";
+            closed(x: openable) :: "The {x} is closed";
+        }
+
+        commands {
+            open :: "open {x}" :: "opening {x}";
+            close :: "close {x}" :: "closing {x}";
+        }
+    }
+}

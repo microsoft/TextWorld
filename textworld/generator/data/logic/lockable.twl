@@ -1,0 +1,35 @@
+type lockable : openable {
+    predicates {
+        locked(x: lockable);
+    }
+
+    rules {
+        lock   :: $reachable(x: lockable) & $in(k, I) & $match(k, x: lockable) & closed(x: lockable) -> locked(x: lockable);
+        unlock :: $reachable(x: lockable) & $in(k, I) & $match(k, x: lockable) & locked(x: lockable) -> locked(x: lockable);
+    }
+
+    reverse_rules {
+        lock :: unlock;
+    }
+
+    constraints {
+        open_and_locked :: open(x: lockable)   & locked(x: lockable) -> fail();
+        closed_and_locked :: closed(x: lockable) & locked(x: lockable) -> fail();
+    }
+
+    inform7 {
+        type {
+            #kind :: "door";
+            #definition :: "door is openable and lockable.";
+        }
+
+        predicates {
+            locked(x: lockable) :: "The {x} is locked";
+        }
+
+        commands {
+            unlock :: "unlock {x} with {k}" :: "unlocking {x} with the {k}";
+            lock :: "lock {x} with {k}" :: "locking {x} with the {k}";
+        }
+    }
+}
