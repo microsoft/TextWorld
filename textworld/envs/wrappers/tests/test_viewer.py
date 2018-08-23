@@ -35,8 +35,8 @@ def test_html_viewer():
     assert len(nodes) == num_nodes
     items = driver.find_elements_by_class_name("item")
 
-    # add one for P
-    assert len(items) == num_items + 1
+    objects = [obj for obj in game.world.objects if obj.type != "I"]
+    assert len(items) == len(objects)
 
     env.close()
     driver.close()

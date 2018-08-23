@@ -10,8 +10,9 @@ from textworld.utils import make_temp_directory
 
 from textworld.generator import data
 from textworld.generator import World, Quest
-from textworld.generator import compile_game, sample_quest
+from textworld.generator import compile_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
+from textworld.generator.chaining import ChainingOptions, sample_quest
 from textworld.logic import Proposition
 
 
@@ -51,14 +52,18 @@ def test_quest_winning_condition():
     world = World.from_map(map_)
 
     for rule in data.get_rules().values():
-        chain = sample_quest(world.state, rng=None, max_depth=1,
-                             nb_retry=20, allow_partial_match=True, backward=True,
-                             rules_per_depth={0: [rule]}, exceptions=["r"])
-        assert len(chain) > 0, rule.name
-        quest = Quest([c.action for c in chain])
+        options = ChainingOptions()
+        options.backward = True
+        options.max_depth = 1
+        options.create_variables = True
+        options.rules_per_depth = [[rule]]
+        options.restricted_types = {"r"}
+        chain = sample_quest(world.state, options)
+        assert len(chain.actions) > 0, rule.name
+        quest = Quest(chain.actions)
 
         # Set the initial state required for the quest.
-        tmp_world = World.from_facts(chain[0].state.facts)
+        tmp_world = World.from_facts(chain.initial_state.facts)
         game = make_game_with(tmp_world, [quest], make_grammar({}))
 
         if tmp_world.player_room is None:

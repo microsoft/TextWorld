@@ -19,11 +19,27 @@ from textworld.utils import make_temp_directory
 from textworld.generator import data, user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
-from textworld.generator.chaining import get_failing_constraints
 from textworld.generator.game import Game, World, Quest
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
+
+
+def get_failing_constraints(state):
+    fail = Proposition("fail", [])
+
+    failed_constraints = []
+    constraints = state.all_applicable_actions(data.get_constraints().values())
+    for constraint in constraints:
+        if state.is_applicable(constraint):
+            # Optimistically delay copying the state
+            copy = state.copy()
+            copy.apply(constraint)
+
+            if copy.is_fact(fail):
+                failed_constraints.append(constraint)
+
+    return failed_constraints
 
 
 class MissingPlayerError(ValueError):

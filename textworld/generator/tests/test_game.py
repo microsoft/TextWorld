@@ -14,8 +14,10 @@ from textworld.utils import make_temp_directory
 
 from textworld.generator import data
 from textworld.generator import World
-from textworld.generator import compile_game, sample_quest, make_game
+from textworld.generator import compile_game, make_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
+
+from textworld.generator.chaining import ChainingOptions, sample_quest
 
 from textworld.generator.game import Quest, Game
 from textworld.generator.game import QuestProgression, GameProgression
@@ -127,15 +129,21 @@ class TestQuest(unittest.TestCase):
 
         for max_depth in range(1, 3):
             for rule in data.get_rules().values():
-                chain = sample_quest(world.state, rng=None, max_depth=max_depth,
-                                     nb_retry=30, allow_partial_match=True, backward=True,
-                                     rules_per_depth={0: [rule]}, exceptions=["r"])
-                assert len(chain) == max_depth, rule.name
+                options = ChainingOptions()
+                options.backward = True
+                options.max_depth = max_depth
+                options.create_variables = True
+                options.rules_per_depth = [[rule]]
+                options.restricted_types = {"r"}
+                chain = sample_quest(world.state, options)
 
                 # Build the quest by providing the actions.
-                actions = [c.action for c in chain]
+                actions = chain.actions
+                if len(actions) != max_depth:
+                    print(chain)
+                assert len(actions) == max_depth, rule.name
                 quest = Quest(actions)
-                tmp_world = World.from_facts(chain[0].state.facts)
+                tmp_world = World.from_facts(chain.initial_state.facts)
 
                 state = tmp_world.state
                 for action in actions:
@@ -146,7 +154,7 @@ class TestQuest(unittest.TestCase):
 
                 # Build the quest by only providing the winning conditions.
                 quest = Quest(actions=None, winning_conditions=actions[-1].postconditions)
-                tmp_world = World.from_facts(chain[0].state.facts)
+                tmp_world = World.from_facts(chain.initial_state.facts)
 
                 state = tmp_world.state
                 for action in actions:

@@ -3,8 +3,24 @@
 
 
 from textworld.generator import data
-from textworld.generator.chaining import check_state
 from textworld.logic import Action, Proposition, State, Variable
+
+
+def check_state(state):
+    fail = Proposition("fail", [])
+    debug = Proposition("debug", [])
+
+    constraints = state.all_applicable_actions(data.get_constraints().values())
+    for constraint in constraints:
+        if state.is_applicable(constraint):
+            # Optimistically delay copying the state
+            copy = state.copy()
+            copy.apply(constraint)
+
+            if copy.is_fact(fail):
+                return False
+
+    return True
 
 
 def test_constraints():

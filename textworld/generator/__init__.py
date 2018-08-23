@@ -12,7 +12,7 @@ from numpy.random import RandomState
 
 from textworld import g_rng
 from textworld.utils import maybe_mkdir, str2bool
-from textworld.generator.chaining import sample_quest, get_chains, print_chains
+from textworld.generator.chaining import ChainingOptions, sample_quest
 from textworld.generator.game import Game, Quest, World
 from textworld.generator.graph_networks import create_map, create_small_map
 from textworld.generator.text_generation import generate_text_from_grammar
@@ -112,7 +112,7 @@ def make_world_with(rooms, rng=None):
     return world
 
 
-def make_quest(world, quest_length, rng=None, rules_per_depth={}, backward=False):
+def make_quest(world, quest_length, rng=None, rules_per_depth=(), backward=False):
     state = world
     if hasattr(world, "state"):
         state = world.state
@@ -120,10 +120,13 @@ def make_quest(world, quest_length, rng=None, rules_per_depth={}, backward=False
     rng = g_rng.next() if rng is None else rng
 
     # Sample a quest according to quest_length.
-    chain = sample_quest(state, rng, max_depth=quest_length, nb_retry=20,
-                         rules_per_depth=rules_per_depth, backward=backward)
-    quest = [c.action for c in chain]
-    return Quest(quest)
+    options = ChainingOptions()
+    options.backward = backward
+    options.max_depth = quest_length
+    options.rng = rng
+    options.rules_per_depth = rules_per_depth
+    chain = sample_quest(state, options)
+    return Quest(chain.actions)
 
 
 def make_grammar(flags: Mapping = {}, rng: Optional[RandomState] = None) -> Grammar:
@@ -172,13 +175,17 @@ def make_game(world_size: int, nb_objects: int, quest_length: int,
     world = make_world(world_size, nb_objects=0, rngs=rngs)
 
     # Sample a quest according to quest_length.
-    chain = sample_quest(world.state, rngs['rng_quest'], max_depth=quest_length,
-                         nb_retry=20, allow_partial_match=True, backward=True,
-                         exceptions=["r"])
-    quest = Quest([c.action for c in chain])
+    options = ChainingOptions()
+    options.backward = True
+    options.max_depth = quest_length
+    options.create_variables = True
+    options.rng = rngs['rng_quest']
+    options.restricted_types = {"r"}
+    chain = sample_quest(world.state, options)
+    quest = Quest(chain.actions)
 
     # Set the initial state required for the quest.
-    world.state = chain[0].state
+    world.state = chain.initial_state
 
     # Add distractors objects (i.e. not related to the quest)
     world.populate(nb_objects, rng=rngs['rng_objects'])

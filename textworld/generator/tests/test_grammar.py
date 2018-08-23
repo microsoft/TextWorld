@@ -3,7 +3,7 @@
 
 
 from textworld.generator import data
-from textworld.generator.chaining import maybe_instantiate_variables
+from textworld.generator.vtypes import NotEnoughNounsError, get_new
 from textworld.logic import Action, Placeholder, Proposition, Rule, State, Variable
 
 
@@ -20,6 +20,21 @@ chest = Variable("chest", "c")
 cabinet = Variable("cabinet", "c")
 counter = Variable("counter", "s")
 robe = Variable("robe", "o")
+
+
+def maybe_instantiate_variables(rule, mapping, state, max_types_counts=None):
+    types_counts = data.get_types().count(state)
+
+    # Instantiate variables if needed
+    try:
+        for ph in rule.placeholders:
+            if mapping.get(ph) is None:
+                name = get_new(ph.type, types_counts, max_types_counts)
+                mapping[ph] = Variable(name, ph.type)
+    except NotEnoughNounsError:
+        return None
+
+    return rule.instantiate(mapping)
 
 
 def build_state(door_state="open"):
