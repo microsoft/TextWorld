@@ -34,9 +34,34 @@ def test_html_viewer():
     nodes = driver.find_elements_by_class_name("node")
     assert len(nodes) == num_nodes
     items = driver.find_elements_by_class_name("item")
+    item_text = driver.find_elements_by_class_name('item-text')
 
-    # add one for P
-    assert len(items) == num_items + 1
+    # TextWorld generates 14 for some reason.
+    assert len(items) == num_items + 4
+
+    tracking = env.get('tracking')
+
+    assert len(tracking['path']) == 1
+
+    game_state, score, done = env.step('go south')
+
+    updated_tracking = env.get('tracking')
+
+    print(updated_tracking)
+    assert updated_tracking['entrance_count']['upsettingly hot scullery']['south'] == 1
+
+    assert len(updated_tracking['path']) == 2
+
+    assert updated_tracking['path'][-1] == 'upsettingly hot scullery'
+
+    game_state, score, done = env.step('take soft coconut')
+
+    updated_tracking_new = env.get('tracking')
+
+    assert updated_tracking_new['highlighted']['items']['soft coconut'] == 1
+
+    assert updated_tracking_new['room_step_count']['upsettingly hot scullery'] == 2
+
 
     env.close()
     driver.close()

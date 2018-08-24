@@ -73,18 +73,18 @@ class GameLog:
         current = self.current_game[-1]
         current[key] = value
 
-    def append_optional(self, value: Any) -> None:
+    def get(self, key: Any) -> Any:
         """
-        Appends optional information to current game
+        Gets value reference by key in latest game
 
         Args:
-            value: Value to append. Must be JSON serializable.
+            key: Key to set
 
+        Returns:
+            value reference by key
         """
         current = self.current_game[-1]
-        if 'optional' not in current:
-            current['optional'] = []
-        current['optional'].append(value)
+        return current[key]
 
     def add_log(self, log: Mapping):
         """
@@ -199,14 +199,26 @@ class GlulxLogger(Wrapper):
 
         self._game_log.set('commands', commands)
 
-    def add(self, info: Any) -> None:
+    def set(self, key: Any, value: Any) -> None:
         """
         Add any additional information you want to log.
 
         Args:
-            info: Additional information to log for the current game state.
+            key: Key to reference value to add.
+            value: Additional information to log for the current game state.
         """
-        self._game_log.append_optional(info)
+        self._game_log.set(key, value)
+
+    def get(self, key: Any) -> Any:
+        """
+        Get additional information from current log.
+        Args:
+            key: key of value to get from logs
+
+        Returns:
+            value referenced by key.
+        """
+        return self._game_log.get(key)
 
     @property
     def current(self) -> Mapping:

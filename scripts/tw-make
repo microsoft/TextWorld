@@ -37,7 +37,6 @@ def parse_args():
 
     parser = argparse.ArgumentParser(parents=[general_parser])
     subparsers = parser.add_subparsers(dest="subcommand",
-                                       required=True, 
                                        help='Kind of game to make.')
 
     custom_parser = subparsers.add_parser("custom", parents=[general_parser],

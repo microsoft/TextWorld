@@ -45,9 +45,8 @@ def test_glulx_logger():
     assert len(env.current['commands']) == len(env.current['command_scores'])
 
     # test add
-    additional_info = {'scores': option_scores}
-    env.add(additional_info)
-    assert len(env.current['optional']) > 0
+    env.set('scores', option_scores)
+    assert env.get('scores') is not None
 
 
 

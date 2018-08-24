@@ -13,7 +13,7 @@ from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
 from threading import Thread
 from queue import Queue
-from typing import Mapping
+from typing import Mapping, List
 
 import webbrowser
 import flask
@@ -24,7 +24,6 @@ from flask import Flask, request
 import pybars
 
 from textworld.envs.glulx.git_glulx_ml import GlulxGameState
-from textworld.render import load_state_from_game_state
 
 WEB_SERVER_RESOURCES = pjoin(os.path.abspath(os.path.dirname(__file__)), "tmpl")
 
@@ -114,18 +113,15 @@ class VisualizationService(object):
     the server. The server instantiates new gevent Queues for every connection.
     """
 
-    def __init__(self, game_state: GlulxGameState, open_automatically: bool):
+    def __init__(self, state_dict: dict, tracking: dict, game_state: GlulxGameState, open_automatically: bool):
         self.prev_state = None
         self.command = None
         self._process = None
-        state_dict = load_state_from_game_state(game_state)
-        self._path = []
-        self._path.append(self.get_current(state_dict))
+        self._tracking = tracking
         self._history = '<p class="objective-text">{}</p>'.format(game_state.objective.strip().replace("\n", "<br/>"))
         self._history += '<p class="feedback-text">{}</p>'.format(game_state.description.strip().replace("\n", "<br/>"))
         state_dict["history"] = self._history
         state_dict["command"] = ""
-        state_dict["path"] = self._path
         self.parent_conn, self.child_conn = Pipe()
         self.game_state = state_dict
         self.open_automatically = open_automatically
@@ -163,37 +159,20 @@ class VisualizationService(object):
             with SupressStdStreams():
                 webbrowser.open("http://localhost:{}/".format(self.port))
 
-    @staticmethod
-    def get_current(state_dict: Mapping):
-        """
-        Returns the current room position the player is in.
-        Args:
-            state_dict: state dict of game_state
-
-        Returns:
-            Tuple representing position
-        """
-        for room in state_dict['rooms']:
-            for item in room['items']:
-                if item['type'] == 'P':
-                    return room['name']
-
-    def update_state(self, game_state: GlulxGameState, command: str):
+    def update_state(self, state_dict: dict, tracking: dict, game_state: GlulxGameState, command: str):
         """
         Propogate state update to server.
         We use a multiprocessing.Pipe to pass state into flask process.
+        :param state_dict: Parsed Glulx game state.
         :param game_state: Glulx game state.
         :param command: previous command
         """
-        state_dict = load_state_from_game_state(game_state)
-        current_position = self.get_current(state_dict)
-        self._path.append(current_position)
+        self._tracking = tracking
 
         self._history += '<p class="command-text">> {}</p>'.format(command)
         self._history += '<p class="feedback-text">{}</p>'.format(game_state.feedback.strip().replace("\n", "<br/>"))
         state_dict["command"] = command
         state_dict["history"] = self._history
-        state_dict["path"] = self._path
         self.parent_conn.send(state_dict)
 
     def stop_server(self):

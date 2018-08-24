@@ -582,8 +582,10 @@ const Graph = (function(window, d3, rerendered) {
 
         console.log(state)
 
-        const path = state.path;
+        const path = state.tracking.path;
         console.log(path)
+
+        const highlight_counts = state.tracking.highlighted
 
         if (state.history == "") {
             $('.history').html('<p class="objective-text">' + state.objective + '</p>');

@@ -3,10 +3,11 @@
 
 
 import io
+import re
 import json
 import tempfile
 from os.path import join as pjoin
-from typing import Union, Dict, Optional
+from typing import Union, Dict, Optional, Mapping, List
 
 import numpy as np
 import networkx as nx
@@ -124,6 +125,64 @@ def temp_viz(nodes, edges, pos, color=[]):
                                    node_size=500,
                                    alpha=0.8)
     plt.show()
+
+
+def get_direction(prev_room: str, current_room: str, state_dict: dict):
+    # this will not work with impossible rooms.
+    prev_base_room = next(room['base_room'] for room in state_dict['rooms'] if room['name'] == prev_room)
+    current_base_room = next(room['base_room'] for room in state_dict['rooms'] if room['name'] == current_room)
+
+    for attr in current_base_room['attributes']:
+        regexp = re.compile(r'(\w+)_of')
+        if regexp.search(attr['name']) and \
+            attr['arguments'][0]['name'] == current_base_room['name'] and \
+                attr['arguments'][1]['name'] == prev_base_room['name']:
+            return regexp.findall(attr['name'])[0]
+    return ''
+
+
+def get_current(state_dict: Mapping) -> str:
+    """
+    Returns the current room position the player is in.
+    Args:
+        state_dict: state dict of game_state
+
+    Returns:
+        Tuple representing position
+    """
+    for room in state_dict['rooms']:
+        for item in room['items']:
+            if item['type'] == 'P':
+                return room['name']
+    return ''
+
+
+def get_highlighted(state_dict: Mapping) -> dict:
+    """
+    Returns all highlighted items.
+    Args:
+        state_dict: state dict representation of game_state
+
+    Returns:
+        list of highlighted names
+    """
+    highlighted = {'items': [], 'doors': []}
+    for room in state_dict['rooms']:
+        for item in room['items']:
+            if item['highlight']:
+                highlighted['items'].append(item['name'])
+
+    for item in state_dict['inventory']:
+        if item['highlight']:
+            highlighted['items'].append(item['name'])
+
+    for connection in state_dict['connections']:
+        door = connection['door']
+        if door is not None and door['highlight']:
+            highlighted['doors'].append(door['name'])
+
+    return highlighted
+
 
 # create state object from world and game_info
 def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None, action: Optional[Action] = None, format: str = 'png', limit_player_view: bool = False) -> dict:
