@@ -27,7 +27,7 @@ int sherlock_victory() {
 }
 
 int sherlock_game_over() {
-  char *death_text = "****  You have died  ****";
+  char *death_text = "The game is no longer afoot";
   if (strstr(world, death_text)) {
     return 1;
   }
