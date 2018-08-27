@@ -49,7 +49,7 @@ int afflicted_victory() {
 }
 
 int afflicted_game_over() {
-  char *death_text = "****  You have died  ****";
+  char *death_text = "*** You've been convicted. ***";
   if (strstr(world, death_text)) {
     return 1;
   }
