@@ -100,9 +100,9 @@ class TestGlulxGameState(unittest.TestCase):
 
         # Check feedback for dropping and taking the carrot.
         game_state, _, _ = self.env.step("drop carrot")
-        assert game_state.feedback.strip() == "Dropped.", game_state.feedback
+        assert "drop the carrot on the ground" in game_state.feedback
         game_state, _, _ = self.env.step("take carrot")
-        assert game_state.feedback.strip() == "Taken.", game_state.feedback
+        assert "pick up the carrot from the ground" in game_state.feedback
 
     def test_command_feedback(self):
         assert self.game_state.command_feedback.strip() == ""
@@ -113,9 +113,9 @@ class TestGlulxGameState(unittest.TestCase):
 
         # Check command feedback for dropping and taking the carrot.
         game_state, _, _ = self.env.step("drop carrot")
-        assert game_state.command_feedback.strip() == "Dropped.", game_state.command_feedback
+        assert "drop the carrot on the ground" in game_state.command_feedback
         game_state, _, _ = self.env.step("take carrot")
-        assert game_state.command_feedback.strip() == "Taken.", game_state.command_feedback
+        assert "pick up the carrot from the ground" in game_state.command_feedback
 
     def test_inventory(self):
         assert "carrot" in self.game_state.inventory

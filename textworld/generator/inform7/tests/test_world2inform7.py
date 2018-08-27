@@ -199,7 +199,7 @@ def test_take_all_and_variants():
         env.reset()
 
         game_state, _, done = env.step("take all ball")
-        assert "red ball: Taken." in game_state.feedback
-        assert "blue ball: Taken." in game_state.feedback
+        assert "red ball:" in game_state.feedback
+        assert "blue ball:" in game_state.feedback
         assert "red ball" in game_state.inventory
         assert "blue ball" in game_state.inventory
