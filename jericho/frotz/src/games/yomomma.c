@@ -32,7 +32,7 @@ int yomomma_victory() {
 }
 
 int yomomma_game_over() {
-  char *death_text = "*** You have died ***";
+  char *death_text = "***GAME OVER***";
   if (strstr(world, death_text)) {
     return 1;
   }
