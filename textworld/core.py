@@ -163,7 +163,7 @@ class Environment:
     >>> command = "take keycard"  # Command to send to the game.
     >>> game_state, reward, done = env.step(command)
     >>> env.render()
-    Taken
+    You pick up the keycard from the ground.
     """
 
     @property

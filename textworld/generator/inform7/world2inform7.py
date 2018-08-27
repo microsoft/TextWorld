@@ -461,6 +461,25 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
 
     """)
 
+    # Customize reporting of the "take" action.
+    # Ref: http://inform7.com/learn/man/RB_6_8.html
+    source += textwrap.dedent("""\
+    The taking action has an object called previous locale (matched as "from").
+
+    Setting action variables for taking: 
+        now previous locale is the holder of the noun.
+
+    Report taking something from the location: 
+        say "You pick up [the noun] from the ground." instead.
+
+    Report taking something: 
+        say "You take [the noun] from [the previous locale]." instead.
+
+    Report dropping something: 
+        say "You drop [the noun] on the ground." instead.
+
+    """)
+
     # Special command to print game state.
     source += textwrap.dedent("""\
     The print state option is a truth state that varies.
