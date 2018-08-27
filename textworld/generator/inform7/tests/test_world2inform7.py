@@ -165,6 +165,54 @@ def test_names_disambiguation():
         assert "tasty apple" in game_state.inventory
         assert "tasty apple" not in game_state.description
 
+    # With two-argument actions.
+    M = textworld.GameMaker()
+    roomA = M.new_room("roomA")
+    roomB = M.new_room("roomB")
+    roomC = M.new_room("roomC")
+    M.set_player(roomA)
+
+    path = M.connect(roomA.east, roomB.west)
+    gateway = M.new_door(path, name="gateway")
+    
+    path = M.connect(roomA.west, roomC.east)
+    rectangular_gateway = M.new_door(path, name="rectangular gateway")
+
+    keycard = M.new(type="k", name="keycard")
+    rectangular_keycard = M.new(type="k", name="rectangular keycard")
+    roomA.add(keycard, rectangular_keycard)
+
+    M.add_fact("match", keycard, gateway)
+    M.add_fact("match", rectangular_keycard, rectangular_gateway)
+    M.add_fact("locked", gateway)
+    M.add_fact("locked", rectangular_gateway)
+
+    game = M.build()
+    game_name = "test_names_disambiguation"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = compile_game(game, game_name, games_folder=tmpdir)
+        env = textworld.start(game_file)
+        env.reset()
+        game_state, _, done = env.step("take keycard")
+        assert "keycard" in game_state.inventory
+        game_state, _, done = env.step("take keycard")
+        assert "rectangular keycard" in game_state.inventory
+
+        game_state, _, done = env.step("unlock gateway with rectangular keycard")
+        assert "That doesn't seem to fit the lock." in game_state.command_feedback
+        game_state, _, done = env.step("unlock gateway with keycard")
+        game_state, _, done = env.step("open gateway")
+        game_state, _, done = env.step("go east")
+        assert "-= Roomb =-" in game_state.description
+
+        game_state, _, done = env.step("go west")
+        game_state, _, done = env.step("unlock rectangular gateway with keycard")
+        assert "That doesn't seem to fit the lock." in game_state.command_feedback
+        game_state, _, done = env.step("unlock rectangular gateway with rectangular keycard")
+        game_state, _, done = env.step("open rectangular gateway")
+        game_state, _, done = env.step("go west")
+        assert "-= Roomc =-" in game_state.description
+
 
 def test_take_all_and_variants():
     M = textworld.GameMaker()
