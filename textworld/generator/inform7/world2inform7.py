@@ -329,8 +329,10 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     # Refeering to an object by it whole name shouldn't be ambiguous.
     source += textwrap.dedent("""\
     Does the player mean doing something with something (called target):
-        if the player's command matches the text printed name of the target:
-            it is very likely.
+	if the player's command matches the text printed name of the target and the second noun is nothing:
+		it is very likely;
+	if the player's command matches the text printed name of the target and the player's command matches the text printed name of the second noun:
+		it is very likely.  [Handle action with two arguments.]
 
     """)
 
@@ -391,11 +393,8 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         remove the list of containers from L;
         remove the list of supporters from L;
         remove the list of doors from L;
-        if the number of entries in L is 1:
-            say "There is [L with indefinite articles] on the floor.";
-        else if the number of entries in L is greater than 1:
-            say "There's [L with indefinite articles] on the floor.";
-
+        say "There is [L with indefinite articles] on the floor.";
+        
     """)
 
     # Print properties of objects when listing the inventory contents and the room contents.
