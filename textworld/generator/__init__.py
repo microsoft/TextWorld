@@ -180,7 +180,7 @@ def make_game(world_size: int, nb_objects: int, quest_length: int,
     options.max_depth = quest_length
     options.create_variables = True
     options.rng = rngs['rng_quest']
-    options.restricted_types = {"r"}
+    options.restricted_types = {"r", "d"}
     chain = sample_quest(world.state, options)
     quest = Quest(chain.actions)
 
