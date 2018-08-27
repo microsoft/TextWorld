@@ -32,7 +32,7 @@ int snacktime_victory() {
 }
 
 int snacktime_game_over() {
-  char *death_text = "****  You have died  ****";
+  char *death_text = "*** You have missed your chance to snack ***";
   if (strstr(world, death_text)) {
     return 1;
   }
