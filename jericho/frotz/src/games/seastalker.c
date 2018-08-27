@@ -48,7 +48,7 @@ int seastalker_get_moves() {
 }
 
 int seastalker_get_score() {
-  return zmp[9310];
+  return (char) zmp[9310];
 }
 
 int seastalker_max_score() {
