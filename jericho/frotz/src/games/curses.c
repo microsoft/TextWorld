@@ -9,9 +9,11 @@
 
 // Curses: http://ifdb.tads.org/viewgame?id=plvzam05bmz3enh8
 
+const char *curses_intro[] = { "\n" };
+
 char** curses_intro_actions(int *n) {
-  *n = 0;
-  return NULL;
+  *n = 1;
+  return curses_intro;
 }
 
 char* curses_clean_observation(char* obs) {
