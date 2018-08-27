@@ -347,6 +347,7 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
     """
     try:
         import webbrowser
+        from textworld.render.serve import get_html_template
     except ImportError:
         raise ImportError('Visualization dependencies not installed. Try running `pip install textworld[vis]`')
 
@@ -369,7 +370,6 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
 
     state["command"] = ""
     state["history"] = ""
-    from textworld.render.serve import get_html_template
     html = get_html_template(game_state=json.dumps(state))
     tmpdir = maybe_mkdir(pjoin(tempfile.gettempdir(), "textworld"))
     fh, filename = tempfile.mkstemp(suffix=".html", dir=tmpdir, text=True)
