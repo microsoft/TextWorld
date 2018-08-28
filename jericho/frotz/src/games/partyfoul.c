@@ -9,9 +9,12 @@
 
 // Party Foul - http://ifdb.tads.org/viewgame?id=cqwq699i9qiqdju
 
+const char *partyfoul_intro[] = { "\n",
+                                  "no\n" };
+
 char** partyfoul_intro_actions(int *n) {
-  *n = 0;
-  return NULL;
+  *n = 2;
+  return partyfoul_intro;
 }
 
 char* partyfoul_clean_observation(char* obs) {
