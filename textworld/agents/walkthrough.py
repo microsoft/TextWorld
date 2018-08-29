@@ -26,7 +26,7 @@ class WalkthroughAgent(Agent):
             raise NameError(msg)
 
         # Load command from the generated game.
-        self._commands = iter(env.game.quests[0].commands)
+        self._commands = iter(env.game.quests[-1].commands)
 
     def act(self, game_state, reward, done):
         try:
