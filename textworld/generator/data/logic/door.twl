@@ -34,7 +34,13 @@ type d : t {
         link3 :: link(r, d, r') & link(r, d', r') -> fail();
 
         # There cannot be more than four doors in a room.
-        dr2 :: link(r, d1: d, r1: r) & link(r, d2: d, r2: r) & link(r, d3: d, r3: r) & link(r, d4: d, r4: r) & link(r, d5: d, r5: r) -> fail();
+        too_many_doors :: link(r, d1: d, r1: r) & link(r, d2: d, r2: r) & link(r, d3: d, r3: r) & link(r, d4: d, r4: r) & link(r, d5: d, r5: r) -> fail();
+        
+        # There cannot be more than four doors in a room.
+        dr1 :: free(r, r1: r) & link(r, d2: d, r2: r) & link(r, d3: d, r3: r) & link(r, d4: d, r4: r) & link(r, d5: d, r5: r) -> fail();
+        dr2 :: free(r, r1: r) & free(r, r2: r) & link(r, d3: d, r3: r) & link(r, d4: d, r4: r) & link(r, d5: d, r5: r) -> fail();
+        dr3 :: free(r, r1: r) & free(r, r2: r) & free(r, r3: r) & link(r, d4: d, r4: r) & link(r, d5: d, r5: r) -> fail();
+        dr4 :: free(r, r1: r) & free(r, r2: r) & free(r, r3: r) & free(r, r4: r) & link(r, d5: d, r5: r) -> fail();
 
         free1 :: link(r, d, r') & free(r, r') & closed(d) -> fail();
         free2 :: link(r, d, r') & free(r, r') & locked(d) -> fail();
