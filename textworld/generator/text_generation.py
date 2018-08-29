@@ -6,6 +6,7 @@ import re
 from collections import OrderedDict
 
 from textworld.generator import data
+from textworld.generator.game import Quest
 
 from textworld.generator.text_grammar import Grammar
 from textworld.generator.text_grammar import fix_determinant
@@ -154,6 +155,11 @@ def generate_text_from_grammar(game, grammar: Grammar):
     # Generate the instructions.
     for quest in game.quests:
         assign_description_to_quest(quest, game, grammar, counts, only_last_action, blend_instructions, ambiguous_instructions)
+
+    if only_last_action and len(game.quests) > 1:
+        main_quest = Quest(actions=[quest.actions[-1] for quest in game.quests])
+        assign_description_to_quest(main_quest, game, grammar, counts, False, blend_instructions, ambiguous_instructions)
+        game.objective = main_quest.desc
 
     return game
 

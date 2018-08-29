@@ -222,7 +222,6 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
     if game_infos is None:
         new_game = Game(world, [])
         game_infos = new_game.infos
-        game_infos["objective"] = new_game.quests[0].desc
         for k, v in game_infos.items():
             if v.name is None:
                 v.name = k
@@ -354,9 +353,7 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
     if isinstance(world, Game):
         game = world
         state = load_state(game.world, game.infos)
-        state["objective"] = ""
-        if len(game.quests) > 0:
-            state["objective"] = game.quests[0].desc
+        state["objective"] = game.objective
     elif isinstance(world, GlulxGameState):
         state = load_state_from_game_state(game_state=world)
     elif isinstance(world, World):
