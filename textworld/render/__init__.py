@@ -3,4 +3,3 @@
 
 
 from textworld.render.render import load_state, load_state_from_game_state, visualize
-from textworld.render.serve import get_html_template
