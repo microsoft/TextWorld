@@ -326,7 +326,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
 
     """)
 
-    # Refeering to an object by its whole name shouldn't be ambiguous.
+    # Referring to an object by its whole name shouldn't be ambiguous.
     source += textwrap.dedent("""\
     Does the player mean doing something:
         if the noun is not nothing and the second noun is nothing and the player's command matches the text printed name of the noun:
