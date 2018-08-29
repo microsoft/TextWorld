@@ -17,7 +17,7 @@ def test_html_viewer():
     num_items = 10
     g_rng.set_seed(1234)
     grammar_flags = {"theme": "house", "include_adj": True}
-    game = textworld.generator.make_game(world_size=num_nodes, nb_objects=num_items, quest_length=3, grammar_flags=grammar_flags)
+    game = textworld.generator.make_game(world_size=num_nodes, nb_objects=num_items, quest_length=3, quest_breadth=1, grammar_flags=grammar_flags)
 
     game_name = "test_html_viewer_wrapper"
     with make_temp_directory(prefix=game_name) as tmpdir:
