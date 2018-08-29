@@ -3,6 +3,7 @@
 
 
 import os
+import itertools
 from os.path import join as pjoin
 
 from typing import List, Iterable, Union, Optional
@@ -588,6 +589,44 @@ class GameMaker:
         # Calling build will generate the description for the quest.
         self.build()
         return self._quests[0]
+        
+    def new_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+        """ Create new fact.
+
+        Args:
+            name: The name of the new fact.
+            *entities: A list of entities as arguments to the new fact.
+        """
+        args = [entity.var for entity in entities]
+        return Proposition(name, args)
+    
+    def new_quest_using_commands(self, commands: List[str], winning_facts: Optional[Iterable[Proposition]] = None) -> Quest:
+        """ Add a new quest using predefined text commands.
+
+        This launches a `textworld.play` session.
+
+        Args:
+            commands: Text commands.
+            winning_facts: set of facts that should be true in order to
+                           consider the quest as completed. If `None`,
+                           the last action's preconditions will be used. 
+
+        Returns:
+            The resulting quest.
+        """
+        with make_temp_directory() as tmpdir:
+            try:
+                game_file = self.compile(pjoin(tmpdir, "record_quest"))
+                recorder = Recorder()
+                agent = textworld.agents.WalkthroughAgent(commands)
+                textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
+            except textworld.agents.WalkthroughDone:
+                pass  # Quest is done.
+
+        # Skip "None" actions.
+        actions = [action for action in recorder.actions if action is not None]
+        quest = Quest(actions=actions, winning_conditions=winning_facts)
+        return quest
 
     def set_quest_from_final_state(self, final_state: Collection[Proposition]) -> Quest:
         """ Defines the game's quest using a collection of facts.
