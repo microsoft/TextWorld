@@ -16,7 +16,7 @@ def test_play_generated_games():
         # Sample game specs.
         world_size = rng.randint(1, 10)
         nb_objects = rng.randint(0, 20)
-        quest_length = rng.randint(1, 5)
+        quest_length = rng.randint(2, 5)
         quest_breadth = rng.randint(3, 7)
         game_seed = rng.randint(0, 65365)
         grammar_flags = {}  # Default grammar.

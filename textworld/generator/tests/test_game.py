@@ -18,17 +18,18 @@ from textworld.generator import compile_game, make_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
 
 from textworld.generator.chaining import ChainingOptions, sample_quest
+from textworld.logic import Action, State
 
 from textworld.generator.game import Quest, Game
 from textworld.generator.game import QuestProgression, GameProgression
 from textworld.generator.game import UnderspecifiedQuestError
+from textworld.generator.game import ActionDependencyTree, ActionDependencyTreeElement
 from textworld.generator.inform7 import gen_commands_from_actions
 
 from textworld.logic import Proposition
 
 
-
-def _apply_command(command: str, game_progression: GameProgression):
+def _apply_command(command: str, game_progression: GameProgression) -> None:
     """ Apply a text command to a game_progression object.
     """
     valid_commands = gen_commands_from_actions(game_progression.valid_actions, game_progression.game.infos)
@@ -60,8 +61,6 @@ def test_game_comparison():
 
     game3 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
     assert game1 != game3
-
-
 
 
 def test_variable_infos(verbose=False):
@@ -256,9 +255,6 @@ class TestQuestProgression(unittest.TestCase):
     def setUpClass(cls):
         M = GameMaker()
 
-        # The goal
-        commands = ["open wooden door", "go west", "take carrot", "go east", "drop carrot"]
-
         # Create a 'bedroom' room.
         R1 = M.new_room("bedroom")
         R2 = M.new_room("kitchen")
@@ -276,13 +272,38 @@ class TestQuestProgression(unittest.TestCase):
         chest.add_property("open")
         R2.add(chest)
 
+        # The goal
+        commands = ["open wooden door", "go west", "take carrot", "go east", "drop carrot"]
         cls.quest = M.set_quest_from_commands(commands)
+
+        commands = ["open wooden door", "go west", "take carrot", "eat carrot"]
+        cls.eating_quest = M.new_quest_using_commands(commands)
+
+        cls.game = M.build()
 
     def test_winning_policy(self):
         quest = QuestProgression(self.quest)
         assert quest.winning_policy == self.quest.actions
-        quest.update(self.quest.actions[0])
+        quest.update(self.quest.actions[0], state=State())
         assert quest.winning_policy == self.quest.actions[1:]
+
+    def test_failing_quest(self):
+        quest = QuestProgression(self.quest)
+
+        state = self.game.state.copy()
+        for action in self.eating_quest.actions:
+            state.apply(action)
+            if action.name.startswith("eat"):
+                quest.update(action, state)
+                assert len(quest.winning_policy) == 0
+                assert quest.done
+                assert not quest.completed
+                assert not quest.failed
+                assert quest.unfinishable
+                break
+
+            assert not quest.done
+            assert len(quest.winning_policy) > 0
 
 
 class TestGameProgression(unittest.TestCase):
@@ -362,7 +383,6 @@ class TestGameProgression(unittest.TestCase):
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
         _apply_command("go east", game_progression)
-
         _apply_command("go north", game_progression)
         expected_commands = ["go south", "go west", "go north"] + commands
         winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
@@ -375,6 +395,7 @@ class TestGameProgression(unittest.TestCase):
 
         # Quest where player's has to pick up the carrot first.
         commands = ["go east", "take apple", "go west", "go north", "drop apple"]
+        
         M.set_quest_from_commands(commands)
         game = M.build()
         game_progression = GameProgression(game)
@@ -398,17 +419,6 @@ class TestGameProgression(unittest.TestCase):
         M = GameMaker()
 
         # The subgoals (needs to be executed in order).
-        # commands = [["open wooden door"],
-        #             ["go west", "take carrot"],
-        #             ["go east", "drop carrot"],
-        #             # Now, the player is back in the kitchen and the wooden door is open.
-        #             ["go west", "take lettuce"],
-        #             ["go east", "drop lettuce"],
-        #             # Now, the player is back in the kitchen, there are a carrot and a lettuce on the floor.
-        #             ["take lettuce"],
-        #             ["take carrot"],
-        #             ["insert carrot into chest"],
-        #             ["insert lettuce into chest", "close chest"]]
         commands = [["open wooden door", "go west", "take carrot", "go east", "drop carrot"],
                     # Now, the player is back in the kitchen and the wooden door is open.
                     ["go west", "take lettuce", "go east", "drop lettuce"],
@@ -441,7 +451,6 @@ class TestGameProgression(unittest.TestCase):
                          M.new_fact("in", carrot, chest),
                          M.new_fact("closed", chest),]
         quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2], winning_facts=winning_facts)
-        # quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2])
         quest3.desc = "Put the lettuce and the carrot into the chest before closing it."
         
         M._quests = [quest1, quest2, quest3]
@@ -451,29 +460,21 @@ class TestGameProgression(unittest.TestCase):
         game_progress = GameProgression(game)
         assert len(game_progress.quest_progressions) == len(game.quests)
 
-        # for i, qp in enumerate(game_progress.quest_progressions):
-        #     print()
-        #     print(qp._tree)
-        #     print(i, [c.name for c in qp.winning_policy])
-
-        # print()
-        # print([c.name for c in game_progress.winning_policy])
-
         # Following the actions associated to the last quest actually corresponds
         # to solving the whole game. 
         for action in game_progress.winning_policy:
             assert not game_progress.done
             game_progress.update(action)
-            # print(action.name, [c.name for c in game_progress.winning_policy])
             
         assert game_progress.done
         assert all(quest_progression.done for quest_progression in game_progress.quest_progressions)
-
+        
         # Try solving the game by greedily taking the first action from the current winning policy.
         game_progress = GameProgression(game)
         while not game_progress.done:
             action = game_progress.winning_policy[0]
             game_progress.update(action)
+            # print(action.name, [c.name for c in game_progress.winning_policy])
 
         # Try solving the second quest (i.e. bringing back the lettuce) first.
         game_progress = GameProgression(game)
@@ -494,6 +495,15 @@ class TestGameProgression(unittest.TestCase):
 
         assert game_progress.done
 
+        # Game is done whenever a quest has failed or is unfinishable.
+        game_progress = GameProgression(game)
+        
+        for command in ["open wooden door", "go west", "take carrot", "eat carrot"]:
+            assert not game_progress.done
+            _apply_command(command, game_progress)
+
+        assert game_progress.done
+
     def test_game_without_a_quest(self):
         M = GameMaker()
 
@@ -510,3 +520,48 @@ class TestGameProgression(unittest.TestCase):
         action = game_progress.valid_actions[0]
         game_progress.update(action)
         assert not game_progress.done
+
+
+class TestActionDependencyTree(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    def test_tolist(self):
+        action_lock = Action.parse("lock/c :: $at(P, r) & $at(c, r) & $match(k, c) & $in(k, I) & closed(c) -> locked(c)")
+        action_close = Action.parse("close/c :: $at(P, r) & $at(c, r) & open(c) -> closed(c)")
+        action_open = Action.parse("open/c :: $at(P, r) & $at(c, r) & closed(c) -> open(c)")
+        action_insert1 = Action.parse("insert :: $at(P, r) & $at(c, r) & $open(c) & in(o1: o, I) -> in(o1: o, c)")
+        action_insert2 = Action.parse("insert :: $at(P, r) & $at(c, r) & $open(c) & in(o2: o, I) -> in(o2: o, c)")
+        action_take1 = Action.parse("take :: $at(P, r) & at(o1: o, r) -> in(o1: o, I)")
+        action_take2 = Action.parse("take :: $at(P, r) & at(o2: o, r) -> in(o2: o, I)")
+        action_win = Action.parse("win :: $in(o1: o, c) & $in(o2: o, c) & $locked(c) -> win(o1: o, o2: o, c)")
+        
+        tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+        tree.push(action_win)
+        tree.push(action_lock)
+        tree.push(action_close)
+        tree.push(action_insert1)
+        tree.push(action_insert2)
+        tree.push(action_take1)
+        tree.push(action_take2)
+        tree.push(action_open)
+        tree.push(action_close)
+        tree.compress()
+        actions = [a.name for a in tree.tolist()]
+        assert actions == ['take', 'insert', 'take', 'insert', 'close/c', 'lock/c', 'win'], actions
+
+
+    def test_compress(self):
+        tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+
+        action_close = Action.parse("close/d :: $at(P, r) & $at(d, r) & open(d) -> closed(d)")
+        action_open = Action.parse("open/d :: $at(P, r) & $at(d, r) & closed(d) -> open(d)")
+        tree.push(action_close)
+        tree.push(action_open)
+        tree.push(action_close)
+        assert len(list(tree)) == 3
+        tree.compress()
+        assert len(list(tree)) == 1
+

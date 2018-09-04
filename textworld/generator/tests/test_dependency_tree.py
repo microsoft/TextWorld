@@ -25,21 +25,23 @@ class CustomDependencyTreeElement(DependencyTreeElement):
 
 class TestDependencyTree(unittest.TestCase):
 
-    def test_pop(self):
+    def test_remove(self):
         tree = DependencyTree(element_type=CustomDependencyTreeElement)
         assert len(tree.roots) == 0
-        tree.push("G")
-        tree.pop("G")
+        assert tree.push("G")
+        assert tree.remove("G")
         assert len(tree.roots) == 0
+        assert list(tree) == []
+        assert tree.values == []
 
-        tree.push("G")
-        tree.push("F")
+        assert tree.push("G")
+        assert tree.push("F")
         # Can't pop a non-leaf element.
-        assert_raises(ValueError, tree.pop, "G")
+        assert not tree.remove("G")
         assert len(tree.roots) > 0
 
         assert set(tree.leaves_values) == set("F")
-        tree.pop("F")
+        assert tree.remove("F")
         assert set(tree.leaves_values) == set("G")
 
     def test_push(self):
@@ -69,16 +71,17 @@ class TestDependencyTree(unittest.TestCase):
 
         tree_ = tree.copy()
         tree.push("E")
-        assert tree_.tolist() != tree.tolist()
+        assert tree_.values != tree.values
         assert set(tree.leaves_values) == set(["E", "C"])
 
         # Add the same element twice at the same level doesn't change the tree.
         tree_ = tree.copy()
         tree.push("E")
-        assert tree_.tolist() == tree.tolist()
+        assert tree_.values == tree.values
         assert set(tree.leaves_values) == set(["E", "C"])
-        # Cannot remove a value that hasn't been added to the tree.
-        assert_raises(ValueError, tree.pop, "Z")
+        # Removing a value not associated to a leaf, does not change the tree.
+        assert not tree.remove("Z")
+        assert tree_.values == tree.values
 
         tree.push("A")
         assert set(tree.leaves_values) == set(["A", "C"])

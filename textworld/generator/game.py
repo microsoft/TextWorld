@@ -205,7 +205,7 @@ class EntityInfo:
 
     def __str__(self) -> str:
         return "Info({}: {} | {})".format(self.name, self.adj, self.noun)
-    
+
     @classmethod
     def deserialize(cls, data: Mapping) -> "EntityInfo":
         """ Creates a `EntityInfo` from serialized data.
@@ -414,9 +414,9 @@ class Game:
 
         if len(self.quests) == 0:
             return ""
-        
+
         # We assume the last quest includes all actions needed to solve the game.
-        return self.quests[-1].desc 
+        return self.quests[-1].desc
 
     @objective.setter
     def objective(self, value: str):
@@ -472,9 +472,19 @@ class ActionDependencyTreeElement(DependencyTreeElement):
 
         Notes:
             This is not a proper ordering, i.e. two actions
-            can mutually removed information needed by the other.   
+            can mutually removed information needed by each other.
         """
-        return len(other.action.removed & self.action._pre_set) > 0
+        def _required_facts(node):
+            pre_set = set(node.action._pre_set)
+            while node.parent is not None:
+                pre_set |= node.parent.action._pre_set
+                pre_set -= node.action.added
+                node = node.parent
+
+            return pre_set
+
+        return len(other.action.removed & _required_facts(self)) > len(self.action.removed & _required_facts(other))
+        #return len(other.action.removed & self.action._pre_set) > 0
 
     def __str__(self) -> str:
         params = ", ".join(map(str, self.action.variables))
@@ -483,10 +493,9 @@ class ActionDependencyTreeElement(DependencyTreeElement):
 
 class ActionDependencyTree(DependencyTree):
 
-    def pop(self, action: Action) -> Optional[Action]:
-        super().pop(action)
+    def remove(self, action: Action) -> Optional[Action]:
+        super().remove(action)
 
-        reverse_action = None
         # The last action might have impacted one of the subquests.
         reverse_action = get_reverse_action(action)
         if reverse_action is not None:
@@ -511,16 +520,20 @@ class ActionDependencyTree(DependencyTree):
                     break  # Choose an action that avoids cycles.
 
             actions.append(leaf.action)
-            last_reverse_action = tree.pop(leaf.action)
+            last_reverse_action = tree.remove(leaf.action)
 
         return actions
-    
+
     def compress(self):
-        tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
-        for action in self.tolist()[::-1]:
-            tree.push(action)
-        
-        self.roots = tree.roots
+        for node in self:
+            if node.parent is None:
+                continue
+
+            if len(node.children) == 1:
+                r_action = get_reverse_action(node.element.action)
+                if r_action == node.children[0].element.action:
+                    node.parent.children.remove(node)
+                    node.parent.children += node.children[0].children
 
 
 class QuestProgression:
@@ -536,7 +549,9 @@ class QuestProgression:
             quest: The quest to keep track of its completion.
         """
         self._quest = quest
-        self._winning_policy = None
+        self._completed = False
+        self._failed = False
+        self._unfinishable = False
 
         # Build a tree representation of the quest.
         self._tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
@@ -544,124 +559,143 @@ class QuestProgression:
         for action in quest.actions[::-1]:
             self._tree.push(action)
 
-        # We compress the tree since quest's actions might not be optimal.
-        # e.g. go west > go east > go west cycles
-        self._tree.compress()
-        self._rebuild_policy()
-                
-    def _rebuild_policy(self):
-        self._winning_policy = None
-        if self._tree is not None:
-            self._winning_policy = self._tree.tolist()
-    
+        self._winning_policy = quest.actions + [quest.win_action]
+
     @property
     def winning_policy(self) -> List[Action]:
         """ Actions to be performed in order to complete the quest. """
-        if self._winning_policy is None:
-            return None
+        if self.done:
+            return []
 
         return self._winning_policy[:-1]  # Discard "win" action.
 
     @property
-    def done(self):
-        """ Check whether the quest is done. """
-        if self.winning_policy is None:
-            return True
-            
-        return len(self.winning_policy) == 0
+    def done(self) -> bool:
+        """ Check if the quest is done (i.e. completed, failed or unfinishable). """
+        return self.completed or self.failed or self.unfinishable
 
-    def is_completed(self, state: State) -> bool:
+    @property
+    def completed(self) -> bool:
         """ Check whether the quest is completed. """
-        return state.is_applicable(self._quest.win_action)
+        return self._completed
 
-    def has_failed(self, state: State) -> bool:
+    @property
+    def failed(self) -> bool:
         """ Check whether the quest has failed. """
-        if self._quest.fail_action is None:
-            return False
+        return self._failed
 
-        return state.is_applicable(self._quest.fail_action)
+    @property
+    def unfinishable(self) -> bool:
+        """ Check whether the quest is in an unfinishable state. """
+        return self._unfinishable
 
-    def update(self, action: Action) -> None:
-        """ Update the state of the quest after a given action was performed.
+    def update(self, action: Optional[Action] = None, state: Optional[State] = None) -> None:
+        """ Update quest progression given available information.
 
         Args:
-            action: Action affecting the state of the quest.
+            action: Action potentially affecting the quest progression.
+            state: Current game state.
         """
-        # Determine if we moved away from the goal or closer to it.
-        if action in self._tree.leaves_values:
-            # The last action was meaningful for the quest.
-            self._tree.pop(action)
-        else:
-            # The last action must have moved us away from the goal.
-            # We need to reverse it.
-            reverse_action = get_reverse_action(action)
-            if reverse_action is None:
-                # Irreversible action.
-                self._tree = None  # Can't track quest anymore.
-            else:
-                self._tree.push(reverse_action)
+        if self.done:
+            return  # Nothing to do, the quest is already done.
 
-        self._rebuild_policy()
+        if state is not None:
+            # Check if quest is completed.
+            if self._quest.win_action is not None:
+                self._completed = state.is_applicable(self._quest.win_action)
 
-    def compress_winning_policy(self, state: State):
-        for j in range(0, len(self._winning_policy)):
-            for i in range(j + 1, len(self._winning_policy))[::-1]:                    
-                if state.is_sequence_applicable(self._winning_policy[:j] + self._winning_policy[i:]):
-                    for action in self._winning_policy[:i]:
-                        self._tree.pop(action)
-                    
-                    for action in self._winning_policy[:j][::-1]:
-                        self._tree.push(action)
-                    
-                    self._rebuild_policy()
-                    return True
+            # Check if quest has failed.
+            if self._quest.fail_action is not None:
+                self._failed = state.is_applicable(self._quest.fail_action)
 
-        return False
+            # Try compressing the winning policy given the new game state.
+            if self.compress_winning_policy(state):
+                return  # A shorter winning policy has been found.
+
+        if action is not None:
+            # Determine if we moved away from the goal or closer to it.
+            reverse_action = self._tree.remove(action)
+            if reverse_action is None:  # Irreversible action.
+                self._unfinishable = True  # Can't track quest anymore.
+
+            self._winning_policy = self._tree.tolist()  # Rebuild policy.
+
+    def compress_winning_policy(self, state: State) -> bool:
+        """ Compress the winning policy given a game state.
+
+        Args:
+            state: Current game state.
+
+        Returns:
+            Whether the winning policy was compressed or not.
+        """
+
+        def _find_shorter_policy(policy):
+            for j in range(0, len(policy)):
+                for i in range(j + 1, len(policy))[::-1]:
+                    shorter_policy = policy[:j] + policy[i:]
+                    if state.is_sequence_applicable(shorter_policy):
+                        self._tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+                        for action in shorter_policy[::-1]:
+                            self._tree.push(action)
+
+                        return shorter_policy
+
+            return None
+
+        compressed = False
+        policy = _find_shorter_policy(self._winning_policy)
+        while policy is not None:
+            compressed = True
+            self._winning_policy = policy
+            policy = _find_shorter_policy(policy)
+
+        return compressed
 
 
 class GameProgression:
     """ GameProgression keeps track of the progression of a game.
 
-    If `tracking_quest` is  True, then `winning_policy` will be the list
+    If `tracking_quests` is  True, then `winning_policy` will be the list
     of Action that need to be applied in order to complete the game.
     """
 
-    def __init__(self, game: Game, track_quest: bool = True) -> None:
+    def __init__(self, game: Game, track_quests: bool = True) -> None:
         """
         Args:
-            game: The gaquest_progressionogression of.
-            track_quest:quest_progressionould track the quest completion.
+            game: The game for which to track progression.
+            track_quests: whether quest progressions are being tracked.
         """
         self.game = game
         self.state = game.state.copy()
         self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
                                                                      self.game._types.constants_mapping))
-        self.quest_progressions = None
-        if track_quest and len(game.quests) > 0:
+
+        self.quest_progressions = []
+        if track_quests:
             self.quest_progressions = [QuestProgression(quest) for quest in game.quests]
             for quest_progression in self.quest_progressions:
-                while quest_progression.compress_winning_policy(self.state):
-                    pass
+                quest_progression.update(action=None, state=self.state)
 
     @property
     def done(self) -> bool:
-        """ Whether the quest is completed or has failed. """
-        if self.quest_progressions is None:
-            return False
+        """ Whether all quests are completed or at least one has failed or is unfinishable. """
+        if not self.tracking_quests:
+            return False  # There is nothing to be "done".
 
         all_completed = True
         for quest_progression in self.quest_progressions:
-            if quest_progression.has_failed(self.state):
+            if quest_progression.failed or quest_progression.unfinishable:
                 return True
 
-            all_completed &= quest_progression.done
+            all_completed &= quest_progression.completed
 
         return all_completed
 
     @property
-    def tracking_quest(self) -> bool:
-        """ Whether the quest is tracked or not. """
-        return self.quest_progressions is not None
+    def tracking_quests(self) -> bool:
+        """ Whether quests are being tracked or not. """
+        return len(self.quest_progressions) > 0
 
     @property
     def valid_actions(self) -> List[Action]:
@@ -674,21 +708,20 @@ class GameProgression:
 
         Returns:
             A policy that leads to winning the game. It can be `None`
-            if `tracking_quest` is `False` or the quest has failed.
+            if `tracking_quests` is `False` or the quest has failed.
         """
-        if not self.tracking_quest:
+        if not self.tracking_quests:
             return None
-        
+
         # Check if any quest has failed.
         if any(quest_progression.winning_policy is None for quest_progression in self.quest_progressions):
             return None
-        
+
         # Greedily build a new winning policy by merging all individual quests' tree.
         trees = [qp._tree for qp in self.quest_progressions if not qp.done]
         master_quest_tree = ActionDependencyTree(element_type=ActionDependencyTreeElement,
                                                  trees=trees)
-        
-        # print(master_quest_tree)
+
         winning_policy = master_quest_tree.tolist()
         return [a for a in winning_policy if a.name != "win"]
 
@@ -705,15 +738,6 @@ class GameProgression:
         self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
                                                                      self.game._types.constants_mapping))
 
-        if self.tracking_quest:
-            if self.state.is_sequence_applicable(self.winning_policy):
-                pass  # The last action didn't impact the quest.
-            else:
-                for quest_progression in self.quest_progressions:
-                    if quest_progression.done:
-                        continue
-                    
-                    # Try compressing the winning policy for the quest, 
-                    # otherwise update its progression given the new action.
-                    if not quest_progression.compress_winning_policy(self.state):
-                        quest_progression.update(action)
+        # Update all quest progressions given the last action and new state.
+        for quest_progression in self.quest_progressions:
+            quest_progression.update(action, self.state)

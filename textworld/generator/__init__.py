@@ -180,16 +180,16 @@ def make_game(world_size: int, nb_objects: int, quest_length: int, quest_breadth
 
         def get_rules(self, depth):
             if depth == 0:
-		# Last action should not be "go <dir>".
+		        # Last action should not be "go <dir>".
                 return data.get_rules().get_matching("^(?!go.*).*")
             else:
                 return super().get_rules(depth)
 
     options = Options()
     options.backward = True
-    options.min_depth = quest_length
+    options.min_depth = 1
     options.max_depth = quest_length
-    options.min_breadth = quest_breadth
+    options.min_breadth = 1
     options.max_breadth = quest_breadth
     options.create_variables = True
     options.rng = rngs['rng_quest']

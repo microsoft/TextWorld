@@ -3,7 +3,7 @@
 
 
 import textwrap
-from typing import List, Any
+from typing import List, Any, Iterable
 
 from textworld.utils import uniquify
 
@@ -19,32 +19,34 @@ class DependencyTreeElement:
     `__str__` accordingly.
     """
 
-    def __init__(self, value):
+    def __init__(self, value: Any):
         self.value = value
+        self.parent = None
 
-    def depends_on(self, other):
+    def depends_on(self, other: "DependencyTreeElement") -> bool:
         """
         Check whether this element depends on the `other`.
         """
         return self.value > other.value
 
-    def is_distinct_from(self, others):
+    def is_distinct_from(self, others: Iterable["DependencyTreeElement"]) -> bool:
         """
         Check whether this element is distinct from `others`.
         """
         return self.value not in [other.value for other in others]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
 
 class DependencyTree:
     class _Node:
-        def __init__(self, element):
+        def __init__(self, element: DependencyTreeElement):
             self.element = element
             self.children = []
+            self.parent = None
 
-        def push(self, node):
+        def push(self, node: "DependencyTree._Node") -> bool:
             if node == self:
                 return True
             
@@ -53,12 +55,15 @@ class DependencyTree:
                 added |= child.push(node)
 
             if self.element.depends_on(node.element) and not self.already_added(node):
+                node = node.copy()
                 self.children.append(node)
+                node.element.parent = self.element
+                node.parent = self
                 return True
 
             return added
 
-        def already_added(self, node):
+        def already_added(self, node: "DependencyTree._Node") -> bool:
             # We want to avoid duplicate information about dependencies.
             if node in self.children:
                 return True
@@ -69,8 +74,14 @@ class DependencyTree:
                 return True
 
             return False
+        
+        def __iter__(self) -> Iterable["DependencyTree._Node"]:
+            for child in self.children:
+                yield from list(child)
+            
+            yield self
 
-        def __str__(self):
+        def __str__(self) -> str:
             node_text = str(self.element)
 
             txt = [node_text]
@@ -79,12 +90,16 @@ class DependencyTree:
 
             return "\n".join(txt)
 
-        def copy(self):
+        def copy(self) -> "DependencyTree._Node":
             node = DependencyTree._Node(self.element)
-            node.children = [child.copy() for child in self.children]
+            for child in self.children:
+                child_ = child.copy()
+                child_.parent = node
+                node.children.append(child_)
+
             return node
 
-    def __init__(self, element_type=DependencyTreeElement, trees=[]):
+    def __init__(self, element_type: DependencyTreeElement = DependencyTreeElement, trees: Iterable["DependencyTree"] = []):
         self.roots = []
         self.element_type = element_type
         for tree in trees:
@@ -92,7 +107,7 @@ class DependencyTree:
 
         self._update()
 
-    def push(self, value: Any, allow_multi_root: bool = False):
+    def push(self, value: Any, allow_multi_root: bool = False) -> bool:
         """ Add a value to this dependency tree.
 
         Adding a value already present in the tree does not modify the tree. 
@@ -112,53 +127,53 @@ class DependencyTree:
 
         if len(self.roots) == 0 or (not added and allow_multi_root):
             self.roots.append(node)
+            added = True
+        
+        self._update()  # Recompute leaves.
+        return added
 
-        # Recompute leaves.
-        self._update()
+    def remove(self, value: Any) -> None:
+        """ Remove all leaves having the given value.
 
-    def pop(self, value):
+        The value to remove needs to belong to at least one leaf in this tree.
+        Otherwise, the tree remains unchanged.
+        
+        Args:
+            value: value to remove from the tree.
+        
+        Returns:
+            Whether the tree has changed or not.
+        """
         if value not in self.leaves_values:
-            raise ValueError("That element is not a leaf: {!r}.".format(value))
-
-        def _visit(node):
-            for child in list(node.children):
-                if child.element.value == value:
-                    node.children.remove(child)
+            return False
 
         root_to_remove = [] 
-        for i, root in enumerate(self.roots):
-            self._postorder(root, _visit)
-            if root.element.value == value:
-                root_to_remove.append(i)
-        
-        for i in root_to_remove[::-1]:
-            del self.roots[i]
+        for node in self:
+            if node.element.value == value:
+                if node.parent is not None:
+                    node.parent.children.remove(node)
+                else:
+                    root_to_remove.append(node)
 
-        # Recompute leaves.
-        self._update()
+        for node in root_to_remove:
+            self.roots.remove(node)
 
-    def _postorder(self, node, visit):
-        for child in node.children:
-            self._postorder(child, visit)
-
-        visit(node)
-
-    def _update(self):
+        self._update()  # Recompute leaves.
+        return True
+            
+    def _update(self) -> None:
         self._leaves_values = []
         self._leaves_elements = []
 
-        def _visit(node):
+        for node in self:
             if len(node.children) == 0:
                 self._leaves_elements.append(node.element)
                 self._leaves_values.append(node.element.value)
 
-        for root in self.roots:
-            self._postorder(root, _visit)
-
         self._leaves_values = uniquify(self._leaves_values)
         self._leaves_elements = uniquify(self._leaves_elements)
 
-    def copy(self):
+    def copy(self) -> "DependencyTree":
         tree = type(self)(element_type=self.element_type)
         for root in self.roots:
             tree.roots.append(root.copy())
@@ -166,25 +181,21 @@ class DependencyTree:
         tree._update()
         return tree
 
-    def tolist(self) -> List[Any]:
-        values = []
-
-        def _visit(node):
-            values.append(node.element.value)
-
+    def __iter__(self) -> Iterable["DependencyTree._Node"]:
         for root in self.roots:
-            self._postorder(root, _visit)
-    
-        return values
+            yield from list(root)
 
     @property
-    def leaves_elements(self):
+    def values(self) -> List[Any]:
+        return [node.element.value for node in self]
+
+    @property
+    def leaves_elements(self) -> List[DependencyTreeElement]:
         return self._leaves_elements
 
     @property
-    def leaves_values(self):
+    def leaves_values(self) -> List[Any]:
         return self._leaves_values
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n".join(map(str, self.roots))
-

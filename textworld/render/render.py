@@ -215,7 +215,6 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
             edges.append((room.name, target.name, room.doors.get(exit)))
             # temp_viz(nodes, edges, pos, color=[world.player_room.name])
 
-    pos = {game_infos[k].name: v for k, v in pos.items()}
 
     rooms = {}
     player_room = world.player_room
@@ -226,6 +225,8 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
             if v.name is None:
                 v.name = k
 
+    pos = {game_infos[k].name: v for k, v in pos.items()}
+    
     for room in world.rooms:
         rooms[room.id] = GraphRoom(game_infos[room.id].name, room)
 
