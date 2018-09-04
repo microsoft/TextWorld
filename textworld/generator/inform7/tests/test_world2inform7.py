@@ -165,7 +165,7 @@ def test_names_disambiguation():
         assert "tasty apple" in game_state.inventory
         assert "tasty apple" not in game_state.description
 
-    # With two-argument actions.
+    # Actions with two arguments.
     M = textworld.GameMaker()
     roomA = M.new_room("roomA")
     roomB = M.new_room("roomB")
@@ -212,6 +212,53 @@ def test_names_disambiguation():
         game_state, _, done = env.step("open rectangular gateway")
         game_state, _, done = env.step("go west")
         assert "-= Roomc =-" in game_state.description
+
+    # Test invariance of the order in which ambiguous object names are defined.
+    # First define "type G safe" then a "safe".
+    M = textworld.GameMaker()
+    garage = M.new_room("garage")
+    M.set_player(garage)
+
+    key = M.new(type="k", name="key")    
+    typeG_safe = M.new(type="c", name="type G safe")
+    safe = M.new(type="c", name="safe")
+
+    safe.add(key)
+    garage.add(safe, typeG_safe)
+    
+    M.add_fact("open", safe)
+
+    game = M.build()
+    game_name = "test_names_disambiguation"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = compile_game(game, game_name, games_folder=tmpdir)
+        env = textworld.start(game_file)
+        game_state = env.reset()
+        game_state, _, done = env.step("take key from safe")
+        assert "key" in game_state.inventory
+
+    # First define "safe" then "type G safe".
+    M = textworld.GameMaker()
+    garage = M.new_room("garage")
+    M.set_player(garage)
+
+    key = M.new(type="k", name="key")    
+    safe = M.new(type="c", name="safe")
+    typeG_safe = M.new(type="c", name="type G safe")
+
+    safe.add(key)
+    garage.add(safe, typeG_safe)
+    
+    M.add_fact("open", safe)
+
+    game = M.build()
+    game_name = "test_names_disambiguation"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = compile_game(game, game_name, games_folder=tmpdir)
+        env = textworld.start(game_file)
+        game_state = env.reset()
+        game_state, _, done = env.step("take key from safe")
+        assert "key" in game_state.inventory
 
 
 def test_take_all_and_variants():
