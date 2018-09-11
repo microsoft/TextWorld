@@ -203,8 +203,8 @@ class _Node:
         |  |  |
         .......
 
-    A.backtracks[0] will be [B, C], B.backtracks[0] will be [C], and
-    C.backtracks[0] will be [].
+    A.backtracks[0] will be {A}, B.backtracks[0] will be {A, B}, and
+    C.backtracks[0] will be {A, B, C}.
     """
 
     def __init__(self, parent, dep_parent, state, action, backtracks, depth, breadth):
@@ -259,7 +259,7 @@ class _Chainer:
             if not action:
                 continue
 
-            if not self.check_action(node, action):
+            if not self.check_action(node, node.state, action):
                 continue
 
             state = self.apply(node, action)
@@ -272,8 +272,8 @@ class _Chainer:
 
         for i, action in enumerate(actions):
             # Only allow backtracking into later actions, to avoid duplication
-            remaining = partials[i+1:]
-            backtracks = node.backtracks + [remaining]
+            used = set(actions[:i+1])
+            backtracks = node.backtracks + [used]
             yield _Node(node, node, states[i], action, backtracks, node.depth + 1, node.breadth)
 
     def backtrack(self, node: _Node) -> Iterable[_Node]:
@@ -284,21 +284,37 @@ class _Chainer:
         if node.breadth >= self.max_breadth:
             return
 
-        for i, partials in enumerate(node.backtracks):
-            backtracks = node.backtracks[:i]
+        parent = node.dep_parent
+        parents = []
+        while parent:
+            parents.append(parent)
+            parent = parent.dep_parent
+        parents = parents[::-1]
 
-            for j, partial in enumerate(partials):
+        for parent in parents:
+            rules = self.options.get_rules(parent.depth)
+            assignments = self.all_assignments(node, rules)
+            if self.rng:
+                self.rng.shuffle(assignments)
+
+            for partial in assignments:
                 action = self.try_instantiate(node.state, partial)
                 if not action:
+                    continue
+
+                used = node.backtracks[parent.depth]
+                if action in used:
+                    continue
+
+                if not self.check_action(parent, node.state, action):
                     continue
 
                 state = self.apply(node, action)
                 if not state:
                     continue
 
-                remaining = partials[j+1:]
-                new_backtracks = backtracks + [remaining]
-                yield _Node(node, partial.node, state, action, new_backtracks, i + 1, node.breadth + 1)
+                backtracks = node.backtracks[:parent.depth] + [used | {action}]
+                yield _Node(node, parent, state, action, backtracks, parent.depth + 1, node.breadth + 1)
 
     def all_assignments(self, node: _Node, rules: Iterable[Rule]) -> Iterable[_PartialAction]:
         """
@@ -359,7 +375,7 @@ class _Chainer:
         type_counts[ph.type] += 1
         return var
 
-    def check_action(self, node: _Node, action: Action) -> bool:
+    def check_action(self, node: _Node, state: State, action: Action) -> bool:
         # Find the last action before a navigation action
         # TODO: Fold this behaviour into ChainingOptions.check_action()
         nav_parent = node
@@ -387,7 +403,7 @@ class _Chainer:
             if len(recent.added & relevant) == 0 or len(pre_navigation.added & relevant) == 0:
                 return False
 
-        return self.options.check_action(node.state, action)
+        return self.options.check_action(state, action)
 
     def _is_navigation(self, action):
         return action.name.startswith("go/")
@@ -406,6 +422,9 @@ class _Chainer:
         new_state.apply(action)
 
         # Some debug checks
+        # XXX
+        if not self.check_state(new_state):
+            return None
         assert self.check_state(new_state)
 
         # Detect cycles
