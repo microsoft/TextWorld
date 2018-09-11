@@ -58,9 +58,7 @@ type r {
 
         predicates {
             at(P, r) :: "The player is in {r}";
-            at(s, r) :: "The {s} is in {r}";
-            at(c, r) :: "The {c} is in {r}";
-            at(o, r) :: "The {o} is in {r}";
+            at(t, r) :: "The {t} is in {r}";
 
             north_of(r, r') :: "The {r} is mapped north of {r'}";
             south_of(r, r') :: "The {r} is mapped south of {r'}";
