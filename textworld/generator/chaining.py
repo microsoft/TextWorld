@@ -286,7 +286,7 @@ class _Chainer:
 
         parent = node.dep_parent
         parents = []
-        while parent:
+        while parent.action:
             parents.append(parent)
             parent = parent.dep_parent
         parents = parents[::-1]

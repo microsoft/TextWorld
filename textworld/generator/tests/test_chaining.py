@@ -237,7 +237,7 @@ def test_parallel_quests():
     options.min_breadth = 1
     options.create_variables = True
     chains = list(get_chains(State(), options))
-    assert len(chains) == 6
+    assert len(chains) == 5
 
 
 def test_parallel_quests_navigation():
@@ -306,4 +306,4 @@ def test_parallel_quests_navigation():
     options.rules_per_depth = [bake, non_bake, non_bake]
     options.restricted_types = {"P", "r"}
     chains = list(get_chains(state, options))
-    assert len(chains) == 6
+    assert len(chains) == 2
