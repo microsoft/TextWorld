@@ -292,7 +292,13 @@ class _Chainer:
         parents = parents[::-1]
 
         for parent in parents:
-            rules = self.options.get_rules(parent.depth)
+            used = node.backtracks[parent.depth]
+            if self.backward:
+                needed_predicates = set(p for a in used for p in a.inverse().preconditions)
+            else:
+                needed_predicates = set(p for a in used for p in a.preconditions)
+
+            rules = self.options.get_rules(parent.depth + 1)
             assignments = self.all_assignments(node, rules)
             if self.rng:
                 self.rng.shuffle(assignments)
@@ -302,10 +308,19 @@ class _Chainer:
                 if not action:
                     continue
 
-                used = node.backtracks[parent.depth]
                 if action in used:
                     continue
+                
+                tmp_action = action
+                if self.backward:
+                    tmp_action = action.inverse()
 
+                if len(tmp_action.added & needed_predicates) == 0:
+                    continue
+
+                if len(tmp_action.removed & needed_predicates) > 0:
+                    continue
+                
                 if not self.check_action(parent, node.state, action):
                     continue
 
@@ -415,18 +430,11 @@ class _Chainer:
         for prop in action.preconditions:
             new_state.add_fact(prop)
 
-        # Make sure new_state still respects the constraints
-        if not self.check_state(new_state):
-            return None
-
         new_state.apply(action)
 
-        # Some debug checks
-        # XXX
         if not self.check_state(new_state):
             return None
-        assert self.check_state(new_state)
-
+        
         # Detect cycles
         state = new_state.copy()
         state.apply(action.inverse())
