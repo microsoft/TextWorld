@@ -41,9 +41,9 @@ def main():
     env = textworld.start(args.game)
 
     if args.mode == "random":
-        agent = textworld.agents.RandomTextAgent(verbose=args.verbose)
+        agent = textworld.agents.NaiveAgent()
     elif args.mode == "random-cmd":
-        agent = textworld.agents.RandomCommandAgent(verbose=args.verbose)
+        agent = textworld.agents.RandomCommandAgent()
     elif args.mode == "human":
         agent = textworld.agents.HumanAgent(autocompletion=args.hints, walkthrough=args.hints)
     elif args.mode == 'walkthrough':
