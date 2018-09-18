@@ -237,4 +237,73 @@ def test_parallel_quests():
     options.min_breadth = 1
     options.create_variables = True
     chains = list(get_chains(State(), options))
-    assert len(chains) == 6
+    assert len(chains) == 5
+
+
+def test_parallel_quests_navigation():
+    logic = GameLogic.parse("""
+        type P {
+        }
+
+        type I {
+        }
+
+        type r {
+            rules {
+                move :: at(P, r) & $free(r, r') -> at(P, r');
+            }
+
+            constraints {
+                atat :: at(P, r) & at(P, r') -> fail();
+            }
+        }
+
+        type o {
+            rules {
+                take :: $at(P, r) & at(o, r) -> in(o, I);
+            }
+
+            constraints {
+                inat :: in(o, I) & at(o, r) -> fail();
+            }
+        }
+
+        type flour : o {
+        }
+
+        type eggs : o {
+        }
+
+        type cake {
+            rules {
+                bake :: in(flour, I) & in(eggs, I) -> in(cake, I) & in(flour, cake) & in(eggs, cake);
+            }
+
+            constraints {
+                inincake :: in(o, I) & in(o, cake) -> fail();
+                atincake :: at(o, r) & in(o, cake) -> fail();
+            }
+        }
+    """)
+
+    state = State([
+        Proposition.parse("at(P, r3: r)"),
+        Proposition.parse("free(r2: r, r3: r)"),
+        Proposition.parse("free(r1: r, r2: r)"),
+    ])
+
+    bake = [logic.rules["bake"]]
+    non_bake = [r for r in logic.rules.values() if r.name != "bake"]
+
+    options = ChainingOptions()
+    options.backward = True
+    options.create_variables = True
+    options.min_depth = 3
+    options.max_depth = 3
+    options.min_breadth = 2
+    options.max_breadth = 2
+    options.logic = logic
+    options.rules_per_depth = [bake, non_bake, non_bake]
+    options.restricted_types = {"P", "r"}
+    chains = list(get_chains(state, options))
+    assert len(chains) == 2
