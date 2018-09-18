@@ -57,12 +57,12 @@ where
 TextWorld provide an easy way of generating simple text-based games via the `tw-make` script. For instance,
 
 ```
-tw-make custom --world-size 5 --nb-objects 10 --quest-length 5 --output gen_games/
+tw-make custom --world-size 5 --nb-objects 10 --quest-length 5 --seed 1234 --output gen_games/
 ```
-where `custom` indicates we want to customize the game using the following options: `--world-size` controls the number of rooms in the world, `--nb-objects` controls the number of objects that can be interacted with (excluding doors) and `--quest-length` controls the minimum number of commands that is required to type in order to win the game. Once done, the game will be saved in the `gen_games/` folder.
+where `custom` indicates we want to customize the game using the following options: `--world-size` controls the number of rooms in the world, `--nb-objects` controls the number of objects that can be interacted with (excluding doors) and `--quest-length` controls the minimum number of commands that is required to type in order to win the game. Once done, the game `game_1234.ulx` will be saved in the `gen_games/` folder.
 
 
-### Playing a game
+### Playing a game (terminal)
 
 To play a game, one can use the `tw-play` script. For instance, the command to play the game generated in the previous section would be
 
@@ -72,6 +72,39 @@ tw-play gen_games/simple_game.ulx
 
 _* Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported._
 
+### Playing a game (Python)
+
+Here's how you can interact with a text-based game from within Python. 
+
+```python
+import textworld
+
+env = textworld.start("gen_games/game_1234.ulx")  # Start an existing game.
+agent = textworld.agents.NaiveAgent()  # Or your own `textworld.Agent` subclass.
+
+# Collect some statistics: nb_steps, final reward.
+avg_moves, avg_scores = [], []
+N = 10
+for no_episode in range(N):
+    agent.reset(env)  # Tell the agent a new episode is starting.
+    game_state = env.reset()  # Start new episode.
+
+    reward = 0
+    done = False
+    for no_step in range(100):
+        command = agent.act(game_state, reward, done)
+        game_state, reward, done = env.step(command)
+
+        if done:
+            break
+
+    # See https://textworld-docs.maluuba.com/textworld.html#textworld.core.GameState
+    avg_moves.append(game_state.nb_moves)
+    avg_scores.append(game_state.score)
+
+env.close()
+print("avg. steps: {:5.1f}; avg. score: {:4.1f} / 1.".format(sum(avg_moves)/N, sum(avg_scores)/N))
+```
 
 ## Documentation
 For more information about TextWorld, check the [documentation](https://aka.ms/textworld-docs).
