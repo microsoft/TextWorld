@@ -1,0 +1,515 @@
+.\" -*- nroff -*-
+.TH FROTZ 6 2.45pre
+.SH NAME
+frotz \- interpreter for Infocom and other Z-Machine games
+
+.SH SYNOPSIS
+.B frotz
+.RI [ options "] " file
+
+.SH DESCRIPTION
+.B Frotz
+is a Z-Machine interpreter.  The Z-machine is a virtual machine designed
+by Infocom to run all of their text adventures.  It went through multiple
+revisions during the lifetime of the company, and two further revisions
+(V7 and V8) were created by Graham Nelson after the company's demise.
+The specification is now quite well documented; this version of Frotz
+supports version 1.0.
+.P
+This version of Frotz fully supports all these versions of the Z-Machine
+except for version 6.  Version 6 is semi-supported by displaying the
+outlines of V6 graphics with the picture number in the bottom-right
+corner.
+
+
+.SH OPTIONS
+.TP
+.B \-a
+Watch attribute setting.  Setting and clearing of attributes on objects
+will be noted in debugging messages.
+
+.TP
+.B \-A
+Watch attribute testing.  Every time the z-machine tests an attribute
+value, the test and the result will be reported.
+
+.TP
+.B \-b <colorname>
+Sets the default background color.  <colorname> corresponds to one of the
+Z-machine colors, which are as follows:
+.br
+.I black red green yellow blue magenta cyan white
+.br
+If color support is disabled or not available on your terminal, this
+option does nothing.
+
+.TP
+.B \-c N
+Sets the number of context lines used.  By default, after a ``[MORE]''
+prompt, and assuming there is enough output pending, Frotz will allow all
+the currently visible lines to scroll off the screen before prompting
+again.  This switch specifies how many lines of text Frotz will hold
+over and display at the top of the next screen.
+
+.TP
+.B \-d
+Disable color.
+
+.TP
+.B \-e
+Enable sound.  If you've disabled sound in a config file and want to hear
+sound effects, use this.
+
+.TP
+.B \-f <colorname>
+Sets the default foreground color.  <colorname> corresponds to one of the
+Z-machine colors, which are as follows
+.br
+.I black red green yellow blue magenta cyan white
+.br
+If color support is disabled or is not available on your terminal, this
+option does nothing.
+
+.TP
+.B \-F
+Force color mode.  If you've disabled color in a config file and want to
+Frotz to display colors, use this.
+
+.TP
+.B \-h N
+Manually sets the screen height.  Though most curses libraries are intelligent
+enough to determine the current width from the terminal, it may sometimes
+be necessary to use this option to override the default.
+
+.TP
+.B \-i
+Ignore fatal errors.  If a Z-Machine interpreter encounters a zcode error
+such as division-by-zero or addressing an illegal object, the proper
+response is to abort execution.  This is done because the zcode program
+doesn't have a clear idea of what is going on.  There are some games out
+there that cause fatal errors because the authors were careless and used
+an interpreter that didn't properly check for errors.  This option is
+intended to get around such bugs, but be warned that Strange Things may
+happen if fatal errors are not caught.
+
+.TP
+.B \-l N
+Sets the left margin, for those who might have specific formatting needs.
+
+.TP
+.B \-L <filename>
+When the game starts, load this saved game file.
+
+.TP
+.B \-o
+Watch object movement.  This option enables debugging messages from the
+interpreter which describe the moving of objects in the object tree.
+
+.TP
+.B \-O
+Watch object location.  These debugging messages detail the locations of
+objects in the object tree.
+
+.TP
+.B \-p
+Plain ASCII output only.  This inhibits the output of accented letters
+and other characters from the Latin-1 character set, replacing them with
+reasonable alternatives.  This may be necessary on devices lacking these
+characters.
+
+.TP
+.B \-P
+Alter the piracy opcode.  The piracy opcode was never used by Infocom.
+This switch is really only useful for those who like to toy around with
+Z-code.
+
+.TP
+.B \-q
+Quiet.  Turns off sound effects.  Useful when running Frotz on a remote
+machine and you don't want to bother whoever's near the console with weird
+noises.
+
+.TP
+.B \-r N
+Sets the right margin.
+
+.TP
+.B \-R <path>
+Restricted read/write.  Reading and writing files will be restricted
+only to the provided path. Ordinarily Frotz will write or read its
+saves, transcripts, and move recordings in whatever path or directory
+the user provides when the
+.B SAVE,
+.B SCRIPT,
+or
+.B RECORDING
+commands are given.  This can be undesirable if Frotz is run in a
+restricted environment, by a front end, or by a chatbot.  This option will
+cause Frotz to write or read only to the provided path and nowhere else.
+Then the controlling process can then watch that directory for changes
+and need not worry about someone scribbling or snooping who-knows-where.
+
+.TP
+.B \-s N
+Set the random number seed value.  The given seed value is used as the initial
+seed value on every restart. This is helpful for testing games like
+.B Curses
+which make random decisions before the first input (such that the hot
+key Alt\-S does not really help).
+
+.TP
+.B \-S N
+Set the transcript width.  By default your transscript files are formatted
+to a width of 80 columns per line, regardless of the current screen width.
+This switch allows you to change this setting. In particular, use \-S 0
+to deactivate automatic line splitting in transscript files.
+
+.TP
+.B \-t
+Sets the z-machine's
+.I Tandy bit,
+which may affect the behavior of certain Infocom games.  For example,
+Zork I pretends not to have sequels, and Witness has its language
+toned down.
+
+.TP
+.B \-u N
+Sets the number of slots available for Frotz's multiple undo hotkey (see
+below).  This defaults to twenty, which should be sufficient for most
+purposes.  Setting too high a number here may be dangerous on machines
+with limited memory.
+
+.TP
+.B \-w N
+Manually sets the screen width.  Again, this should not be necessary
+except in special circumstances.
+
+.TP
+.B \-x
+Expand the abbreviations "g", "x", and "z" to "again", "examine", and
+"wait".  This switch is for use with old Infocom games that lack these
+common abbreviations which were introduced in later games.  Use it with
+caution: A few games might use "g", "x" or "z" for different purposes.
+
+.TP
+.B \-Z N
+Error checking mode.
+.br
+0 = don't report errors.
+.br
+1 = report first instance of an error.
+.br
+2 = report all errors.
+.br
+3 = exit after any error.
+.br
+Default is 1 (report first instance of an error).
+
+
+.SH CONFIGURATION FILES
+On startup,
+.B frotz
+will first check the system's frotz.conf then $HOME/.frotzrc for
+configuration information.  The configuration file uses a simple syntax 
+of
+.br
+<variable> <whitespace> <value>
+
+.PP
+Color names may be any of the following:
+.br
+black\ |\ red\ |\ green\ |\ blue\ |\ magenta\ |\ cyan\ |\ white
+
+
+.PP
+.BR ascii
+\ \ on\ |\ off
+.br
+Use plain ASCII only.  Default is "off".
+
+.PP
+.BR background
+\ \ <colorname>
+.br
+Set background color.  Default is terminal's default background color.
+
+.PP
+.BR color
+\ \ yes\ |\ no
+.br
+Use color text.  Default is "yes" if supported.
+
+.PP
+.BR errormode
+\ \ never\ |\ once\ |\ always\ |\ fatal
+.br
+Set error reporting mode.
+.br
+.I never
+Don't report any errors except for fatal ones.
+.br
+.I once
+Report only the first instance of an error.
+.br
+.I always
+Report every instance of an error.
+.br
+.I fatal
+Abort on any error, even non-fatal ones.
+.br
+Default is "once".
+
+.PP
+.BR expand_abb
+\ \ on\ |\ off
+.br
+Expand abbreviations.  Default is off.  Expand the abbreviations "g", "x",
+and "z" to "again", "examine", and "wait".  This switch is for use with
+old Infocom games that lack these common abbreviations which were
+introduced in later games.  Use it with caution.  A few games might use
+the "g", "x", or "z" for different purposes.
+
+.PP
+.BR foreground
+\ \ <colorname>
+.br
+Set foreground color.  Default is terminal's default forground color.
+
+.PP
+.BR ignore_fatal
+\ \ on\ |\ off
+.br
+Ignore fatal errors.  If a Z-Machine interpreter encounters a zcode error
+such as division-by-zero or addressing an illegal object, the proper
+response is to abort execution.  This is done because the zcode program
+doesn't have a clear idea of what is going on.  There are some games out
+there that cause fatal errors because the authors were careless and used
+an interpreter that didn't properly check for errors.  This option is
+intended to get around such bugs, but be warned that Strange Things may
+happen if fatal errors are not caught.
+.br
+Default is "off"
+
+.PP
+.BR piracy
+\ \ on\ |\ off
+.br
+Alter the piracy opcode.  Default is off.  The piracy opcode was never
+used by Infocom. This option is only useful for those who like to toy
+around with Z-code.
+
+.PP
+.BR randseed
+\ \ <integer>
+.br
+Set random number seed.  Default comes from the Unix epoch.
+
+.PP
+.BR sound
+\ \ on\ |\ off
+.br
+Turn sound effects on or off.  Default is "on".
+
+.PP
+.BR tandy
+\ \ on\ |\ off
+.br
+Set the machine's
+.I Tandy bit.
+This may affect the behavior of certain Infocom games.  For example, Zork
+I pretends not to have sequels, and Witness has its language toned down.
+Default is "off".
+
+.PP
+.BR undo_slots
+\ \ <integer>
+.br
+Set number of undo slots.  Default is 500.
+
+.PP
+.BR zcode_path
+\ \ /path/to/zcode/files:/another/path
+.br
+Set path to search for zcode game files.  This is just like the $PATH
+environmental variable except that you can't put environmental variables
+in the path or use other shortcuts.  For example, "$HOME/games/zcode" is
+illegal because the shell can't interpret that $HOME variable.
+
+
+.P
+The following options are really only useful for weird terminals, weird
+curses libraries or if you want to force a certain look (like play in
+40-column mode).
+
+.PP
+.BR context_lines
+\ \ <integer>
+.br
+Set the number of context lines used.  By default, after a ``[MORE]''
+prompt, and assuming there is enough output pending, frotz will allow all
+the currently visible lines to scroll off the screen before prompting
+again.  This switch specifies how many lines of text frotz will hold over
+and display at the top of the next screen.  Default is "0".
+
+.PP
+.BR left_margin
+\ \ <integer>
+.br
+Set the left margin.  This is for those who might have special formatting
+needs.
+
+.PP
+.BR right_margin
+\ \ <integer>
+.br
+Set the right margin.  This is for those who might have special formatting
+needs.
+
+.PP
+.BR screen_height
+\ \ <integer>
+.br
+Manually set screen height.  Most curses libraries are intelligent enough
+to determine the current width of the terminal.  You may need to use this
+option to override the default.
+
+.PP
+.BR screen_width
+\ \ <integer>
+.br
+Manually set screen width.  Again, this should not be necessary except in
+special circumstances.
+
+.PP
+.BR script_width
+\ \ <integer>
+.br
+Set the transcript width.  Default is 80 columns per line, regardless of
+the current screen width.  This switch allows you to change this setting.
+You may set this to "0" to deactivate automatic line-splitting in
+transcript files.
+
+
+.P
+The following options are mainly useful for debugging or cheating.
+
+.PP
+.BR attrib_set
+\ \ on\ |\ off
+.br
+Watch attribute setting.  Setting and clearing of attributes on objects
+will be noted in debugging messages.  Default is "off"
+
+.PP
+.BR attrib_test
+\ \ on\ |\ off
+.br
+Watch attribute testing.  Every time the z-machine tests an attribute
+value, the test and the result will be reported.  Default is "off".
+
+.PP
+.BR obj_loc
+\ \ on\ |\ off
+.br
+Watch object location.  These debugging messages detail the locations of
+objects in the object tree.  Default is "off".
+
+.PP
+.BR obj_move
+\ \ on\ |\ off
+.br
+Watch object movement.  This option enables debugging messages from the
+interpreter which describe the movement of objects in the object tree.
+Default is "off".
+
+.SH ENVIRONMENT
+If the ZCODE_PATH environmental variable is defined, frotz will search
+that path for game files.  If that doesn't exist, INFOCOM_PATH will be
+searched.
+
+
+.SH FURTHER INFORMATION
+.PP
+A
+.BR git(1)
+repository of all versions of Unix Frotz back to 2.32 is available 
+for public perusal here:
+.br
+https://github.com/DavidGriffith/frotz/. 
+.PP
+The bleeding edge of Frotz development may be followed there.  A wiki 
+summarising Frotz is also there at this URL:
+.br
+https://github.com/DavidGriffith/frotz/wiki/
+.PP
+The Interactive Fiction Archive is a good place to find games to play
+with Frotz.  Various ports and builds for Frotz may also be found here.
+Here is its URL:
+.br
+http://www.ifarchive.org/
+.PP
+Most distributions of Linux and BSD include Frotz in their package 
+repositories.
+
+.SH CAVEATS
+.PP
+The Z Machine itself has trouble with the concept of resizing a terminal.
+It assumes that once the screen height and width are set, they will never
+change; even across saves.  This made sense when 24x80 terminals were the
+norm and graphical user interfaces were mostly unknown.  I'm fairly sure
+there's a way around this problem, but for now, don't resize an xterm in
+which frotz is running.  Also, you should try to make sure the terminal
+on which you restore a saved game has the same dimensions as the one on
+which you saved the game.
+
+.PP
+You can use a path like "/usr/local/games/zcode:$HOME/zcode" with
+$ZCODE_PATH or $INFOCOM_PATH because the shell will digest that $HOME
+variable for you before setting $ZCODE_PATH. While processing frotz.conf
+and $HOME/.frotzrc, a shell is not used. Therefore you cannot use
+environmental variables in the "zcodepath" option within the config files.
+
+.PP
+This manpage is not intended to tell users HOW to play interactive
+fiction.  Refer to the file HOW_TO_PLAY included in the Unix Frotz
+documentation or visit one of the following sites:
+.br
+http://www.microheaven.com/ifguide/
+.br
+http://www.brasslantern.org/beginners/
+.br
+http://www.musicwords.net/if/how_to_play.htm
+.br
+http://ifarchive.org/
+
+.PP
+If you prefer a PDF file of how to play, here is one:
+.br
+http://inform-fiction.org/I7Downloads/Examples/dm/IntroductionToIF.pdf
+
+
+.SH BUGS
+This program has no bugs.  no bugs.  no bugs.  no *WHAP* thank you.  If 
+you find one, please report it to the Github site referenced above in
+.B
+FURTHER INFORMATION.
+
+
+.SH AUTHORS
+.B Frotz
+was written by Stefan Jokisch for MSDOS in 1995-7.
+.br
+The Unix port was done by Galen Hazelwood.
+.br
+The Unix port is currently maintained by David Griffith <dave@661.org>.
+
+
+.SH "SEE ALSO"
+.BR dfrotz (6)
+.BR nitfol (6)
+.BR rezrov (6)
+.BR jzip (6)
+.BR xzip (6)
+.BR inform (1)
+
+

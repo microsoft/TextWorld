@@ -1,0 +1,50 @@
+===========================================================================
+---------------------------------------------------------------------------
+|  READ THIS FILE ALL THE WAY THROUGH BEFORE ATTEMPTING TO INSTALL FROTZ  |
+---------------------------------------------------------------------------
+===========================================================================
+
+Frotz was originally written specifically for MS/PC DOS.  When it began 
+to be ported to other machines and operating systems, the DOS port 
+lagged behind.  This has been fixed to the extent that DOS is capable of 
+the new enhancements.  For instance, DOS Frotz is now capable of using 
+Blorb files to get audio and graphical data.  The old Infocom-style 
+mechanism of doing this has been removed.  Sound is supported through 
+Soundblaster compatible sound cards.  Graphic levels from Hercules to 
+MCGA are supported.
+
+To compile DOS Frotz, you need the following:
+	* Borland Turbo C++ 3.00.  This is the latest version I'm aware 
+	  of capable of building 16-bit DOS applications.
+	* PC-DOS, MS-DOS, or DR-DOS version 5.0 or higher.
+	  FreeDOS works well too.
+
+==============
+Compilation ||
+==============
+
+Turbo C++ is typically installed to C:\tc.  Make sure your path contains 
+C:\tc\bin.  When this is done, type "make".  Did Borland's make program 
+run?  Now type "tcc".  If those two commands work, then you should be 
+ready to compile.
+
+Somehow get the source tree onto your DOS machine or into a DOS 
+emulation environment.  If you're using emulation, this should be as 
+simple as copying the tree you're in now into the proper directory.  For 
+real hardware, a floppy disk will do.
+
+To compile, go into the Frotz directory and type "build".  That will 
+invoke "build.bat", a batch file that simply executes "make -f 
+makefile.tc".  The reason for this is a bit of syntactic sugar to deal 
+with the fact that it is impractical to have one Makefile build both 
+Unix and DOS versions.  After about a minute, you should have FROTZ.EXE.  
+This file is all you need to run Frotz.  Put it somewhere in your path 
+and go to wherever you keep your Infocom games.  Type "frotz zork1.dat" 
+or whatever and there you go.
+
+========================
+Hardware Requirements ||
+========================
+
+The exact hardware requirements of DOS Frotz are yet to be determined.  
+Please send me reports of what Zcode works and what doesn't.

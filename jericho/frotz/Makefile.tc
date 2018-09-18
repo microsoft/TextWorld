@@ -1,0 +1,70 @@
+# This file is used to build Frotz for DOS using Borland Turbo C++ 3.00.
+# The resulting executable runs as a 16-bit program.
+# -O or higher optimization causes problems in quetzal.c
+#
+
+CC = tcc
+CFLAGS = -ml -N
+TLIB = tlib
+CP = copy
+RM = del
+RENAME = ren
+
+
+BINNAME = frotz.exe
+LIBRARY = frotz.lib
+
+SOUND_DEF = -DSOUND_SUPPORT
+DOS_DEF = -DMSDOS_16BIT
+
+DEFS = $(SOUND_DEF) $(DOS_DEF)
+
+DOS_DIR = src\dos
+DOS_OBJECTS =   $(DOS_DIR)\bcinit.o \
+		$(DOS_DIR)\bcinput.o \
+		$(DOS_DIR)\bcmouse.o \
+		$(DOS_DIR)\bcpic.o \
+		$(DOS_DIR)\bcsample.o \
+		$(DOS_DIR)\bcscreen.o \
+		$(DOS_DIR)\bctext.o \
+		$(DOS_DIR)\bcblorb.o
+
+CORE_DIR = src\common
+CORE_OBJECTS =  $(CORE_DIR)\buffer.o \
+		$(CORE_DIR)\fastmem.o \
+		$(CORE_DIR)\files.o \
+		$(CORE_DIR)\getopt.o \
+		$(CORE_DIR)\hotkey.o \
+		$(CORE_DIR)\input.o \
+		$(CORE_DIR)\main.o \
+		$(CORE_DIR)\math.o \
+		$(CORE_DIR)\object.o \
+		$(CORE_DIR)\process.o \
+		$(CORE_DIR)\random.o \
+		$(CORE_DIR)\redirect.o \
+		$(CORE_DIR)\screen.o \
+		$(CORE_DIR)\sound.o \
+		$(CORE_DIR)\stream.o \
+		$(CORE_DIR)\table.o \
+		$(CORE_DIR)\text.o \
+		$(CORE_DIR)\variable.o \
+		$(CORE_DIR)\quetzal.o \
+		$(CORE_DIR)\err.o
+
+.SUFFIXES: .c .o .h
+
+.c.o:
+	$(CC) $(CFLAGS) $(DEFS) -I$(DOS_DIR) -I$(CORE_DIR) -c -o$@ $<
+	$(TLIB) $(LIBRARY) +-$@
+
+all:	frotz
+
+clean:
+	$(RM) $(CORE_DIR)\*.o
+	$(RM) $(DOS_DIR)\*.o
+	$(RM) *.lib
+	$(RM) *.exe
+	$(RM) *.bak
+
+frotz:	$(DOS_OBJECTS) $(CORE_OBJECTS)
+	$(CC) $(CFLAGS) -e$(BINNAME) $(LIBRARY)

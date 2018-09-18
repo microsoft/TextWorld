@@ -1,0 +1,271 @@
+! Inform Randomization Test version 1.0, by David Griffith August 2002
+!
+! Simulates dropping balls through a grid of pegs to test the
+! interpreter's random number generator.  A bellcurve should be the
+! result.
+!
+! Also contains Andrew Hunter's randomization test which is found in the
+! Zoom tarball.  I'm not quite sure how it displays randomness, but I
+! put it in here anyway.
+!
+
+Constant LANES  80;
+Constant PEG_HEIGHT 40;
+
+! For the spread random test
+Constant usualIter = 20000;
+Constant time = 50;
+Global iterations = 0;
+
+Global Granularity = 1;
+Global Height = 0;
+Global Dropcount_curr = 0;
+Global Dropcount_last = 0;
+Array bin --> LANES + 1;
+
+Array count --> 70;
+
+! Drop a ball into a given lane.  Return the number of the bin the ball
+! eventually falls into.  A ball should never have the opportunity to
+! bounce to the left if it's already at the very left of the pegfield.
+! Likewise for the very right.  Therefore, balls should always be
+! dropped into the very middle.
+!
+[ drop initial_lane current_lane x y;
+	Dropcount_curr++;
+	current_lane = initial_lane;
+	for (x = PEG_HEIGHT: x > 0: x--) {
+		y = random(2);
+		if (y == 1) {	! Ball bounces left.
+			if (current_lane == 0) {
+				@set_cursor 3 20;
+				print "ERROR! Ball fell off left side!";
+				quit;
+			} else {
+				current_lane--;
+			}
+		}
+		if (y == 2) {	! Ball bounces right.
+			if (current_lane == LANES) {
+				@set_cursor 3 20;
+				print "ERROR! Ball fell of right side!";
+				quit;
+			} else {
+				current_lane++;
+			}
+		}
+	}
+	return current_lane;
+];
+
+
+[ display_bellcurve x y q top;
+	@split_window Height;
+	@set_window 1;
+	@erase_window 1;
+
+	for (x = 0: x <= LANES: x++) {
+		@set_cursor 1 1;
+		print "prev: ", Dropcount_last;
+		@set_cursor 2 1;
+		print "drops: ", Dropcount_curr;
+		@set_cursor 3 1;
+		print "granularity: ", Granularity;
+		@set_cursor 1 20;
+		print "Press <space> to pause.";
+		@set_cursor 2 20;
+		print "Press 'q' to quit.";
+		top = bin-->x / Granularity;
+		if (top < 0) {
+			top == 0;
+		}
+		if (top >= Height - 2) {
+			return 0;
+		}
+		for (y = 0: y <= top: y++) {
+			q = Height - y;
+			@set_cursor q x;
+			if (x == LANES/2) {
+				print (char) '|';
+			} else {
+				if (y == 0) {
+					print (char) '=';
+				} else {
+					print (char) 'o';
+				}
+			}
+		}
+	}
+	return 1;
+];
+
+
+[ Main_bellcurve x y reps ix num crap;
+
+	@set_window 0;
+	@erase_window -1;
+
+
+	print "^^This program drops ~balls~ from the very top-middle of
+a vertical two-dimensional field filled with pegs.  The balls bounce off
+the pegs either left or right until they drop into one of several slots
+at the bottom where they stack up.  There are one less than half as many
+levels of pegs as there are slots.  This means that if a ball always
+bounces left, it will fall the leftmost slot.  Likewise, a ball always
+bouncing right will fall into the rightmost slot.
+According to the laws of probability, if the bounces are totally random,
+a smooth bellcurve should appear when the balls are counted and put into
+a bar graph.  This program displays such a bar graph.^";
+
+	print "^A ball which settles in the center of the field is
+represented by '|'.^";
+
+	print "A ball which settles to the left or right of the center
+is represented by 'o'.^";
+
+	print "^How many drops (1 through 9) per ball drawn? ";
+
+	@read_char 1 ix;
+	if (ix >= '1' && ix <= '9') {
+		Granularity = ix - '0';
+	} else {
+		Granularity = 1;
+	}
+
+	print "^^Press any key to begin.  ";
+	@read_char 1 crap;
+
+	for (num = 0: num < LANES: num++) {
+		bin-->num = 0;
+	}
+	Height = $24-->0;
+	while (1) {
+		for (reps = 1: reps <= GRANULARITY: reps++) {
+			x = drop(LANES/2);
+		}
+		bin-->x = bin-->x + 1;
+		y = display_bellcurve();
+		if (y == 0) {
+			for (num = 0: num < LANES: num++) {
+				bin-->num = 0;
+			}
+			@erase_window 0;
+			@erase_window 1;
+			dropcount_last = dropcount_curr;
+			dropcount_curr = 0;
+			display_bellcurve();
+		}
+		@read_char 1 1 pause -> crap;
+		if (crap == ' ') {
+			@erase_window 1;
+			@set_cursor 1 20;
+			print "Paused.";
+
+			@read_char 1 pause crap;
+		} else {
+			if (crap == 'q' || crap == 'Q') {
+				@erase_window -1;
+				rtrue;
+			}
+		}
+	}
+];
+
+[ randomize_spread x y z;
+	for (x = 0: x < usualIter: ) {
+		for (z = 0: z < time: z++) {
+			x++;
+			y = random(69);
+			count-->y = count-->y + 1;
+		}
+		iterations = iterations + time;
+		Height = $24-->0;
+		display_spread();
+		@read_char 1 1 pause -> z;
+
+		if (z == ' ') {
+			@read_char 1 z;
+		} else {
+	! This does not exit the test correctly.
+			if (z == 'q' || z == 'Q') {
+				@erase_window -1;
+				rfalse;
+			}
+		}
+	}
+];
+
+[ display_spread x y z q largest;
+	@split_window Height;
+	@set_window 1;
+	@erase_window 1;
+
+	largest = 1;
+	for (x = 0: x < 70: x++) {
+		if (count-->x > largest) {
+			largest = count-->x;
+		}
+	}
+	@set_cursor 1 1;
+	print iterations, " iterations";
+	for (x = 0: x < 70: x++) {
+		z = (count-->x * (Height-2)) / largest;
+		q = 3 + (x % 6);
+		@set_colour q q;
+		for (y = 0: y <= z: y++) {
+			q = Height - y;
+			@set_cursor q x;
+			print (char) '#';
+		}
+	}
+	@set_colour 1 1;
+	@set_cursor 1 1;
+];
+
+[ Main_spread x;
+	for (x = 0: x < 70: x++) {
+		count-->x = 0;
+	}
+
+	Height = $24-->0;
+
+	while (1) {
+		randomize_spread();
+
+
+
+
+
+
+
+
+
+
+
+
+		display_spread();
+		@read_char -> x;
+	}
+];
+
+[ Main mychar;
+	while (1) {
+		print "^Inform Randomization Test version 1.0, by David
+		Griffith August 2002^^";
+		print "1) Bellcurve graph.^";
+		print "2) Spread graph.^";
+		print "q) Quit.^";
+		print "^Please select a test: ";
+		@read_char 1 mychar;
+		switch (mychar) {
+			'1':	Main_bellcurve();
+			'2':	Main_spread();
+			'q':	rtrue;
+			default: print "^";
+		}
+	}
+];
+
+[ pause;
+	rtrue;
+];
