@@ -119,12 +119,12 @@ class TestQuest(unittest.TestCase):
         assert quest.win_action.preconditions == self.quest.actions[-1].postconditions
         assert quest.fail_action is None
 
-        quest = Quest(actions=None, winning_conditions=self.quest.actions[-1].postconditions)
-        assert quest.actions is None
+        quest = Quest(winning_conditions=self.quest.actions[-1].postconditions)
+        assert len(quest.actions) == 0
         assert quest.win_action == self.quest.win_action
         assert quest.fail_action is None
 
-        npt.assert_raises(UnderspecifiedQuestError, Quest, actions=None, winning_conditions=None)
+        npt.assert_raises(UnderspecifiedQuestError, Quest, actions=[], winning_conditions=None)
 
         quest = Quest(self.quest.actions, failing_conditions=self.failing_conditions)
         assert quest.fail_action == self.quest.fail_action
@@ -285,7 +285,7 @@ class TestQuestProgression(unittest.TestCase):
         quest = QuestProgression(self.quest)
         assert quest.winning_policy == self.quest.actions
         quest.update(self.quest.actions[0], state=State())
-        assert quest.winning_policy == self.quest.actions[1:]
+        assert tuple(quest.winning_policy) == self.quest.actions[1:]
 
     def test_failing_quest(self):
         quest = QuestProgression(self.quest)
@@ -395,7 +395,7 @@ class TestGameProgression(unittest.TestCase):
 
         # Quest where player's has to pick up the carrot first.
         commands = ["go east", "take apple", "go west", "go north", "drop apple"]
-        
+
         M.set_quest_from_commands(commands)
         game = M.build()
         game_progression = GameProgression(game)
@@ -452,7 +452,7 @@ class TestGameProgression(unittest.TestCase):
                          M.new_fact("closed", chest),]
         quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2], winning_facts=winning_facts)
         quest3.desc = "Put the lettuce and the carrot into the chest before closing it."
-        
+
         M._quests = [quest1, quest2, quest3]
         assert len(M._quests) == len(commands)
         game = M.build()
@@ -461,14 +461,14 @@ class TestGameProgression(unittest.TestCase):
         assert len(game_progress.quest_progressions) == len(game.quests)
 
         # Following the actions associated to the last quest actually corresponds
-        # to solving the whole game. 
+        # to solving the whole game.
         for action in game_progress.winning_policy:
             assert not game_progress.done
             game_progress.update(action)
-            
+
         assert game_progress.done
         assert all(quest_progression.done for quest_progression in game_progress.quest_progressions)
-        
+
         # Try solving the game by greedily taking the first action from the current winning policy.
         game_progress = GameProgression(game)
         while not game_progress.done:
@@ -480,7 +480,7 @@ class TestGameProgression(unittest.TestCase):
         game_progress = GameProgression(game)
         for command in ["open wooden door", "go west", "take lettuce", "go east", "drop lettuce"]:
             _apply_command(command, game_progress)
-        
+
         assert not game_progress.quest_progressions[0].done
         assert game_progress.quest_progressions[1].done
 
@@ -497,7 +497,7 @@ class TestGameProgression(unittest.TestCase):
 
         # Game is done whenever a quest has failed or is unfinishable.
         game_progress = GameProgression(game)
-        
+
         for command in ["open wooden door", "go west", "take carrot", "eat carrot"]:
             assert not game_progress.done
             _apply_command(command, game_progress)
@@ -537,7 +537,7 @@ class TestActionDependencyTree(unittest.TestCase):
         action_take1 = Action.parse("take :: $at(P, r) & at(o1: o, r) -> in(o1: o, I)")
         action_take2 = Action.parse("take :: $at(P, r) & at(o2: o, r) -> in(o2: o, I)")
         action_win = Action.parse("win :: $in(o1: o, c) & $in(o2: o, c) & $locked(c) -> win(o1: o, o2: o, c)")
-        
+
         tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
         tree.push(action_win)
         tree.push(action_lock)
@@ -549,7 +549,7 @@ class TestActionDependencyTree(unittest.TestCase):
         tree.push(action_open)
         tree.push(action_close)
         tree.compress()
-        actions = [a.name for a in tree.tolist()]
+        actions = list(a.name for a in tree.flatten())
         assert actions == ['take', 'insert', 'take', 'insert', 'close/c', 'lock/c', 'win'], actions
 
 

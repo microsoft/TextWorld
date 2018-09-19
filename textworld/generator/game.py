@@ -4,7 +4,7 @@
 
 import json
 
-from typing import List, Dict, Optional, Mapping, Any
+from typing import List, Dict, Optional, Mapping, Any, Iterable
 from collections import OrderedDict
 
 from textworld.generator import data
@@ -32,6 +32,23 @@ class UnderspecifiedQuestError(NameError):
         super().__init__(msg)
 
 
+def gen_commands_from_actions(actions):
+    def _get_name_mapping(action):
+        mapping = data.get_rules()[action.name].match(action)
+        return {ph.name: var.name for ph, var in mapping.items()}
+
+    commands = []
+    for action in actions:
+        command = "None"
+        if action is not None:
+            command = data.INFORM7_COMMANDS[action.name]
+            command = command.format(**_get_name_mapping(action))
+
+        commands.append(command)
+
+    return commands
+
+
 class Quest:
     """ Quest presentation in TextWorld.
 
@@ -39,14 +56,15 @@ class Quest:
     undertaken with a goal.
     """
 
-    def __init__(self, actions: Optional[List[Action]],
+    def __init__(self, actions: Optional[Iterable[Action]] = None,
                  winning_conditions: Optional[Collection[Proposition]] = None,
                  failing_conditions: Optional[Collection[Proposition]] = None,
-                 desc: str = "") -> None:
+                 desc: Optional[str] = None) -> None:
         """
         Args:
             actions: The actions to be performed to complete the quest.
-                     If `None`, then `winning_conditions` must be provided.
+                     If `None` or an empty list, then `winning_conditions`
+                     must be provided.
             winning_conditions: Set of propositions that need to be true
                                 before marking the quest as completed.
                                 Default: postconditions of the last action.
@@ -55,9 +73,9 @@ class Quest:
                                 Default: can't fail the quest.
             desc: A text description of the quest.
         """
-        self.actions = actions
+        self.actions = tuple(actions) if actions else ()
         self.desc = desc
-        self.commands = []
+        self.commands = gen_commands_from_actions(self.actions)
         self.reward = 1
         self.win_action = self.set_winning_conditions(winning_conditions)
         self.fail_action = self.set_failing_conditions(failing_conditions)
@@ -73,7 +91,7 @@ class Quest:
             An action that is only applicable when the quest is finished.
         """
         if winning_conditions is None:
-            if self.actions is None:
+            if len(self.actions) == 0:
                 raise UnderspecifiedQuestError()
 
             # The default winning conditions are the postconditions of the
@@ -103,7 +121,7 @@ class Quest:
         return self.fail_action
 
     def __hash__(self) -> int:
-        return hash((tuple(self.actions),
+        return hash((self.actions,
                      self.win_action,
                      self.fail_action,
                      self.desc,
@@ -246,16 +264,26 @@ class Game:
         """
         self.world = world
         self.state = world.state.copy()  # Current state of the game.
-        self.grammar = grammar
         self.quests = [] if quests is None else quests
         self.metadata = {}
         self._objective = None
         self._infos = self._build_infos()
         self._rules = data.get_rules()
         self._types = data.get_types()
-        # TODO:
-        # self.change_names()
-        # self.change_descriptions()
+        self.change_grammar(grammar)
+
+        self._main_quest = None
+
+    @property
+    def main_quest(self):
+        if self._main_quest is None:
+            from textworld.generator import inform7
+            from textworld.generator.text_generation import assign_description_to_quest
+            self._main_quest = Quest(actions=GameProgression(self).winning_policy)
+            self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
+            self._main_quest.commands = inform7.gen_commands_from_actions(self._main_quest.actions, self.infos)
+
+        return self._main_quest
 
     @property
     def infos(self) -> Dict[str, EntityInfo]:
@@ -285,15 +313,14 @@ class Game:
         from textworld.generator import inform7
         from textworld.generator.text_generation import generate_text_from_grammar
         self.grammar = grammar
+        if self.grammar is None:
+            return
+
         generate_text_from_grammar(self, self.grammar)
         for quest in self.quests:
             # TODO: should have a generic way of generating text commands from actions
-            #       insteaf of relying on inform7 convention.
+            #       instead of relying on inform7 convention.
             quest.commands = inform7.gen_commands_from_actions(quest.actions, self.infos)
-
-        # TODO
-        # self.change_names()
-        # self.change_descriptions()
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -315,11 +342,11 @@ class Game:
                   `Game` object.
         """
         world = World.deserialize(data["world"])
-        grammar = None
+        game = cls(world)
         if "grammar" in data:
-            grammar = Grammar(data["grammar"])
-        quests = [Quest.deserialize(d) for d in data["quests"]]
-        game = cls(world, grammar, quests)
+            game.grammar = Grammar(data["grammar"])
+
+        game.quests = [Quest.deserialize(d) for d in data["quests"]]
         game._infos = {k: EntityInfo.deserialize(v)
                        for k, v in data["infos"]}
         game.state = State.deserialize(data["state"])
@@ -341,7 +368,7 @@ class Game:
         data["world"] = self.world.serialize()
         data["state"] = self.state.serialize()
         if self.grammar is not None:
-            data["grammar"] = self.grammar.flags
+            data["grammar"] = self.grammar.flags.serialize()
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
         data["rules"] = [(k, v.serialize()) for k, v in self._rules.items()]
@@ -415,8 +442,8 @@ class Game:
         if len(self.quests) == 0:
             return ""
 
-        # We assume the last quest includes all actions needed to solve the game.
-        return self.quests[-1].desc
+        self._objective = self.main_quest.desc
+        return self._objective
 
     @objective.setter
     def objective(self, value: str):
@@ -503,10 +530,11 @@ class ActionDependencyTree(DependencyTree):
 
         return reverse_action
 
-    def tolist(self) -> Optional[List[Action]]:
-        """ Builds a list with the actions contained in this dependency tree.
+    def flatten(self) -> Iterable[Action]:
+        """
+        Generates a flatten representation of this dependency tree.
 
-        The list is greedily built by iteratively popping leaves from
+        Actions are greedily yielded by iteratively popping leaves from
         the dependency tree.
         """
         tree = self.copy()  # Make a copy of the tree to work on.
@@ -519,10 +547,8 @@ class ActionDependencyTree(DependencyTree):
                 if leaf.action != last_reverse_action:
                     break  # Choose an action that avoids cycles.
 
-            actions.append(leaf.action)
+            yield leaf.action
             last_reverse_action = tree.remove(leaf.action)
-
-        return actions
 
     def compress(self):
         for node in self:
@@ -559,7 +585,7 @@ class QuestProgression:
         for action in quest.actions[::-1]:
             self._tree.push(action)
 
-        self._winning_policy = quest.actions + [quest.win_action]
+        self._winning_policy = quest.actions + (quest.win_action,)
 
     @property
     def winning_policy(self) -> List[Action]:
@@ -618,7 +644,7 @@ class QuestProgression:
             if reverse_action is None:  # Irreversible action.
                 self._unfinishable = True  # Can't track quest anymore.
 
-            self._winning_policy = self._tree.tolist()  # Rebuild policy.
+            self._winning_policy = tuple(self._tree.flatten())  # Rebuild policy.
 
     def compress_winning_policy(self, state: State) -> bool:
         """ Compress the winning policy given a game state.
@@ -714,16 +740,15 @@ class GameProgression:
             return None
 
         # Check if any quest has failed.
-        if any(quest_progression.winning_policy is None for quest_progression in self.quest_progressions):
+        if any(quest.failed or quest.unfinishable for quest in self.quest_progressions):
             return None
 
         # Greedily build a new winning policy by merging all individual quests' tree.
-        trees = [qp._tree for qp in self.quest_progressions if not qp.done]
+        trees = [quest._tree for quest in self.quest_progressions if not quest.done]
         master_quest_tree = ActionDependencyTree(element_type=ActionDependencyTreeElement,
                                                  trees=trees)
 
-        winning_policy = master_quest_tree.tolist()
-        return [a for a in winning_policy if a.name != "win"]
+        return tuple(a for a in master_quest_tree.flatten() if a.name != "win")
 
     def update(self, action: Action) -> None:
         """ Update the state of the game given the provided action.

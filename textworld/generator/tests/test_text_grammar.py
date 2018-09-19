@@ -5,12 +5,20 @@
 import unittest
 
 from textworld.generator.text_grammar import Grammar
+from textworld.generator.text_grammar import GrammarFlags
 
 
 class ContainsEveryObjectContainer:
     def __contains__(self, item):
         return True
 
+
+class TestGrammarFlags(unittest.TestCase):
+    def test_serialization(self):
+        flags = GrammarFlags()
+        data = flags.serialize()
+        flags2 = GrammarFlags.deserialize(data)
+        assert flags == flags2
 
 class GrammarTest(unittest.TestCase):
     def test_grammar_eq(self):
@@ -20,7 +28,7 @@ class GrammarTest(unittest.TestCase):
 
     def test_grammar_eq2(self):
         grammar = Grammar()
-        grammar2 = Grammar(flags={'unused': 'flag'})
+        grammar2 = Grammar(flags={'theme': 'something'})
         self.assertNotEqual(grammar, grammar2, "Testing two different grammar files are not equal")
 
     def test_grammar_get_random_expansion_fail(self):

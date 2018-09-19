@@ -77,8 +77,10 @@ def test_blend_instructions(verbose=False):
     grammar2 = textworld.generator.make_grammar(flags={"blend_instructions": True},
                                                 rng=np.random.RandomState(42))
 
+    quest.desc = None
     game.change_grammar(grammar1)
     quest1 = quest.copy()
+    quest.desc = None
     game.change_grammar(grammar2)
     quest2 = quest.copy()
     assert len(quest1.desc) > len(quest2.desc)

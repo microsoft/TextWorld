@@ -22,7 +22,7 @@ class CountOrderedDict(OrderedDict):
         return super().__getitem__(item)
 
 
-def assign_new_matching_names(obj1_infos, obj2_infos, grammar, include_adj, exclude=[]):
+def assign_new_matching_names(obj1_infos, obj2_infos, grammar, exclude=[]):
     tag = "#({}<->{})_match#".format(obj1_infos.type, obj2_infos.type)
     if not grammar.has_tag(tag):
         return False
@@ -32,8 +32,8 @@ def assign_new_matching_names(obj1_infos, obj2_infos, grammar, include_adj, excl
         result = grammar.expand(tag)
         first, second = result.split("<->")  # Matching arguments are separated by '<->'.
 
-        name1, adj1, noun1 = grammar.split_name_adj_noun(first.strip(), include_adj)
-        name2, adj2, noun2 = grammar.split_name_adj_noun(second.strip(), include_adj)
+        name1, adj1, noun1 = grammar.split_name_adj_noun(first.strip(), grammar.flags.include_adj)
+        name2, adj2, noun2 = grammar.split_name_adj_noun(second.strip(), grammar.flags.include_adj)
         if name1 not in exclude and name2 not in exclude and name1 != name2:
             found_matching_names = True
             break
@@ -53,7 +53,7 @@ def assign_new_matching_names(obj1_infos, obj2_infos, grammar, include_adj, excl
     return True
 
 
-def assign_name_to_object(obj, grammar, game_infos, include_adj):
+def assign_name_to_object(obj, grammar, game_infos):
     """
     Assign a name to an object (if needed).
     """
@@ -67,20 +67,19 @@ def assign_name_to_object(obj, grammar, game_infos, include_adj):
     # Check if the object should match another one (i.e. same adjective).
     if obj.matching_entity_id is not None:
         other_obj_infos = game_infos[obj.matching_entity_id]
-        success = assign_new_matching_names(obj_infos, other_obj_infos, grammar, include_adj, exclude)
+        success = assign_new_matching_names(obj_infos, other_obj_infos, grammar, exclude)
         if success:
             return
 
         # Try swapping the objects around i.e. match(o2, o1).
-        success = assign_new_matching_names(other_obj_infos, obj_infos, grammar, include_adj, exclude)
+        success = assign_new_matching_names(other_obj_infos, obj_infos, grammar, exclude)
         if success:
             return
 
         # TODO: Should we enforce it?
         # Fall back on generating unmatching object name.
 
-    values = grammar.generate_name(obj.type, room_type=obj_infos.room_type,
-                                   include_adj=include_adj, exclude=exclude)
+    values = grammar.generate_name(obj.type, room_type=obj_infos.room_type, exclude=exclude)
     obj_infos.name, obj_infos.adj, obj_infos.noun = values
     grammar.used_names.add(obj_infos.name)
 
@@ -104,19 +103,13 @@ def assign_description_to_object(obj, grammar, game_infos):
 
 
 def generate_text_from_grammar(game, grammar: Grammar):
-    include_adj = grammar.flags.get("include_adj", False)
-    only_last_action = grammar.flags.get("only_last_action", False)
-    blend_instructions = grammar.flags.get("blend_instructions", False)
-    blend_descriptions = grammar.flags.get("blend_descriptions", False)
-    ambiguous_instructions = grammar.flags.get("ambiguous_instructions", False)
-
     # Assign a specific room type and name to our rooms
     for room in game.world.rooms:
         # First, generate a unique roomtype and name from the grammar
         if game.infos[room.id].room_type is None and grammar.has_tag("#room_type#"):
             game.infos[room.id].room_type = grammar.expand("#room_type#")
 
-        assign_name_to_object(room, grammar, game.infos, include_adj)
+        assign_name_to_object(room, grammar, game.infos)
 
         # Next, assure objects contained in a room must have the same room type
         for obj in game.world.get_all_objects_in(room):
@@ -128,43 +121,35 @@ def generate_text_from_grammar(game, grammar: Grammar):
         if game.infos[obj.id].room_type is None and grammar.has_tag("#room_type#"):
             game.infos[obj.id].room_type = grammar.expand("#room_type#")
 
-    # We have to "count" all the adj/noun/types in the world
-    # This is important for using "unique" but abstracted references to objects
-    counts = OrderedDict()
-    counts["adj"] = CountOrderedDict()
-    counts["noun"] = CountOrderedDict()
-    counts["type"] = CountOrderedDict()
-
     # Assign name and description to objects.
     for obj in game.world.objects:
         if obj.type in ["I", "P"]:
             continue
 
-        obj_infos = game.infos[obj.id]
-        assign_name_to_object(obj, grammar, game.infos, include_adj)
+        assign_name_to_object(obj, grammar, game.infos)
         assign_description_to_object(obj, grammar, game.infos)
-
-        counts['adj'][obj_infos.adj] += 1
-        counts['noun'][obj_infos.noun] += 1
-        counts['type'][obj.type] += 1
 
     # Generate the room descriptions.
     for room in game.world.rooms:
-        assign_description_to_room(room, game, grammar, blend_descriptions)
+        if game.infos[room.id].desc is None:  # Skip rooms which already have a description.
+            game.infos[room.id].desc = assign_description_to_room(room, game, grammar)
 
     # Generate the instructions.
     for quest in game.quests:
-        assign_description_to_quest(quest, game, grammar, counts, only_last_action, blend_instructions, ambiguous_instructions)
+        if quest.desc is None:  # Skip quests which already have a description.
+            quest.desc = assign_description_to_quest(quest, game, grammar)
 
-    if only_last_action and len(game.quests) > 1:
+    if grammar.flags.only_last_action and len(game.quests) > 1:
         main_quest = Quest(actions=[quest.actions[-1] for quest in game.quests])
-        assign_description_to_quest(main_quest, game, grammar, counts, False, blend_instructions, ambiguous_instructions)
-        game.objective = main_quest.desc
+        only_last_action_bkp = grammar.flags.only_last_action
+        grammar.flags.only_last_action = False
+        game.objective = assign_description_to_quest(main_quest, game, grammar)
+        grammar.flags.only_last_action = only_last_action_bkp
 
     return game
 
 
-def assign_description_to_room(room, game, grammar, blend_descriptions):
+def assign_description_to_room(room, game, grammar):
     """
     Assign a descripton to a room.
     """
@@ -194,7 +179,7 @@ def assign_description_to_room(room, game, grammar, blend_descriptions):
         obj_infos = game.infos[obj.id]
         adj, noun = obj_infos.adj, obj_infos.noun
 
-        if blend_descriptions:
+        if grammar.flags.blend_descriptions:
             found = False
             for type in ["noun", "adj"]:
                 group_filt = []
@@ -254,7 +239,7 @@ def assign_description_to_room(room, game, grammar, blend_descriptions):
 
     exits_desc = []
     # Describing exits with door.
-    if blend_descriptions and len(exits_with_closed_door) > 1:
+    if grammar.flags.blend_descriptions and len(exits_with_closed_door) > 1:
         dirs, door_objs = zip(*exits_with_closed_door)
         e_desc = grammar.expand("#room_desc_doors_closed#")
         e_desc = replace_num(e_desc, len(door_objs))
@@ -269,7 +254,7 @@ def assign_description_to_room(room, game, grammar, blend_descriptions):
             d_desc = d_desc.replace("(dir)", dir_)
             exits_desc.append(d_desc)
 
-    if blend_descriptions and len(exits_with_open_door) > 1:
+    if grammar.flags.blend_descriptions and len(exits_with_open_door) > 1:
         dirs, door_objs = zip(*exits_with_open_door)
         e_desc = grammar.expand("#room_desc_doors_open#")
         e_desc = replace_num(e_desc, len(door_objs))
@@ -285,7 +270,7 @@ def assign_description_to_room(room, game, grammar, blend_descriptions):
             exits_desc.append(d_desc)
 
     # Describing exits without door.
-    if blend_descriptions and len(exits_without_door) > 1:
+    if grammar.flags.blend_descriptions and len(exits_without_door) > 1:
         e_desc = grammar.expand("#room_desc_exits#").replace("(dir)", list_to_string(exits_without_door, False))
         e_desc = repl_sing_plur(e_desc, len(exits_without_door))
         exits_desc.append(e_desc)
@@ -297,7 +282,7 @@ def assign_description_to_room(room, game, grammar, blend_descriptions):
     room_desc += " ".join(exits_desc)
 
     # Finally, set the description
-    game.infos[room.id].desc = fix_determinant(room_desc)
+    return fix_determinant(room_desc)
 
 
 class MergeAction:
@@ -314,7 +299,7 @@ class MergeAction:
         self.end = None
 
 
-def generate_instruction(action, grammar, game_infos, world, counts, ambiguous_instructions):
+def generate_instruction(action, grammar, game_infos, world, counts):
     """
     Generate text instruction for a specific action.
     """
@@ -366,7 +351,7 @@ def generate_instruction(action, grammar, game_infos, world, counts, ambiguous_i
             obj = world.find_object_by_id(var.name)
             obj_infos = game_infos[obj.id]
 
-            if ambiguous_instructions:
+            if grammar.flags.ambiguous_instructions:
                 assert False, "not tested"
                 choices = []
 
@@ -399,29 +384,46 @@ def generate_instruction(action, grammar, game_infos, world, counts, ambiguous_i
     return desc, separator
 
 
-def assign_description_to_quest(quest, game, grammar, counts, only_last_action, blend_instructions, ambiguous_instructions):
+def assign_description_to_quest(quest, game, grammar):
     """
     Assign a descripton to a quest.
     """
+    # We have to "count" all the adj/noun/types in the world
+    # This is important for using "unique" but abstracted references to objects
+    counts = OrderedDict()
+    counts["adj"] = CountOrderedDict()
+    counts["noun"] = CountOrderedDict()
+    counts["type"] = CountOrderedDict()
+
+    # Assign name and description to objects.
+    for obj in game.world.objects:
+        if obj.type in ["I", "P"]:
+            continue
+
+        obj_infos = game.infos[obj.id]
+        counts['adj'][obj_infos.adj] += 1
+        counts['noun'][obj_infos.noun] += 1
+        counts['type'][obj.type] += 1
+
     if len(quest.actions) == 0:
         # We don't need to say anything if the quest is empty
-        quest.desc = "Choose your own adventure!"
+        quest_desc = "Choose your own adventure!"
     else:
         # Generate a description for either the last, or all commands
-        if only_last_action:
-            actions_desc, _ = generate_instruction(quest.actions[-1], grammar, game.infos, game.world, counts, ambiguous_instructions)
+        if grammar.flags.only_last_action:
+            actions_desc, _ = generate_instruction(quest.actions[-1], grammar, game.infos, game.world, counts)
             only_one_action = True
         else:
             actions_desc = ""
             # Decide if we blend instructions together or not
-            if blend_instructions:
+            if grammar.flags.blend_instructions:
                 instructions = get_action_chains(quest.actions, grammar, game.infos)
             else:
                 instructions = quest.actions
 
             only_one_action = len(instructions) < 2
             for c in instructions:
-                desc, separator = generate_instruction(c, grammar, game.infos, game.world, counts, ambiguous_instructions)
+                desc, separator = generate_instruction(c, grammar, game.infos, game.world, counts)
                 actions_desc += desc
                 if c != instructions[-1] and len(separator) > 0:
                     actions_desc += separator
@@ -434,7 +436,9 @@ def assign_description_to_quest(quest, game, grammar, counts, only_last_action, 
             quest_tag = grammar.get_random_expansion("#quest#")
             quest_tag = quest_tag.replace("(list_of_actions)", actions_desc.strip())
 
-        quest.desc = grammar.expand(quest_tag)
+        quest_desc = grammar.expand(quest_tag)
+
+    return quest_desc
 
 
 def get_action_chains(actions, grammar, game_infos):
