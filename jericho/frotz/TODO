@@ -1,0 +1,36 @@
+Redo how the core and interfaces use the f_setup structure.  Failure to 
+do this properly led to a segfault when dumb frotz saves a game.
+Look at using a memset() or calloc() there.
+
+
+Rework os_process_arguments() in src/curses/ux_init.c to make Frotz more
+convenient to use as a BBS door or MUD module.
+
+Add mouse support through.  Not sure how useful this would be, but
+someone did ask.
+
+Remove debug options from command line.  They should be set through the
+hotkey menu instead
+
+Hotkey menu needs work.
+
+Blink the screen instead of ringing the bell when in quiet mode.
+
+Add zlib support to allow Frotz to read gzipped story files.
+
+Add support for debug verbs (teleport, pilfer, bamf, (frotz|futz|lumen),
+tail, travis, lummox, systolic, lingo, spiel, rooms, items, omap,
+embezzle).  I really like the Rezrov's cheat functions.
+
+Give the hotmenu a full ncurses-based interface.  This would allow MUCH
+more flexibility in configuring Frotz.
+
+More sensible handling of saves, transcripts, and game files.
+
+Curses menu to select desired game.  Current working code heavily
+borrowed from Alan Shutko's <ats@hubert.wustl.edu> "int-fiction"
+frontend program.
+
+An X11 graphical interface using GTK widgets (thus allowing V6 full support).
+
+Cocoa support for OSX.

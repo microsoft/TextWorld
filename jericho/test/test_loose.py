@@ -4,12 +4,12 @@
 
 from jericho import *
 
-walkthrough = 'n/n/take pot/open pot/empty pot/drop pot/take hairpin/sw/w/w/knock knock/boo/give hairpin to mary/ask mary for ladder/sw/take ladder/sw/put ladder in well/here kitty kitty/take ladder/ne/ne/e/e/ne/s/s/lean ladder against fence/take ladder/n/n/sw/w/w/sw/drop ladder/sw/nw/s/s/take kitten/take key/unlock door with key/s/x figure/n'
+walkthrough = '/n/n/take pot/open pot/empty pot/drop pot/take hairpin/sw/w/w/knock knock/boo/give hairpin to mary/ask mary for ladder/sw/take ladder/sw/put ladder in well/here kitty kitty/take ladder/ne/ne/e/e/ne/s/s/lean ladder against fence/take ladder/n/n/sw/w/w/sw/drop ladder/sw/nw/s/s/take kitten/take key/unlock door with key/s/x figure/n'
 
 solution = walkthrough.split('/')
 
 def test_loose():
-    env = FrotzEnv("../roms/loose.z5", seed=4)
+    env = FrotzEnv("../../TextWorld-baselines/games/loose.z5", seed=4)
     env.reset()
     for act in solution:
         print(act, env.step(act))

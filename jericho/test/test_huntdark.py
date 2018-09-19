@@ -14,7 +14,12 @@ def test_huntdark():
     env = FrotzEnv(ROM_PATH, seed=4)
     env.reset()
     for act in solution:
-        print(act, env.step(act))
+        print("{} {}".format(act, env.step(act)))
+        loc = env.get_player_location()
+        print("Loc {}-{}".format(loc.name, loc.num))
+        for i in env.get_inventory():
+            print("  {}-{}".format(i.name, i.num))
+        print('')
 
 def test_max_score():
     env = FrotzEnv(ROM_PATH, seed=4)

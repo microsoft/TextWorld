@@ -8,7 +8,7 @@ walkthrough = 'remove hat/examine hat/take stethoscope/knock on door/open front 
 solution = walkthrough.split('/')
 
 def test_sherlock():
-    env = FrotzEnv("../roms/sherlock.z5", seed=6)
+    env = FrotzEnv("../../TextWorld-baselines/games/sherlock.z5", seed=6)
     env.reset()
     for act in solution:
         print(act, env.step(act))

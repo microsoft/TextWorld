@@ -1,0 +1,198 @@
+===========================================================================
+---------------------------------------------------------------------------
+|  READ THIS FILE ALL THE WAY THROUGH BEFORE ATTEMPTING TO INSTALL FROTZ  |
+---------------------------------------------------------------------------
+===========================================================================
+
+Frotz was originally written specifically for MS/PC DOS.  When it was
+ported to Unix, it was done mainly with Linux in mind.  Since then,
+Frotz has been written with an aim to compile and run smoothly on as
+many platforms as possible.
+
+The source is rather generic C code and runs well on pretty much all
+current Unixen.  These are the only three things needed to compile and
+run Frotz:
+  * Some variant of Unix with an ANSI C compiler (gcc works fine)
+  * A POSIX-compliant version of make (GNU make will do)
+  * A reasonably good SYSV derived curses library (ncurses is best)
+
+For sound support, a few more things are necessary:
+  * libao         (1.1.0 or higher)
+  * libmodplug    (0.8.8.4 or higher)
+  * libsamplerate (0.1.8 or higher)
+  * libsndfile    (1.0.25 or higher)
+  * libvorbis     (1.3.2 or higher)
+Earlier versions of these libraries might work, but are untested.
+
+Frotz can be compiled without curses, leaving you with a dumb-mode 
+interface.  This option is provided for hysterical raisins and for those 
+who find it useful for web-based front-ends, bots, and whatever else you 
+can think up.  Read the DUMB file for more information.
+
+Linux uses ncurses, so you're safe there.  The version of curses that
+comes with NetBSD 1.6.x and later is good too.  Earlier versions lacked
+certain features needed by Frotz.  I don't know about the other *BSD
+curses.  You can download ncurses from ftp://ftp.gnu/org/gnu/ncurses/.
+If you insist on using the vendor-supplied curses library, see the
+platform-specific info below.
+
+It's always a good idea to have the GNU version of make(1) around.
+
+
+=======================
+Editing the Makefile ||
+=======================
+
+You should take a look at the Makefile, which is found in the src/ 
+subdirectory.  Read the comments.  It's pretty self-explanatory.  This 
+is where you define your compiler, where Frotz will be installed, what 
+libraries you're using, if you want sound support, and so on.
+
+If this is too much for you, try using your operating systems's 
+packaging scheme to install Frotz for you.  If the latest version of 
+Frotz isn't there, ask the package maintainer to update it.
+
+
+=================================
+Compiling and installing Frotz ||
+=================================
+
+After checking over and editing the Makefile, type "make" and Frotz will 
+be compiled.  If this doesn't work, chances are you have an older flavor 
+of Unix.  Check the second section of the Makefile.  That's where you'll 
+find options for older flavors of Unix.  Are you using plain old curses 
+or ncurses.  On modern systems, the regular curses library is actually 
+ncurses.  For older systems, this isn't always true.  Figure out where 
+the necessary header files and libraries live and edit the Makefile 
+accordingly.
+
+Once the compile is complete, make sure you have the correct permissions
+to write where you want Frotz installed, then type "make install".
+
+To uninstall Frotz, type "make uninstall".
+
+If you don't have permission to install Frotz, you can just put the
+resulting executable somewhere like $HOME/bin and add that directory to
+your $PATH.
+
+For compiling, installing, and uninstalling dumb frotz, use "make dumb",
+"make install_dumb", and "make uninstall_dumb".  The process is exactly 
+the same as above except you won't be depending on any external 
+libraries; not even curses.
+
+
+========================================
+Installing and playing games on Frotz ||
+========================================
+
+If you've unfamiliar with Infocom-style text adventures, you should
+probably stop here and read the file HOW_TO_PLAY.  Then come back and
+continue.
+
+Now that you have Frotz installed, you'll probably want to play some of
+those ultra-nifty text adventures on it.  These games come in files
+which are compiled programs that run on the Z-machine, which
+interpreters like Frotz emulate.  The best-stocked archive of freeware
+games for use on Z-machine interpreters is the Interactive Fiction
+Archive at http://www.ifarchive.org.  There are several mirrors of the
+archive all over the world listed there.
+
+Here are direct URLs to the zcode directories:
+
+http://www.ifarchive.org/indexes/if-archiveXgamesXzcode.html
+ftp://ftp.ifarchive.org/if-archive/games/zcode
+
+
+Here is the scheme I use for organizing my Zcode games:
+
+/usr/local/share/zcode			This contains games written after the
+					demise of Infocom.  Most are freeware.
+
+/home/dave/.zcode			I sometimes put games here too.
+
+/usr/local/share/zcode/infocom		This is where I keep my collection of
+					genuine Infocom games.
+
+/usr/local/share/zcode/infocom/sound	Soundfiles from "Lurking Horror"
+					and "Sherlock" go here.
+
+/usr/local/share/zcode/infocom/graphics	Graphics files from Zork 0,
+					Arthur, Shogun, and Journey go here.
+
+I add this command to my .profile file:
+export ZCODE_PATH="/usr/local/share/zcode: \
+	/usr/local/share/zcode/infocom:$HOME/.zcode
+
+Now, when I want to play Zork I, I will type "frotz zork1.dat" at the
+command prompt.  Then I will then be told I am standing in an open field
+west of a white house which has a boarded front door.
+
+You can also just give a path to the game file.
+
+When you save your game, all save files are put in the current directory
+unless you specify a full path.  Please name your saves intelligently.
+
+You MUST put sound and graphics in directories named "sound" and
+"graphics" in the same directory as the gamefile.  Yes, this is a bit
+confusing.  That's why Blorb will be so wonderful when Unix Frotz supports
+it.
+
+You'll probably want to make use of Frotz's new config file functionality.
+The options in the config file mirror the command line options and free
+you from having to remember to add something like "-Z0" to get rid of
+complaints about buggy zcode or if you want to always play with white text
+on black at a Linux console (instead of white on blue).  Sample config
+files are included here as "frotz.conf-big" (which lists all possible
+options) and "frotz.conf-small" (a shortened one listing the more
+commonly-used options).  The Makefile defines where Frotz will look for
+the frotz.conf file.  By default, this is /usr/local/etc and can be
+changed at compile time if you like.  This file will be read if Frotz
+notices you don't have a config file of your own in "$HOME/.frotzrc".
+
+
+===========================
+Platform-specific issues ||
+===========================
+
+Linux:  No apparent problems.
+
+[Net|Open|Free]BSD:  If you have NetBSD 1.6.x or later, you can use the
+supplied BSD curses.  Otherwise you must have ncurses.
+
+Digital UNIX:  No apparent problems.  Sound is probably not available.
+
+Tru64 Unix:  Rebadged Digital Unix.  Sound is probably not available.
+
+Irix:  The vendor-supplied curses library is broken as well as all
+versions of ncurses supplied on SGI's freeware CDs and in SGI's freeware
+archive.  You MUST compile and install at least ncurses 5.0 from source.
+Versions of ncurses older than 5.0 are also broken on Irix.
+
+MacOS X:  You must use "cc" instead of "gcc" even though it's really GCC.
+This is a quirk of the Mac OS X Developer Tools.  MAN_PREFIX in the
+Makefile should be set to "/usr/local/share".
+
+Installing ncurses on MacOS X used to be troublesome because of some
+nonstandard places for things, but it seems that thse problems have been
+solved with ncurses 5.2.  A precompiled version of ncurses for MacOS X is
+available at http://gnu-darwin.sourceforge.net/.
+
+Solaris:  Some versions of curses on Solaris have trouble with color
+support.  At least the one in Solaris 2.6 works okay.  If compiled with
+the -02 option on an UltraSPARC using gcc 2.8.1, you may get lots of weird
+segfaults. The problem seems UltraSPARC related and it's not clear if this
+problem crosses flavor boundaries (ie, if UltraLinux or NetBSD on
+UltraSparc have this problem too).  Because version 2.8.x of gcc had lots
+of strange problems, gcc might be to blame.  I don't have sufficient
+access to test this theory, so if you're able to enlighten me on this,
+please do so.
+
+SunOS:  Uncomment the "MEMMOVE_DEF..." line in the Makefile before 
+compiling.  Since I don't have access to a SunOS machine, Frotz on SunOS 
+is untested.
+
+Other flavors of Unix:  Getting Unix Frotz to compile and run seems to
+focus mostly on making sure make(1) can find the proper curses library.
+It's probably a good idea to install ncurses anyway.
+
+Now go on and have fun!

@@ -1,0 +1,20 @@
+What are all these files for?
+
+AUTHORS		People who've had a hand in making Frotz what it is.
+BUGS		A list of known bugs and workarounds (if known).
+build.bat	A batch file for building Frotz for PC/MS DOS.
+COPYING		Full text of the GNU General Public License.
+ChangeLog	Summary of changes from one version to another.
+DOSBUILD.txt	How to build and install Frotz for PC/MS DOS.
+DUMB		Description of the dumb-interface version of Frotz.
+HOW_TO_PLAY	How to play Interactive Fiction.
+INSTALL		How to build and install Frotz.
+Makefile	The Makefile (the INSTALL file tells you about this).
+Makefile.tc	Makefile for building Frotz for DOS.
+PORTING		Notes about porting Frotz to new machines and operating systems.
+README		An overview of Frotz.
+README.1st	This file.
+TODO		Stuff to do in no particular order.
+
+doc/		Manpages and sample config files.
+src/		Source code to Frotz.

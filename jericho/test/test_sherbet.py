@@ -9,7 +9,7 @@ walkthrough = 'x amelia/i/x amilia/x hat/my hat/x my hat/x fedora/show fedora to
 solution = walkthrough.split('/')
 
 def test_sherbet():
-    env = FrotzEnv("../roms/sherbet.z5", seed=4)
+    env = FrotzEnv("../../TextWorld-baselines/games/sherbet.z5", seed=4)
     env.reset()
     for act in solution:
         print(act, env.step(act))

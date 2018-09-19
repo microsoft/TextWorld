@@ -4,7 +4,7 @@
 
 from jericho import *
 
-walkthrough = 'ne/wee/examine stool/take stool/wait/read rule book/take all except tray/examine tray/take food/open door/s/read sign/open narrow door/s/examine paper/ask trent about paper/n/u/look through window/look through window/up/enter circle/w/nw/show painting to mouse/take mouse/drop painting/s/e/n/n/n'
+walkthrough = '/ne/wee/examine stool/take stool/wait/read rule book/take all except tray/examine tray/take food/open door/s/read sign/open narrow door/s/examine paper/ask trent about paper/n/u/look through window/look through window/up/enter circle/w/nw/show painting to mouse/take mouse/drop painting/s/e/n/n/n'
 solution = walkthrough.split('/')
 
 def test_lgop():
