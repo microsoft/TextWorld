@@ -146,13 +146,10 @@ class GlulxGameState(textworld.GameState):
         """
         output = _strip_input_prompt_symbol(output)
         super().init(output)
-        self._game_progression = GameProgression(game, track_quest=compute_intermediate_reward)
+        self._game_progression = GameProgression(game, track_quests=compute_intermediate_reward)
         self._state_tracking = state_tracking
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0
-
-        self._objective = ""
-        if len(game.quests) > 0:
-            self._objective = game.quests[0].desc
+        self._objective = game.objective
 
     def view(self) -> "GlulxGameState":
         """
@@ -317,6 +314,7 @@ class GlulxGameState(textworld.GameState):
 
     @property
     def score(self):
+        # XXX: Should the score reflect the sum of all subquests' reward?
         if self.has_won:
             return 1
         elif self.has_lost:
@@ -326,6 +324,7 @@ class GlulxGameState(textworld.GameState):
 
     @property
     def max_score(self):
+        # XXX: Should the score reflect the sum of all subquests' reward?
         return 1
 
     @property

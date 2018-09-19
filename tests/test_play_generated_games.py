@@ -16,12 +16,13 @@ def test_play_generated_games():
         # Sample game specs.
         world_size = rng.randint(1, 10)
         nb_objects = rng.randint(0, 20)
-        quest_length = rng.randint(1, 10)
+        quest_length = rng.randint(2, 5)
+        quest_breadth = rng.randint(3, 7)
         game_seed = rng.randint(0, 65365)
         grammar_flags = {}  # Default grammar.
 
         with make_temp_directory(prefix="test_play_generated_games") as tmpdir:
-            game_file, game = textworld.make(world_size, nb_objects, quest_length, grammar_flags,
+            game_file, game = textworld.make(world_size, nb_objects, quest_length, quest_breadth, grammar_flags,
                                              seed=game_seed, games_dir=tmpdir)
 
             # Solve the game using WalkthroughAgent.
@@ -47,10 +48,10 @@ def test_play_generated_games():
                 game_state, reward, done = env.step(command)
 
                 if done:
-                    msg = "Finished before playing `max_steps` steps."
+                    msg = "Finished before playing `max_steps` steps because of command '{}'.".format(command)
                     if game_state.has_won:
                         msg += " (winning)"
-                        assert game_state._game_progression.winning_policy == []
+                        assert len(game_state._game_progression.winning_policy) == 0
 
                     if game_state.has_lost:
                         msg += " (losing)"

@@ -119,7 +119,7 @@ def play(game_file: str, agent: Optional[Agent] = None, max_nb_steps: int = 1000
         print(msg)
 
 
-def make(world_size: int = 1, nb_objects: int = 5, quest_length: int = 2,
+def make(world_size: int = 1, nb_objects: int = 5, quest_length: int = 2, quest_breadth: int = 1,
          grammar_flags: Mapping = {}, seed: int = None,
          games_dir: str = "./gen_games/") -> Tuple[str, Game]:
     """ Makes a text-based game.
@@ -128,6 +128,7 @@ def make(world_size: int = 1, nb_objects: int = 5, quest_length: int = 2,
         world_size: Number of rooms in the world.
         nb_objects: Number of objects in the world.
         quest_length: Minimum number of actions the quest requires to be completed.
+        quest_breadth: Control how nonlinear a quest can be (1: linear).
         grammar_flags: Grammar options.
         seed: Random seed for the game generation process.
         games_dir: Path to the directory where the game will be saved.
@@ -137,6 +138,6 @@ def make(world_size: int = 1, nb_objects: int = 5, quest_length: int = 2,
     """
     g_rng.set_seed(seed)
     game_name = "game_{}".format(seed)
-    game = make_game(world_size, nb_objects, quest_length, grammar_flags)
+    game = make_game(world_size, nb_objects, quest_length, quest_breadth, grammar_flags)
     game_file = compile_game(game, game_name, games_folder=games_dir, force_recompile=True)
     return game_file, game

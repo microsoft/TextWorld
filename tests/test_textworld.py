@@ -58,7 +58,7 @@ class TestIntegration(unittest.TestCase):
         agent = textworld.agents.WalkthroughAgent()
         env = textworld.start(self.game_file)
         env.activate_state_tracking()
-        commands = self.game.quests[0].commands
+        commands = self.game.quests[-1].commands
         agent.reset(env)
         game_state = env.reset()
 

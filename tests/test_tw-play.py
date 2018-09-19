@@ -7,9 +7,9 @@ import textworld
 from textworld.utils import make_temp_directory
 
 
-def test_making_a_custom_game():                                             
+def test_playing_a_game():                                             
     with make_temp_directory(prefix="test_tw-play") as tmpdir:    
-        game_file, _ = textworld.make(5, 10, 5, {}, seed=1234, games_dir=tmpdir)
+        game_file, _ = textworld.make(5, 10, 5, 4, {}, seed=1234, games_dir=tmpdir)
 
         command = ["tw-play", "--max-steps", "100", "--mode", "random", game_file]
         assert check_call(command) == 0

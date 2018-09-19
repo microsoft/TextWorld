@@ -4,7 +4,7 @@
 
 import json
 
-from typing import List, Dict, Optional, Mapping, Any
+from typing import List, Dict, Optional, Mapping, Any, Iterable
 from collections import OrderedDict
 
 from textworld.generator import data
@@ -32,6 +32,23 @@ class UnderspecifiedQuestError(NameError):
         super().__init__(msg)
 
 
+def gen_commands_from_actions(actions):
+    def _get_name_mapping(action):
+        mapping = data.get_rules()[action.name].match(action)
+        return {ph.name: var.name for ph, var in mapping.items()}
+
+    commands = []
+    for action in actions:
+        command = "None"
+        if action is not None:
+            command = data.INFORM7_COMMANDS[action.name]
+            command = command.format(**_get_name_mapping(action))
+
+        commands.append(command)
+
+    return commands
+
+
 class Quest:
     """ Quest presentation in TextWorld.
 
@@ -39,14 +56,15 @@ class Quest:
     undertaken with a goal.
     """
 
-    def __init__(self, actions: Optional[List[Action]],
+    def __init__(self, actions: Optional[Iterable[Action]] = None,
                  winning_conditions: Optional[Collection[Proposition]] = None,
                  failing_conditions: Optional[Collection[Proposition]] = None,
-                 desc: str = "") -> None:
+                 desc: Optional[str] = None) -> None:
         """
         Args:
             actions: The actions to be performed to complete the quest.
-                     If `None`, then `winning_conditions` must be provided.
+                     If `None` or an empty list, then `winning_conditions`
+                     must be provided.
             winning_conditions: Set of propositions that need to be true
                                 before marking the quest as completed.
                                 Default: postconditions of the last action.
@@ -55,9 +73,10 @@ class Quest:
                                 Default: can't fail the quest.
             desc: A text description of the quest.
         """
-        self.actions = actions
+        self.actions = tuple(actions) if actions else ()
         self.desc = desc
-        self.commands = []
+        self.commands = gen_commands_from_actions(self.actions)
+        self.reward = 1
         self.win_action = self.set_winning_conditions(winning_conditions)
         self.fail_action = self.set_failing_conditions(failing_conditions)
 
@@ -72,14 +91,16 @@ class Quest:
             An action that is only applicable when the quest is finished.
         """
         if winning_conditions is None:
-            if self.actions is None:
+            if len(self.actions) == 0:
                 raise UnderspecifiedQuestError()
 
             # The default winning conditions are the postconditions of the
             # last action in the quest.
             winning_conditions = self.actions[-1].postconditions
 
-        self.win_action = Action("win", winning_conditions, [Proposition("win")])
+        from textworld.utils import uniquify
+        arguments = uniquify([a for c in winning_conditions for a in c.arguments])
+        self.win_action = Action("win", winning_conditions, [Proposition("win", arguments)] + list(winning_conditions))
         return self.win_action
 
     def set_failing_conditions(self, failing_conditions: Optional[Collection[Proposition]]) -> Optional[Action]:
@@ -100,7 +121,7 @@ class Quest:
         return self.fail_action
 
     def __hash__(self) -> int:
-        return hash((tuple(self.actions),
+        return hash((self.actions,
                      self.win_action,
                      self.fail_action,
                      self.desc,
@@ -112,6 +133,7 @@ class Quest:
                 self.win_action == other.win_action and
                 self.fail_action == other.fail_action and
                 self.desc == other.desc and
+                self.reward == other.reward and
                 self.commands == other.commands)
 
     @classmethod
@@ -132,6 +154,7 @@ class Quest:
         desc = data["desc"]
         quest = cls(actions, win_action.preconditions, failing_conditions, desc=desc)
         quest.commands = data["commands"]
+        quest.reward = data.get("reward", 1)
         return quest
 
     def serialize(self) -> Mapping:
@@ -142,6 +165,7 @@ class Quest:
         """
         data = {}
         data["desc"] = self.desc
+        data["reward"] = self.reward
         data["commands"] = self.commands
         data["actions"] = [action.serialize() for action in self.actions]
         data["win_action"] = self.win_action.serialize()
@@ -240,15 +264,26 @@ class Game:
         """
         self.world = world
         self.state = world.state.copy()  # Current state of the game.
-        self.grammar = grammar
         self.quests = [] if quests is None else quests
         self.metadata = {}
+        self._objective = None
         self._infos = self._build_infos()
         self._rules = data.get_rules()
         self._types = data.get_types()
-        # TODO:
-        # self.change_names()
-        # self.change_descriptions()
+        self.change_grammar(grammar)
+
+        self._main_quest = None
+
+    @property
+    def main_quest(self):
+        if self._main_quest is None:
+            from textworld.generator import inform7
+            from textworld.generator.text_generation import assign_description_to_quest
+            self._main_quest = Quest(actions=GameProgression(self).winning_policy)
+            self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
+            self._main_quest.commands = inform7.gen_commands_from_actions(self._main_quest.actions, self.infos)
+
+        return self._main_quest
 
     @property
     def infos(self) -> Dict[str, EntityInfo]:
@@ -270,6 +305,7 @@ class Game:
         game.state = self.state.copy()
         game._rules = self._rules
         game._types = self._types
+        game._objective = self._objective
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
@@ -277,15 +313,14 @@ class Game:
         from textworld.generator import inform7
         from textworld.generator.text_generation import generate_text_from_grammar
         self.grammar = grammar
+        if self.grammar is None:
+            return
+
         generate_text_from_grammar(self, self.grammar)
         for quest in self.quests:
             # TODO: should have a generic way of generating text commands from actions
-            #       insteaf of relying on inform7 convention.
+            #       instead of relying on inform7 convention.
             quest.commands = inform7.gen_commands_from_actions(quest.actions, self.infos)
-
-        # TODO
-        # self.change_names()
-        # self.change_descriptions()
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -307,11 +342,11 @@ class Game:
                   `Game` object.
         """
         world = World.deserialize(data["world"])
-        grammar = None
+        game = cls(world)
         if "grammar" in data:
-            grammar = Grammar(data["grammar"])
-        quests = [Quest.deserialize(d) for d in data["quests"]]
-        game = cls(world, grammar, quests)
+            game.grammar = Grammar(data["grammar"])
+
+        game.quests = [Quest.deserialize(d) for d in data["quests"]]
         game._infos = {k: EntityInfo.deserialize(v)
                        for k, v in data["infos"]}
         game.state = State.deserialize(data["state"])
@@ -319,6 +354,7 @@ class Game:
                        for k, v in data["rules"]}
         game._types = VariableTypeTree.deserialize(data["types"])
         game.metadata = data.get("metadata", {})
+        game._objective = data.get("objective", None)
 
         return game
 
@@ -332,24 +368,27 @@ class Game:
         data["world"] = self.world.serialize()
         data["state"] = self.state.serialize()
         if self.grammar is not None:
-            data["grammar"] = self.grammar.flags
+            data["grammar"] = self.grammar.flags.serialize()
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
         data["rules"] = [(k, v.serialize()) for k, v in self._rules.items()]
         data["types"] = self._types.serialize()
         data["metadata"] = self.metadata
+        data["objective"] = self._objective
         return data
 
     def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Game) and
                 self.world == other.world and
                 self.infos == other.infos and
-                self.quests == other.quests)
+                self.quests == other.quests and
+                self._objective == other._objective)
 
     def __hash__(self) -> int:
         state = (self.world,
                  frozenset(self.quests),
-                 frozenset(self.infos.items()))
+                 frozenset(self.infos.items()),
+                 self._objective)
 
         return hash(state)
 
@@ -395,6 +434,21 @@ class Game:
         """ All win conditions, one for each quest. """
         return [q.winning_conditions for q in self.quests]
 
+    @property
+    def objective(self) -> str:
+        if self._objective is not None:
+            return self._objective
+
+        if len(self.quests) == 0:
+            return ""
+
+        self._objective = self.main_quest.desc
+        return self._objective
+
+    @objective.setter
+    def objective(self, value: str):
+        self._objective = value
+
 
 class ActionDependencyTreeElement(DependencyTreeElement):
     """ Representation of an `Action` in the dependency tree.
@@ -438,11 +492,74 @@ class ActionDependencyTreeElement(DependencyTreeElement):
         return len(new_facts) > 0
 
     def __lt__(self, other: "ActionDependencyTreeElement") -> bool:
-        return len(other.action.removed & self.action._pre_set) > 0
+        """ Order ActionDependencyTreeElement elements.
+
+        Actions that remove information needed by other actions
+        should be sorted further in the list.
+
+        Notes:
+            This is not a proper ordering, i.e. two actions
+            can mutually removed information needed by each other.
+        """
+        def _required_facts(node):
+            pre_set = set(node.action._pre_set)
+            while node.parent is not None:
+                pre_set |= node.parent.action._pre_set
+                pre_set -= node.action.added
+                node = node.parent
+
+            return pre_set
+
+        return len(other.action.removed & _required_facts(self)) > len(self.action.removed & _required_facts(other))
+        #return len(other.action.removed & self.action._pre_set) > 0
 
     def __str__(self) -> str:
         params = ", ".join(map(str, self.action.variables))
         return "{}({})".format(self.action.name, params)
+
+
+class ActionDependencyTree(DependencyTree):
+
+    def remove(self, action: Action) -> Optional[Action]:
+        super().remove(action)
+
+        # The last action might have impacted one of the subquests.
+        reverse_action = get_reverse_action(action)
+        if reverse_action is not None:
+            self.push(reverse_action)
+
+        return reverse_action
+
+    def flatten(self) -> Iterable[Action]:
+        """
+        Generates a flatten representation of this dependency tree.
+
+        Actions are greedily yielded by iteratively popping leaves from
+        the dependency tree.
+        """
+        tree = self.copy()  # Make a copy of the tree to work on.
+
+        actions = []
+        last_reverse_action = None
+        while len(tree.roots) > 0:
+            # Try leaves that doesn't affect the others first.
+            for leaf in sorted(tree.leaves_elements):
+                if leaf.action != last_reverse_action:
+                    break  # Choose an action that avoids cycles.
+
+            yield leaf.action
+            last_reverse_action = tree.remove(leaf.action)
+
+    def compress(self):
+        for node in self:
+            if node.parent is None:
+                continue
+
+            if len(node.children) == 1:
+                r_action = get_reverse_action(node.element.action)
+                if r_action == node.children[0].element.action:
+                    node.parent.children.remove(node)
+                    node.parent.children += node.children[0].children
 
 
 class QuestProgression:
@@ -458,130 +575,153 @@ class QuestProgression:
             quest: The quest to keep track of its completion.
         """
         self._quest = quest
-        self._tree = DependencyTree(element_type=ActionDependencyTreeElement)
-        self._winning_policy = list(quest.actions)
+        self._completed = False
+        self._failed = False
+        self._unfinishable = False
 
-        # Build a tree representation
-        for i, action in enumerate(quest.actions[::-1]):
+        # Build a tree representation of the quest.
+        self._tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+        self._tree.push(quest.win_action)
+        for action in quest.actions[::-1]:
             self._tree.push(action)
 
-    def is_completed(self, state: State) -> bool:
-        """ Check whether the quest is completed. """
-        return state.is_applicable(self._quest.win_action)
-
-    def has_failed(self, state: State) -> bool:
-        """ Check whether the quest has failed. """
-        if self._quest.fail_action is None:
-            return False
-
-        return state.is_applicable(self._quest.fail_action)
+        self._winning_policy = quest.actions + (quest.win_action,)
 
     @property
     def winning_policy(self) -> List[Action]:
         """ Actions to be performed in order to complete the quest. """
-        return self._winning_policy
+        if self.done:
+            return []
 
-    def _pop_action_from_tree(self, action: Action, tree: DependencyTree) -> Optional[Action]:
-        # The last action was meaningful for the quest.
-        tree.pop(action)
+        return self._winning_policy[:-1]  # Discard "win" action.
 
-        reverse_action = None
-        if tree.root is not None:
-            # The last action might have impacted one of the subquests.
-            reverse_action = get_reverse_action(action)
-            if reverse_action is not None:
-                tree.push(reverse_action)
+    @property
+    def done(self) -> bool:
+        """ Check if the quest is done (i.e. completed, failed or unfinishable). """
+        return self.completed or self.failed or self.unfinishable
 
-        return reverse_action
+    @property
+    def completed(self) -> bool:
+        """ Check whether the quest is completed. """
+        return self._completed
 
-    def _build_policy(self) -> Optional[List[Action]]:
-        """ Build a policy given the current state of the QuestTree.
+    @property
+    def failed(self) -> bool:
+        """ Check whether the quest has failed. """
+        return self._failed
 
-        The policy is greedily built by iteratively popping leaves from
-        the dependency tree.
-        """
-        if self._tree is None:
-            return None
+    @property
+    def unfinishable(self) -> bool:
+        """ Check whether the quest is in an unfinishable state. """
+        return self._unfinishable
 
-        tree = self._tree.copy()  # Make a copy of the tree to work on.
-
-        policy = []
-        last_reverse_action = None
-        while tree.root is not None:
-            # Try leaves that doesn't affect the others first.
-            for leaf in sorted(tree.leaves_elements):
-                if leaf.action != last_reverse_action:
-                    break  # Choose an action that avoids cycles.
-
-            policy.append(leaf.action)
-            last_reverse_action = self._pop_action_from_tree(leaf.action, tree)
-
-        return policy
-
-    def update(self, action: Action, bypass: Optional[List[Action]] = None) -> None:
-        """ Update the state of the quest after a given action was performed.
+    def update(self, action: Optional[Action] = None, state: Optional[State] = None) -> None:
+        """ Update quest progression given available information.
 
         Args:
-            action: Action affecting the state of the quest.
+            action: Action potentially affecting the quest progression.
+            state: Current game state.
         """
-        if bypass is not None:
-            for action in bypass:
-                self._pop_action_from_tree(action, self._tree)
+        if self.done:
+            return  # Nothing to do, the quest is already done.
 
-            self._winning_policy = self._build_policy()
-            return
+        if state is not None:
+            # Check if quest is completed.
+            if self._quest.win_action is not None:
+                self._completed = state.is_applicable(self._quest.win_action)
 
-        # Determine if we moved away from the goal or closer to it.
-        if action in self._tree.leaves_values:
-            # The last action was meaningful for the quest.
-            self._pop_action_from_tree(action, self._tree)
-        else:
-            # The last action must have moved us away from the goal.
-            # We need to reverse it.
-            reverse_action = get_reverse_action(action)
-            if reverse_action is None:
-                # Irreversible action.
-                self._tree = None  # Can't track quest anymore.
-            else:
-                self._tree.push(reverse_action)
+            # Check if quest has failed.
+            if self._quest.fail_action is not None:
+                self._failed = state.is_applicable(self._quest.fail_action)
 
-        self._winning_policy = self._build_policy()
+            # Try compressing the winning policy given the new game state.
+            if self.compress_winning_policy(state):
+                return  # A shorter winning policy has been found.
+
+        if action is not None:
+            # Determine if we moved away from the goal or closer to it.
+            reverse_action = self._tree.remove(action)
+            if reverse_action is None:  # Irreversible action.
+                self._unfinishable = True  # Can't track quest anymore.
+
+            self._winning_policy = tuple(self._tree.flatten())  # Rebuild policy.
+
+    def compress_winning_policy(self, state: State) -> bool:
+        """ Compress the winning policy given a game state.
+
+        Args:
+            state: Current game state.
+
+        Returns:
+            Whether the winning policy was compressed or not.
+        """
+
+        def _find_shorter_policy(policy):
+            for j in range(0, len(policy)):
+                for i in range(j + 1, len(policy))[::-1]:
+                    shorter_policy = policy[:j] + policy[i:]
+                    if state.is_sequence_applicable(shorter_policy):
+                        self._tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+                        for action in shorter_policy[::-1]:
+                            self._tree.push(action)
+
+                        return shorter_policy
+
+            return None
+
+        compressed = False
+        policy = _find_shorter_policy(self._winning_policy)
+        while policy is not None:
+            compressed = True
+            self._winning_policy = policy
+            policy = _find_shorter_policy(policy)
+
+        return compressed
 
 
 class GameProgression:
     """ GameProgression keeps track of the progression of a game.
 
-    If `tracking_quest` is  True, then `winning_policy` will be the list
+    If `tracking_quests` is  True, then `winning_policy` will be the list
     of Action that need to be applied in order to complete the game.
     """
 
-    def __init__(self, game: Game, track_quest: bool = True) -> None:
+    def __init__(self, game: Game, track_quests: bool = True) -> None:
         """
         Args:
-            game: The game to track progression of.
-            track_quest: Whether we should track the quest completion.
+            game: The game for which to track progression.
+            track_quests: whether quest progressions are being tracked.
         """
         self.game = game
         self.state = game.state.copy()
         self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
                                                                      self.game._types.constants_mapping))
-        self.quest_progression = None
-        if track_quest and len(game.quests) > 0:
-            self.quest_progression = QuestProgression(game.quests[0])
+
+        self.quest_progressions = []
+        if track_quests:
+            self.quest_progressions = [QuestProgression(quest) for quest in game.quests]
+            for quest_progression in self.quest_progressions:
+                quest_progression.update(action=None, state=self.state)
 
     @property
     def done(self) -> bool:
-        """ Whether the quest is completed or has failed. """
-        if self.quest_progression is None:
-            return False
+        """ Whether all quests are completed or at least one has failed or is unfinishable. """
+        if not self.tracking_quests:
+            return False  # There is nothing to be "done".
 
-        return (self.quest_progression.is_completed(self.state) or
-                self.quest_progression.has_failed(self.state))
+        all_completed = True
+        for quest_progression in self.quest_progressions:
+            if quest_progression.failed or quest_progression.unfinishable:
+                return True
+
+            all_completed &= quest_progression.completed
+
+        return all_completed
 
     @property
-    def tracking_quest(self) -> bool:
-        """ Whether the quest is tracked or not. """
-        return self.quest_progression is not None
+    def tracking_quests(self) -> bool:
+        """ Whether quests are being tracked or not. """
+        return len(self.quest_progressions) > 0
 
     @property
     def valid_actions(self) -> List[Action]:
@@ -594,12 +734,21 @@ class GameProgression:
 
         Returns:
             A policy that leads to winning the game. It can be `None`
-            if `tracking_quest` is `False` or the quest has been failed.
+            if `tracking_quests` is `False` or the quest has failed.
         """
-        if not self.tracking_quest or self.quest_progression.winning_policy is None:
+        if not self.tracking_quests:
             return None
 
-        return list(self.quest_progression.winning_policy)
+        # Check if any quest has failed.
+        if any(quest.failed or quest.unfinishable for quest in self.quest_progressions):
+            return None
+
+        # Greedily build a new winning policy by merging all individual quests' tree.
+        trees = [quest._tree for quest in self.quest_progressions if not quest.done]
+        master_quest_tree = ActionDependencyTree(element_type=ActionDependencyTreeElement,
+                                                 trees=trees)
+
+        return tuple(a for a in master_quest_tree.flatten() if a.name != "win")
 
     def update(self, action: Action) -> None:
         """ Update the state of the game given the provided action.
@@ -614,14 +763,6 @@ class GameProgression:
         self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
                                                                      self.game._types.constants_mapping))
 
-        if self.tracking_quest:
-            if self.state.is_sequence_applicable(self.winning_policy):
-                pass  # The last action didn't impact the quest.
-            else:
-                # Check for shortcut.
-                for i in range(1, len(self.winning_policy)):
-                    if self.state.is_sequence_applicable(self.winning_policy[i:]):
-                        self.quest_progression.update(action, bypass=self.winning_policy[:i])
-                        return
-
-                self.quest_progression.update(action)
+        # Update all quest progressions given the last action and new state.
+        for quest_progression in self.quest_progressions:
+            quest_progression.update(action, self.state)

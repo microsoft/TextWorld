@@ -25,60 +25,66 @@ class CustomDependencyTreeElement(DependencyTreeElement):
 
 class TestDependencyTree(unittest.TestCase):
 
-    def test_pop(self):
+    def test_remove(self):
         tree = DependencyTree(element_type=CustomDependencyTreeElement)
-        assert tree.root is None
-        tree.push("G")
-        tree.pop("G")
-        assert tree.root is None
+        assert len(tree.roots) == 0
+        assert tree.push("G")
+        assert tree.remove("G")
+        assert len(tree.roots) == 0
+        assert list(tree) == []
+        assert tree.values == []
 
-        tree.push("G")
-        tree.push("F")
+        assert tree.push("G")
+        assert tree.push("F")
         # Can't pop a non-leaf element.
-        assert_raises(ValueError, tree.pop, "G")
-        assert tree.root is not None
+        assert not tree.remove("G")
+        assert len(tree.roots) > 0
 
         assert set(tree.leaves_values) == set("F")
-        tree.pop("F")
+        assert tree.remove("F")
         assert set(tree.leaves_values) == set("G")
 
     def test_push(self):
         tree = DependencyTree(element_type=CustomDependencyTreeElement)
-        assert tree.root is None
+        assert len(tree.roots) == 0
         assert set(tree.leaves_values) == set()
 
-        node = tree.push("G")
+        tree.push("G")
         assert set(tree.leaves_values) == set(["G"]), tree.leaves_values
-        assert tree.root.element.value == "G"
-        assert tree.root is node
-        assert len(node.children) == 0
+        assert tree.roots[0].element.value == "G"
+        assert len(tree.roots[0].children) == 0
 
-        node = tree.push("F")
+        tree.push("F")
         assert set(tree.leaves_values) == set(["F"])
 
-        node = tree.push("C")
+        tree.push("C")
+        node = tree.roots[0].children[0].children[0]
         assert set(tree.leaves_values) == set(["C"])
-        assert tree.root.element.value == "G"
+        assert tree.roots[0].element.value == "G"
         assert node.element.value == "C"
-        assert len(tree.root.children) == 1
+        assert len(tree.roots[0].children) == 1
         assert len(node.children) == 0
 
         # Nothing depends on A at the moment.
-        node = tree.push("A")
+        tree.push("A")
         assert set(tree.leaves_values) == set(["C"])
 
-        node = tree.push("E")
+        tree_ = tree.copy()
+        tree.push("E")
+        assert tree_.values != tree.values
         assert set(tree.leaves_values) == set(["E", "C"])
 
         # Add the same element twice at the same level doesn't change the tree.
-        node = tree.push("E")
-        assert node is None
+        tree_ = tree.copy()
+        tree.push("E")
+        assert tree_.values == tree.values
         assert set(tree.leaves_values) == set(["E", "C"])
-        # Cannot remove a value that hasn't been added to the tree.
-        assert_raises(ValueError, tree.pop, "Z")
+        # Removing a value not associated to a leaf, does not change the tree.
+        assert not tree.remove("Z")
+        assert tree_.values == tree.values
 
-        node = tree.push("A")
+        tree.push("A")
         assert set(tree.leaves_values) == set(["A", "C"])
 
-        node = tree.push("B")
+        tree.push("B")
         assert set(tree.leaves_values) == set(["B", "A", "C"])
