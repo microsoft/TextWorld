@@ -38,7 +38,7 @@ if __name__ == "__main__":
             continue
 
         if len(game.quests) > 0:
-            objectives[game_filename] = game.quests[0].desc
+            objectives[game_filename] = game.objective
 
         names |= set(info.name for info in game.infos.values() if info.name is not None)
         game_logger.collect(game)

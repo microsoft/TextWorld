@@ -32,6 +32,23 @@ class UnderspecifiedQuestError(NameError):
         super().__init__(msg)
 
 
+def gen_commands_from_actions(actions):
+    def _get_name_mapping(action):
+        mapping = data.get_rules()[action.name].match(action)
+        return {ph.name: var.name for ph, var in mapping.items()}
+
+    commands = []
+    for action in actions:
+        command = "None"
+        if action is not None:
+            command = data.INFORM7_COMMANDS[action.name]
+            command = command.format(**_get_name_mapping(action))
+
+        commands.append(command)
+
+    return commands
+
+
 class Quest:
     """ Quest presentation in TextWorld.
 
@@ -42,7 +59,7 @@ class Quest:
     def __init__(self, actions: Optional[Iterable[Action]] = None,
                  winning_conditions: Optional[Collection[Proposition]] = None,
                  failing_conditions: Optional[Collection[Proposition]] = None,
-                 desc: str = "") -> None:
+                 desc: Optional[str] = None) -> None:
         """
         Args:
             actions: The actions to be performed to complete the quest.
@@ -58,7 +75,7 @@ class Quest:
         """
         self.actions = tuple(actions) if actions else ()
         self.desc = desc
-        self.commands = []
+        self.commands = gen_commands_from_actions(self.actions)
         self.reward = 1
         self.win_action = self.set_winning_conditions(winning_conditions)
         self.fail_action = self.set_failing_conditions(failing_conditions)
@@ -120,6 +137,7 @@ class Quest:
                 self.win_action == other.win_action and
                 self.fail_action == other.fail_action and
                 self.desc == other.desc and
+                self.reward == other.reward and
                 self.commands == other.commands)
 
     @classmethod
@@ -140,6 +158,7 @@ class Quest:
         desc = data["desc"]
         quest = cls(actions, win_action.preconditions, failing_conditions, desc=desc)
         quest.commands = data["commands"]
+        quest.reward = data.get("reward", 1)
         return quest
 
     def serialize(self) -> Mapping:
@@ -150,6 +169,7 @@ class Quest:
         """
         data = {}
         data["desc"] = self.desc
+        data["reward"] = self.reward
         data["commands"] = self.commands
         data["actions"] = [action.serialize() for action in self.actions]
         data["win_action"] = self.win_action.serialize()
@@ -248,15 +268,26 @@ class Game:
         """
         self.world = world
         self.state = world.state.copy()  # Current state of the game.
-        self.grammar = grammar
         self.quests = [] if quests is None else quests
         self.metadata = {}
+        self._objective = None
         self._infos = self._build_infos()
         self._rules = data.get_rules()
         self._types = data.get_types()
-        # TODO:
-        # self.change_names()
-        # self.change_descriptions()
+        self.change_grammar(grammar)
+
+        self._main_quest = None
+
+    @property
+    def main_quest(self):
+        if self._main_quest is None:
+            from textworld.generator import inform7
+            from textworld.generator.text_generation import assign_description_to_quest
+            self._main_quest = Quest(actions=GameProgression(self).winning_policy)
+            self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
+            self._main_quest.commands = inform7.gen_commands_from_actions(self._main_quest.actions, self.infos)
+
+        return self._main_quest
 
     @property
     def infos(self) -> Dict[str, EntityInfo]:
@@ -278,6 +309,7 @@ class Game:
         game.state = self.state.copy()
         game._rules = self._rules
         game._types = self._types
+        game._objective = self._objective
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
@@ -285,15 +317,14 @@ class Game:
         from textworld.generator import inform7
         from textworld.generator.text_generation import generate_text_from_grammar
         self.grammar = grammar
+        if self.grammar is None:
+            return
+
         generate_text_from_grammar(self, self.grammar)
         for quest in self.quests:
             # TODO: should have a generic way of generating text commands from actions
-            #       insteaf of relying on inform7 convention.
+            #       instead of relying on inform7 convention.
             quest.commands = inform7.gen_commands_from_actions(quest.actions, self.infos)
-
-        # TODO
-        # self.change_names()
-        # self.change_descriptions()
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -315,11 +346,11 @@ class Game:
                   `Game` object.
         """
         world = World.deserialize(data["world"])
-        grammar = None
+        game = cls(world)
         if "grammar" in data:
-            grammar = Grammar(data["grammar"])
-        quests = [Quest.deserialize(d) for d in data["quests"]]
-        game = cls(world, grammar, quests)
+            game.grammar = Grammar(data["grammar"])
+
+        game.quests = [Quest.deserialize(d) for d in data["quests"]]
         game._infos = {k: EntityInfo.deserialize(v)
                        for k, v in data["infos"]}
         game.state = State.deserialize(data["state"])
@@ -327,6 +358,7 @@ class Game:
                        for k, v in data["rules"]}
         game._types = VariableTypeTree.deserialize(data["types"])
         game.metadata = data.get("metadata", {})
+        game._objective = data.get("objective", None)
 
         return game
 
@@ -340,24 +372,27 @@ class Game:
         data["world"] = self.world.serialize()
         data["state"] = self.state.serialize()
         if self.grammar is not None:
-            data["grammar"] = self.grammar.flags
+            data["grammar"] = self.grammar.flags.serialize()
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
         data["rules"] = [(k, v.serialize()) for k, v in self._rules.items()]
         data["types"] = self._types.serialize()
         data["metadata"] = self.metadata
+        data["objective"] = self._objective
         return data
 
     def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Game) and
                 self.world == other.world and
                 self.infos == other.infos and
-                self.quests == other.quests)
+                self.quests == other.quests and
+                self._objective == other._objective)
 
     def __hash__(self) -> int:
         state = (self.world,
                  frozenset(self.quests),
-                 frozenset(self.infos.items()))
+                 frozenset(self.infos.items()),
+                 self._objective)
 
         return hash(state)
 
@@ -402,6 +437,21 @@ class Game:
     def win_condition(self) -> List[Collection[Proposition]]:
         """ All win conditions, one for each quest. """
         return [q.winning_conditions for q in self.quests]
+
+    @property
+    def objective(self) -> str:
+        if self._objective is not None:
+            return self._objective
+
+        if len(self.quests) == 0:
+            return ""
+
+        self._objective = self.main_quest.desc
+        return self._objective
+
+    @objective.setter
+    def objective(self, value: str):
+        self._objective = value
 
 
 class ActionDependencyTreeElement(DependencyTreeElement):
