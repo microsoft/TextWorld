@@ -47,10 +47,10 @@ def test_play_generated_games():
                 game_state, reward, done = env.step(command)
 
                 if done:
-                    msg = "Finished before playing `max_steps` steps."
+                    msg = "Finished before playing `max_steps` steps because of command '{}'.".format(command)
                     if game_state.has_won:
                         msg += " (winning)"
-                        assert game_state._game_progression.winning_policy == []
+                        assert len(game_state._game_progression.winning_policy) == 0
 
                     if game_state.has_lost:
                         msg += " (losing)"

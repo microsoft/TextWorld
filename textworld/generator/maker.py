@@ -589,6 +589,40 @@ class GameMaker:
         self.build()
         return self._quests[0]
 
+    def new_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+        """ Create new fact.
+
+        Args:
+            name: The name of the new fact.
+            *entities: A list of entities as arguments to the new fact.
+        """
+        args = [entity.var for entity in entities]
+        return Proposition(name, args)
+
+    def new_quest_using_commands(self, commands: List[str]) -> Quest:
+        """ Creates a new quest using predefined text commands.
+
+        This launches a `textworld.play` session to execute provided commands.
+
+        Args:
+            commands: Text commands.
+
+        Returns:
+            The resulting quest.
+        """
+        with make_temp_directory() as tmpdir:
+            try:
+                game_file = self.compile(pjoin(tmpdir, "record_quest"))
+                recorder = Recorder()
+                agent = textworld.agents.WalkthroughAgent(commands)
+                textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
+            except textworld.agents.WalkthroughDone:
+                pass  # Quest is done.
+
+        # Skip "None" actions.
+        actions = [action for action in recorder.actions if action is not None]
+        return Quest(actions=actions)
+
     def set_quest_from_final_state(self, final_state: Collection[Proposition]) -> Quest:
         """ Defines the game's quest using a collection of facts.
 

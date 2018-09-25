@@ -18,13 +18,28 @@ from textworld.generator import compile_game, make_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
 
 from textworld.generator.chaining import ChainingOptions, sample_quest
+from textworld.logic import Action, State
 
 from textworld.generator.game import Quest, Game
 from textworld.generator.game import QuestProgression, GameProgression
 from textworld.generator.game import UnderspecifiedQuestError
+from textworld.generator.game import ActionDependencyTree, ActionDependencyTreeElement
 from textworld.generator.inform7 import gen_commands_from_actions
 
 from textworld.logic import Proposition
+
+
+def _apply_command(command: str, game_progression: GameProgression) -> None:
+    """ Apply a text command to a game_progression object.
+    """
+    valid_commands = gen_commands_from_actions(game_progression.valid_actions, game_progression.game.infos)
+
+    for action, cmd in zip(game_progression.valid_actions, valid_commands):
+        if command == cmd:
+            game_progression.update(action)
+            return
+
+    raise ValueError("Not a valid command: {}. Expected: {}".format(command, valid_commands))
 
 
 def test_game_comparison():
@@ -106,12 +121,12 @@ class TestQuest(unittest.TestCase):
         assert quest.win_action.preconditions == self.quest.actions[-1].postconditions
         assert quest.fail_action is None
 
-        quest = Quest(actions=None, winning_conditions=self.quest.actions[-1].postconditions)
-        assert quest.actions is None
+        quest = Quest(winning_conditions=self.quest.actions[-1].postconditions)
+        assert len(quest.actions) == 0
         assert quest.win_action == self.quest.win_action
         assert quest.fail_action is None
 
-        npt.assert_raises(UnderspecifiedQuestError, Quest, actions=None, winning_conditions=None)
+        npt.assert_raises(UnderspecifiedQuestError, Quest, actions=[], winning_conditions=None)
 
         quest = Quest(self.quest.actions, failing_conditions=self.failing_conditions)
         assert quest.fail_action == self.quest.fail_action
@@ -242,9 +257,6 @@ class TestQuestProgression(unittest.TestCase):
     def setUpClass(cls):
         M = GameMaker()
 
-        # The goal
-        commands = ["open wooden door", "go west", "take carrot", "go east", "drop carrot"]
-
         # Create a 'bedroom' room.
         R1 = M.new_room("bedroom")
         R2 = M.new_room("kitchen")
@@ -262,94 +274,38 @@ class TestQuestProgression(unittest.TestCase):
         chest.add_property("open")
         R2.add(chest)
 
+        # The goal
+        commands = ["open wooden door", "go west", "take carrot", "go east", "drop carrot"]
         cls.quest = M.set_quest_from_commands(commands)
+
+        commands = ["open wooden door", "go west", "take carrot", "eat carrot"]
+        cls.eating_quest = M.new_quest_using_commands(commands)
+
+        cls.game = M.build()
 
     def test_winning_policy(self):
         quest = QuestProgression(self.quest)
         assert quest.winning_policy == self.quest.actions
-        quest.update(self.quest.actions[0])
-        assert quest.winning_policy == self.quest.actions[1:]
+        quest.update(self.quest.actions[0], state=State())
+        assert tuple(quest.winning_policy) == self.quest.actions[1:]
 
-    def test_cycle_in_winning_policy(cls):
-        M = GameMaker()
+    def test_failing_quest(self):
+        quest = QuestProgression(self.quest)
 
-        # Create a map.
-        # r0
-        #  |
-        # r1 -- r2
-        #  |    |
-        # r3 -- r4
-        R0 = M.new_room("r0")
-        R1 = M.new_room("r1")
-        R2 = M.new_room("r2")
-        R3 = M.new_room("r3")
-        R4 = M.new_room("r4")
-        M.set_player(R1)
+        state = self.game.state.copy()
+        for action in self.eating_quest.actions:
+            state.apply(action)
+            if action.name.startswith("eat"):
+                quest.update(action, state)
+                assert len(quest.winning_policy) == 0
+                assert quest.done
+                assert not quest.completed
+                assert not quest.failed
+                assert quest.unfinishable
+                break
 
-        M.connect(R0.south, R1.north),
-        M.connect(R1.east, R2.west),
-        M.connect(R3.east, R4.west)
-        M.connect(R1.south, R3.north)
-        M.connect(R2.south, R4.north)
-
-        carrot = M.new(type='f', name='carrot')
-        R0.add(carrot)
-
-        apple = M.new(type='f', name='apple')
-        R2.add(apple)
-
-        commands = ["go north", "take carrot"]
-        M.set_quest_from_commands(commands)
-        game = M.build()
-        game_progression = GameProgression(game)
-
-        def _apply_command(command, game_progression):
-            valid_commands = gen_commands_from_actions(game_progression.valid_actions, game.infos)
-
-            for action, cmd in zip(game_progression.valid_actions, valid_commands):
-                if command == cmd:
-                    game_progression.update(action)
-                    return
-
-            raise ValueError("Not a valid command: {}. Expected: {}".format(command, valid_commands))
-
-        _apply_command("go south", game_progression)
-        expected_commands = ["go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
-        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
-
-        _apply_command("go east", game_progression)
-
-        _apply_command("go north", game_progression)
-        expected_commands = ["go south", "go west", "go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
-        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
-
-        _apply_command("go west", game_progression)  # Found shortcut
-        expected_commands = commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
-        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
-
-        # Quest where player's has to pick up the carrot first.
-        commands = ["go east", "take apple", "go west", "go north", "drop apple"]
-        M.set_quest_from_commands(commands)
-        game = M.build()
-        game_progression = GameProgression(game)
-
-        _apply_command("go south", game_progression)
-        expected_commands = ["go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
-        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
-
-        _apply_command("go east", game_progression)
-        expected_commands = ["go west", "go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
-        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
-
-        _apply_command("go north", game_progression)  # Found shortcut
-        expected_commands = commands[1:]
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
-        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+            assert not quest.done
+            assert len(quest.winning_policy) > 0
 
 
 class TestGameProgression(unittest.TestCase):
@@ -390,6 +346,167 @@ class TestGameProgression(unittest.TestCase):
 
         assert game_progress.done
 
+    def test_cycle_in_winning_policy(self):
+        M = GameMaker()
+
+        # Create a map.
+        # r0
+        #  |
+        # r1 -- r2
+        #  |    |
+        # r3 -- r4
+        R0 = M.new_room("r0")
+        R1 = M.new_room("r1")
+        R2 = M.new_room("r2")
+        R3 = M.new_room("r3")
+        R4 = M.new_room("r4")
+        M.set_player(R1)
+
+        M.connect(R0.south, R1.north),
+        M.connect(R1.east, R2.west),
+        M.connect(R3.east, R4.west)
+        M.connect(R1.south, R3.north)
+        M.connect(R2.south, R4.north)
+
+        carrot = M.new(type='f', name='carrot')
+        R0.add(carrot)
+
+        apple = M.new(type='f', name='apple')
+        R2.add(apple)
+
+        commands = ["go north", "take carrot"]
+        M.set_quest_from_commands(commands)
+        game = M.build()
+        game_progression = GameProgression(game)
+
+        _apply_command("go south", game_progression)
+        expected_commands = ["go north"] + commands
+        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+
+        _apply_command("go east", game_progression)
+        _apply_command("go north", game_progression)
+        expected_commands = ["go south", "go west", "go north"] + commands
+        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+
+        _apply_command("go west", game_progression)  # Found shortcut
+        expected_commands = commands
+        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+
+        # Quest where player's has to pick up the carrot first.
+        commands = ["go east", "take apple", "go west", "go north", "drop apple"]
+
+        M.set_quest_from_commands(commands)
+        game = M.build()
+        game_progression = GameProgression(game)
+
+        _apply_command("go south", game_progression)
+        expected_commands = ["go north"] + commands
+        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+
+        _apply_command("go east", game_progression)
+        expected_commands = ["go west", "go north"] + commands
+        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+
+        _apply_command("go north", game_progression)  # Found shortcut
+        expected_commands = commands[1:]
+        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
+
+    def test_game_with_multiple_quests(self):
+        M = GameMaker()
+
+        # The subgoals (needs to be executed in order).
+        commands = [["open wooden door", "go west", "take carrot", "go east", "drop carrot"],
+                    # Now, the player is back in the kitchen and the wooden door is open.
+                    ["go west", "take lettuce", "go east", "drop lettuce"],
+                    # Now, the player is back in the kitchen, there are a carrot and a lettuce on the floor.
+                    ["take lettuce", "take carrot", "insert carrot into chest", "insert lettuce into chest", "close chest"]]
+
+        # Create a 'bedroom' room.
+        R1 = M.new_room("bedroom")
+        R2 = M.new_room("kitchen")
+        M.set_player(R2)
+
+        path = M.connect(R1.east, R2.west)
+        path.door = M.new(type='d', name='wooden door')
+        path.door.add_property("closed")
+
+        carrot = M.new(type='f', name='carrot')
+        lettuce = M.new(type='f', name='lettuce')
+        R1.add(carrot, lettuce)
+
+        # Add a closed chest in R2.
+        chest = M.new(type='c', name='chest')
+        chest.add_property("open")
+        R2.add(chest)
+
+        quest1 = M.new_quest_using_commands(commands[0])
+        quest1.desc = "Fetch the carrot and drop it on the kitchen's ground."
+        quest2 = M.new_quest_using_commands(commands[0] + commands[1])
+        quest2.desc = "Fetch the lettuce and drop it on the kitchen's ground."
+        quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2])
+        winning_facts = [M.new_fact("in", lettuce, chest),
+                         M.new_fact("in", carrot, chest),
+                         M.new_fact("closed", chest),]
+        quest3.set_winning_conditions(winning_facts)
+        quest3.desc = "Put the lettuce and the carrot into the chest before closing it."
+
+        M._quests = [quest1, quest2, quest3]
+        assert len(M._quests) == len(commands)
+        game = M.build()
+
+        game_progress = GameProgression(game)
+        assert len(game_progress.quest_progressions) == len(game.quests)
+
+        # Following the actions associated to the last quest actually corresponds
+        # to solving the whole game.
+        for action in game_progress.winning_policy:
+            assert not game_progress.done
+            game_progress.update(action)
+
+        assert game_progress.done
+        assert all(quest_progression.done for quest_progression in game_progress.quest_progressions)
+
+        # Try solving the game by greedily taking the first action from the current winning policy.
+        game_progress = GameProgression(game)
+        while not game_progress.done:
+            action = game_progress.winning_policy[0]
+            game_progress.update(action)
+            # print(action.name, [c.name for c in game_progress.winning_policy])
+
+        # Try solving the second quest (i.e. bringing back the lettuce) first.
+        game_progress = GameProgression(game)
+        for command in ["open wooden door", "go west", "take lettuce", "go east", "drop lettuce"]:
+            _apply_command(command, game_progress)
+
+        assert not game_progress.quest_progressions[0].done
+        assert game_progress.quest_progressions[1].done
+
+        for command in ["go west", "take carrot", "go east", "drop carrot"]:
+            _apply_command(command, game_progress)
+
+        assert game_progress.quest_progressions[0].done
+        assert game_progress.quest_progressions[1].done
+
+        for command in ["take lettuce", "take carrot", "insert carrot into chest", "insert lettuce into chest", "close chest"]:
+            _apply_command(command, game_progress)
+
+        assert game_progress.done
+
+        # Game is done whenever a quest has failed or is unfinishable.
+        game_progress = GameProgression(game)
+
+        for command in ["open wooden door", "go west", "take carrot", "eat carrot"]:
+            assert not game_progress.done
+            _apply_command(command, game_progress)
+
+        assert game_progress.done
+
     def test_game_without_a_quest(self):
         M = GameMaker()
 
@@ -406,3 +523,26 @@ class TestGameProgression(unittest.TestCase):
         action = game_progress.valid_actions[0]
         game_progress.update(action)
         assert not game_progress.done
+
+
+class TestActionDependencyTree(unittest.TestCase):
+
+    def test_flatten(self):
+        action_lock = Action.parse("lock/c :: $at(P, r) & $at(c, r) & $match(k, c) & $in(k, I) & closed(c) -> locked(c)")
+        action_close = Action.parse("close/c :: $at(P, r) & $at(c, r) & open(c) -> closed(c)")
+        action_insert1 = Action.parse("insert :: $at(P, r) & $at(c, r) & $open(c) & in(o1: o, I) -> in(o1: o, c)")
+        action_insert2 = Action.parse("insert :: $at(P, r) & $at(c, r) & $open(c) & in(o2: o, I) -> in(o2: o, c)")
+        action_take1 = Action.parse("take :: $at(P, r) & at(o1: o, r) -> in(o1: o, I)")
+        action_take2 = Action.parse("take :: $at(P, r) & at(o2: o, r) -> in(o2: o, I)")
+        action_win = Action.parse("win :: $in(o1: o, c) & $in(o2: o, c) & $locked(c) -> win(o1: o, o2: o, c)")
+
+        tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+        tree.push(action_win)
+        tree.push(action_lock)
+        tree.push(action_close)
+        tree.push(action_insert1)
+        tree.push(action_insert2)
+        tree.push(action_take1)
+        tree.push(action_take2)
+        actions = list(a.name for a in tree.flatten())
+        assert actions == ['take', 'insert', 'take', 'insert', 'close/c', 'lock/c', 'win'], actions
