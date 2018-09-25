@@ -49,7 +49,7 @@ class DependencyTree:
         def push(self, node: "DependencyTree._Node") -> bool:
             if node == self:
                 return True
-            
+
             added = False
             for child in self.children:
                 added |= child.push(node)
@@ -74,11 +74,11 @@ class DependencyTree:
                 return True
 
             return False
-        
+
         def __iter__(self) -> Iterable["DependencyTree._Node"]:
             for child in self.children:
                 yield from list(child)
-            
+
             yield self
 
         def __str__(self) -> str:
@@ -99,7 +99,7 @@ class DependencyTree:
 
             return node
 
-    def __init__(self, element_type: DependencyTreeElement = DependencyTreeElement, trees: Iterable["DependencyTree"] = []):
+    def __init__(self, element_type: type = DependencyTreeElement, trees: Iterable["DependencyTree"] = []):
         self.roots = []
         self.element_type = element_type
         for tree in trees:
@@ -110,17 +110,17 @@ class DependencyTree:
     def push(self, value: Any, allow_multi_root: bool = False) -> bool:
         """ Add a value to this dependency tree.
 
-        Adding a value already present in the tree does not modify the tree. 
-        
+        Adding a value already present in the tree does not modify the tree.
+
         Args:
             value: value to add.
-            allow_multi_root: if `True`, allow the value to spawn an 
+            allow_multi_root: if `True`, allow the value to spawn an
                               additional root if needed.
-                
+
         """
         element = self.element_type(value)
         node = DependencyTree._Node(element)
-        
+
         added = False
         for root in self.roots:
             added |= root.push(node)
@@ -128,7 +128,7 @@ class DependencyTree:
         if len(self.roots) == 0 or (not added and allow_multi_root):
             self.roots.append(node)
             added = True
-        
+
         self._update()  # Recompute leaves.
         return added
 
@@ -137,17 +137,17 @@ class DependencyTree:
 
         The value to remove needs to belong to at least one leaf in this tree.
         Otherwise, the tree remains unchanged.
-        
+
         Args:
             value: value to remove from the tree.
-        
+
         Returns:
             Whether the tree has changed or not.
         """
         if value not in self.leaves_values:
             return False
 
-        root_to_remove = [] 
+        root_to_remove = []
         for node in self:
             if node.element.value == value:
                 if node.parent is not None:
@@ -160,7 +160,7 @@ class DependencyTree:
 
         self._update()  # Recompute leaves.
         return True
-            
+
     def _update(self) -> None:
         self._leaves_values = []
         self._leaves_elements = []
@@ -177,7 +177,7 @@ class DependencyTree:
         tree = type(self)(element_type=self.element_type)
         for root in self.roots:
             tree.roots.append(root.copy())
-        
+
         tree._update()
         return tree
 
