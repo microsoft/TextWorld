@@ -24,8 +24,8 @@ def test_used_names_is_updated(verbose=False):
     r = Variable('r_0', 'r')
     k1 = Variable('k_1', 'k')
     k2 = Variable('k_2', 'k')
-    c1 = Variable('c_1', 'c')
-    c2 = Variable('c_2', 'c')
+    c1 = Variable('c_1', 'chest')
+    c2 = Variable('c_2', 'chest')
     facts = [Proposition('at', [P, r]),
              Proposition('at', [k1, r]),
              Proposition('at', [k2, r]),
@@ -35,7 +35,7 @@ def test_used_names_is_updated(verbose=False):
              Proposition('match', [k2, c2])]
     world = World.from_facts(facts)
     world.set_player_room()  # Set start room to the middle one.
-    world.populate_room(10, world.player_room)  # Add objects to the starting room.
+    world.populate_room(5, world.player_room)  # Add objects to the starting room.
 
     # Generate the world representation.
     grammar = textworld.generator.make_grammar(flags={}, rng=np.random.RandomState(42))
@@ -84,7 +84,3 @@ def test_blend_instructions(verbose=False):
     game.change_grammar(grammar2)
     quest2 = quest.copy()
     assert len(quest1.desc) > len(quest2.desc)
-
-
-if __name__ == "__main__":
-    test_blend_instructions(verbose=True)

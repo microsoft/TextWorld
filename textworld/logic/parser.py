@@ -101,7 +101,7 @@ class GameLogicParser(Parser):
 
     @tatsumasu()
     def _ruleName_(self):  # noqa
-        self._pattern(r'[\w/]+')
+        self._pattern(r'[\w/(), ]+[\w)]')
 
     @tatsumasu('VariableNode')
     def _variable_(self):  # noqa

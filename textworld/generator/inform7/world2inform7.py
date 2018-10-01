@@ -198,14 +198,14 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
 
     # Declare all objects
     for vtype in data.get_types():
-        if vtype in ["P", "I"]:
-            continue  # Skip player and inventory.
+        if vtype.constant:
+            continue  # Skip constants like player and inventory.
 
-        entities = world.get_entities_per_type(vtype)
+        entities = world.get_entities_per_type(vtype.name)
         if len(entities) == 0:
             continue  # No entity of that specific type.
 
-        kind = data.INFORM7_VARIABLES[vtype]
+        kind = data.INFORM7_VARIABLES[vtype.name]
         names = [entity.id for entity in entities]
         source += "The " + " and the ".join(names) + " are {}s.\n".format(kind)
         # All objects are privately-named and we manually define all "Understand as" phrases needed.
@@ -269,7 +269,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         test_template = "quest{} completed is true"
         game_winning_test = " and ".join(test_template.format(i) for i in range(len(quests)))
 
-    # Remove square bracket when printing score increases. Square brackets are conflicting with 
+    # Remove square bracket when printing score increases. Square brackets are conflicting with
     # Inform7's events parser in git_glulx_ml.py.
     # And add winning conditions for the game.
     source += textwrap.dedent("""\
@@ -330,6 +330,17 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     # Replace default banner with a greeting message and the quest description.
     source += textwrap.dedent("""\
     Rule for printing the banner text:
+        say "[fixed letter spacing]";
+        say " ________  ________  __    __  ________  __       __   ______   _______   __        _______  [line break]";
+        say "|        \|        \|  \  |  \|        \|  \  _  |  \ /      \ |       \ |  \      |       \ [line break]";
+        say " \$$$$$$$$| $$$$$$$$| $$  | $$ \$$$$$$$$| $$ / \ | $$|  $$$$$$\| $$$$$$$\| $$      | $$$$$$$\[line break]";
+        say "   | $$   | $$__     \$$\/  $$   | $$   | $$/  $\| $$| $$  | $$| $$__| $$| $$      | $$  | $$[line break]";
+        say "   | $$   | $$  \     >$$  $$    | $$   | $$  $$$\ $$| $$  | $$| $$    $$| $$      | $$  | $$[line break]";
+        say "   | $$   | $$$$$    /  $$$$\    | $$   | $$ $$\$$\$$| $$  | $$| $$$$$$$\| $$      | $$  | $$[line break]";
+        say "   | $$   | $$_____ |  $$ \$$\   | $$   | $$$$  \$$$$| $$__/ $$| $$  | $$| $$_____ | $$__/ $$[line break]";
+        say "   | $$   | $$     \| $$  | $$   | $$   | $$$    \$$$ \$$    $$| $$  | $$| $$     \| $$    $$[line break]";
+        say "    \$$    \$$$$$$$$ \$$   \$$    \$$    \$$      \$$  \$$$$$$  \$$   \$$ \$$$$$$$$ \$$$$$$$ [line break]";
+        say "[variable letter spacing][line break]";
         say "{objective}[line break]".
 
     """.format(objective=objective))
@@ -435,7 +446,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         remove the list of doors from L;
         if the number of entries in L is greater than 0:
             say "There is [L with indefinite articles] on the floor.";
-        
+
     """)
 
     # Print properties of objects when listing the inventory contents and the room contents.
@@ -507,16 +518,16 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     source += textwrap.dedent("""\
     The taking action has an object called previous locale (matched as "from").
 
-    Setting action variables for taking: 
+    Setting action variables for taking:
         now previous locale is the holder of the noun.
 
-    Report taking something from the location: 
+    Report taking something from the location:
         say "You pick up [the noun] from the ground." instead.
 
-    Report taking something: 
+    Report taking something:
         say "You take [the noun] from [the previous locale]." instead.
 
-    Report dropping something: 
+    Report dropping something:
         say "You drop [the noun] on the ground." instead.
 
     """)

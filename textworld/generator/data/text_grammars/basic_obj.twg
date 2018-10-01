@@ -19,12 +19,12 @@ digit:0;1;2;3;4;5;6;7;8;9
 #Containers
 # Each roomType must has specific containers
 #-------------------
-(c):#(c)_adj#|#(c)_noun##number#
-(c)_noun:box
-(c)_adj:#adj_stripped#
-X_(c):#X_(c)_adj#|#X_(c)_noun##number#
-X_(c)_noun:box
-X_(c)_adj:#adj_stripped#
+(chest):#(chest)_adj#|#(chest)_noun##number#
+(chest)_noun:box
+(chest)_adj:#adj_stripped#
+X_(chest):#X_(chest)_adj#|#X_(chest)_noun##number#
+X_(chest)_noun:box
+X_(chest)_adj:#adj_stripped#
 #Doors
 # Each roomType must has specific doors
 #-------------------
@@ -34,12 +34,12 @@ X_(c)_adj:#adj_stripped#
 #Supporters
 # Each roomType must has specific supporters
 #-------------------
-(s):#(s)_adj#|#(s)_noun##number#
-(s)_noun:stand
-(s)_adj:#adj_stripped#
-X_(s):#X_(s)_adj#|#X_(s)_noun##number#
-X_(s)_noun:stand
-X_(s)_adj:#adj_stripped#
+(table):#(table)_adj#|#(table)_noun##number#
+(table)_noun:stand
+(table)_adj:#adj_stripped#
+X_(table):#X_(table)_adj#|#X_(table)_noun##number#
+X_(table)_noun:stand
+X_(table)_adj:#adj_stripped#
 # Objects
 # Each roomType must have specific objects
 #-------------------
@@ -68,8 +68,8 @@ X_(o)_adj_type_1:#adj_stripped#
 #Object Descriptor Functions
 #---------------------------
 (P)_desc:It's you.
-(c)_desc:It is what it is
-(s)_desc:It is what it is
+(chest)_desc:It is what it is
+(table)_desc:It is what it is
 (o)_desc:It is what it is
 (f)_desc:It is what it is
 (k)_desc:It is what it is
@@ -83,4 +83,4 @@ on_desc:On the (name) is [a list of things on the (obj)].
 #----------------
 letter:A;B;C;D;E;F;G;H;I;J;K;L;M;N;O;P;Q;R;S;T;U;V;W;X;Y;Z
 (k<->d)_match:#letter#-#(k)_noun# <-> #letter#-#(d)_noun#
-(k<->c)_match:#letter#-#(k)_noun# <-> #letter#-#(c)_noun#
+(k<->c)_match:#letter#-#(k)_noun# <-> #letter#-#(chest)_noun#

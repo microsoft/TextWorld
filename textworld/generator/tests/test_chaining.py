@@ -2,60 +2,55 @@
 # Licensed under the MIT license.
 
 
-from textworld import testing
+import textworld
 from textworld.generator import data
 from textworld.generator.chaining import ChainingOptions, get_chains
 from textworld.logic import GameLogic, Proposition, State, Variable
 
 
-# noinspection PyPep8Naming
 def build_state(locked_door=False):
     # Set up a world with two rooms and a few objecs.
-    P = Variable("P")
-    I = Variable("I")
-    bedroom = Variable("bedroom", "r")
-    kitchen = Variable("kitchen", "r")
-    rusty_key = Variable("rusty key", "k")
-    small_key = Variable("small key", "k")
-    wooden_door = Variable("wooden door", "d")
-    chest = Variable("chest", "c")
-    cabinet = Variable("cabinet", "c")
-    robe = Variable("robe", "o")
+    M = textworld.GameMaker()
+    bedroom = M.new_room("bedroom")
+    kitchen = M.new_room("kitchen")
+    rusty_key = M.new("k", name="rusty key")
+    small_key = M.new("k", name="small key")
+    chest = M.new("chest", name="chest")
+    cabinet = M.new("chest", name="cabinet")
+    robe = M.new("o", name="robe")
+    path = M.connect(bedroom.south, kitchen.north)
+    wooden_door = M.new_door(path, name="wooden door")
 
-    state = State([
-        Proposition("at", [P, bedroom]),
-        Proposition("south_of", [kitchen, bedroom]),
-        Proposition("north_of", [bedroom, kitchen]),
-        Proposition("link", [bedroom, wooden_door, kitchen]),
-        Proposition("link", [kitchen, wooden_door, bedroom]),
+    M.set_player(bedroom)
+    M.inventory.add(rusty_key)
+    if locked_door:
+        wooden_door.add_property("locked")
+    else:
+        wooden_door.add_property("closed")
 
-        Proposition("locked" if locked_door else "closed", [wooden_door]),
+    chest.add_property("locked")
+    M.add_fact("match", rusty_key, chest)
+    kitchen.add(chest)
+    chest.add(small_key)
 
-        Proposition("in", [rusty_key, I]),
-        Proposition("match", [rusty_key, chest]),
-        Proposition("locked", [chest]),
-        Proposition("at", [chest, kitchen]),
-        Proposition("in", [small_key, chest]),
+    M.add_fact("match", small_key, cabinet)
+    cabinet.add_property("locked")
+    bedroom.add(cabinet)
+    cabinet.add(robe)
 
-        Proposition("match", [small_key, cabinet]),
-        Proposition("locked", [cabinet]),
-        Proposition("at", [cabinet, bedroom]),
-        Proposition("in", [robe, cabinet]),
-    ])
-
-    return state
+    return State(M.facts)
 
 
 def test_chaining():
     # The following test depends on the available rules,
     # so instead of depending on what is in rules.txt,
     # we define the allowed_rules to used.
-    allowed_rules = data.get_rules().get_matching("take/.*")
-    allowed_rules += data.get_rules().get_matching("go.*")
-    allowed_rules += data.get_rules().get_matching("insert.*", "put.*")
-    allowed_rules += data.get_rules().get_matching("open.*", "close.*")
-    allowed_rules += data.get_rules().get_matching("lock.*", "unlock.*")
-    allowed_rules += data.get_rules().get_matching("eat.*")
+    allowed_rules = data.get_rules().get_matching(r"take\((o|k|f), (r|table|chest)\).*")
+    allowed_rules += data.get_rules().get_matching(r"go\(.*\).*")
+    allowed_rules += data.get_rules().get_matching(r"insert\((o|k|f), chest\).*", r"put\((o|k|f), table\).*")
+    allowed_rules += data.get_rules().get_matching(r"open\((d|chest)\).*", r"close\((d|chest)\).*")
+    allowed_rules += data.get_rules().get_matching(r"lock\((d|chest), k\).*", r"unlock\((d|chest), k\).*")
+    allowed_rules += data.get_rules().get_matching(r"eat\(f\).*")
 
     class Options(ChainingOptions):
         def get_rules(self, depth):
@@ -74,12 +69,26 @@ def test_chaining():
     state = build_state(locked_door=False)
     chains = list(get_chains(state, options))
     assert len(chains) == 5
+    # open/d > go/south > unlock/c > open/c > take/c-P-r-c-k-I
+    # open/d > go/south > unlock/c > open/c > insert-P-r-c-k-I
+    # open/d > go/south > unlock/c > open/c > go/north
+    # open/d > go/south > unlock/c > go/north
+    # open/d > go/south > close/d
 
     # With more depth.
     state = build_state(locked_door=False)
     options.max_depth = 20
     chains = list(get_chains(state, options))
     assert len(chains) == 9
+    # open/d > go/south > unlock/c > open/c > take/c-P-r-c-k-I > go/north > unlock/c > open/c > take/c > go/south > insert > go/north
+    # open/d > go/south > unlock/c > open/c > take/c-P-r-c-k-I > go/north > unlock/c > open/c > insert-P-r-c-k-I > go/south
+    # open/d > go/south > unlock/c > open/c > take/c-P-r-c-k-I > go/north > unlock/c > open/c > insert-P-r-c-k-I > go/south
+    # open/d > go/south > unlock/c > open/c > take/c-P-r-c-k-I > go/north > unlock/c > open/c > go/south
+    # open/d > go/south > unlock/c > open/c > take/c-P-r-c-k-I > go/north > unlock/c > go/south
+    # open/d > go/south > unlock/c > open/c > insert-P-r-c-k-I > go/north
+    # open/d > go/south > unlock/c > open/c > go/north
+    # open/d > go/south > unlock/c > go/north
+    # open/d > go/south > close/d
 
 
 def test_applying_actions():
@@ -117,9 +126,9 @@ def test_going_through_door():
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
-        [data.get_rules()["take/c"], data.get_rules()["take/s"]],
-        data.get_rules().get_matching("go.*"),
-        [data.get_rules()["open/d"]],
+        data.get_rules().get_matching(r"take\(o, chest\).*", r"take\(o, table\).*"),
+        data.get_rules().get_matching(r"go\(.*\).*"),
+        data.get_rules().get_matching(r"open\(d\).*"),
     ]
 
     chains = list(get_chains(state, options))
@@ -160,8 +169,8 @@ def test_backward_chaining():
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
-        [data.get_rules()["take/c"], data.get_rules()["take/s"]],
-        [data.get_rules()["open/c"]],
+        data.get_rules().get_matching(r"take\(o, chest\).*", r"take\(o, table\).*"),
+        data.get_rules().get_matching(r"open\(chest\).*"),
     ]
     options.restricted_types = {"d"}
 
@@ -174,9 +183,9 @@ def test_backward_chaining():
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
-        [data.get_rules()["put"]],
-        [data.get_rules()["go/north"]],
-        [data.get_rules()["take/c"]],
+        data.get_rules().get_matching(r"put\(o, table\).*"),
+        data.get_rules().get_matching(r"go\(north\).*"),
+        data.get_rules().get_matching(r"take\(o, chest\).*"),
     ]
     options.restricted_types = {"d"}
 
@@ -186,7 +195,20 @@ def test_backward_chaining():
 
 def test_parallel_quests():
     logic = GameLogic.parse("""
-        type foo {
+        type t { }
+        type P { }
+        type I { }
+
+        type foo : t {
+            predicates {
+                not_a(foo);
+                not_b(foo);
+                not_c(foo);
+                a(foo);
+                b(foo);
+                c(foo);
+            }
+
             rules {
                 do_a :: not_a(foo) & $not_c(foo) -> a(foo);
                 do_b :: not_b(foo) & $not_c(foo) -> b(foo);
@@ -249,6 +271,11 @@ def test_parallel_quests_navigation():
         }
 
         type r {
+            predicates {
+                at(P, r);
+                free(r, r);
+            }
+
             rules {
                 move :: at(P, r) & $free(r, r') -> at(P, r');
             }
@@ -258,7 +285,15 @@ def test_parallel_quests_navigation():
             }
         }
 
-        type o {
+        type t {
+        }
+
+        type o : t {
+            predicates {
+                at(o, r);
+                in(o, I);
+            }
+
             rules {
                 take :: $at(P, r) & at(o, r) -> in(o, I);
             }
@@ -274,7 +309,11 @@ def test_parallel_quests_navigation():
         type eggs : o {
         }
 
-        type cake {
+        type cake : o {
+            predicates {
+                in(o, cake);
+            }
+
             rules {
                 bake :: in(flour, I) & in(eggs, I) -> in(cake, I) & in(flour, cake) & in(eggs, cake);
             }
@@ -292,7 +331,7 @@ def test_parallel_quests_navigation():
         Proposition.parse("free(r1: r, r2: r)"),
     ])
 
-    bake = [logic.rules["bake"]]
+    bake = [logic.rules["bake.0"]]
     non_bake = [r for r in logic.rules.values() if r.name != "bake"]
 
     options = ChainingOptions()

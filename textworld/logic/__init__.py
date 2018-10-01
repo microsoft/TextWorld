@@ -222,6 +222,13 @@ class Type:
         self._hier = hier
 
     @property
+    def constant(self) -> bool:
+        """
+        Whether this type is a constant.
+        """
+        return self.name == self.name.upper()
+
+    @property
     def parent_types(self) -> Iterable["Type"]:
         """
         The parents of this type as Type objects.
@@ -338,7 +345,7 @@ class TypeHierarchy:
         return len(self._types)
 
     def closure(self, type: Type, expand: Callable[[Type], Iterable[Type]]) -> Iterable[Type]:
-        """
+        r"""
         Compute the transitive closure in a type lattice according to some type
         relationship (generally direct sub-/super-types).
 
@@ -367,7 +374,7 @@ class TypeHierarchy:
                 yield tuple(expansion)
 
     def multi_closure(self, types: Collection[Type], expand: Callable[[Type], Iterable[Type]]) -> Iterable[Collection[Type]]:
-        """
+        r"""
         Compute the transitive closure of a sequence of types in a type lattice
         induced by some per-type relationship (generally direct sub-/super-types).
 
@@ -394,7 +401,6 @@ class TypeHierarchy:
         """
 
         return self._bfs_unique(types, lambda ts: self._multi_expand(ts, expand))
-
 
     def _bfs_unique(self, start, expand):
         """
@@ -833,7 +839,7 @@ class Predicate:
         params = [mapping.get(param, param) for param in self.parameters]
         return Predicate(self.name, params)
 
-    def instantiate(self, mapping: Mapping[Placeholder, Variable]) -> Proposition:
+    def instantiate(self, mapping: Optional[Mapping[Placeholder, Variable]] = None) -> Proposition:
         """
         Instantiate this predicate with the given mapping.
 
@@ -841,11 +847,16 @@ class Predicate:
         ----------
         mapping :
             A mapping from Placeholders to Variables.
+            If None, the name and type of the Placeholders will be used to create
+            dummy Variables.
 
         Returns
         -------
         The instantiated Proposition with each Placeholder mapped to the corresponding Variable.
         """
+
+        if mapping is None:
+            mapping = {param: Variable(param.name, param.type) for param in self.parameters}
 
         args = [mapping[param] for param in self.parameters]
         return Proposition._instantiate(self, args)
@@ -885,6 +896,16 @@ class Alias:
 
     def __repr__(self):
         return "Alias({!r}, {!r})".format(self.pattern, self.replacement)
+
+    def __eq__(self, other):
+        if isinstance(other, Alias):
+            return (self.pattern == other.pattern and
+                    self.replacement == other.replacement)
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash((self.pattern, frozenset(self.replacement)))
 
     def expand(self, predicate: Predicate) -> Collection[Predicate]:
         """
@@ -1036,6 +1057,7 @@ class Rule:
         """
 
         self.name = name
+        self.parent = None
         self.preconditions = tuple(preconditions)
         self.postconditions = tuple(postconditions)
 
@@ -1116,7 +1138,9 @@ class Rule:
             name = self.name
         pre_subst = [pred.substitute(mapping) for pred in self.preconditions]
         post_subst = [pred.substitute(mapping) for pred in self.postconditions]
-        return Rule(name, pre_subst, post_subst)
+        rule = Rule(name, pre_subst, post_subst)
+        rule.parent = self
+        return rule
 
     def instantiate(self, mapping: Mapping[Placeholder, Variable]) -> Action:
         """
@@ -1182,238 +1206,6 @@ class Rule:
         if name is None:
             name = self.name
         return Rule(name, self.postconditions, self.preconditions)
-
-
-class Inform7Type:
-    """
-    Information about an Inform 7 kind.
-    """
-
-    def __init__(self, name: str, kind: str, definition: Optional[str] = None):
-        self.name = name
-        self.kind = kind
-        self.definition = definition
-
-
-class Inform7Predicate:
-    """
-    Information about an Inform 7 predicate.
-    """
-
-    def __init__(self, predicate: Predicate, source: str):
-        self.predicate = predicate
-        self.source = source
-
-    def __str__(self):
-        return '{} :: "{}"'.format(self.predicate, self.source)
-
-    def __repr__(self):
-        return "Inform7Predicate({!r}, {!r})".format(self.predicate, self.source)
-
-
-class Inform7Command:
-    """
-    Information about an Inform 7 command.
-    """
-
-    def __init__(self, rule: str, command: str, event: str):
-        self.rule = rule
-        self.command = command
-        self.event = event
-
-    def __str__(self):
-        return '{} :: "{}" :: "{}"'.format(self.rule, self.command, self.event)
-
-    def __repr__(self):
-        return "Inform7Command({!r}, {!r}, {!r})".format(self.rule, self.command, self.event)
-
-
-class Inform7Logic:
-    """
-    The Inform 7 bindings of a GameLogic.
-    """
-
-    def __init__(self):
-        self.types = {}
-        self.predicates = {}
-        self.commands = {}
-        self.code = ""
-
-    def _add_type(self, i7type: Inform7Type):
-        if i7type.name in self.types:
-            raise ValueError("Duplicate Inform 7 type for {}".format(i7type.name))
-        self.types[i7type.name] = i7type
-
-    def _add_predicate(self, i7pred: Inform7Predicate):
-        sig = i7pred.predicate.signature
-        if sig in self.predicates:
-            raise ValueError("Duplicate Inform 7 predicate for {}".format(sig))
-        self.predicates[sig] = i7pred
-
-    def _add_command(self, i7cmd: Inform7Command):
-        rule_name = i7cmd.rule
-        if rule_name in self.commands:
-            raise ValueError("Duplicate Inform 7 command for {}".format(rule_name))
-        self.commands[rule_name] = i7cmd
-
-    def _add_code(self, code: str):
-        self.code += code + "\n"
-
-    def _initialize(self, logic):
-        self._expand_predicates(logic)
-        self._expand_commands(logic)
-
-    def _expand_predicates(self, logic):
-        for sig, pred in list(self.predicates.items()):
-            params = pred.predicate.parameters
-            types = [logic.types.get(ph.type) for ph in params]
-            for descendant in logic.types.multi_descendants(types):
-                mapping = {ph: Placeholder(ph.name, type.name) for ph, type in zip(params, descendant)}
-                expanded = pred.predicate.substitute(mapping)
-                self._add_predicate(Inform7Predicate(expanded, pred.source))
-
-    def _expand_commands(self, logic):
-        for name, command in list(self.commands.items()):
-            rule = logic.rules.get(name)
-            if not rule:
-                continue
-
-            types = [logic.types.get(ph.type) for ph in rule.placeholders]
-            descendants = logic.types.multi_descendants(types)
-            for descendant in descendants:
-                type_names = [type.name for type in descendant]
-                expanded_name = name + "-" + "-".join(type_names)
-                self._add_command(Inform7Command(expanded_name, command.command, command.event))
-
-
-class GameLogic:
-    """
-    The logic for a game (types, rules, etc.).
-    """
-
-    def __init__(self):
-        self.types = TypeHierarchy()
-        self.predicates = set()
-        self.aliases = {}
-        self.rules = {}
-        self.reverse_rules = {}
-        self.constraints = {}
-        self.inform7 = Inform7Logic()
-
-    def _add_predicate(self, signature: Signature):
-        if signature in self.predicates:
-            raise ValueError("Duplicate predicate {}".format(signature))
-        if signature in self.aliases:
-            raise ValueError("Predicate {} is also an alias".format(signature))
-        self.predicates.add(signature)
-
-    def _add_alias(self, alias: Alias):
-       sig = alias.pattern.signature
-       if sig in self.aliases:
-           raise ValueError("Duplicate alias {}".format(alias))
-       if sig in self.predicates:
-           raise ValueError("Alias {} is also a predicate".format(alias))
-       self.aliases[sig] = alias
-
-    def _add_rule(self, rule: Rule):
-        if rule.name in self.rules:
-            raise ValueError("Duplicate rule {}".format(rule))
-        self.rules[rule.name] = rule
-
-    def _add_reverse_rule(self, rule_name, reverse_name):
-        if rule_name in self.reverse_rules:
-            raise ValueError("Duplicate reverse rule {}".format(rule_name))
-        if reverse_name in self.reverse_rules:
-            raise ValueError("Duplicate reverse rule {}".format(reverse_name))
-        self.reverse_rules[rule_name] = reverse_name
-        self.reverse_rules[reverse_name] = rule_name
-
-    def _add_constraint(self, constraint: Rule):
-        if constraint.name in self.constraints:
-            raise ValueError("Duplicate constraint {}".format(constraint))
-        self.constraints[constraint.name] = constraint
-
-    def _parse(self, document: str, path: Optional[str] = None):
-        model = _PARSER.parse(document, filename=path)
-        _ModelConverter(self).walk(model)
-
-    def _initialize(self):
-        self.aliases = {sig: self._expand_alias(alias) for sig, alias in self.aliases.items()}
-
-        self.rules = {name: self.normalize_rule(rule) for name, rule in self.rules.items()}
-        self.constraints = {name: self.normalize_rule(rule) for name, rule in self.constraints.items()}
-
-        self._expand_rules(self.rules)
-        self._expand_rules(self.constraints)
-
-        self.inform7._initialize(self)
-
-    def _expand_alias(self, alias):
-        return Alias(alias.pattern, self._expand_alias_recursive(alias.replacement, set()))
-
-    def _expand_alias_recursive(self, predicates, used):
-        result = []
-
-        for pred in predicates:
-            sig = pred.signature
-
-            if sig in used:
-                raise ValueError("Cycle of aliases involving {}".format(sig))
-
-            alias = self.aliases.get(pred.signature)
-            if alias:
-                expansion = alias.expand(pred)
-                used.add(pred.signature)
-                result.extend(self._expand_alias_recursive(expansion, used))
-                used.remove(pred.signature)
-            else:
-                result.append(pred)
-
-        return result
-
-    def normalize_rule(self, rule: Rule) -> Rule:
-        pre = self._normalize_predicates(rule.preconditions)
-        post = self._normalize_predicates(rule.postconditions)
-        return Rule(rule.name, pre, post)
-
-    def _normalize_predicates(self, predicates):
-        result = []
-        for pred in predicates:
-            alias = self.aliases.get(pred.signature)
-            if alias:
-                result.extend(alias.expand(pred))
-            else:
-                result.append(pred)
-        return result
-
-    def _expand_rules(self, rules):
-        # Expand rules with variations for descendant types
-        for rule in list(rules.values()):
-            placeholders = rule.placeholders
-            types = [self.types.get(ph.type) for ph in placeholders]
-            descendants = self.types.multi_descendants(types)
-            for descendant in descendants:
-                names = [type.name for type in descendant]
-                new_name = rule.name + "-" + "-".join(names)
-                mapping = {ph: Placeholder(ph.name, type.name) for ph, type in zip(placeholders, descendant)}
-                new_rule = rule.substitute(mapping, new_name)
-                rules[new_name] = new_rule
-
-    @classmethod
-    def parse(cls, document: str) -> "GameLogic":
-        result = cls()
-        result._parse(document)
-        result._initialize()
-        return result
-
-    @classmethod
-    def load(cls, paths: Iterable[str]):
-        result = cls()
-        for path in paths:
-            with open(path, "r") as f:
-                result._parse(f.read(), path=path)
-        result._initialize()
-        return result
 
 
 class State:
@@ -1818,3 +1610,356 @@ class State:
         lines.append("})")
 
         return "\n".join(lines)
+
+
+class Inform7Type:
+    """
+    Information about an Inform 7 kind.
+    """
+
+    def __init__(self, name: str, kind: str, definition: Optional[str] = None):
+        self.name = name
+        self.kind = kind
+        self.definition = definition
+
+
+class Inform7Predicate:
+    """
+    Information about an Inform 7 predicate.
+    """
+
+    def __init__(self, predicate: Predicate, source: str):
+        self.predicate = predicate
+        self.source = source
+
+    def __str__(self):
+        return '{} :: "{}"'.format(self.predicate, self.source)
+
+    def __repr__(self):
+        return "Inform7Predicate({!r}, {!r})".format(self.predicate, self.source)
+
+
+class Inform7Command:
+    """
+    Information about an Inform 7 command.
+    """
+
+    def __init__(self, rule: str, command: str, event: str):
+        self.rule = rule
+        self.command = command
+        self.event = event
+
+    def __str__(self):
+        return '{} :: "{}" :: "{}"'.format(self.rule, self.command, self.event)
+
+    def __repr__(self):
+        return "Inform7Command({!r}, {!r}, {!r})".format(self.rule, self.command, self.event)
+
+
+class Inform7Logic:
+    """
+    The Inform 7 bindings of a GameLogic.
+    """
+
+    def __init__(self):
+        self.types = {}
+        self.predicates = {}
+        self.commands = {}
+        self.code = ""
+
+    def _add_type(self, i7type: Inform7Type):
+        if i7type.name in self.types:
+            raise ValueError("Duplicate Inform 7 type for {}".format(i7type.name))
+        self.types[i7type.name] = i7type
+
+    def _add_predicate(self, i7pred: Inform7Predicate):
+        sig = i7pred.predicate.signature
+        if sig in self.predicates:
+            raise ValueError("Duplicate Inform 7 predicate for {}".format(sig))
+        self.predicates[sig] = i7pred
+
+    def _add_command(self, i7cmd: Inform7Command):
+        rule_name = i7cmd.rule
+        if rule_name in self.commands:
+            raise ValueError("Duplicate Inform 7 command for {}".format(rule_name))
+        self.commands[rule_name] = i7cmd
+
+    def _add_code(self, code: str):
+        self.code += code + "\n"
+
+    def _expand_predicates(self, sig, new_sig):
+        i7_pred = self.predicates.get(sig)
+        if i7_pred:
+            predicate = Predicate(sig.name, [Placeholder(t1, t2) for t1, t2 in zip(sig.types, new_sig.types)])
+            #predicate = Predicate.parse(str(new_sig))
+            #for p1, p2 in zip(predicate.parameters, i7_pred.predicate.parameters):
+            #    p1.name = p2.name
+
+            self._add_predicate(Inform7Predicate(predicate, i7_pred.source))
+
+    def _expand_command(self, rule, new_rule):
+        command = self.commands.get(rule.name)
+        if command:
+            self._add_command(Inform7Command(new_rule.name, command.command, command.event))
+
+
+class GameLogic:
+    """
+    The logic for a game (types, rules, etc.).
+    """
+
+    def __init__(self):
+        self.types = TypeHierarchy()
+        self.predicates = set()
+        self.aliases = defaultdict(list)
+        self.rules = {}
+        self.reverse_rules = {}
+        self.constraints = {}
+        self.inform7 = Inform7Logic()
+        self._document = ""
+
+    def _add_predicate(self, signature: Signature):
+        if signature in self.predicates:
+            raise ValueError("Duplicate predicate {}".format(signature))
+        if signature in self.aliases:
+            raise ValueError("Predicate {} is also an alias".format(signature))
+        self.predicates.add(signature)
+
+    def _add_alias(self, alias: Alias):
+        sig = alias.pattern.signature
+        if sig in self.predicates:
+            raise ValueError("Alias {} is also a predicate".format(alias))
+        self.aliases[sig].append(alias)
+
+    def _add_rule(self, rule: Rule):
+        if rule.name in self.rules:
+            raise ValueError("Duplicate rule {}".format(rule))
+        self.rules[rule.name] = rule
+
+    def _add_reverse_rule(self, rule_name, reverse_name):
+        if rule_name in self.reverse_rules:
+            raise ValueError("Duplicate reverse rule {}".format(rule_name))
+        if reverse_name in self.reverse_rules:
+            raise ValueError("Duplicate reverse rule {}".format(reverse_name))
+        self.reverse_rules[rule_name] = reverse_name
+        self.reverse_rules[reverse_name] = rule_name
+
+    def _add_constraint(self, constraint: Rule):
+        if constraint.name in self.constraints:
+            raise ValueError("Duplicate constraint {}".format(constraint))
+        self.constraints[constraint.name] = constraint
+
+    def _parse(self, document: str, path: Optional[str] = None):
+        model = _PARSER.parse(document, filename=path)
+        _ModelConverter(self).walk(model)
+
+    def _initialize(self):
+        self._expand_predicates(self.predicates)
+
+        self._expand_aliases(self.aliases)
+        self.aliases = self._normalize_aliases(self.aliases)
+
+        self._expand_rules(self.rules)
+        self._expand_rules(self.constraints)
+        self.rules = self._normalize_rules(self.rules)
+        self.constraints = self._normalize_constraints(self.constraints)
+
+    def _check_constraints(self, rule: Rule) -> bool:
+        """Check that the pre and postconditions of the rule satisfy the constraints."""
+
+        state = State(predicate.instantiate() for predicate in rule.preconditions)
+        failed_constraints = list(state.all_applicable_actions(self.constraints.values()))
+        if len(failed_constraints) > 0:
+            return False  # At least one constraint was violated.
+
+        state = State(predicate.instantiate() for predicate in rule.postconditions)
+        failed_constraints = list(state.all_applicable_actions(self.constraints.values()))
+        if len(failed_constraints) > 0:
+            return False  # At least one constraint was violated.
+
+        return True
+
+    def _normalize_aliases(self, map_of_aliases):
+        expanded_aliases = {}
+        for sig, aliases in map_of_aliases.items():
+            expanded_aliases[sig] = [expanded_alias for alias in aliases for expanded_alias in self._normalize_alias(alias)]
+
+        return expanded_aliases
+
+    def _normalize_alias(self, alias):
+        for expansion in self._normalize_alias_recursive(alias.replacement, set()):
+            if any(p for p in expansion if p.signature not in self.predicates):
+                continue   # Skip alias that uses undefined predicates.
+
+            yield Alias(alias.pattern, expansion)
+
+    def _normalize_alias_recursive(self, predicates, used):
+        results = []
+
+        for pred in predicates:
+            sig = pred.signature
+
+            if sig in used:
+                raise ValueError("Cycle of aliases involving {}".format(sig))
+
+            aliases = self.aliases.get(pred.signature)
+            if aliases:
+                used.add(pred.signature)
+                results.append([])
+                for alias in aliases:
+                    expansion = alias.expand(pred)
+                    results[-1].extend(self._normalize_alias_recursive(expansion, used))
+                used.remove(pred.signature)
+            else:
+                results.append([(pred,)])
+
+        for result in itertools.product(*results):
+            yield list(itertools.chain(*result))
+
+    def _normalize_rules(self, rules):
+        normalized_rules = {}
+        for name, rule in rules.items():
+            for i, normalized_rule in enumerate(self._normalize_rule(rule)):
+                normalized_rule.name = name + ".{}".format(i)
+                normalized_rules[normalized_rule.name] = normalized_rule
+                self.inform7._expand_command(rule, normalized_rule)
+
+        return normalized_rules
+
+    def _normalize_rule(self, rule: Rule) -> Rule:
+        pre_list = self._normalize_predicates(rule.preconditions)
+        post_list = self._normalize_predicates(rule.postconditions)
+        for pre, post in zip(itertools.product(*pre_list), itertools.product(*post_list)):
+            rule = Rule(rule.name, itertools.chain(*pre), itertools.chain(*post))
+            if any(p for p in rule.all_predicates if p.signature not in self.predicates):
+                continue  # Skip rule that uses undefined predicates.
+
+            if any(t for predicate in rule.all_predicates for t in predicate.types
+                   if (not self.types.get(t).has_supertype_named("t") and
+                       not self.types.get(t).has_supertype_named("P") and
+                       not self.types.get(t).has_supertype_named("I") and
+                       not self.types.get(t).has_supertype_named("r"))):
+                continue  # Skip rule that uses parameters which are not "things".
+
+            if not self._check_constraints(rule):
+                continue  # Skip rule that violates constraints.
+
+            yield rule
+
+    def _normalize_constraints(self, constraints):
+        normalized_constraints = {}
+        for name, constraint in constraints.items():
+            for i, normalized_constraint in enumerate(self._normalize_constraint(constraint)):
+                normalized_constraint.name = name + ".{}".format(i)
+                normalized_constraints[normalized_constraint.name] = normalized_constraint
+
+        return normalized_constraints
+
+    def _normalize_constraint(self, constraint: Rule) -> Rule:
+        pre_list = self._normalize_predicates(constraint.preconditions)
+        post_list = self._normalize_predicates(constraint.postconditions)
+        for pre, post in zip(itertools.product(*pre_list), itertools.product(*post_list)):
+            constraint = Rule(constraint.name, itertools.chain(*pre), itertools.chain(*post))
+            if any(p for p in constraint.preconditions if p.signature not in self.predicates):
+                continue  # Skip rule that uses undefined predicates.
+
+            if any(t for predicate in constraint.all_predicates for t in predicate.types
+                   if (not self.types.get(t).has_supertype_named("t") and
+                       not self.types.get(t).has_supertype_named("P") and
+                       not self.types.get(t).has_supertype_named("I") and
+                       not self.types.get(t).has_supertype_named("r"))):
+                continue  # Skip rule that uses parameters which are not "things".
+
+            yield constraint
+
+    def _normalize_predicates(self, predicates):
+        results = []
+        for pred in predicates:
+            aliases = self.aliases.get(pred.signature)
+            if aliases:
+                results.append([alias.expand(pred) for alias in aliases])
+            else:
+                results.append([(pred,)])
+
+        return results
+
+    def _expand_types(self, types: Iterable[str]) -> Iterable[Type]:
+        """ Returns all variations for descendant types. """
+        types = [self.types.get(t) for t in types]
+        descendants = self.types.multi_descendants(types)
+        for descendant in descendants:
+            yield descendant
+
+    def _expand_placeholders(self, placeholders: Iterable[Placeholder]) -> Mapping[Placeholder, Placeholder]:
+        types = [ph.type for ph in placeholders]
+        for expansion in self._expand_types(types):
+            mapping = {ph: Placeholder(ph.name, type.name) for ph, type in zip(placeholders, expansion)}
+            yield mapping
+
+    def _expand_predicates(self, predicates):
+        # Expand predicates with variations for descendant types
+        manually_defined_predicates = set(predicates)
+        for signature in manually_defined_predicates:
+            for expansion in self._expand_types(signature.types):
+                new_signature = Signature(signature.name, [type_.name for type_ in expansion])
+                if new_signature not in manually_defined_predicates:
+                    predicates.add(new_signature)
+                    self.inform7._expand_predicates(signature, new_signature)
+
+    def _expand_rules(self, rules):
+        # Expand rules with variations for descendant types
+        manually_defined_rules = set(rules.keys())
+        for rule in list(rules.values()):
+            for i, mapping in enumerate(self._expand_placeholders(rule.placeholders)):
+                new_rule_name = rule.name
+                for k, v in mapping.items():
+                    new_rule_name = new_rule_name.replace(k.type, v.type)
+
+                if rule.name == new_rule_name:
+                    new_rule_name = rule.name + ".{}".format(i)
+
+                if new_rule_name in manually_defined_rules:
+                    continue  # Skip rules that are fine-grainy defined.
+
+                new_rule = rule.substitute(mapping, new_rule_name)
+                rules[new_rule.name] = new_rule
+                self.inform7._expand_command(rule, new_rule)
+
+    def _expand_aliases(self, aliases):
+        # Expand aliases with variations for descendant types
+        manually_defined_aliases = list(aliases.keys())
+        for alias_list in list(aliases.values()):
+            for alias in alias_list:
+                parameters = set(list(alias.pattern.parameters) + [p for pred in alias.replacement for p in pred.parameters])
+                for mapping in self._expand_placeholders(parameters):
+                    new_pattern = alias.pattern.substitute(mapping)
+                    if new_pattern.signature == alias.pattern.signature or new_pattern.signature not in manually_defined_aliases:
+                        new_alias = Alias(new_pattern, [pred.substitute(mapping) for pred in alias.replacement])
+                        if new_alias not in aliases[new_pattern.signature]:
+                            aliases[new_pattern.signature].append(new_alias)
+
+    @classmethod
+    def parse(cls, document: str) -> "GameLogic":
+        result = cls()
+        result._parse(document)
+        result._initialize()
+        result._document = document
+        return result
+
+    @classmethod
+    def load(cls, paths: Iterable[str]):
+        result = cls()
+        for path in paths:
+            with open(path, "r") as f:
+                document = f.read()
+                result._parse(document, path=path)
+                result._document += document + "\n"
+        result._initialize()
+        return result
+
+    @classmethod
+    def deserialize(cls, data: str) -> "GameLogic":
+        return cls.parse(data)
+
+    def serialize(self) -> str:
+        return self._document

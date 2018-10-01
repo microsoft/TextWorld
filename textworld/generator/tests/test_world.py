@@ -55,7 +55,7 @@ def test_cannot_automatically_positioning_rooms():
 def test_get_all_objects_in():
     P = Variable("P")
     room = Variable("room", "r")
-    chest = Variable("chest", "c")
+    chest = Variable("chest", "chest")
     obj = Variable("obj", "o")
     facts = [Proposition("at", [P, room]),
              Proposition("at", [chest, room]),
@@ -71,7 +71,7 @@ def test_get_all_objects_in():
 def test_get_visible_objects_in():
     P = Variable("P")
     room = Variable("room", "r")
-    chest = Variable("chest", "c")
+    chest = Variable("chest", "chest")
     obj = Variable("obj", "o")
 
     # Closed chest.

@@ -1,0 +1,31 @@
+# Property of an object that can eaten.
+type edible {
+    predicates {
+        edible(edible);
+        eaten(edible);
+    }
+
+    rules {
+        eat(edible) :: in(edible, I) & edible(edible) -> eaten(edible);
+    }
+
+    constraints {
+        eaten_thing_is_unreachable :: reachable(edible) & eaten(edible) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "";
+            definition :: "";
+        }
+
+        predicates {
+            edible(edible) :: "The {edible} is edible";
+            eaten(edible) :: "The {edible} is nowhere";
+        }
+
+        commands {
+            eat(edible) :: "eat {edible}" :: "eating the {edible}";
+        }
+    }
+}

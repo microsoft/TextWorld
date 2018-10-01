@@ -145,11 +145,13 @@ class WorldEntity:
 
     def add(self, *entities: List["WorldEntity"]) -> None:
         """ Add children to this entity. """
-        if data.get_types().is_descendant_of(self.type, "r"):
+        if data.get_logic().types.get(self.type).has_supertype_named("r"):
             name = "at"
-        elif data.get_types().is_descendant_of(self.type, ["c", "I"]):
+        elif data.get_logic().types.get(self.type).has_supertype_named("container"):
             name = "in"
-        elif data.get_types().is_descendant_of(self.type, "s"):
+        elif data.get_logic().types.get(self.type).has_supertype_named("I"):
+            name = "in"
+        elif data.get_logic().types.get(self.type).has_supertype_named("supporter"):
             name = "on"
         else:
             raise ValueError("Unexpected type {}".format(self.type))
@@ -167,7 +169,7 @@ class WorldEntity:
         Example:
             >>> from textworld import GameMaker
             >>> M = GameMaker()
-            >>> chest = M.new(type="c", name="chest")
+            >>> chest = M.new(type="chest", name="chest")
             >>> chest.has_property('closed')
             False
             >>> chest.add_property('closed')
@@ -276,7 +278,7 @@ class WorldPath:
 
     @door.setter
     def door(self, door: WorldEntity) -> None:
-        if door is not None and not data.get_types().is_descendant_of(door.type, "d"):
+        if door is not None and not data.get_types().get(door.type).has_supertype_named("d"):
             msg = "Expecting a WorldEntity of 'door' type."
             raise TypeError(msg)
 
@@ -322,7 +324,7 @@ class GameMaker:
         self._quests = []
         self.rooms = []
         self.paths = []
-        self._types_counts = data.get_types().count(State())
+        self._types_counts = {}
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.grammar = textworld.generator.make_grammar()
@@ -402,7 +404,7 @@ class GameMaker:
             * Otherwise, a `WorldEntity` is returned.
         """
         var_id = type
-        if not data.get_types().is_constant(type):
+        if not data.get_types().get(type).constant:
             var_id = get_new(type, self._types_counts)
 
         var = Variable(var_id, type)
@@ -643,7 +645,7 @@ class GameMaker:
         self.build()
         return self._quests[0]
 
-    def validate(self) -> bool:
+    def validate(self, raises: bool = False) -> bool:
         """ Check if the world is valid and can be compiled.
 
         A world is valid is the player has been place in a room and
@@ -652,11 +654,17 @@ class GameMaker:
         """
         if self.player not in self:
             msg = "Player position has not been specified. Use 'M.set_player(room)'."
-            raise MissingPlayerError(msg)
+            if raises:
+                raise MissingPlayerError(msg)
+
+            return False
 
         failed_constraints = get_failing_constraints(self.state)
         if len(failed_constraints) > 0:
-            raise FailedConstraintsError(failed_constraints)
+            if raises:
+                raise FailedConstraintsError(failed_constraints)
+
+            return False
 
         return True
 
@@ -673,7 +681,7 @@ class GameMaker:
             Generated game.
         """
         if validate:
-            self.validate()  # Validate the state of the world.
+            self.validate(raises=True)  # Validate the state of the world.
 
         world = World.from_facts(self.facts)
         game = Game(world, quests=self._quests)

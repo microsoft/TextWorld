@@ -1,0 +1,31 @@
+# A type of container that is portable.
+type box : t, container, portable, openable {
+    predicates {
+        reachable_contents(box) = reachable(box) & open(box);
+        reachable(box) = in(box, I);
+        reachable(box) = at(P, r) & at(box, r);
+        reachable(box) = reachable(table) & on(box, table);
+        reachable(box) = reachable_contents(chest) & in(box, chest);
+    }
+
+    constraints {
+        no_nested_boxes :: in(x: box, y: box) -> fail();
+        no_box_on_stool :: on(box, stool) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "box-like";
+        }
+
+        code :: """
+            [Avoid nesting box-like objects because of some limitation with alias cycles.]
+            Instead of inserting a box-like (called source) into a box-like (called dest):
+                say "You cannot insert [the source] in [the dest]!";
+
+            Instead of putting a box-like (called source) on a stool-like (called dest):
+                say "You cannot put [the source] on [the dest]!";
+        """;
+
+    }
+}

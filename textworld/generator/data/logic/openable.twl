@@ -1,0 +1,37 @@
+# Property of an object that can be opened/closed.
+type openable {
+    predicates {
+        open(openable);
+        closed(openable);
+    }
+
+    rules {
+        open(openable)  :: $reachable(openable) & closed(openable) -> open(openable);
+        close(openable) :: $reachable(openable) & open(openable) -> closed(openable);
+    }
+
+    reverse_rules {
+        open(openable) :: close(openable);
+    }
+
+    constraints {
+        open_and_closed :: open(openable) & closed(openable) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "";
+            definition :: "It is openable. It is usually closed.";
+        }
+
+        predicates {
+            open(openable) :: "The {openable} is open";
+            closed(openable) :: "The {openable} is closed";
+        }
+
+        commands {
+            open(openable) :: "open {openable}" :: "opening the {openable}";
+            close(openable) :: "close {openable}" :: "closing the {openable}";
+        }
+    }
+}

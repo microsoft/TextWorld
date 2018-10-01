@@ -1,17 +1,17 @@
-# supporter
-type s : t {
+# Property of an object that can support other objects.
+type supporter {
     predicates {
-        on(o, s);
+        on(portable, supporter);
     }
 
     inform7 {
         type {
-            kind :: "supporter";
-            definition :: "supporters are fixed in place.";
+            kind :: "";
+            definition :: "It is a kind of supporter.";
         }
 
         predicates {
-            on(o, s) :: "The {o} is on the {s}";
+            on(portable, supporter) :: "The {portable} is on the {supporter}";
         }
     }
 }

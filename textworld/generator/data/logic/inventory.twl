@@ -1,40 +1,40 @@
 # Inventory
 type I {
     predicates {
-        in(o, I);
+        in(portable, I);
     }
 
     rules {
-        take :: $at(P, r) & at(o, r) -> in(o, I);
-        drop :: $at(P, r) & in(o, I) -> at(o, r);
+        take(portable, r) :: $at(P, r) & at(portable, r) -> in(portable, I);
+        drop(portable, r) :: $at(P, r) & in(portable, I) -> at(portable, r);
 
-        take/c :: $at(P, r) & $at(c, r) & $open(c) & in(o, c) -> in(o, I);
-        insert :: $at(P, r) & $at(c, r) & $open(c) & in(o, I) -> in(o, c);
+        take(portable, container)   :: $reachable_contents(container) & in(portable, container) -> in(portable, I);
+        insert(portable, container) :: $reachable_contents(container) & in(portable, I) -> in(portable, container);
 
-        take/s :: $at(P, r) & $at(s, r) & on(o, s) -> in(o, I);
-        put    :: $at(P, r) & $at(s, r) & in(o, I) -> on(o, s);
+        take(portable, supporter) :: $reachable(supporter) & on(portable, supporter) -> in(portable, I);
+        put(portable, supporter)  :: $reachable(supporter) & in(portable, I) -> on(portable, supporter);
     }
 
     reverse_rules {
-        take :: drop;
-        take/c :: insert;
-        take/s :: put;
+        take(portable, r) :: drop(portable, r);
+        take(portable, container) :: insert(portable, container);
+        take(portable, supporter) :: put(portable, supporter);
     }
 
     inform7 {
         predicates {
-            in(o, I) :: "The player carries the {o}";
+            in(portable, I) :: "The player carries the {portable}";
         }
 
         commands {
-            take :: "take {o}" :: "taking the {o}";
-            drop :: "drop {o}" :: "dropping the {o}";
+            take(portable, r) :: "take {portable}" :: "taking the {portable}";
+            drop(portable, r) :: "drop {portable}" :: "dropping the {portable}";
 
-            take/c :: "take {o} from {c}" :: "removing the {o} from the {c}";
-            insert :: "insert {o} into {c}" :: "inserting the {o} into the {c}";
+            take(portable, container)   :: "take {portable} from {container}" :: "removing the {portable} from the {container}";
+            insert(portable, container) :: "insert {portable} into {container}" :: "inserting the {portable} into the {container}";
 
-            take/s :: "take {o} from {s}" :: "removing the {o} from the {s}";
-            put :: "put {o} on {s}" :: "putting the {o} on the {s}";
+            take(portable, supporter) :: "take {portable} from {supporter}" :: "removing the {portable} from the {supporter}";
+            put(portable, supporter)  :: "put {portable} on {supporter}" :: "putting the {portable} on the {supporter}";
 
             inventory :: "inventory" :: "taking inventory";
         }

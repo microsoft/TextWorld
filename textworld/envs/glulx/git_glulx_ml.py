@@ -253,6 +253,11 @@ class GlulxGameState(textworld.GameState):
         """
         if not hasattr(self, "_command_feedback"):
             command_feedback = self.feedback
+
+            # On the first move, command_feedback should be empty.
+            if self.nb_moves == 0:
+                command_feedback = ""
+
             # Remove room description from command feedback.
             if len(self.description.strip()) > 0:
                 regex = "\s*" + re.escape(self.description.strip()) + "\s*"
@@ -531,7 +536,7 @@ class GitGlulxMLEnvironment(textworld.Environment):
         # Wrap each paragraph.
         if mode == "human":
             paragraphs = msg.split("\n")
-            paragraphs = ["\n".join(textwrap.wrap(paragraph, width=80)) for paragraph in paragraphs]
+            paragraphs = ["\n".join(textwrap.wrap(paragraph, width=120)) for paragraph in paragraphs]
             msg = "\n".join(paragraphs)
 
         outfile.write(msg + "\n")

@@ -1,0 +1,17 @@
+# portable
+type fixed_in_place {
+    predicates {
+        reachable(fixed_in_place) = at(P, r) & at(fixed_in_place, r);
+    }
+
+    constraints {
+        single_location :: at(fixed_in_place, r) & at(fixed_in_place, r') -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "";
+            definition :: "It is usually fixed in place.";
+        }
+    }
+}

@@ -1,0 +1,36 @@
+# Property of an object that can be locked/unlocked.
+type lockable : openable {
+    predicates {
+        locked(lockable);
+    }
+
+    rules {
+        lock(lockable, k)   :: $reachable(lockable) & $in(k, I) & $match(k, lockable) & closed(lockable) -> locked(lockable);
+        unlock(lockable, k) :: $reachable(lockable) & $in(k, I) & $match(k, lockable) & locked(lockable) -> closed(lockable);
+    }
+
+    reverse_rules {
+        lock(lockable, k) :: unlock(lockable, k);
+    }
+
+    constraints {
+        open_and_locked :: open(lockable)   & locked(lockable) -> fail();
+        closed_and_locked :: closed(lockable) & locked(lockable) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "";
+            definition :: "It is lockable. It is usually unlocked.";
+        }
+
+        predicates {
+            locked(lockable) :: "The {lockable} is locked";
+        }
+
+        commands {
+            unlock(lockable, k) :: "unlock {lockable} with {k}" :: "unlocking the {lockable} with the {k}";
+            lock(lockable, k) :: "lock {lockable} with {k}" :: "locking the {lockable} with the {k}";
+        }
+    }
+}

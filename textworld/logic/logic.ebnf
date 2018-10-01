@@ -13,7 +13,7 @@ phName = ?"[\w']+" ;
 
 predName = ?"[\w/]+" ;
 
-ruleName = ?"[\w/]+" ;
+ruleName = ?"[\w/(), ]+[\w)]" ;
 
 
 variable::VariableNode = name:name [":" type:name] ;

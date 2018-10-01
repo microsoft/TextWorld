@@ -23,6 +23,18 @@ class NoFreeExitError(Exception):
     pass
 
 
+def _can_hold_objects(type_name: str) -> bool:
+    obj_type = data.get_logic().types.get(type_name)
+    is_kind_of_container = obj_type.has_supertype_named("container")
+    is_kind_of_supporter = obj_type.has_supertype_named("supporter")
+    return is_kind_of_container or is_kind_of_supporter
+
+
+def _is_lockable(type_name: str) -> bool:
+    obj_type = data.get_logic().types.get(type_name)
+    return obj_type.has_supertype_named("lockable")
+
+
 def connect(room1: Variable, direction: str, room2: Variable,
             door: Optional[Variable] = None) -> List[Proposition]:
     """ Generate predicates that connect two rooms.
@@ -252,7 +264,7 @@ class World:
 
     def _process_rooms(self) -> None:
         for fact in self.facts:
-            if not data.get_types().is_descendant_of(fact.arguments[0].type, 'r'):
+            if not data.get_types().get(fact.arguments[0].type).has_supertype_named('r'):
                 continue  # Skip non room facts.
 
             room = self._get_room(fact.arguments[0])
@@ -314,7 +326,7 @@ class World:
 
     def _process_objects(self) -> None:
         for fact in self.facts:
-            if data.get_types().is_descendant_of(fact.arguments[0].type, 'r'):
+            if data.get_types().get(fact.arguments[0].type).has_supertype_named('r'):
                 continue  # Skip room facts.
 
             obj = self._get_entity(fact.arguments[0])
@@ -387,7 +399,7 @@ class World:
                       object_types_probs: Optional[Dict[str, float]] = None) -> List[Proposition]:
         rng = g_rng.next() if rng is None else rng
         state = []
-        types_counts = data.get_types().count(self.state)
+        types_counts = data.count_types(self.state)
 
         inventory = Variable("I", "I")
         objects_holder = [inventory, room]
@@ -396,11 +408,11 @@ class World:
         lockable_objects = []
         for s in self.facts:
             # Look for containers and supporters to put stuff in/on them.
-            if s.name == "at" and s.arguments[0].type in ["c", "s"] and s.arguments[1].name == room.name:
+            if s.name == "at" and _can_hold_objects(s.arguments[0].type) and s.arguments[1].name == room.name:
                 objects_holder.append(s.arguments[0])
 
             # Look for containers and doors without a matching key.
-            if s.name == "at" and s.arguments[0].type in ["c", "d"] and s.arguments[1].name == room.name:
+            if s.name == "at" and _is_lockable(s.arguments[0].type) and s.arguments[1].name == room.name:
                 obj_propositions = [p.name for p in self.facts if s.arguments[0].name in p.names]
                 if "match" not in obj_propositions and s.arguments[0] not in lockable_objects:
                     lockable_objects.append(s.arguments[0])
@@ -414,12 +426,13 @@ class World:
                 # Prioritize adding key if there are locked or closed things in the room.
                 obj_type = "k"
             else:
-                obj_type = data.get_types().sample(parent_type='t', rng=rng, exceptions=["d", "r"],
-                                                   include_parent=False, probs=object_types_probs)
+                obj_type = data.sample_type(parent_type='t', rng=rng, exceptions=["d", "r"],
+                                            include_parent=False, probs=object_types_probs)
 
-            if data.get_types().is_descendant_of(obj_type, "o"):
-                obj_name = get_new(obj_type, types_counts)
-                obj = Variable(obj_name, obj_type)
+            obj_type = data.get_logic().types.get(obj_type)
+            if obj_type.has_supertype_named("portable"):
+                obj_name = get_new(obj_type.name, types_counts)
+                obj = Variable(obj_name, obj_type.name)
                 allowed_objects_holder = list(objects_holder)
 
                 if obj_type == "k":
@@ -448,26 +461,27 @@ class World:
 
                 # Place the object somewhere.
                 obj_holder = rng.choice(allowed_objects_holder)
-                if data.get_types().is_descendant_of(obj_holder.type, "s"):
+                obj_holder_type = data.get_logic().types.get(obj_holder.type)
+                if obj_holder_type.has_supertype_named("supporter"):
                     state.append(Proposition("on", [obj, obj_holder]))
-                elif data.get_types().is_descendant_of(obj_holder.type, "c"):
+                elif obj_holder_type.has_supertype_named("container"):
                     state.append(Proposition("in", [obj, obj_holder]))
-                elif data.get_types().is_descendant_of(obj_holder.type, "I"):
+                elif obj_holder_type.has_supertype_named("I"):
                     state.append(Proposition("in", [obj, obj_holder]))
-                elif data.get_types().is_descendant_of(obj_holder.type, "r"):
+                elif obj_holder_type.has_supertype_named("r"):
                     state.append(Proposition("at", [obj, obj_holder]))
                 else:
                     raise ValueError("Unknown type for object holder: {}".format(obj_holder))
 
-            elif data.get_types().is_descendant_of(obj_type, "s"):
-                supporter_name = get_new(obj_type, types_counts)
-                supporter = Variable(supporter_name, obj_type)
+            elif obj_type.has_supertype_named("supporter"):
+                supporter_name = get_new(obj_type.name, types_counts)
+                supporter = Variable(supporter_name, obj_type.name)
                 state.append(Proposition("at", [supporter, room]))
                 objects_holder.append(supporter)
 
-            elif data.get_types().is_descendant_of(obj_type, "c"):
-                container_name = get_new(obj_type, types_counts)
-                container = Variable(container_name, obj_type)
+            elif obj_type.has_supertype_named("container"):
+                container_name = get_new(obj_type.name, types_counts)
+                container = Variable(container_name, obj_type.name)
                 state.append(Proposition("at", [container, room]))
                 objects_holder.append(container)
 
@@ -479,7 +493,7 @@ class World:
                     locked_or_closed_objects.append(container)
 
             else:
-                raise ValueError("Unknown object type: {}".format(obj_type))
+                raise ValueError("Unknown object type: {}".format(obj_type.name))
 
             object_id += 1
 
@@ -514,11 +528,11 @@ class World:
         lockable_objects = []
         for s in self.facts:
             # Look for containers and supporters to put stuff in/on them.
-            if s.name == "at" and s.arguments[0].type in ["c", "s"] and s.arguments[1].name == room.name:
+            if s.name == "at" and _can_hold_objects(s.arguments[0].type) and s.arguments[1].name == room.name:
                 objects_holder.append(s.arguments[0])
 
             # Look for containers and doors without a matching key.
-            if s.name == "at" and s.arguments[0].type in ["c", "d"] and s.arguments[1].name == room.name:
+            if s.name == "at" and _is_lockable(s.arguments[0].type) and s.arguments[1].name == room.name:
                 obj_propositions = [p.name for p in self.facts if s.arguments[0].name in p.names]
                 if "match" not in obj_propositions and s.arguments[0] not in lockable_objects:
                     lockable_objects.append(s.arguments[0])
@@ -530,28 +544,29 @@ class World:
         rng.shuffle(remaining_objects_id)
         for idx in remaining_objects_id:
             obj = objects[idx]
-            obj_type = obj.type
+            obj_type = data.get_logic().types.get(obj.type)
 
-            if data.get_types().is_descendant_of(obj_type, "o"):
+            if obj_type.has_supertype_named("portable"):
                 allowed_objects_holder = list(objects_holder)
 
                 # Place the object somewhere.
                 obj_holder = rng.choice(allowed_objects_holder)
-                if data.get_types().is_descendant_of(obj_holder.type, "s"):
+                obj_holder_type = data.get_logic().types.get(obj_holder.type)
+                if obj_holder_type.has_supertype_named("supporter"):
                     state.append(Proposition("on", [obj, obj_holder]))
-                elif data.get_types().is_descendant_of(obj_holder.type, "c"):
+                elif obj_holder_type.has_supertype_named("container"):
                     state.append(Proposition("in", [obj, obj_holder]))
-                elif data.get_types().is_descendant_of(obj_holder.type, "r"):
+                elif obj_holder_type.has_supertype_named("r"):
                     state.append(Proposition("at", [obj, obj_holder]))
                 else:
                     raise ValueError("Unknown type for object holder: {}".format(obj_holder))
 
-            elif data.get_types().is_descendant_of(obj_type, "s"):
+            elif obj_type.has_supertype_named("supporter"):
                 supporter = obj
                 state.append(Proposition("at", [supporter, room]))
                 objects_holder.append(supporter)
 
-            elif data.get_types().is_descendant_of(obj_type, "c"):
+            elif obj_type.has_supertype_named("container"):
                 container = obj
                 state.append(Proposition("at", [container, room]))
                 objects_holder.append(container)

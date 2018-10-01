@@ -101,6 +101,7 @@ class GameLogger(object):
 
         nb_objects = 0
         for type_ in data.get_types():
+            type_ = type_.name
             if type_ in ["I", "P", "t", "r"]:
                 continue
 
