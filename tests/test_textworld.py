@@ -14,9 +14,12 @@ class TestIntegration(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp(prefix="test_textworld")
-        self.game_file, self.game = textworld.make(world_size=5, nb_objects=10,
-                                                   quest_length=10, grammar_flags={},
-                                                   seed=1234, games_dir=self.tmpdir)
+        options = textworld.GameOptions()
+        options.nb_rooms = 5
+        options.nb_objects = 10
+        options.quest_length = 10
+        options.seeds = 1234
+        self.game_file, self.game = textworld.make(options, path=self.tmpdir)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)

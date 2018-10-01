@@ -16,9 +16,14 @@ def test_logger():
     game_logger = GameLogger()
 
     for _ in range(10):
-        seed = rng.randint(65635)
-        g_rng.set_seed(seed)
-        game = textworld.generator.make_game(world_size=5, nb_objects=10, quest_length=3, quest_breadth=3)
+        options = textworld.GameOptions()
+        options.nb_rooms = 5
+        options.nb_objects = 10
+        options.quest_length = 3
+        options.quest_breadth = 3
+        options.seeds = rng.randint(65635)
+
+        game = textworld.generator.make_game(options)
         game_logger.collect(game)
 
     with make_temp_directory(prefix="textworld_tests") as tests_folder:

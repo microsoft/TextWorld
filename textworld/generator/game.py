@@ -2,18 +2,25 @@
 # Licensed under the MIT license.
 
 
+import copy
 import json
 
-from typing import List, Dict, Optional, Mapping, Any, Iterable
+from typing import List, Dict, Optional, Mapping, Any, Iterable, Union
 from collections import OrderedDict
 
+from numpy.random import RandomState
+
+from textworld import g_rng
+from textworld.utils import encode_seeds
 from textworld.generator import data
-from textworld.generator.text_grammar import Grammar
+from textworld.generator.text_grammar import Grammar, GrammarOptions
 from textworld.generator.world import World
 from textworld.logic import Action, Proposition, Rule, State
 from textworld.generator.vtypes import VariableTypeTree
 from textworld.generator.grammar import get_reverse_action
 from textworld.generator.graph_networks import DIRECTIONS
+
+from textworld.generator.chaining import ChainingOptions
 
 from textworld.generator.dependency_tree import DependencyTree
 from textworld.generator.dependency_tree import DependencyTreeElement
@@ -372,7 +379,7 @@ class Game:
         data["world"] = self.world.serialize()
         data["state"] = self.state.serialize()
         if self.grammar is not None:
-            data["grammar"] = self.grammar.flags.serialize()
+            data["grammar"] = self.grammar.options.serialize()
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
         data["rules"] = [(k, v.serialize()) for k, v in self._rules.items()]
@@ -772,3 +779,125 @@ class GameProgression:
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:
             quest_progression.update(action, self.state)
+
+
+class GameOptions:
+    """
+    Options for customizing the game generation.
+
+    Attributes:
+        nb_rooms:
+            Number of rooms in the game.
+        nb_objects:
+            Number of objects in the game.
+        quest_length:
+            Minimum number of actions the quest requires to be completed.
+        quest_breadth:
+            Control how nonlinear a quest can be (1: linear).
+        games_dir:
+            Path to the directory where the game will be saved.
+        force_recompile:
+            If `True`, recompile game even if it already exists.
+        file_type:
+            Type of the generated game file. Either .z8 (Z-Machine) or .ulx (Glulx).
+        seeds:
+            Seeds for the different generation processes.
+
+               * If `None`, seeds will be sampled from
+                 :py:data:`textworld.g_rng <textworld.utils.g_rng>`.
+               * If `int`, it acts as a seed for a random generator that will be
+                 used to sample the other seeds.
+               * If dict, the following keys can be set:
+
+                 * `'map'`: control the map generation;
+                 * `'objects'`: control the type of objects and their
+                   location;
+                 * `'quest'`: control the quest generation;
+                 * `'grammar'`: control the text generation.
+
+                 For any key missing, a random number gets assigned (sampled
+                 from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
+        chaining_options:
+            For customizing the quest generation (see
+            :py:class:`textworld.generator.ChainingOptions <textworld.generator.chaining.ChainingOptions>`
+            for the list of available options).
+        grammar_options:
+            For customizing the text generation (see
+            :py:class:`textworld.generator.GrammarOptions <textworld.generator.text_grammar.GrammarOptions>`
+            for the list of available options).
+    """
+
+    def __init__(self):
+        self.chaining_options = ChainingOptions()
+        self.grammar_options = GrammarOptions()
+        self._seeds = None
+
+        self.nb_rooms = 1
+        self.nb_objects = 1
+        self.quest_length = 1
+        self.quest_breadth = 1
+        self.force_recompile = False
+
+    @property
+    def quest_length(self) -> int:
+        return self.chaining_options.max_depth
+
+    @quest_length.setter
+    def quest_length(self, value: int) -> None:
+        self.chaining_options.min_depth = 1
+        self.chaining_options.max_depth = value
+
+    @property
+    def quest_breadth(self) -> int:
+        return self.chaining_options.max_breadth
+
+    @quest_breadth.setter
+    def quest_breadth(self, value: int) -> None:
+        self.chaining_options.min_breadth = 1
+        self.chaining_options.max_breadth = value
+
+    @property
+    def seeds(self):
+        return self._seeds
+
+    @seeds.setter
+    def seeds(self, value: Union[int, Mapping[str, int]]) -> None:
+        keys = ['map', 'objects', 'quest', 'grammar']
+
+        def _key_missing(seeds):
+            return not set(seeds.keys()).issuperset(keys)
+
+        seeds = value
+        if type(value) is int:
+            rng = RandomState(value)
+            seeds = {}
+        elif _key_missing(value):
+            rng = g_rng.next()
+
+        # Check if we need to generate missing seeds.
+        self._seeds = {}
+        for key in keys:
+            if key in seeds:
+                self._seeds[key] = seeds[key]
+            else:
+                self._seeds[key] = rng.randint(65635)
+
+    @property
+    def rngs(self) -> Dict[str, RandomState]:
+        rngs = {}
+        for key, seed in self._seeds.items():
+            rngs[key] = RandomState(seed)
+
+        return rngs
+
+    def copy(self) -> "GameOptions":
+        return copy.copy(self)
+
+    @property
+    def uuid(self) -> str:
+        # TODO: generate uuid from chaining options?
+        uuid = "tw-game-{specs}-{grammar}-{seeds}"
+        uuid = uuid.format(specs=encode_seeds((self.nb_rooms, self.nb_objects, self.quest_length, self.quest_breadth)),
+                           grammar=self.grammar_options.uuid,
+                           seeds=encode_seeds([self.seeds[k] for k in sorted(self._seeds)]))
+        return uuid

@@ -6,7 +6,7 @@ import warnings
 from textworld.utils import g_rng
 
 from textworld.core import Environment, GameState, Agent
-from textworld.generator import Game, GameMaker
+from textworld.generator import Game, GameMaker, GameOptions
 
 from textworld.generator import TextworldGenerationWarning
 

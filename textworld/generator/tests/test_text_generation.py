@@ -38,7 +38,7 @@ def test_used_names_is_updated(verbose=False):
     world.populate_room(10, world.player_room)  # Add objects to the starting room.
 
     # Generate the world representation.
-    grammar = textworld.generator.make_grammar(flags={}, rng=np.random.RandomState(42))
+    grammar = textworld.generator.make_grammar({}, rng=np.random.RandomState(42))
     for k, v in grammar.grammar.items():
         grammar.grammar[k] = v[:2]  # Force reusing variables.
 
@@ -71,10 +71,10 @@ def test_blend_instructions(verbose=False):
 
     game = M.build()
 
-    grammar1 = textworld.generator.make_grammar(flags={"blend_instructions": False},
+    grammar1 = textworld.generator.make_grammar({"blend_instructions": False},
                                                 rng=np.random.RandomState(42))
 
-    grammar2 = textworld.generator.make_grammar(flags={"blend_instructions": True},
+    grammar2 = textworld.generator.make_grammar({"blend_instructions": True},
                                                 rng=np.random.RandomState(42))
 
     quest.desc = None

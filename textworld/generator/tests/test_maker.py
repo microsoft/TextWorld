@@ -27,11 +27,11 @@ def compile_game(game, folder):
         "instruction_extension": []
     }
     rng_grammar = np.random.RandomState(1234)
-    grammar = textworld.generator.make_grammar(flags=grammar_flags, rng=rng_grammar)
+    grammar = textworld.generator.make_grammar(grammar_flags, rng=rng_grammar)
     game.change_grammar(grammar)
 
     game_name = "test_game"
-    game_file = textworld.generator.compile_game(game, game_name, games_folder=folder)
+    game_file = textworld.generator.compile_game(game, path=folder)
     return game_file
 
 

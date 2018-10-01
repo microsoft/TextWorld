@@ -4,7 +4,6 @@
 
 import textworld
 
-
 from textworld import g_rng
 from textworld.utils import make_temp_directory, get_webdriver
 from textworld.generator import compile_game
@@ -15,13 +14,18 @@ def test_html_viewer():
     # Integration test for visualization service
     num_nodes = 3
     num_items = 10
-    g_rng.set_seed(1234)
-    grammar_flags = {"theme": "house", "include_adj": True}
-    game = textworld.generator.make_game(world_size=num_nodes, nb_objects=num_items, quest_length=3, quest_breadth=1, grammar_flags=grammar_flags)
+    options = textworld.GameOptions()
+    options.seeds = 1234
+    options.nb_rooms = num_nodes
+    options.nb_objects = num_items
+    options.quest_length = 3
+    options.grammar_options.theme = "house"
+    options.grammar_options.include_adj = True
+    game = textworld.generator.make_game(options)
 
     game_name = "test_html_viewer_wrapper"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, game_name, games_folder=tmpdir)
+        game_file = compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
         env = HtmlViewer(env, open_automatically=False, port=8080)

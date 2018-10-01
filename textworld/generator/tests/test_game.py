@@ -14,7 +14,6 @@ from textworld.utils import make_temp_directory
 
 from textworld.generator import data
 from textworld.generator import World
-from textworld.generator import compile_game, make_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
 
 from textworld.generator.chaining import ChainingOptions, sample_quest
@@ -43,30 +42,35 @@ def _apply_command(command: str, game_progression: GameProgression) -> None:
 
 
 def test_game_comparison():
-    rngs = {}
-    rngs['rng_map'] = np.random.RandomState(1)
-    rngs['rng_objects'] = np.random.RandomState(2)
-    rngs['rng_quest'] = np.random.RandomState(3)
-    rngs['rng_grammar'] = np.random.RandomState(4)
-    game1 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
-
-    rngs['rng_map'] = np.random.RandomState(1)
-    rngs['rng_objects'] = np.random.RandomState(2)
-    rngs['rng_quest'] = np.random.RandomState(3)
-    rngs['rng_grammar'] = np.random.RandomState(4)
-    game2 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
+    options = textworld.GameOptions()
+    options.nb_rooms = 5
+    options.nb_objects = 5
+    options.quest_length = 2
+    options.quest_breadth = 2
+    options.seeds = {"map": 1, "objects": 2, "quest": 3, "grammar": 4}
+    game1 = textworld.generator.make_game(options)
+    game2 = textworld.generator.make_game(options)
 
     assert game1 == game2  # Test __eq__
     assert game1 in {game2}  # Test __hash__
 
-    game3 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
+    options = options.copy()
+    options.seeds = {"map": 4, "objects": 3, "quest": 2, "grammar": 1}
+    game3 = textworld.generator.make_game(options)
     assert game1 != game3
 
 
 def test_variable_infos(verbose=False):
-    g_rng.set_seed(1234)
-    grammar_flags = {"theme": "house", "include_adj": True}
-    game = textworld.generator.make_game(world_size=5, nb_objects=10, quest_length=3, quest_breadth=2, grammar_flags=grammar_flags)
+    options = textworld.GameOptions()
+    options.nb_rooms = 5
+    options.nb_objects = 10
+    options.quest_length = 3
+    options.quest_breadth = 2
+    options.seeds = 1234
+    options.grammar_options.theme = "house"
+    options.grammar_options.include_adj = True
+
+    game = textworld.generator.make_game(options)
 
     for var_id, var_infos in game.infos.items():
         if var_id not in ["P", "I"]:
