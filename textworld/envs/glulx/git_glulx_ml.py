@@ -152,6 +152,7 @@ class GlulxGameState(textworld.GameState):
         self._state_tracking = state_tracking
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0
         self._objective = game.objective
+        self._score = 0
         self._max_score = sum(quest.reward for quest in game.quests)
 
     def view(self) -> "GlulxGameState":
@@ -320,14 +321,18 @@ class GlulxGameState(textworld.GameState):
     @property
     def score(self):
         if not hasattr(self, "_score"):
-            output = self._raw
-            if not self.game_ended:
-                output = self._env._send("score")
+            # Check if there was any Inform7 events.
+            if self._feedback == self._raw:
+                self._score = self.previous_state.score
+            else:
+                output = self._raw
+                if not self.game_ended:
+                    output = self._env._send("score")
 
-            match = re.search("scored (?P<score>[0-9]+) out of a possible (?P<max_score>[0-9]+),", output)
-            self._score = 0
-            if match:
-                self._score = int(match.groupdict()["score"])
+                match = re.search("scored (?P<score>[0-9]+) out of a possible (?P<max_score>[0-9]+),", output)
+                self._score = 0
+                if match:
+                    self._score = int(match.groupdict()["score"])
 
         return self._score
 
