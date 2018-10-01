@@ -89,7 +89,7 @@ def _detect_i7_events_debug_tags(text: str) -> Tuple[List[str], str]:
     """
     matches = []
     open_tags = []
-    for match in re.findall("\[[^]]+\]\n?", text):
+    for match in re.findall(r"\[[^]]+\]\n?", text):
         text = text.replace(match, "")  # Remove i7 debug tags.
         tag_name = match.strip()[1:-1]  # Strip starting '[' and trailing ']'.
 
@@ -127,12 +127,12 @@ class GlulxGameState(textworld.GameState):
         :param kwargs: The kwargs
         """
         super().__init__(*args, **kwargs)
-        self._has_won = False
-        self._has_lost = False
+        self.has_timeout = False
         self._state_tracking = False
         self._compute_intermediate_reward = False
+        self._max_score = 0
 
-    def init(self, output: str, game=None,
+    def init(self, output: str, game: Game,
              state_tracking: bool = False, compute_intermediate_reward: bool = False):
         """
         Initialize the game state and set tracking parameters.
@@ -149,10 +149,9 @@ class GlulxGameState(textworld.GameState):
         self._game_progression = GameProgression(game, track_quests=compute_intermediate_reward)
         self._state_tracking = state_tracking
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0
-
-        self._objective = ""
-        if len(game.quests) > 0:
-            self._objective = game.quests[0].desc
+        self._objective = game.objective
+        self._score = 0
+        self._max_score = self._game_progression.max_score
 
     def view(self) -> "GlulxGameState":
         """
@@ -177,6 +176,7 @@ class GlulxGameState(textworld.GameState):
         game_state._nb_moves = self.nb_moves
         game_state._has_won = self.has_won
         game_state._has_lost = self.has_lost
+        game_state.has_timeout = self.has_timeout
 
         if self._state_tracking:
             game_state._admissible_commands = self.admissible_commands
@@ -199,6 +199,7 @@ class GlulxGameState(textworld.GameState):
         game_state = super().update(command, output)
         game_state.previous_state = self.view()
         game_state._objective = self.objective
+        game_state._max_score = self.max_score
         game_state._game_progression = self._game_progression
         game_state._state_tracking = self._state_tracking
         game_state._compute_intermediate_reward = self._compute_intermediate_reward
@@ -214,12 +215,6 @@ class GlulxGameState(textworld.GameState):
                 if game_state._action is not None:
                     # An action that affects the state of the game.
                     game_state._game_progression.update(game_state._action)
-
-                if game_state._compute_intermediate_reward:
-                    if game_state._game_progression.winning_policy is None:
-                        game_state._has_lost = True
-                    elif len(game_state._game_progression.winning_policy) == 0:
-                        game_state._has_won = True
 
         return game_state
 
@@ -317,24 +312,54 @@ class GlulxGameState(textworld.GameState):
 
     @property
     def score(self):
-        if self.has_won:
-            return 1
-        elif self.has_lost:
-            return -1
+        if not hasattr(self, "_score"):
+            if self._state_tracking:
+                self._score = self._game_progression.score
+            else:
 
-        return 0
+                # Check if there was any Inform7 events.
+                if self._feedback == self._raw:
+                    self._score = self.previous_state.score
+                else:
+                    output = self._raw
+                    if not self.game_ended:
+                        output = self._env._send("score")
+
+                    match = re.search("scored (?P<score>[0-9]+) out of a possible (?P<max_score>[0-9]+),", output)
+                    self._score = 0
+                    if match:
+                        self._score = int(match.groupdict()["score"])
+
+        return self._score
 
     @property
     def max_score(self):
-        return 1
+        return self._max_score
 
     @property
     def has_won(self):
-        return self._has_won or '*** The End ***' in self.feedback
+        if not hasattr(self, "_has_won"):
+            if self._compute_intermediate_reward:
+                self._has_won = self._game_progression.completed
+            else:
+                self._has_won = '*** The End ***' in self.feedback
+
+        return self._has_won
 
     @property
     def has_lost(self):
-        return self._has_lost or '*** You lost! ***' in self.feedback
+        if not hasattr(self, "_has_lost"):
+            if self._compute_intermediate_reward:
+                self._has_lost = self._game_progression.failed
+            else:
+                self._has_lost = '*** You lost! ***' in self.feedback
+
+        return self._has_lost
+
+    @property
+    def game_ended(self) -> bool:
+        """ Whether the game is finished or not. """
+        return self.has_won | self.has_lost | self.has_timeout
 
     @property
     def game_infos(self) -> Mapping:
@@ -439,8 +464,8 @@ class GitGlulxMLEnvironment(textworld.Environment):
             raise GameNotRunningError()
 
         self.game_state = self.game_state.update(command, output)
-        done = self.game_state.game_ended or not self.game_running
-        return self.game_state, self.game_state.score, done
+        self.game_state.has_timeout = not self.game_running
+        return self.game_state, self.game_state.score, self.game_state.game_ended
 
     def _send(self, command: str) -> Union[str, None]:
         if not self.game_running:

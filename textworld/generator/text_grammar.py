@@ -36,7 +36,7 @@ def fix_determinant(var):
 
 
 class GrammarFlags:
-    __slots__ = ['theme', 'include_adj', 'blend_descriptions',
+    __slots__ = ['theme', 'names_to_exclude', 'include_adj', 'blend_descriptions',
                  'ambiguous_instructions', 'only_last_action',
                  'blend_instructions',
                  'allowed_variables_numbering', 'unique_expansion']
@@ -45,6 +45,7 @@ class GrammarFlags:
         flags = flags or kwargs
 
         self.theme = flags.get("theme", "house")
+        self.names_to_exclude = flags.get("names_to_exclude", [])
         self.allowed_variables_numbering = flags.get("allowed_variables_numbering", False)
         self.unique_expansion = flags.get("unique_expansion", False)
         self.include_adj = flags.get("include_adj", False)
@@ -53,18 +54,37 @@ class GrammarFlags:
         self.blend_descriptions = flags.get("blend_descriptions", False)
         self.ambiguous_instructions = flags.get("ambiguous_instructions", False)
 
-    def encode(self):
+    def serialize(self) -> Mapping:
+        return {slot: getattr(self, slot) for slot in self.__slots__}
+
+    @classmethod
+    def deserialize(cls, data: Mapping) -> "GrammarFlags":
+        return cls(data)
+
+    def __eq__(self, other) -> bool:
+        return (isinstance(other, GrammarFlags) and
+                all(getattr(self, slot) == getattr(other, slot) for slot in self.__slots__))
+
+    def encode(self) -> str:
         """ Generate UUID for this set of grammar flags.
         """
-        values = [int(getattr(self, s)) for s in self.__slots__[1:]]
+        def _unsigned(n):
+            return n & 0xFFFFFFFFFFFFFFFF
+
+        # Skip theme and names_to_exclude.
+        values = [int(getattr(self, s)) for s in self.__slots__[2:]]
         flag = "".join(map(str, values))
 
         from hashids import Hashids
         hashids = Hashids(salt="TextWorld")
+        if len(self.names_to_exclude) > 0:
+            names_to_exclude_hash = _unsigned(hash(frozenset(self.names_to_exclude)))
+            return self.theme + "-" + hashids.encode(names_to_exclude_hash) + "-" + hashids.encode(int(flag))
+
         return self.theme + "-" + hashids.encode(int(flag))
 
 
-def encode_flags(flags):
+def encode_flags(flags: Mapping) -> str:
     return GrammarFlags(flags).encode()
 
 
@@ -83,19 +103,19 @@ class Grammar:
         :param rng:
             Random generator used for sampling tag expansions.
         """
-        self.flags = flags
+        self.flags = GrammarFlags(flags)
         self.grammar = OrderedDict()
         self.rng = g_rng.next() if rng is None else rng
-        self.allowed_variables_numbering = self.flags.get("allowed_variables_numbering", False)
-        self.unique_expansion = self.flags.get("unique_expansion", False)
+        self.allowed_variables_numbering = self.flags.allowed_variables_numbering
+        self.unique_expansion = self.flags.unique_expansion
         self.all_expansions = defaultdict(list)
 
         # The current used symbols
         self.overflow_dict = OrderedDict()
-        self.used_names = set(self.flags.get("names_to_exclude", []))
+        self.used_names = set(self.flags.names_to_exclude)
 
         # Load the grammar associated to the provided theme.
-        self.theme = self.flags.get("theme", "house")
+        self.theme = self.flags.theme
         grammar_contents = []
 
         # Load the object names file
@@ -111,7 +131,7 @@ class Grammar:
         return (isinstance(other, Grammar) and
                 self.overflow_dict == other.overflow_dict and
                 self.grammar == other.grammar and
-                self.flags == other.flags and
+                self.flags.encode() == other.flags.encode() and
                 self.used_names == other.used_names)
 
     def _parse(self, lines: List[str]):
@@ -174,7 +194,6 @@ class Grammar:
         self.all_expansions[tag].append(expansion)
         return expansion
 
-
     def expand(self, text: str, rng: Optional[RandomState] = None) -> str:
         """
         Expand some text until there is no more tag to expand.
@@ -235,7 +254,7 @@ class Grammar:
         return name, adj, noun
 
     def generate_name(self, obj_type: str, room_type: str = "",
-                      include_adj: bool = True, exclude: Container[str] = []) -> Tuple[str, str, str]:
+                      include_adj: Optional[bool] = None, exclude: Container[str] = []) -> Tuple[str, str, str]:
         """
         Generate a name given an object type and the type room it belongs to.
 
@@ -248,6 +267,7 @@ class Grammar:
         include_adj : optional
             If True, the name can contain a generated adjective.
             If False, any generated adjective will be discarded.
+            Default: use value grammar.flags.include_adj
         exclude : optional
             List of names we should avoid generating.
 
@@ -260,6 +280,8 @@ class Grammar:
         noun :
             The noun part of the name.
         """
+        if include_adj is None:
+            include_adj = self.flags.include_adj
 
         # Get room-specialized name, if possible.
         symbol = "#{}_({})#".format(room_type, obj_type)

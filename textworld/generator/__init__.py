@@ -147,7 +147,7 @@ def make_game_with(world, quests=None, grammar=None):
     return game
 
 
-def make_game(world_size: int, nb_objects: int, quest_length: int,
+def make_game(world_size: int, nb_objects: int, quest_length: int, quest_breadth: int,
               grammar_flags: Mapping = {},
               rngs: Optional[Dict[str, RandomState]] = None
               ) -> Game:
@@ -158,6 +158,7 @@ def make_game(world_size: int, nb_objects: int, quest_length: int,
         world_size: Number of rooms in the world.
         nb_objects: Number of objects in the world.
         quest_length: Minimum nb. of actions the quest requires to be completed.
+        quest_breadth: How many branches the quest can have.
         grammar_flags: Options for the grammar.
 
     Returns:
@@ -175,14 +176,34 @@ def make_game(world_size: int, nb_objects: int, quest_length: int,
     world = make_world(world_size, nb_objects=0, rngs=rngs)
 
     # Sample a quest according to quest_length.
-    options = ChainingOptions()
+    class Options(ChainingOptions):
+
+        def get_rules(self, depth):
+            if depth == 0:
+		        # Last action should not be "go <dir>".
+                return data.get_rules().get_matching("^(?!go.*).*")
+            else:
+                return super().get_rules(depth)
+
+    options = Options()
     options.backward = True
+    options.min_depth = 1
     options.max_depth = quest_length
+    options.min_breadth = 1
+    options.max_breadth = quest_breadth
     options.create_variables = True
     options.rng = rngs['rng_quest']
     options.restricted_types = {"r", "d"}
     chain = sample_quest(world.state, options)
+
+    subquests = []
+    for i in range(1, len(chain.nodes)):
+        if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
+            quest = Quest(chain.actions[:i])
+            subquests.append(quest)
+
     quest = Quest(chain.actions)
+    subquests.append(quest)
 
     # Set the initial state required for the quest.
     world.state = chain.initial_state
@@ -191,7 +212,9 @@ def make_game(world_size: int, nb_objects: int, quest_length: int,
     world.populate(nb_objects, rng=rngs['rng_objects'])
 
     grammar = make_grammar(grammar_flags, rng=rngs['rng_grammar'])
-    game = make_game_with(world, [quest], grammar)
+    game = make_game_with(world, subquests, grammar)
+    game.change_grammar(grammar)
+
     return game
 
 

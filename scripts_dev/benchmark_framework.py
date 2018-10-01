@@ -10,35 +10,14 @@ from textworld import g_rng
 from textworld.generator import World
 
 
-def generate_never_ending_game_old(args):
-    g_rng.set_seed(args.seed)
-    msg = "--max-steps {} --nb-objects {} --nb-rooms {} --seed {}"
-    print(msg.format(args.max_steps, args.nb_objects, args.nb_rooms, g_rng.seed))
-    print("Generating game...")
-
-    map_ = textworld.generator.make_map(n_rooms=args.nb_rooms)
-    world = World.from_map(map_)
-    world.set_player_room()
-    world.populate(nb_objects=args.nb_objects)
-    grammar = textworld.generator.make_grammar(flags={"theme": "house"})
-
-    quests = []  # No quest
-    game = textworld.generator.make_game_with(world, quests, grammar)
-
-    game_name = "neverending"
-    game_file = textworld.generator.compile_game(game, game_name, force_recompile=True,
-                                                 games_folder=args.output)
-    return game_file
-
-
 def generate_never_ending_game(args):
     g_rng.set_seed(args.seed)
-    msg = "--max-steps {} --nb-objects {} --nb-rooms {} --quest-length {} --seed {}"
-    print(msg.format(args.max_steps, args.nb_objects, args.nb_rooms, args.quest_length, g_rng.seed))
+    msg = "--max-steps {} --nb-objects {} --nb-rooms {} --quest-length {} --quest-breadth {} --seed {}"
+    print(msg.format(args.max_steps, args.nb_objects, args.nb_rooms, args.quest_length, args.quest_breadth, g_rng.seed))
     print("Generating game...")
 
     grammar_flags = {}
-    game = textworld.generator.make_game(args.nb_rooms, args.nb_objects, args.quest_length, grammar_flags)
+    game = textworld.generator.make_game(args.nb_rooms, args.nb_objects, args.quest_length, args.quest_breadth, grammar_flags)
     if args.no_quest:
         game.quests = []
 
@@ -52,9 +31,11 @@ def benchmark(game_file, args):
     print("Using {}".format(env.__class__.__name__))
 
     if args.mode == "random":
-        agent = textworld.agents.RandomTextAgent()
+        agent = textworld.agents.NaiveAgent()
     elif args.mode == "random-cmd":
         agent = textworld.agents.RandomCommandAgent()
+    elif args.mode == "walkthrough":
+        agent = textworld.agents.WalkthroughAgent()
 
     agent.reset(env)
 
@@ -96,13 +77,15 @@ def parse_args():
                         help="Nb. of rooms in the world. Default: %(default)s")
     parser.add_argument("--nb-objects", type=int, default=50,
                         help="Nb. of objects in the world. Default: %(default)s")
-    parser.add_argument("--quest-length", type=int, default=10,
+    parser.add_argument("--quest-length", type=int, default=5,
                         help="Minimum nb. of actions the quest requires to be completed. Default: %(default)s")
+    parser.add_argument("--quest-breadth", type=int, default=3,
+                        help="Control how non-linear a quest can be. Default: %(default)s")
     parser.add_argument("--max-steps", type=int, default=1000,
                         help="Stop the game after that many steps. Default: %(default)s")
     parser.add_argument("--output", default="./gen_games/",
                         help="Output folder to save generated game files.")
-    parser.add_argument("--mode", default="random-cmd", choices=["random", "random-cmd"])
+    parser.add_argument("--mode", default="random-cmd", choices=["random", "random-cmd", "walkthrough"])
     parser.add_argument("--no-quest", action="store_true")
     parser.add_argument("--compute_intermediate_reward", action="store_true")
     parser.add_argument("--activate_state_tracking", action="store_true")

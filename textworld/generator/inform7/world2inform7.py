@@ -156,7 +156,6 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     quests = game.quests
 
     source = ""
-    source += "Use scoring. The maximum score is 1.\n"
     source += "When play begins, seed the random-number generator with {}.\n\n".format(seed)
     source += define_inform7_kinds()
     # Mention that rooms have a special text attribute called 'internal name'.
@@ -221,22 +220,30 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     # Place the player.
     source += "The player is in {}.\n\n".format(var_infos[world.player_room.id].id)
 
-    quest = None
-    if len(quests) > 0:
-        quest = quests[0]  # TODO: randomly sample a quest.
+    objective = game.objective
+    maximum_score = 0
+    for quest_id, quest in enumerate(quests):
         commands = gen_commands_from_actions(quest.actions, var_infos)
         quest.commands = commands
+        maximum_score += quest.reward
 
-        walkthrough = '\nTest me with "{}"\n\n'.format(" / ".join(commands))
+        quest_completed = textwrap.dedent("""\
+        The quest{quest_id} completed is a truth state that varies.
+        The quest{quest_id} completed is usually false.
+        """)
+        source += quest_completed.format(quest_id=quest_id)
+
+        walkthrough = '\nTest quest{} with "{}"\n\n'.format(quest_id, " / ".join(commands))
         source += walkthrough
 
-        # Add winning and losing conditions.
-        ending_condition = """\
+        # Add winning and losing conditions for quest.
+        quest_ending_condition = """\
         Every turn:
-            if {}:
+            if {losing_tests}:
                 end the story; [Lost]
-            else if {}:
-                end the story finally; [Win]
+            else if quest{quest_id} completed is false and {winning_tests}:
+                increase the score by {reward}; [Quest completed]
+                Now the quest{quest_id} completed is true.
 
         """
 
@@ -246,8 +253,41 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         if quest.fail_action is not None:
             losing_tests = gen_source_for_conditions(quest.fail_action.preconditions)
 
-        ending_condition = ending_condition.format(losing_tests, winning_tests)
-        source += textwrap.dedent(ending_condition)
+        quest_ending_condition = quest_ending_condition.format(losing_tests=losing_tests,
+                                                               winning_tests=winning_tests,
+                                                               reward=quest.reward,
+                                                               quest_id=quest_id)
+        source += textwrap.dedent(quest_ending_condition)
+
+    # Enable scoring is at least one quest has nonzero reward.
+    if maximum_score != 0:
+        source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
+
+    # Build test condition for winning the game.
+    game_winning_test = "1 is 0 [always false]"
+    if len(quests) > 0:
+        test_template = "quest{} completed is true"
+        game_winning_test = " and ".join(test_template.format(i) for i in range(len(quests)))
+
+    # Remove square bracket when printing score increases. Square brackets are conflicting with 
+    # Inform7's events parser in git_glulx_ml.py.
+    # And add winning conditions for the game.
+    source += textwrap.dedent("""\
+    This is the simpler notify score changes rule:
+        If the score is not the last notified score:
+            let V be the score - the last notified score;
+            say "Your score has just gone up by [V in words] ";
+            if V > 1:
+                say "points.";
+            else:
+                say "point.";
+            Now the last notified score is the score;
+        if {game_winning_test}:
+            end the story finally; [Win]
+
+    The simpler notify score changes rule substitutes for the notify score changes rule.
+
+    """.format(game_winning_test=game_winning_test))
 
     if not use_i7_description:
         # Remove Inform7 listing of nondescript items.
@@ -292,7 +332,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     Rule for printing the banner text:
         say "{objective}[line break]".
 
-    """.format(objective=quest.desc if quest is not None else ""))
+    """.format(objective=objective))
 
     # Simply display *** The End *** when game ends.
     source += textwrap.dedent("""\
@@ -300,7 +340,6 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
 
     Rule for printing the player's obituary:
         if story has ended finally:
-            increase score by 1;
             center "*** The End ***";
         else:
             center "*** You lost! ***";
@@ -451,7 +490,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
 
     source += textwrap.dedent("""\
     An objective is some text that varies. The objective is "{objective}".
-    """.format(objective=quest.desc if quest is not None else ""))
+    """.format(objective=objective))
 
     # Special command to print the objective of the game, if any.
     source += textwrap.dedent("""\
@@ -618,6 +657,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
 
     Turning on the restrict commands option is an action applying to nothing.
     Carry out turning on the restrict commands option:
+        Decrease turn count by 1;
         Now the restrict commands option is true.
 
     Understand "restrict commands" as turning on the restrict commands option.

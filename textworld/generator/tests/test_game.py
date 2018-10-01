@@ -48,27 +48,25 @@ def test_game_comparison():
     rngs['rng_objects'] = np.random.RandomState(2)
     rngs['rng_quest'] = np.random.RandomState(3)
     rngs['rng_grammar'] = np.random.RandomState(4)
-    game1 = make_game(world_size=5, nb_objects=5, quest_length=2, grammar_flags={}, rngs=rngs)
+    game1 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
 
     rngs['rng_map'] = np.random.RandomState(1)
     rngs['rng_objects'] = np.random.RandomState(2)
     rngs['rng_quest'] = np.random.RandomState(3)
     rngs['rng_grammar'] = np.random.RandomState(4)
-    game2 = make_game(world_size=5, nb_objects=5, quest_length=2, grammar_flags={}, rngs=rngs)
+    game2 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
 
     assert game1 == game2  # Test __eq__
     assert game1 in {game2}  # Test __hash__
 
-    game3 = make_game(world_size=5, nb_objects=5, quest_length=2, grammar_flags={}, rngs=rngs)
+    game3 = make_game(world_size=5, nb_objects=5, quest_length=2, quest_breadth=2, grammar_flags={}, rngs=rngs)
     assert game1 != game3
-
-
 
 
 def test_variable_infos(verbose=False):
     g_rng.set_seed(1234)
     grammar_flags = {"theme": "house", "include_adj": True}
-    game = textworld.generator.make_game(world_size=5, nb_objects=10, quest_length=3, grammar_flags=grammar_flags)
+    game = textworld.generator.make_game(world_size=5, nb_objects=10, quest_length=3, quest_breadth=2, grammar_flags=grammar_flags)
 
     for var_id, var_infos in game.infos.items():
         if var_id not in ["P", "I"]:

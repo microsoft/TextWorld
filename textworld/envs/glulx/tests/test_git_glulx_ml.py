@@ -47,7 +47,12 @@ def build_test_game():
     chest.add_property("open")
     R2.add(chest)
 
-    M.set_quest_from_commands(commands)
+    quest1 = M.new_quest_using_commands(commands)
+    quest1.reward = 2
+    quest2 = M.new_quest_using_commands(commands + ["close chest"])
+    quest2.set_winning_conditions([M.new_fact("in", carrot, chest),
+                                   M.new_fact("closed", chest)])
+    M._quests = [quest1, quest2]
     game = M.build()
     return game
 
@@ -128,7 +133,10 @@ class TestGlulxGameState(unittest.TestCase):
         game_state, _, _ = self.env.step("take carrot")
         game_state, _, _ = self.env.step("go east")
         game_state, _, _ = self.env.step("insert carrot into chest")
-        assert game_state.inventory == ""
+        assert "carrying nothing" in game_state.inventory
+
+        game_state, _, _ = self.env.step("close chest")
+        assert game_state.inventory == ""  # Game has ended
 
     def test_objective(self):
         assert self.game_state.objective.strip() in self.game_state.feedback
@@ -145,16 +153,19 @@ class TestGlulxGameState(unittest.TestCase):
 
         # End the game.
         game_state, _, _ = self.env.step("insert carrot into chest")
+        game_state, _, _ = self.env.step("close chest")
         assert game_state.description == ""
 
     def test_score(self):
         assert self.game_state.score == 0
-        assert self.game_state.max_score == 1
+        assert self.game_state.max_score == 3
         game_state, _, _ = self.env.step("go east")
         assert game_state.score == 0
         game_state, _, _ = self.env.step("insert carrot into chest")
-        assert game_state.score == 1
-        assert game_state.max_score == 1
+        assert game_state.score == 2
+        assert game_state.max_score == 3
+        game_state, _, _ = self.env.step("close chest")
+        assert game_state.score == 3
 
     def test_game_ended_when_no_quest(self):
         M = GameMaker()
@@ -184,6 +195,8 @@ class TestGlulxGameState(unittest.TestCase):
         game_state, _, _ = self.env.step("go east")
         assert not game_state.has_won
         game_state, _, done = self.env.step("insert carrot into chest")
+        assert not game_state.has_won
+        game_state, _, done = self.env.step("close chest")
         assert game_state.has_won
 
     def test_has_lost(self):
@@ -210,31 +223,33 @@ class TestGlulxGameState(unittest.TestCase):
         game_state, _, _ = self.env.step("close wooden door")
         assert game_state.intermediate_reward == 0
         game_state, _, done = self.env.step("insert carrot into chest")
+        game_state, _, done = self.env.step("close chest")
         assert done
         assert game_state.has_won
         assert game_state.intermediate_reward == 1
 
     def test_policy_commands(self):
-        assert self.game_state.policy_commands == self.game.quests[0].commands
+        assert self.game_state.policy_commands == self.game.main_quest.commands
 
         game_state, _, _ = self.env.step("drop carrot")
-        expected = ["take carrot"] + self.game.quests[0].commands
+        expected = ["take carrot"] + self.game.main_quest.commands
         assert game_state.policy_commands == expected, game_state.policy_commands
 
         game_state, _, _ = self.env.step("take carrot")
-        expected = self.game.quests[0].commands
+        expected = self.game.main_quest.commands
         assert game_state.policy_commands == expected
 
         game_state, _, _ = self.env.step("go east")
-        expected = self.game.quests[0].commands[1:]
+        expected = self.game.main_quest.commands[1:]
         assert game_state.policy_commands == expected
 
         game_state, _, _ = self.env.step("insert carrot into chest")
+        game_state, _, _ = self.env.step("close chest")
         assert game_state.policy_commands == [], game_state.policy_commands
 
         # Test parallel subquests.
         game_state = self.env.reset()
-        commands = self.game.quests[0].commands
+        commands = self.game.main_quest.commands
         assert game_state.policy_commands == commands
         game_state, _, _ = self.env.step("close wooden door")
         assert game_state.policy_commands == ["open wooden door"] + commands
@@ -248,7 +263,7 @@ class TestGlulxGameState(unittest.TestCase):
 
         # Irreversible action.
         game_state = self.env.reset()
-        assert game_state.policy_commands == self.game.quests[0].commands
+        assert game_state.policy_commands == self.game.main_quest.commands
         game_state, _, done = self.env.step("eat carrot")
         assert done
         assert game_state.has_lost
@@ -256,7 +271,7 @@ class TestGlulxGameState(unittest.TestCase):
 
     def test_admissible_commands(self):
         game_state = self.env.reset()
-        for command in self.game.quests[0].commands:
+        for command in self.game.main_quest.commands:
             assert command in game_state.admissible_commands
             game_state, _, done = self.env.step(command)
 
