@@ -38,6 +38,7 @@ def compile_game(game, folder):
 def test_missing_player():
     M = GameMaker()
     M.new_room()
+    assert not M.validate()
     npt.assert_raises(MissingPlayerError, M.build)
 
 
@@ -72,21 +73,22 @@ def test_adding_the_same_object_multiple_times():
     M = GameMaker()
     room = M.new_room("room")
     M.set_player(room)
-    container1 = M.new('c', name='container')
-    container2 = M.new('c', name="another container")
+    container1 = M.new('chest', name='container')
+    container2 = M.new('chest', name="another container")
     room.add(container1, container2)
 
     obj = M.new('o')
     container1.add(obj)
     container2.add(obj)
-    npt.assert_raises(FailedConstraintsError, M.validate)
+    assert not M.validate()
+    npt.assert_raises(FailedConstraintsError, M.build)
 
 
 def test_adding_objects():
     M = GameMaker()
 
     objs = [M.new('o') for _ in range(5)]  # Objects to be added.
-    container = M.new('c')
+    container = M.new('chest')
     container.add(*objs)
     assert all(f.name == "in" for f in container.facts)
 
@@ -96,7 +98,7 @@ def test_adding_objects():
     assert all(f.name == "at" for f in room.facts)
 
     objs = [M.new('o') for _ in range(5)]  # Objects to be added.
-    supporter = M.new('s')
+    supporter = M.new('table')
     supporter.add(*objs)
     assert all(f.name == "on" for f in supporter.facts)
 
@@ -121,7 +123,7 @@ def test_making_a_small_game(play_the_game=False):
     R1.add(key)
 
     # Add a closed chest in R2.
-    chest = M.new(type='c', name='chest')
+    chest = M.new(type='chest', name='chest')
     chest.add_property("closed")
     R2.add(chest)
 
@@ -165,7 +167,7 @@ def test_record_quest_from_commands(play_the_game=False):
     M.inventory.add(ball)
 
     # Add a closed chest in R2.
-    chest = M.new(type='c', name='chest')
+    chest = M.new(type='chest', name='chest')
     chest.add_property("open")
     R2.add(chest)
 

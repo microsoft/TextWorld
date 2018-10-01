@@ -226,7 +226,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
                 v.name = k
 
     pos = {game_infos[k].name: v for k, v in pos.items()}
-    
+
     for room in world.rooms:
         rooms[room.id] = GraphRoom(game_infos[room.id].name, room)
 
@@ -246,7 +246,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
     # add all items first, in case properties are "out of order"
     for obj in objects:
         cur_item = GraphItem(obj.type, game_infos[obj.id].name)
-        cur_item.portable = data.get_types().is_descendant_of(cur_item.type, "o")
+        cur_item.portable = data.get_types().get(cur_item.type).has_supertype_named("portable")
         all_items[obj.id] = cur_item
 
     for obj in sorted(objects, key=lambda obj: obj.name):

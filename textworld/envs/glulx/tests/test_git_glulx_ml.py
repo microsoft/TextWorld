@@ -40,10 +40,11 @@ def build_test_game():
     path.door.add_property("open")
 
     carrot = M.new(type='f', name='carrot')
+    M.add_fact("edible", carrot)
     M.inventory.add(carrot)
 
     # Add a closed chest in R2.
-    chest = M.new(type='c', name='chest')
+    chest = M.new(type='chest', name='chest')
     chest.add_property("open")
     R2.add(chest)
 

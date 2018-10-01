@@ -14,17 +14,25 @@ def define_inform7_kinds():
     roots = [type for type in data.get_logic().types if len(type.parents) == 0]
     for root in roots:
         for type_ in root.subtypes:
-            if type_.name not in data.INFORM7_VARIABLES:
-                continue
+            parent_types = list(type_.parent_types)
+            if len(parent_types) == 0:
+                continue  # Skip types without a parent.
 
             kind = data.INFORM7_VARIABLES[type_.name]
-            for parent in type_.parents:
-                parent_kind = data.INFORM7_VARIABLES[parent]
-                msg = '{} is a kind of {}.\n'.format(kind, parent_kind)
-                type_defs += msg
+            parent_kind = data.INFORM7_VARIABLES[parent_types[0].name]  # The first parent should define the kind of object.
 
-            desc = data.INFORM7_VARIABLES_DESCRIPTION[type_.name]
-            if desc:
-                type_defs += desc + '\n'
+            if kind == "" or parent_kind == "":
+                continue
+
+            type_defs += "The {kind} is a kind of {parent_kind}.".format(kind=kind, parent_kind=parent_kind)
+            type_definition = data.INFORM7_VARIABLES_DESCRIPTION[type_.name]
+            if type_definition:
+                type_defs += " " + type_definition
+
+            attributes = {vtype for parent_type in parent_types[1:] for vtype in parent_type.supertypes}
+            for attribute in attributes:
+                type_defs += " " + data.INFORM7_VARIABLES_DESCRIPTION[attribute.name]
+
+            type_defs += "\n"
 
     return type_defs

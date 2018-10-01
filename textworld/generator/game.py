@@ -10,9 +10,7 @@ from collections import OrderedDict
 from textworld.generator import data
 from textworld.generator.text_grammar import Grammar
 from textworld.generator.world import World
-from textworld.logic import Action, Proposition, Rule, State
-from textworld.generator.vtypes import VariableTypeTree
-from textworld.generator.grammar import get_reverse_action
+from textworld.logic import Action, Proposition, Rule, State, GameLogic
 from textworld.generator.graph_networks import DIRECTIONS
 
 from textworld.generator.dependency_tree import DependencyTree
@@ -272,8 +270,9 @@ class Game:
         self.metadata = {}
         self._objective = None
         self._infos = self._build_infos()
-        self._rules = data.get_rules()
-        self._types = data.get_types()
+        self._game_logic = data.get_logic()
+        # self._rules = data.get_rules()
+        # self._types = data.get_types()
         self.change_grammar(grammar)
 
         self._main_quest = None
@@ -307,8 +306,7 @@ class Game:
         game = Game(self.world, self.grammar, self.quests)
         game._infos = self.infos
         game.state = self.state.copy()
-        game._rules = self._rules
-        game._types = self._types
+        game._game_logic = self._game_logic
         game._objective = self._objective
         return game
 
@@ -354,9 +352,7 @@ class Game:
         game._infos = {k: EntityInfo.deserialize(v)
                        for k, v in data["infos"]}
         game.state = State.deserialize(data["state"])
-        game._rules = {k: Rule.deserialize(v)
-                       for k, v in data["rules"]}
-        game._types = VariableTypeTree.deserialize(data["types"])
+        game._game_logic = GameLogic.deserialize(data["game_logic"])
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
 
@@ -375,8 +371,7 @@ class Game:
             data["grammar"] = self.grammar.flags.serialize()
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
-        data["rules"] = [(k, v.serialize()) for k, v in self._rules.items()]
-        data["types"] = self._types.serialize()
+        data["game_logic"] = self._game_logic.serialize()
         data["metadata"] = self.metadata
         data["objective"] = self._objective
         return data
@@ -403,7 +398,7 @@ class Game:
     @property
     def objects_types(self) -> List[str]:
         """ All types of objects in this game. """
-        return sorted(self._types.types)
+        return sorted(t.name for t in self._game_logic.types)
 
     @property
     def objects_names(self) -> List[str]:
@@ -428,7 +423,7 @@ class Game:
         """ Verbs that should be recognized in this game. """
         # Retrieve commands templates for every rule.
         commands = [data.INFORM7_COMMANDS[rule_name]
-                    for rule_name in self._rules]
+                    for rule_name in self._game_logic.rules]
         verbs = [cmd.split()[0] for cmd in commands]
         verbs += ["look", "inventory", "examine", "wait"]
         return sorted(set(verbs))
@@ -527,7 +522,7 @@ class ActionDependencyTree(DependencyTree):
         super().remove(action)
 
         # The last action might have impacted one of the subquests.
-        reverse_action = get_reverse_action(action)
+        reverse_action = data.get_reverse_action(action)
         if reverse_action is not None:
             self.push(reverse_action)
 
@@ -684,8 +679,10 @@ class GameProgression:
         """
         self.game = game
         self.state = game.state.copy()
-        self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
-                                                                     self.game._types.constants_mapping))
+        from textworld.logic import Placeholder, Variable
+        self._rules = self.game._game_logic.rules.values()
+        self._constants_mapping = {Placeholder(t.name): Variable(t.name) for t in self.game._game_logic.types if t.constant}
+        self._valid_actions = list(self.state.all_applicable_actions(self._rules, self._constants_mapping))
 
         self.quest_progressions = []
         if track_quests:
@@ -766,8 +763,7 @@ class GameProgression:
         self.state.apply(action)
 
         # Get valid actions.
-        self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
-                                                                     self.game._types.constants_mapping))
+        self._valid_actions = list(self.state.all_applicable_actions(self._rules, self._constants_mapping))
 
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:

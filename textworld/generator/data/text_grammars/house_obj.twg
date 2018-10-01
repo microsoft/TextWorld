@@ -54,39 +54,72 @@ work_(r)_noun:office;studio;workshop;cubicle;study
 work_(r)_adj:silent;austere;serious;still
 
 hot-adj:super;unreasonably;absurdly;alarmingly;upsettingly
-#Containers
+
+# Chests aka fixed in place containers.
 # Each roomType must has specific containers
-#container descriptions work like room descriptions, except the (r) is a (c)
+# Their descriptions work like room descriptions, except the (r) is a (chest)
 #-------------------
-(c):#(c)_adj_noun#
-(c)_noun:chest;box;safe;locker
-(c)_adj:sturdy;nice;ugly
-(c)_adj_noun:#(c)_adj# | #(c)_noun#
-clean_(c):#clean_(c)_adj_type_1# | #clean_(c)_noun_type_1#;#clean_(c)_adj_type_2# | #clean_(c)_noun_type_2#
+(chest):#(chest)_adj_noun#
+(chest)_noun:chest;safe;locker
+(chest)_adj:sturdy;nice;ugly
+(chest)_adj_noun:#(chest)_adj# | #(chest)_noun#
+clean_(chest):#clean_(chest)_adj_type_1# | #clean_(chest)_noun_type_1#;#clean_(chest)_adj_type_2# | #clean_(chest)_noun_type_2#
 #Type 1
-clean_(c)_noun_type_1:cabinet;basket;box;safe;trunk;case
-clean_(c)_adj_type_1:gross;stained;spotless;plain;
+clean_(chest)_noun_type_1:cabinet;basket;safe;trunk;case
+clean_(chest)_adj_type_1:gross;stained;spotless;plain;
 #Type 2
-clean_(c)_noun_type_2:drawer;dresser;cabinet
-clean_(c)_adj_type_2:#wood_type#wood
+clean_(chest)_noun_type_2:drawer;dresser;cabinet
+clean_(chest)_adj_type_2:#wood_type#wood
 
-storage_(c):#storage_(c)_adj# | #storage_(c)_noun#
-storage_(c)_noun:toolbox;chest;safe;locker;trunk;coffer;cabinet;crate;case;suitcase;display
-storage_(c)_adj:rusty;neglected;brand new
+storage_(chest):#storage_(chest)_adj# | #storage_(chest)_noun#
+storage_(chest)_noun:chest;safe;locker;trunk;coffer;cabinet;case;display
+storage_(chest)_adj:rusty;neglected;brand new
 
-cook_(c):#cook_(c)_adj# | #cook_(c)_noun#
-cook_(c)_noun:fridge;refrigerator;freezer;chest;cabinet;case
-cook_(c)_adj:fancy;big;small
+cook_(chest):#cook_(chest)_adj# | #cook_(chest)_noun#
+cook_(chest)_noun:fridge;refrigerator;freezer;chest;cabinet;case
+cook_(chest)_adj:fancy;big;small
 
-rest_(c):#rest_(c)_adj# | #rest_(c)_noun#
-rest_(c)_noun:dresser;chest;basket;box;safe;locker;trunk;coffer;suitcase;portmanteau
-rest_(c)_adj:new;dusty;clean;amazing
+rest_(chest):#rest_(chest)_adj# | #rest_(chest)_noun#
+rest_(chest)_noun:dresser;chest;basket;safe;locker;trunk;coffer
+rest_(chest)_adj:new;dusty;clean;amazing
 
-work_(c):#work_(c)_adj# | #work_(c)_noun#
-work_(c)_noun:cabinet;box;safe;locker;trunk;bureau;coffer;case;suitcase;toolbox;portmanteau;display
-work_(c)_adj:iron;rusty;ancient
+work_(chest):#work_(chest)_adj# | #work_(chest)_noun#
+work_(chest)_noun:cabinet;safe;locker;trunk;bureau;coffer;case;display
+work_(chest)_adj:iron;rusty;ancient
+
+# Boxes aka portable containers.
+#-------------------
+(box):#(box)_adj_noun#
+(box)_noun:chest;box
+(box)_adj:sturdy;nice;ugly
+(box)_adj_noun:#(box)_adj# | #(box)_noun#
+clean_(box):#clean_(box)_adj# | #clean_(box)_noun#
+clean_(box)_noun:box;bag
+clean_(box)_adj:gross;stained;spotless;plain;
+
+storage_(box):#storage_(box)_adj# | #storage_(box)_noun#
+storage_(box)_noun:toolbox;crate;suitcase
+storage_(box)_adj:rusty;neglected;brand new
+
+cook_(box):#cook_(box)_adj# | #cook_(box)_noun#
+cook_(box)_noun:grocery bag;bowl;cooking pot
+cook_(box)_adj:fancy;big;small
+
+rest_(box):#rest_(box)_adj# | #rest_(box)_noun#
+rest_(box)_noun:box;suitcase;bag;laundry basket
+rest_(box)_adj:new;dusty;clean;amazing
+
+work_(box):#work_(box)_adj# | #work_(box)_noun#
+work_(box)_noun:box;suitcase;toolbox;crate
+work_(box)_adj:iron;rusty;ancient
 
 
+# Stool aka portable supporters.
+#-------------------
+(stool):#(stool)_adj_noun#
+(stool)_noun:step stool;stool
+(stool)_adj:sturdy;nice;ugly
+(stool)_adj_noun:#(stool)_adj# | #(stool)_noun#
 
 fruit:watermelon;melon;honeydew;strawberry;apple;pear;grape;kiwi;cantaloupe
 #Doors
@@ -101,30 +134,30 @@ wood_type:oak;birch;maple;balsam;beech;mahogany;walnut;cedar;pine;
 #Supporters
 # Each roomType must has specific supporters
 #-------------------
-#Like containers, but with a (s)
-(s):#(s)_adj# | #(s)_noun#
-(s)_noun:shelf;table;pedestal;slab
-(s)_adj:#(o)_adj#
-clean_(s):#clean_(s)_adj# | #clean_(s)_noun#
-clean_(s)_noun:board;shelf;table;counter;rack;bench
-clean_(s)_adj:dusty;chipped;shiny
-storage_(s):#storage_(s)_adj# | #storage_(s)_noun#
-storage_(s)_noun:shelf;table;workbench;counter;rack;stand
-storage_(s)_adj:rusty;shoddy;splintery;rough
-cook_(s):#cook_(s)_adj# | #cook_(s)_noun#
-cook_(s)_noun:counter;board;shelf;table;rack;chair;plate;bowl;pan;platter;saucepan
-cook_(s)_adj:greasy;soaped down;filthy;messy
-rest_(s):#rest_(s)_adj# | #rest_(s)_noun#
-rest_(s)_noun:bed;couch;shelf;bookshelf;desk;bed stand;mantelpiece;mantle;bar;bench;stand;recliner
-rest_(s)_adj:comfy;warm;worn-out
-work_(s):#work_(s)_adj# | #work_(s)_noun#
-work_(s)_noun:stand;bookshelf;table;chair;shelf;desk;mantelpiece;mantle;stand;armchair
-work_(s)_adj:stern;solid;worn;gross
+#Like containers, but with a (table)
+(table):#(table)_adj# | #(table)_noun#
+(table)_noun:shelf;table;pedestal;slab
+(table)_adj:#(o)_adj#
+clean_(table):#clean_(table)_adj# | #clean_(table)_noun#
+clean_(table)_noun:board;shelf;table;counter;rack;bench
+clean_(table)_adj:dusty;chipped;shiny
+storage_(table):#storage_(table)_adj# | #storage_(table)_noun#
+storage_(table)_noun:shelf;table;workbench;counter;rack;stand
+storage_(table)_adj:rusty;shoddy;splintery;rough
+cook_(table):#cook_(table)_adj# | #cook_(table)_noun#
+cook_(table)_noun:counter;board;shelf;table;rack;chair;plate;bowl;pan;platter;saucepan
+cook_(table)_adj:greasy;soaped down;filthy;messy
+rest_(table):#rest_(table)_adj# | #rest_(table)_noun#
+rest_(table)_noun:bed;couch;shelf;bookshelf;desk;bed stand;mantelpiece;mantle;bar;bench;stand;recliner
+rest_(table)_adj:comfy;warm;worn-out
+work_(table):#work_(table)_adj# | #work_(table)_noun#
+work_(table)_noun:stand;bookshelf;table;chair;shelf;desk;mantelpiece;mantle;stand;armchair
+work_(table)_adj:stern;solid;worn;gross
 
 # Objects
 # Each roomType must have specific objects
 #-------------------
-#(s) --> (o) Very useful to create multiple subtypes to avoid inappropriate or awkward adjective pairing
+#(table) --> (o) Very useful to create multiple subtypes to avoid inappropriate or awkward adjective pairing
 (o):#(o)_adj# | #(o)_noun#
 (o)_noun:pencil;pen
 (o)_adj:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;simple;hefty;modest;austere
@@ -265,9 +298,9 @@ candy:chocolate bar;gummy bear;candy bar;licorice strip;cookie
 #Object Descriptor Functions
 #---------------------------
 (P)_desc:It's you.
-(c)_desc:The (name) looks strong, and impossible to #force_open#.
+(chest)_desc:The (name) looks strong, and impossible to #force_open#.
 force_open:force open;open;break open;bash open;crack open
-(s)_desc:The (name) is #supp_stable#.
+(table)_desc:The (name) is #supp_stable#.
 supp_stable:stable;wobbly;unstable;balanced;durable;reliable;solid;undependable;solidly built;an unstable piece of #garbage#;shaky
 garbage:garbage;trash;junk
 (o)_desc:The (name) is #obj_what#.;The (name) #looks_seems# #out_in_place# here
@@ -298,4 +331,4 @@ shape:rectangular;cuboid;spherical;formless;non-euclidean
 colour:red;blue;chartreuse;purple;violet;orange;yellow;green;brown;teal;cyan
 smell:vanilla;lavender;cake;fudge;fresh laundry;soap
 (k<->d)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(d)_adj# | #clearancelevel# #(d)_noun#; #colour# | #(k)_noun# <-> #colour# | #(d)_noun#
-(k<->c)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(c)_adj# | #clearancelevel# #(c)_noun#; #colour# | #(k)_noun# <-> #colour# | #(c)_noun#
+(k<->c)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(chest)_adj# | #clearancelevel# #(chest)_noun#; #colour# | #(k)_noun# <-> #colour# | #(chest)_noun#

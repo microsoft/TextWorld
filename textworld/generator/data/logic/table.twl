@@ -1,0 +1,17 @@
+# A type of supporter that is fixed in place.
+type table : t, supporter, fixed_in_place {
+    inform7 {
+        type {
+            kind :: "table-like";
+        }
+    }
+}
+
+## Alias for backward compatibility.
+#type s : table {
+#    inform7 {
+#        type {
+#            kind :: "old-s";
+#        }
+#    }
+#}

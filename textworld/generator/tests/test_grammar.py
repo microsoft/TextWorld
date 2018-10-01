@@ -23,7 +23,7 @@ robe = Variable("robe", "o")
 
 
 def maybe_instantiate_variables(rule, mapping, state, max_types_counts=None):
-    types_counts = data.get_types().count(state)
+    types_counts = data.count_types(state)
 
     # Instantiate variables if needed
     try:
@@ -77,60 +77,44 @@ def test_propositions():
 
 
 def test_rules():
-    # Make sure the number of basic rules matches the number
-    # of rules in rules.txt
-    basic_rules = [k for k in data.get_rules().keys() if "-" not in k]
-    assert len(basic_rules) == 19
-
     for rule in data.get_rules().values():
         infos = rule.serialize()
         loaded_rule = Rule.deserialize(infos)
         assert loaded_rule == rule
 
 
-def test_get_reverse_rules(verbose=False):
+def test_get_reverse_rules():
+    constants_mapping = {Placeholder(t.name): Variable(t.name) for t in data.get_types() if t.constant}
     for rule in data.get_rules().values():
-        r_rule = data.get_reverse_rules(rule)
-
-        if verbose:
-            print(rule, r_rule)
+        action = maybe_instantiate_variables(rule, constants_mapping.copy(), State([]))
+        r_action = data.get_reverse_action(action)
 
         if rule.name.startswith("eat"):
-            assert r_rule is None
+            assert r_action is None
         else:
-            # Check if that when applying the reverse rule we can reobtain
+            assert r_action is not None
+
+            # Check if that when applying the reverse rule we can re-obtain
             # the previous state.
-            action = maybe_instantiate_variables(rule, data.get_types().constants_mapping.copy(), State([]))
             state = State(action.preconditions)
 
             new_state = state.copy()
             assert new_state.apply(action)
 
-            assert r_rule is not None
-            actions = list(new_state.all_applicable_actions([r_rule], data.get_types().constants_mapping))
-            if len(actions) != 1:
-                print(actions)
-                print(r_rule)
-                print(new_state)
-                print(list(new_state.all_instantiations(r_rule, data.get_types().constants_mapping)))
-                assert len(actions) == 1
             r_state = new_state.copy()
-            r_state.apply(actions[0])
+            r_state.apply(r_action)
             assert state == r_state
 
 
 def test_serialization_deserialization():
-    rule = data.get_rules()["go/east"]
+    constants_mapping = {Placeholder(t.name): Variable(t.name) for t in data.get_types() if t.constant}
+    rule = data.get_rules()["go(east).0"]
     mapping = {
         Placeholder("r'"): Variable("room1", "r"),
         Placeholder("r"): Variable("room2"),
     }
-    mapping.update(data.get_types().constants_mapping)
+    mapping.update(constants_mapping)
     action = rule.instantiate(mapping)
     infos = action.serialize()
     action2 = Action.deserialize(infos)
     assert action == action2
-
-
-if __name__ == "__main__":
-    test_get_reverse_rules()

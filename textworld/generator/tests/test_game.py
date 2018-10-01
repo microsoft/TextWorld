@@ -103,7 +103,7 @@ class TestQuest(unittest.TestCase):
         M.inventory.add(carrot)
 
         # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
+        chest = M.new(type='chest', name='chest')
         chest.add_property("open")
         R2.add(chest)
 
@@ -152,8 +152,6 @@ class TestQuest(unittest.TestCase):
 
                 # Build the quest by providing the actions.
                 actions = chain.actions
-                if len(actions) != max_depth:
-                    print(chain)
                 assert len(actions) == max_depth, rule.name
                 quest = Quest(actions)
                 tmp_world = World.from_facts(chain.initial_state.facts)
@@ -180,8 +178,11 @@ class TestQuest(unittest.TestCase):
         state = self.game.world.state.copy()
         assert not state.is_applicable(self.quest.fail_action)
 
-        actions = list(state.all_applicable_actions(self.game._rules.values(),
-                                                    self.game._types.constants_mapping))
+        from textworld.logic import Placeholder, Variable
+        rules = self.game._game_logic.rules.values()
+        constants_mapping = {Placeholder(t.name): Variable(t.name) for t in self.game._game_logic.types if t.constant}
+        actions = list(state.all_applicable_actions(rules, constants_mapping))
+
         for action in actions:
             state = self.game.world.state.copy()
             state.apply(action)
@@ -213,7 +214,7 @@ class TestGame(unittest.TestCase):
         M.inventory.add(carrot)
 
         # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
+        chest = M.new(type='chest', name='chest')
         chest.add_property("open")
         R2.add(chest)
 
@@ -225,7 +226,7 @@ class TestGame(unittest.TestCase):
         assert set(self.game.directions_names) == expected
 
     def test_objects_types(self):
-        expected_types = set(data.get_types().types)
+        expected_types = set(t.name for t in data.get_types())
         assert set(self.game.objects_types) == expected_types
 
     def test_objects_names(self):
@@ -233,7 +234,7 @@ class TestGame(unittest.TestCase):
         assert set(self.game.objects_names) == expected_names
 
     def test_objects_names_and_types(self):
-        expected_names_types = {("chest", "c"), ("carrot", "f"), ("wooden door", "d")}
+        expected_names_types = {("chest", "chest"), ("carrot", "f"), ("wooden door", "d")}
         assert set(self.game.objects_names_and_types) == expected_names_types
 
     def test_verbs(self):
@@ -268,7 +269,7 @@ class TestQuestProgression(unittest.TestCase):
         R1.add(carrot)
 
         # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
+        chest = M.new(type='chest', name='chest')
         chest.add_property("open")
         R2.add(chest)
 
@@ -328,7 +329,7 @@ class TestGameProgression(unittest.TestCase):
         R1.add(carrot)
 
         # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
+        chest = M.new(type='chest', name='chest')
         chest.add_property("open")
         R2.add(chest)
 
@@ -436,10 +437,12 @@ class TestGameProgression(unittest.TestCase):
 
         carrot = M.new(type='f', name='carrot')
         lettuce = M.new(type='f', name='lettuce')
+        M.add_fact("edible", carrot)
+        M.add_fact("edible", lettuce)
         R1.add(carrot, lettuce)
 
         # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
+        chest = M.new(type='chest', name='chest')
         chest.add_property("open")
         R2.add(chest)
 

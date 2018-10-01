@@ -1,0 +1,29 @@
+# A type of supporter that is portable.
+type stool : t, supporter, portable {
+    predicates {
+        reachable(stool) = in(stool, I);
+        reachable(stool) = at(P, r) & at(stool, r);
+        reachable(stool) = reachable(table) & on(stool, table);
+        reachable(stool) = reachable_contents(chest) & in(stool, chest);
+    }
+
+    constraints {
+        no_nested_stools :: on(x: stool, y: stool) -> fail();
+        no_stool_in_box :: in(stool, box) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "stool-like";
+        }
+
+        code :: """
+            [Avoid nesting stool-like objects because of some limitation with alias cycles.]
+            Instead of putting a stool-like (called source) on a stool-like (called dest):
+                say "You cannot put [the source] on [the dest]!";
+
+            Instead of inserting a stool-like (called source) into a box-like (called dest):
+                say "You cannot insert [the source] in [the dest]!";
+        """;
+    }
+}

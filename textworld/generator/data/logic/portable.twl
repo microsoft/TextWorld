@@ -1,0 +1,28 @@
+# portable
+type portable {
+    predicates {        
+        reachable(portable) = in(portable, I);
+        reachable(portable) = at(P, r) & at(portable, r);
+        reachable(portable) = reachable_contents(container) & in(portable, container);
+        reachable(portable) = reachable(supporter) & on(portable, supporter);
+    }
+
+    constraints {
+        obj1 :: in(portable, I) & in(portable, container) -> fail();
+        obj2 :: in(portable, I) & on(portable, supporter) -> fail();
+        obj3 :: in(portable, I) & at(portable, r) -> fail();
+        obj4 :: in(portable, container) & on(portable, supporter) -> fail();
+        obj5 :: in(portable, container) & at(portable, r) -> fail();
+        obj6 :: on(portable, supporter) & at(portable, r) -> fail();
+        obj7 :: at(portable, r) & at(portable, r') -> fail();
+        obj8 :: in(portable, container) & in(portable, container') -> fail();
+        obj9 :: on(portable, supporter) & on(portable, supporter') -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "";
+            definition :: "It is usually portable.";
+        }
+    }
+}

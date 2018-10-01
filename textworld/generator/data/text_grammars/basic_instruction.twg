@@ -11,8 +11,8 @@ close_open_types:(d|c)
 take:take the #obj_types# in (r).
 take/s:take the #obj_types# from the #on_types#.
 take/c:take the #obj_types# from the #on_types#.
-insert:insert #obj_types# into (c).
-put:put #obj_types# on (s).
+insert:insert #obj_types# into (chest).
+put:put #obj_types# on (table).
 drop:drop #obj_types# in (r).
 eat:eat (f).
 open:open #close_open_types#.
@@ -32,10 +32,10 @@ wait:Wait.
 #----------------
 ig_unlock_open:open locked #lock_types# using (k).
 ig_unlock_open_take:Open locked #lock_types# using (k) and take #obj_types_no_key#.
-ig_open_take:Take the #obj_types# from (c).
+ig_open_take:Take the #obj_types# from (chest).
 ig_take_unlock:Take (k) and use (k) to unlock #lock_types#.
-ig_open_insert:Open (c) and place #obj_types# in (c).
-ig_insert_close:Place the #obj_types# in (c) and close (c).
+ig_open_insert:Open (chest) and place #obj_types# in (chest).
+ig_insert_close:Place the #obj_types# in (chest) and close (chest).
 ig_close_lock:Close #lock_types# and lock #lock_types#.
 #Flavour Text
 #----------------

@@ -103,10 +103,11 @@ def test_quest_losing_condition():
     path.door.add_property("open")
 
     carrot = M.new(type='f', name='carrot')
+    M.add_fact("edible", carrot)
     M.inventory.add(carrot)
 
     # Add a closed chest in R2.
-    chest = M.new(type='c', name='chest')
+    chest = M.new(type='chest', name='chest')
     chest.add_property("open")
     R2.add(chest)
 
@@ -174,7 +175,7 @@ def test_names_disambiguation():
 
     path = M.connect(roomA.east, roomB.west)
     gateway = M.new_door(path, name="gateway")
-    
+
     path = M.connect(roomA.west, roomC.east)
     rectangular_gateway = M.new_door(path, name="rectangular gateway")
 
@@ -219,13 +220,13 @@ def test_names_disambiguation():
     garage = M.new_room("garage")
     M.set_player(garage)
 
-    key = M.new(type="k", name="key")    
-    typeG_safe = M.new(type="c", name="type G safe")
-    safe = M.new(type="c", name="safe")
+    key = M.new(type="k", name="key")
+    typeG_safe = M.new(type="chest", name="type G safe")
+    safe = M.new(type="chest", name="safe")
 
     safe.add(key)
     garage.add(safe, typeG_safe)
-    
+
     M.add_fact("open", safe)
 
     game = M.build()
@@ -242,13 +243,13 @@ def test_names_disambiguation():
     garage = M.new_room("garage")
     M.set_player(garage)
 
-    key = M.new(type="k", name="key")    
-    safe = M.new(type="c", name="safe")
-    typeG_safe = M.new(type="c", name="type G safe")
+    key = M.new(type="k", name="key")
+    safe = M.new(type="chest", name="safe")
+    typeG_safe = M.new(type="chest", name="type G safe")
 
     safe.add(key)
     garage.add(safe, typeG_safe)
-    
+
     M.add_fact("open", safe)
 
     game = M.build()

@@ -1,0 +1,21 @@
+# A type of container that is fixed in place and lockable.
+type chest : t, container, fixed_in_place, lockable {
+    predicates {
+        reachable_contents(chest) = reachable(chest) & open(chest);
+    }
+
+    inform7 {
+        type {
+            kind :: "chest-like";
+        }
+    }
+}
+
+## Alias for backward compatibility.
+#type c : chest {
+#    inform7 {
+#        type {
+#            kind :: "old-c";
+#        }
+#    }
+#}

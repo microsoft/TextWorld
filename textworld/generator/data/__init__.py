@@ -10,7 +10,6 @@ from shutil import copyfile, copytree, rmtree
 from typing import Optional
 
 from textworld.logic import GameLogic
-from textworld.generator.vtypes import VariableType, VariableTypeTree
 from textworld.utils import maybe_mkdir, RegexDict
 
 BUILTIN_DATA_PATH = os.path.dirname(__file__)
@@ -82,17 +81,17 @@ INFORM7_VARIABLES_DESCRIPTION = None
 INFORM7_ADDONS_CODE = None
 
 
-def _to_type_tree(types):
-    vtypes = []
+# def _to_type_tree(types):
+#     vtypes = []
 
-    for vtype in sorted(types):
-        if vtype.parents:
-            parent = vtype.parents[0]
-        else:
-            parent = None
-        vtypes.append(VariableType(vtype.name, vtype.name, parent))
+#     for vtype in sorted(types):
+#         if vtype.parents:
+#             parent = vtype.parents[0]
+#         else:
+#             parent = None
+#         vtypes.append(VariableType(vtype.name, vtype.name, parent))
 
-    return VariableTypeTree(vtypes)
+#     return VariableTypeTree(vtypes)
 
 
 def _to_regex_dict(rules):
@@ -134,7 +133,8 @@ def load_logic(target_dir: str):
     logic = GameLogic.load(paths)
 
     global _TYPES
-    _TYPES = _to_type_tree(logic.types)
+    # _TYPES = _to_type_tree(logic.types)
+    _TYPES = logic.types
 
     global _RULES
     _RULES = _to_regex_dict(logic.rules.values())
@@ -197,11 +197,55 @@ def get_constraints():
 
 
 def get_reverse_rules(action):
+    assert False, "deprecated"  # XXX
     return _REVERSE_RULES(action)
+
+
+def get_reverse_action(action):
+    r_action = action.inverse()
+    for rule in get_rules().values():
+        r_action.name = rule.name
+        if rule.match(r_action):
+            return r_action
+
+    return None
 
 
 def get_types():
     return _TYPES
+
+
+
+def sample_type(parent_type, rng, exceptions=[], include_parent=True, probs=None):
+    """ Sample an object type given the parent's type. """
+    import numpy as np
+    types = [t.name for t in get_types().get(parent_type).descendants]
+    if include_parent:
+        types = [parent_type] + types
+    types = [t for t in types if t not in exceptions]
+
+    if probs is not None:
+        probs = np.array([probs[t] for t in types], dtype="float")
+        probs /= np.sum(probs)
+
+    return rng.choice(types, p=probs)
+
+
+def count_types(state):
+    """ Counts how many objects there are of each type. """
+    types_counts = {t.name: 0 for t in get_types()}
+    for var in state.variables:
+        if get_types().get(var.type).constant:
+            continue
+
+        if "_" not in var.name:
+            continue
+
+        cpt = int(var.name.split("_")[-1])
+        var_type = var.type
+        types_counts[var_type] = max(cpt + 1, types_counts[var_type])
+
+    return types_counts
 
 
 def get_data_path():

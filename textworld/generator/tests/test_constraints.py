@@ -33,9 +33,9 @@ def test_constraints():
     small_key = Variable("small key", "k")
     wooden_door = Variable("wooden door", "d")
     glass_door = Variable("glass door", "d")
-    chest = Variable("chest", "c")
-    cabinet = Variable("cabinet", "c")
-    counter = Variable("counter", "s")
+    chest = Variable("chest", "chest")
+    cabinet = Variable("cabinet", "chest")
+    counter = Variable("counter", "table")
     robe = Variable("robe", "o")
 
     # Make sure the number of basic constraints matches the number

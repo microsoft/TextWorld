@@ -13,6 +13,13 @@ from textworld.generator.text_grammar import fix_determinant
 from textworld.logic import Placeholder
 
 
+def _can_hold_objects(obj):
+    obj_type = data.get_logic().types.get(obj.type)
+    is_kind_of_container = obj_type.has_supertype_named("container")
+    is_kind_of_supporter = obj_type.has_supertype_named("supporter")
+    return is_kind_of_container or is_kind_of_supporter
+
+
 class CountOrderedDict(OrderedDict):
     """ An OrderedDict whose empty items are 0 """
 
@@ -98,7 +105,7 @@ def assign_description_to_object(obj, grammar, game_infos):
         game_infos[obj.id].desc = expand_clean_replace(desc_tag, grammar, obj, game_infos)
 
     # If we have an openable object, append an additional description
-    if obj.type in ["c", "d"]:
+    if data.get_logic().types.get(obj.type).has_supertype_named("openable"):
         game_infos[obj.id].desc += grammar.expand(" #openable_desc#")
 
 
@@ -157,7 +164,8 @@ def assign_description_to_room(room, game, grammar):
     room_desc = expand_clean_replace("#dec#\n\n", grammar, room, game.infos)
 
     # Convert the objects into groupings based on adj/noun/type
-    objs = [o for o in room.content if data.get_types().is_descendant_of(o.type, data.get_types().CLASS_HOLDER)]
+
+    objs = [o for o in room.content if _can_hold_objects(o)]
     groups = OrderedDict()
     groups["adj"] = OrderedDict()
     groups["noun"] = OrderedDict()
@@ -200,8 +208,8 @@ def assign_description_to_room(room, game, grammar):
 
                     for o2 in group_filt:
                         ignore.append(o2.id)
-                        if data.get_types().is_descendant_of(o2.type, data.get_types().CLASS_HOLDER):
-                            for vtype in [o2.type] + data.get_types().get_ancestors(o2.type):
+                        if _can_hold_objects(o2):
+                            for vtype in (o2.type,) + data.get_types().get(o2.type).parents:
                                 tag = "#room_desc_({})_multi_{}#".format(vtype, "adj" if type == "noun" else "noun")
                                 if grammar.has_tag(tag):
                                     desc += expand_clean_replace(" " + tag, grammar, o2, game.infos)
@@ -214,7 +222,7 @@ def assign_description_to_room(room, game, grammar):
                 continue
 
         if obj.type not in ["P", "I", "d"]:
-            for vtype in [obj.type] + data.get_types().get_ancestors(obj.type):
+            for vtype in (obj.type,) + data.get_types().get(obj.type).parents:
                 tag = "#room_desc_({})#".format(vtype)
                 if grammar.has_tag(tag):
                     room_desc += expand_clean_replace(" " + tag, grammar, obj, game.infos)
@@ -303,20 +311,20 @@ def generate_instruction(action, grammar, game_infos, world, counts):
     """
     Generate text instruction for a specific action.
     """
-    # Get the more precise command tag.
+    # Get the most precise command tag.
     cmd_tag = "#{}#".format(action.name)
     if not grammar.has_tag(cmd_tag):
-        cmd_tag = "#{}#".format(action.name.split("-")[0])
+        cmd_tag = "#{}#".format(action.name.split(".")[0])
 
         if not grammar.has_tag(cmd_tag):
-            cmd_tag = "#{}#".format(action.name.split("-")[0].split("/")[0])
+            cmd_tag = "#{}#".format(action.name.split("(")[0])
 
     separator_tag = "#action_separator_{}#".format(action.name)
     if not grammar.has_tag(separator_tag):
-        separator_tag = "#action_separator_{}#".format(action.name.split("-")[0])
+        separator_tag = "#action_separator_{}#".format(action.name.split(".")[0])
 
         if not grammar.has_tag(separator_tag):
-            separator_tag = "#action_separator_{}#".format(action.name.split("-")[0].split("/")[0])
+            separator_tag = "#action_separator_{}#".format(action.name.split("(")[0])
 
     if not grammar.has_tag(separator_tag):
         separator_tag = "#action_separator#"
@@ -341,9 +349,9 @@ def generate_instruction(action, grammar, game_infos, world, counts):
             # We can use a simple description for the room
             r = world.find_room_by_id(var.name)  # Match on 'name'
             if r is None:
-                mapping[ph.name] = ''
+                mapping[ph.type] = ''
             else:
-                mapping[ph.name] = game_infos[r.id].name
+                mapping[ph.type] = game_infos[r.id].name
         elif var.type in ["P", "I"]:
             continue
         else:
@@ -360,19 +368,23 @@ def generate_instruction(action, grammar, game_infos, world, counts):
                         if t == "noun":
                             choices.append(getattr(obj_infos, t))
                         elif t == "type":
-                            choices.append(data.get_types().get_description(getattr(obj_infos, t)))
+                            # XXX: We need human-readable type.
+                            # data.INFORM7_HUMAN_READABLE_TYPES[getattr(obj_infos, t)]
+                            choices.append(getattr(obj_infos, t))
                         else:
                             # For adj, we pick an abstraction on the type
-                            atype = data.get_types().get_description(grammar.rng.choice(data.get_types().get_ancestors(obj.type)))
+                            # XXX: We need human-readable type.
+                            atype = grammar.rng.choice(data.get_types().get(obj.type).parents)
+                            # data.INFORM7_HUMAN_READABLE_TYPES[atype]
                             choices.append("{} {}".format(getattr(obj_infos, t), atype))
 
                 # If we have no possibilities, use the name (ie. prioritize abstractions)
                 if len(choices) == 0:
                     choices.append(obj_infos.name)
 
-                mapping[ph.name] = grammar.rng.choice(choices)
+                mapping[ph.type] = grammar.rng.choice(choices)
             else:
-                mapping[ph.name] = obj_infos.name
+                mapping[ph.type] = obj_infos.name
 
     # Replace the keyword with one of the possibilities
     for keyword in re.findall(r'[(]\S*[)]', desc + separator):
@@ -488,7 +500,7 @@ def is_seq(chain, game_infos):
         c_action_mapping = data.get_rules()[c.name].match(c)
 
         # Update our action name
-        seq.name += "_{}".format(c.name.split("/")[0])
+        seq.name += "_{}".format(c.name.split("(")[0])
 
         # We break a chain if we move rooms
         if c_action_mapping[room_placeholder] != seq.mapping[room_placeholder]:
@@ -534,7 +546,7 @@ def expand_clean_replace(symbol, grammar, obj, game_infos):
     phrase = phrase.replace("(name-n)", obj_infos.noun if obj_infos.adj is not None else obj_infos.name)
     phrase = phrase.replace("(name-adj)", obj_infos.adj if obj_infos.adj is not None else grammar.expand("#ordinary_adj#"))
     if obj.type != "":
-        phrase = phrase.replace("(name-t)", data.get_types().get_description(obj.type))
+        phrase = phrase.replace("(name-t)", obj.type)  # XXX: We need human-readable type.
     else:
         assert False, "Does this even happen?"
 

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-
+import re
 from collections import Counter
 from functools import total_ordering
 from numpy.random import RandomState
@@ -103,7 +103,7 @@ class ChainingOptions:
         self.subquests = False
         self.independent_chains = False
         self.create_variables = False
-        self.fixed_mapping = data.get_types().constants_mapping
+        self.fixed_mapping = {Placeholder(t.name): Variable(t.name) for t in data.get_types() if t.constant}
         self.rng = None
         self.logic = data.get_logic()
         self.rules_per_depth = []
@@ -365,9 +365,9 @@ class _Chainer:
         while nav_parent.action is not None and self._is_navigation(nav_parent.action):
             # HACK: Going through a door is always considered navigation unless the previous action was to open that door.
             parent = nav_parent.parent
-            if parent.action is not None and parent.action.name == "open/d":
+            if parent.action is not None and self._is_open_door(parent.action):
                 break
-            if self.backward and action.name == "open/d":
+            if self.backward and self._is_open_door(action):
                 break
             nav_parent = parent
 
@@ -389,7 +389,10 @@ class _Chainer:
         return self.options.check_action(state, action)
 
     def _is_navigation(self, action):
-        return action.name.startswith("go/")
+        return re.match("go\(.*\).*", action.name)
+
+    def _is_open_door(self, action):
+        return re.match("open\(d\).*", action.name)
 
     def apply(self, node: _Node, action: Action) -> Optional[State]:
         """Attempt to apply an action to the given state."""
