@@ -564,7 +564,7 @@ class QuestProgression:
         Args:
             quest: The quest to keep track of its completion.
         """
-        self._quest = quest
+        self.quest = quest
         self._completed = False
         self._failed = False
         self._unfinishable = False
@@ -617,12 +617,12 @@ class QuestProgression:
 
         if state is not None:
             # Check if quest is completed.
-            if self._quest.win_action is not None:
-                self._completed = state.is_applicable(self._quest.win_action)
+            if self.quest.win_action is not None:
+                self._completed = state.is_applicable(self.quest.win_action)
 
             # Check if quest has failed.
-            if self._quest.fail_action is not None:
-                self._failed = state.is_applicable(self._quest.fail_action)
+            if self.quest.fail_action is not None:
+                self._failed = state.is_applicable(self.quest.fail_action)
 
             # Try compressing the winning policy given the new game state.
             if self.compress_winning_policy(state):
@@ -696,17 +696,33 @@ class GameProgression:
     @property
     def done(self) -> bool:
         """ Whether all quests are completed or at least one has failed or is unfinishable. """
+        return self.completed or self.failed
+
+    @property
+    def completed(self) -> bool:
+        """ Whether all quests are completed. """
         if not self.tracking_quests:
-            return False  # There is nothing to be "done".
+            return False  # There is nothing to be "completed".
 
-        all_completed = True
-        for quest_progression in self.quest_progressions:
-            if quest_progression.failed or quest_progression.unfinishable:
-                return True
+        return all(qp.completed for qp in self.quest_progressions)
 
-            all_completed &= quest_progression.completed
+    @property
+    def failed(self) -> bool:
+        """ Whether at least one quest has failed or is unfinishable. """
+        if not self.tracking_quests:
+            return False  # There is nothing to be "failed".
 
-        return all_completed
+        return any((qp.failed or qp.unfinishable) for qp in self.quest_progressions)
+
+    @property
+    def score(self) -> int:
+        """ Sum of the reward of all completed quests. """
+        return sum(qp.quest.reward for qp in self.quest_progressions if qp.completed)
+
+    @property
+    def max_score(self) -> int:
+        """ Sum of the reward of all quests. """
+        return sum(quest.reward for quest in self.game.quests)
 
     @property
     def tracking_quests(self) -> bool:

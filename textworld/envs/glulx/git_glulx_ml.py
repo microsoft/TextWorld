@@ -89,7 +89,7 @@ def _detect_i7_events_debug_tags(text: str) -> Tuple[List[str], str]:
     """
     matches = []
     open_tags = []
-    for match in re.findall("\[[^]]+\]\n?", text):
+    for match in re.findall(r"\[[^]]+\]\n?", text):
         text = text.replace(match, "")  # Remove i7 debug tags.
         tag_name = match.strip()[1:-1]  # Strip starting '[' and trailing ']'.
 
@@ -127,8 +127,6 @@ class GlulxGameState(textworld.GameState):
         :param kwargs: The kwargs
         """
         super().__init__(*args, **kwargs)
-        self._has_won = False
-        self._has_lost = False
         self.has_timeout = False
         self._state_tracking = False
         self._compute_intermediate_reward = False
@@ -153,7 +151,7 @@ class GlulxGameState(textworld.GameState):
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0
         self._objective = game.objective
         self._score = 0
-        self._max_score = sum(quest.reward for quest in game.quests)
+        self._max_score = self._game_progression.max_score
 
     def view(self) -> "GlulxGameState":
         """
@@ -217,12 +215,6 @@ class GlulxGameState(textworld.GameState):
                 if game_state._action is not None:
                     # An action that affects the state of the game.
                     game_state._game_progression.update(game_state._action)
-
-                if game_state._compute_intermediate_reward:
-                    if game_state._game_progression.winning_policy is None:
-                        game_state._has_lost = True
-                    elif len(game_state._game_progression.winning_policy) == 0:
-                        game_state._has_won = True
 
         return game_state
 
@@ -321,18 +313,22 @@ class GlulxGameState(textworld.GameState):
     @property
     def score(self):
         if not hasattr(self, "_score"):
-            # Check if there was any Inform7 events.
-            if self._feedback == self._raw:
-                self._score = self.previous_state.score
+            if self._state_tracking:
+                self._score = self._game_progression.score
             else:
-                output = self._raw
-                if not self.game_ended:
-                    output = self._env._send("score")
 
-                match = re.search("scored (?P<score>[0-9]+) out of a possible (?P<max_score>[0-9]+),", output)
-                self._score = 0
-                if match:
-                    self._score = int(match.groupdict()["score"])
+                # Check if there was any Inform7 events.
+                if self._feedback == self._raw:
+                    self._score = self.previous_state.score
+                else:
+                    output = self._raw
+                    if not self.game_ended:
+                        output = self._env._send("score")
+
+                    match = re.search("scored (?P<score>[0-9]+) out of a possible (?P<max_score>[0-9]+),", output)
+                    self._score = 0
+                    if match:
+                        self._score = int(match.groupdict()["score"])
 
         return self._score
 
@@ -342,11 +338,23 @@ class GlulxGameState(textworld.GameState):
 
     @property
     def has_won(self):
-        return self._has_won or '*** The End ***' in self.feedback
+        if not hasattr(self, "_has_won"):
+            if self._compute_intermediate_reward:
+                self._has_won = self._game_progression.completed
+            else:
+                self._has_won = '*** The End ***' in self.feedback
+
+        return self._has_won
 
     @property
     def has_lost(self):
-        return self._has_lost or '*** You lost! ***' in self.feedback
+        if not hasattr(self, "_has_lost"):
+            if self._compute_intermediate_reward:
+                self._has_lost = self._game_progression.failed
+            else:
+                self._has_lost = '*** You lost! ***' in self.feedback
+
+        return self._has_lost
 
     @property
     def game_ended(self) -> bool:
