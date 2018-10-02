@@ -12,15 +12,16 @@ import textworld
 import textworld.agents
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--world-size", type=int, nargs="+", default=[5],
+    parser.add_argument("--world-size", type=int, default=5,
                         help="Nb. of rooms in the world.")
-    parser.add_argument("--nb-objects", type=int, nargs="+", default=[10],
+    parser.add_argument("--nb-objects", type=int, default=10,
                         help="Nb. of objects in the world.")
-    parser.add_argument("--quest-length", type=int, nargs="+", default=[5],
+    parser.add_argument("--quest-length", type=int, default=5,
                         help="Minimum nb. of actions the quest requires to be completed.")
+    parser.add_argument("--quest-breadth", type=int, default=3, metavar="BREADTH",
+                        help="Control how non-linear a quest can be.")
     parser.add_argument("--output", default="./gen_games/",
                         help="Output folder to save generated game files.")
     parser.add_argument("--mode", default="human",
@@ -55,7 +56,7 @@ def parse_args():
 
 def make_agent(args):
     if args.mode == "random":
-        agent = textworld.agents.RandomTextAgent()
+        agent = textworld.agents.NaiveAgent()
     elif args.mode == "random-cmd":
         agent = textworld.agents.RandomCommandAgent()
     elif args.mode == "human":
@@ -95,11 +96,11 @@ def main():
     for i in range(args.nb_games) if args.nb_games > 0 else itertools.count():
         # Get a game seed to make everything reproducible.
         game_seed = rng.randint(65635)
-        game_file, game = textworld.make(args.world_size, args.nb_objects, args.quest_length, grammar_flags,
+        game_file, game = textworld.make(args.world_size, args.nb_objects, args.quest_length, args.quest_breadth, grammar_flags,
                                          seed=game_seed, games_dir=args.output)
 
         print("Starting game {}".format(game_file))
-        env = textworld.start(game_file, backend=args.backend)
+        env = textworld.start(game_file)
         agent.reset(env)
 
         if args.vizu >= 0:
