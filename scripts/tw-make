@@ -67,12 +67,12 @@ if __name__ == "__main__":
     print("Global seed: {}".format(args.seed))
 
     options = textworld.GameOptions()
-    options.grammar_options.theme = args.theme
-    options.grammar_options.include_adj = args.include_adj
-    options.grammar_options.only_last_action = args.only_last_action
-    options.grammar_options.blend_instructions = args.blend_instructions
-    options.grammar_options.blend_descriptions = args.blend_descriptions
-    options.grammar_options.ambiguous_instructions = args.ambiguous_instructions
+    options.grammar.theme = args.theme
+    options.grammar.include_adj = args.include_adj
+    options.grammar.only_last_action = args.only_last_action
+    options.grammar.blend_instructions = args.blend_instructions
+    options.grammar.blend_descriptions = args.blend_descriptions
+    options.grammar.ambiguous_instructions = args.ambiguous_instructions
 
     if args.subcommand == "custom":
         options.nb_rooms = args.world_size

@@ -21,7 +21,7 @@ def test_making_game_with_names_to_exclude():
 
         options2 = options.copy()
         game1_objects_names = [info.name for info in game1.infos.values() if info.name is not None]
-        options2.grammar_options.names_to_exclude = game1_objects_names
+        options2.grammar.names_to_exclude = game1_objects_names
         game_file2, game2 = textworld.make(options2, path=tmpdir)
         game2_objects_names = [info.name for info in game2.infos.values() if info.name is not None]
         assert len(set(game1_objects_names) & set(game2_objects_names)) == 0

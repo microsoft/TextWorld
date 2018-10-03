@@ -118,7 +118,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     metadata["seeds"] = options.seeds
     metadata["world_size"] = options.nb_rooms
     metadata["quest_length"] = options.quest_length
-    metadata["grammar_flags"] = options.grammar_options.encode()
+    metadata["grammar_flags"] = options.grammar.encode()
 
     rngs = options.rngs
     rng_map = rngs['seed_map']
@@ -183,25 +183,25 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Generate a quest that finishes by taking something (i.e. the right
     #  object since it's the only one in the inventory).
-    options.chaining_options.rules_per_depth = [data.get_rules().get_matching("take.*")]
-    options.chaining_options.backward = True
-    options.chaining_options.rng = rng_quest
-    #options.chaining_options.restricted_types = exceptions
+    options.chaining.rules_per_depth = [data.get_rules().get_matching("take.*")]
+    options.chaining.backward = True
+    options.chaining.rng = rng_quest
+    #options.chaining.restricted_types = exceptions
     #exceptions = ["r", "c", "s", "d"] if mode == "easy" else ["r"]
-    chain = textworld.generator.sample_quest(world.state, options.chaining_options)
+    chain = textworld.generator.sample_quest(world.state, options.chaining)
 
     # Add objects needed for the quest.
     world.state = chain[0].state
     quest = Quest([c.action for c in chain])
     quest.set_failing_conditions([Proposition("in", [wrong_obj, world.inventory])])
 
-    grammar = textworld.generator.make_grammar(options.grammar_options, rng=rng_grammar)
+    grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
     game = textworld.generator.make_game_with(world, [quest], grammar)
     game.metadata = metadata
     mode_choice = modes.index(mode)
     uuid = "tw-treasure_hunter-{specs}-{grammar}-{seeds}"
     uuid = uuid.format(specs=encode_seeds((mode_choice, options.nb_rooms, options.quest_length)),
-                       grammar=options.grammar_options.uuid,
+                       grammar=options.grammar.uuid,
                        seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
     return game

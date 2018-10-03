@@ -167,7 +167,7 @@ def make_game(options: GameOptions) -> Game:
     world = make_world(options.nb_rooms, nb_objects=0, rngs=rngs)
 
     # Sample a quest.
-    chaining_options = options.chaining_options.copy()
+    chaining_options = options.chaining.copy()
     chaining_options.rules_per_depth = [get_rules().get_matching("^(?!go.*).*")]
     chaining_options.backward = True
     chaining_options.create_variables = True
@@ -190,7 +190,7 @@ def make_game(options: GameOptions) -> Game:
     # Add distractors objects (i.e. not related to the quest)
     world.populate(options.nb_objects, rng=rngs['objects'])
 
-    grammar = make_grammar(options.grammar_options, rng=rngs['grammar'])
+    grammar = make_grammar(options.grammar, rng=rngs['grammar'])
     game = make_game_with(world, subquests, grammar)
     game.change_grammar(grammar)
     game.metadata["uuid"] = options.uuid

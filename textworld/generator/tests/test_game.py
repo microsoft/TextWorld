@@ -67,8 +67,8 @@ def test_variable_infos(verbose=False):
     options.quest_length = 3
     options.quest_breadth = 2
     options.seeds = 1234
-    options.grammar_options.theme = "house"
-    options.grammar_options.include_adj = True
+    options.grammar.theme = "house"
+    options.grammar.include_adj = True
 
     game = textworld.generator.make_game(options)
 

@@ -89,7 +89,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     metadata["seeds"] = options.seeds
     metadata["world_size"] = options.nb_rooms
     metadata["quest_length"] = options.quest_length
-    metadata["grammar_flags"] = options.grammar_options.encode()
+    metadata["grammar_flags"] = options.grammar.encode()
 
     rngs = options.rngs
     rng_map = rngs['map']
@@ -97,7 +97,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Generate map.
     M = textworld.GameMaker()
-    M.grammar = textworld.generator.make_grammar(options.grammar_options, rng=rng_grammar)
+    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
 
     rooms = []
     walkthrough = []
@@ -148,7 +148,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     mode_choice = 0 if mode == "simple" else 1
     uuid = "tw-coin_collector-{specs}-{grammar}-{seeds}"
     uuid = uuid.format(specs=encode_seeds((mode_choice, options.nb_rooms, options.quest_length)),
-                       grammar=options.grammar_options.uuid,
+                       grammar=options.grammar.uuid,
                        seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
     return game

@@ -817,19 +817,19 @@ class GameOptions:
 
                  For any key missing, a random number gets assigned (sampled
                  from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
-        chaining_options:
+        chaining:
             For customizing the quest generation (see
             :py:class:`textworld.generator.ChainingOptions <textworld.generator.chaining.ChainingOptions>`
             for the list of available options).
-        grammar_options:
+        grammar:
             For customizing the text generation (see
             :py:class:`textworld.generator.GrammarOptions <textworld.generator.text_grammar.GrammarOptions>`
             for the list of available options).
     """
 
     def __init__(self):
-        self.chaining_options = ChainingOptions()
-        self.grammar_options = GrammarOptions()
+        self.chaining = ChainingOptions()
+        self.grammar = GrammarOptions()
         self._seeds = None
 
         self.nb_rooms = 1
@@ -840,21 +840,21 @@ class GameOptions:
 
     @property
     def quest_length(self) -> int:
-        return self.chaining_options.max_depth
+        return self.chaining.max_depth
 
     @quest_length.setter
     def quest_length(self, value: int) -> None:
-        self.chaining_options.min_depth = 1
-        self.chaining_options.max_depth = value
+        self.chaining.min_depth = 1
+        self.chaining.max_depth = value
 
     @property
     def quest_breadth(self) -> int:
-        return self.chaining_options.max_breadth
+        return self.chaining.max_breadth
 
     @quest_breadth.setter
     def quest_breadth(self, value: int) -> None:
-        self.chaining_options.min_breadth = 1
-        self.chaining_options.max_breadth = value
+        self.chaining.min_breadth = 1
+        self.chaining.max_breadth = value
 
     @property
     def seeds(self):
@@ -898,6 +898,6 @@ class GameOptions:
         # TODO: generate uuid from chaining options?
         uuid = "tw-game-{specs}-{grammar}-{seeds}"
         uuid = uuid.format(specs=encode_seeds((self.nb_rooms, self.nb_objects, self.quest_length, self.quest_breadth)),
-                           grammar=self.grammar_options.uuid,
+                           grammar=self.grammar.uuid,
                            seeds=encode_seeds([self.seeds[k] for k in sorted(self._seeds)]))
         return uuid

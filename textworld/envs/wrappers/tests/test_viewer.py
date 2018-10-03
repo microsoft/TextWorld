@@ -19,8 +19,8 @@ def test_html_viewer():
     options.nb_rooms = num_nodes
     options.nb_objects = num_items
     options.quest_length = 3
-    options.grammar_options.theme = "house"
-    options.grammar_options.include_adj = True
+    options.grammar.theme = "house"
+    options.grammar.include_adj = True
     game = textworld.generator.make_game(options)
 
     game_name = "test_html_viewer_wrapper"
