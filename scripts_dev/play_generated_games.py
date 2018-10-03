@@ -78,26 +78,29 @@ def main():
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
-    grammar_flags = {
-        "theme": args.theme,
-        "include_adj": args.include_adj,
-        "only_last_action": args.only_last_action,
-        "blend_instructions": args.blend_instructions,
-        "blend_descriptions": args.blend_descriptions,
-        "ambiguous_instructions": args.ambiguous_instructions
-    }
-
     print("Random seed: {}".format(args.seed))
     rng = np.random.RandomState(args.seed)
+
+    options = textworld.GameOptions()
+    options.grammar.theme = args.theme
+    options.grammar.include_adj = args.include_adj
+    options.grammar.only_last_action = args.only_last_action
+    options.grammar.blend_instructions = args.blend_instructions
+    options.grammar.blend_descriptions = args.blend_descriptions
+    options.grammar.ambiguous_instructions = args.ambiguous_instructions
+
+    options.nb_rooms = args.world_size
+    options.nb_objects = args.nb_objects
+    options.quest_length = args.quest_length
+    options.quest_breadth = args.quest_breadth
 
     agent = make_agent(args)
 
     reward_history = []
     for i in range(args.nb_games) if args.nb_games > 0 else itertools.count():
-        # Get a game seed to make everything reproducible.
-        game_seed = rng.randint(65635)
-        game_file, game = textworld.make(args.world_size, args.nb_objects, args.quest_length, args.quest_breadth, grammar_flags,
-                                         seed=game_seed, games_dir=args.output)
+        options = options.copy()
+        options.seeds = rng.randint(65635)
+        game_file, game = textworld.make(options, args.output)
 
         print("Starting game {}".format(game_file))
         env = textworld.start(game_file)
