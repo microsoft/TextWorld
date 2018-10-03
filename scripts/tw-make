@@ -3,8 +3,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-
+import os
 import argparse
+from os.path import join as pjoin
+
 import numpy as np
 
 import textworld
@@ -14,8 +16,8 @@ def parse_args():
     general_parser = argparse.ArgumentParser(add_help=False)
 
     general_group = general_parser.add_argument_group('General settings')
-    general_group.add_argument("--output", default="./gen_games/", metavar="PATH",
-                               help="Output folder to save generated game files.")
+    general_group.add_argument("--output", default="./tw_games/", metavar="PATH",
+                               help="Path where to save the generated game.")
     general_group.add_argument('--seed', type=int)
     general_group.add_argument("--view", action="store_true",
                                help="Display the resulting game.")
@@ -64,18 +66,21 @@ if __name__ == "__main__":
 
     print("Global seed: {}".format(args.seed))
 
-    grammar_flags = {
-        "theme": args.theme,
-        "include_adj": args.include_adj,
-        "only_last_action": args.only_last_action,
-        "blend_instructions": args.blend_instructions,
-        "blend_descriptions": args.blend_descriptions,
-        "ambiguous_instructions": args.ambiguous_instructions,
-    }
+    options = textworld.GameOptions()
+    options.grammar.theme = args.theme
+    options.grammar.include_adj = args.include_adj
+    options.grammar.only_last_action = args.only_last_action
+    options.grammar.blend_instructions = args.blend_instructions
+    options.grammar.blend_descriptions = args.blend_descriptions
+    options.grammar.ambiguous_instructions = args.ambiguous_instructions
 
     if args.subcommand == "custom":
-        game_file, game = textworld.make(args.world_size, args.nb_objects, args.quest_length, args.quest_breadth, grammar_flags,
-                                         seed=args.seed, games_dir=args.output)
+        options.nb_rooms = args.world_size
+        options.nb_objects = args.nb_objects
+        options.quest_length = args.quest_length
+        options.quest_breadth = args.quest_breadth
+        options.seeds = args.seed
+        game_file, game = textworld.make(options, args.output)
 
     elif args.subcommand == "challenge":
         _, challenge, level = args.challenge.split("-")
@@ -84,8 +89,8 @@ if __name__ == "__main__":
 
         level = int(level.lstrip("level"))
         make_game = textworld.challenges.CHALLENGES[challenge]
-        game = make_game(level=level, grammar_flags=grammar_flags, seeds=args.seed)
-        game_file = textworld.generator.compile_game(game, games_folder=args.output)
+        game = make_game(level, options)
+        game_file = textworld.generator.compile_game(game, args.output)
 
     print("Game generated: {}".format(game_file))
     if args.verbose:

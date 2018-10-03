@@ -12,6 +12,7 @@ import numpy as np
 import numpy.testing as npt
 
 import textworld
+from textworld import g_rng
 from textworld import testing
 
 from textworld.generator.maker import GameMaker
@@ -68,11 +69,12 @@ def compile_game(game, folder):
         "instruction_extension": []
     }
     rng_grammar = np.random.RandomState(1234)
-    grammar = textworld.generator.make_grammar(flags=grammar_flags, rng=rng_grammar)
+    grammar = textworld.generator.make_grammar(grammar_flags, rng=rng_grammar)
     game.change_grammar(grammar)
 
     game_name = "test_game"
-    game_file = textworld.generator.compile_game(game, game_name, games_folder=folder)
+    path = pjoin(folder, game_name + ".ulx")
+    game_file = textworld.generator.compile_game(game, path)
     return game_file
 
 
@@ -80,6 +82,7 @@ class TestGlulxGameState(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        g_rng.set_seed(201809)
         cls.game = build_test_game()
         cls.tmpdir = tempfile.mkdtemp()
         cls.game_file = compile_game(cls.game, folder=cls.tmpdir)
@@ -178,7 +181,7 @@ class TestGlulxGameState(unittest.TestCase):
         game = M.build()
         game_name = "test_game_ended_when_no_quest"
         with make_temp_directory(prefix=game_name) as tmpdir:
-            game_file = textworld.generator.compile_game(game, game_name, games_folder=tmpdir)
+            game_file = textworld.generator.compile_game(game, path=tmpdir)
 
             env = textworld.start(game_file)
             env.activate_state_tracking()

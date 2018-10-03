@@ -5,7 +5,7 @@
 import unittest
 
 from textworld.generator.text_grammar import Grammar
-from textworld.generator.text_grammar import GrammarFlags
+from textworld.generator.text_grammar import GrammarOptions
 
 
 class ContainsEveryObjectContainer:
@@ -13,12 +13,12 @@ class ContainsEveryObjectContainer:
         return True
 
 
-class TestGrammarFlags(unittest.TestCase):
+class TestGrammarOptions(unittest.TestCase):
     def test_serialization(self):
-        flags = GrammarFlags()
-        data = flags.serialize()
-        flags2 = GrammarFlags.deserialize(data)
-        assert flags == flags2
+        options = GrammarOptions()
+        data = options.serialize()
+        options2 = GrammarOptions.deserialize(data)
+        assert options == options2
 
 class GrammarTest(unittest.TestCase):
     def test_grammar_eq(self):
@@ -28,7 +28,7 @@ class GrammarTest(unittest.TestCase):
 
     def test_grammar_eq2(self):
         grammar = Grammar()
-        grammar2 = Grammar(flags={'theme': 'something'})
+        grammar2 = Grammar(options={'theme': 'something'})
         self.assertNotEqual(grammar, grammar2, "Testing two different grammar files are not equal")
 
     def test_grammar_get_random_expansion_fail(self):
@@ -66,7 +66,7 @@ class GrammarTest(unittest.TestCase):
     def generate_name_force_numbered(self):
         suffix = '_1'
 
-        grammar = Grammar(flags={'allowed_variables_numbering': True})
+        grammar = Grammar(options={'allowed_variables_numbering': True})
         name, adj, noun = grammar.generate_name('object', 'vault', False, exclude=ContainsEveryObjectContainer())
         self.assertTrue(name.endswith(suffix), 'Checking name ends with suffix')
         self.assertTrue(adj.endswith(suffix), 'Checking adj ends with suffix')

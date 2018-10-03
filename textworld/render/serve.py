@@ -119,7 +119,8 @@ class VisualizationService(object):
         self._process = None
         state_dict = load_state_from_game_state(game_state)
         self._history = '<p class="objective-text">{}</p>'.format(game_state.objective.strip().replace("\n", "<br/>"))
-        self._history += '<p class="feedback-text">{}</p>'.format(game_state.description.strip().replace("\n", "<br/>"))
+        initial_description = game_state.feedback.replace(game_state.objective, "")
+        self._history += '<p class="feedback-text">{}</p>'.format(initial_description.strip().replace("\n", "<br/>"))
         state_dict["history"] = self._history
         state_dict["command"] = ""
         self.parent_conn, self.child_conn = Pipe()

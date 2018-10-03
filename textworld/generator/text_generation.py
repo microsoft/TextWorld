@@ -32,8 +32,8 @@ def assign_new_matching_names(obj1_infos, obj2_infos, grammar, exclude=[]):
         result = grammar.expand(tag)
         first, second = result.split("<->")  # Matching arguments are separated by '<->'.
 
-        name1, adj1, noun1 = grammar.split_name_adj_noun(first.strip(), grammar.flags.include_adj)
-        name2, adj2, noun2 = grammar.split_name_adj_noun(second.strip(), grammar.flags.include_adj)
+        name1, adj1, noun1 = grammar.split_name_adj_noun(first.strip(), grammar.options.include_adj)
+        name2, adj2, noun2 = grammar.split_name_adj_noun(second.strip(), grammar.options.include_adj)
         if name1 not in exclude and name2 not in exclude and name1 != name2:
             found_matching_names = True
             break
@@ -139,12 +139,12 @@ def generate_text_from_grammar(game, grammar: Grammar):
         if quest.desc is None:  # Skip quests which already have a description.
             quest.desc = assign_description_to_quest(quest, game, grammar)
 
-    if grammar.flags.only_last_action and len(game.quests) > 1:
+    if grammar.options.only_last_action and len(game.quests) > 1:
         main_quest = Quest(actions=[quest.actions[-1] for quest in game.quests])
-        only_last_action_bkp = grammar.flags.only_last_action
-        grammar.flags.only_last_action = False
+        only_last_action_bkp = grammar.options.only_last_action
+        grammar.options.only_last_action = False
         game.objective = assign_description_to_quest(main_quest, game, grammar)
-        grammar.flags.only_last_action = only_last_action_bkp
+        grammar.options.only_last_action = only_last_action_bkp
 
     return game
 
@@ -179,7 +179,7 @@ def assign_description_to_room(room, game, grammar):
         obj_infos = game.infos[obj.id]
         adj, noun = obj_infos.adj, obj_infos.noun
 
-        if grammar.flags.blend_descriptions:
+        if grammar.options.blend_descriptions:
             found = False
             for type in ["noun", "adj"]:
                 group_filt = []
@@ -239,7 +239,7 @@ def assign_description_to_room(room, game, grammar):
 
     exits_desc = []
     # Describing exits with door.
-    if grammar.flags.blend_descriptions and len(exits_with_closed_door) > 1:
+    if grammar.options.blend_descriptions and len(exits_with_closed_door) > 1:
         dirs, door_objs = zip(*exits_with_closed_door)
         e_desc = grammar.expand("#room_desc_doors_closed#")
         e_desc = replace_num(e_desc, len(door_objs))
@@ -254,7 +254,7 @@ def assign_description_to_room(room, game, grammar):
             d_desc = d_desc.replace("(dir)", dir_)
             exits_desc.append(d_desc)
 
-    if grammar.flags.blend_descriptions and len(exits_with_open_door) > 1:
+    if grammar.options.blend_descriptions and len(exits_with_open_door) > 1:
         dirs, door_objs = zip(*exits_with_open_door)
         e_desc = grammar.expand("#room_desc_doors_open#")
         e_desc = replace_num(e_desc, len(door_objs))
@@ -270,7 +270,7 @@ def assign_description_to_room(room, game, grammar):
             exits_desc.append(d_desc)
 
     # Describing exits without door.
-    if grammar.flags.blend_descriptions and len(exits_without_door) > 1:
+    if grammar.options.blend_descriptions and len(exits_without_door) > 1:
         e_desc = grammar.expand("#room_desc_exits#").replace("(dir)", list_to_string(exits_without_door, False))
         e_desc = repl_sing_plur(e_desc, len(exits_without_door))
         exits_desc.append(e_desc)
@@ -351,7 +351,7 @@ def generate_instruction(action, grammar, game_infos, world, counts):
             obj = world.find_object_by_id(var.name)
             obj_infos = game_infos[obj.id]
 
-            if grammar.flags.ambiguous_instructions:
+            if grammar.options.ambiguous_instructions:
                 assert False, "not tested"
                 choices = []
 
@@ -410,13 +410,13 @@ def assign_description_to_quest(quest, game, grammar):
         quest_desc = "Choose your own adventure!"
     else:
         # Generate a description for either the last, or all commands
-        if grammar.flags.only_last_action:
+        if grammar.options.only_last_action:
             actions_desc, _ = generate_instruction(quest.actions[-1], grammar, game.infos, game.world, counts)
             only_one_action = True
         else:
             actions_desc = ""
             # Decide if we blend instructions together or not
-            if grammar.flags.blend_instructions:
+            if grammar.options.blend_instructions:
                 instructions = get_action_chains(quest.actions, grammar, game.infos)
             else:
                 instructions = quest.actions

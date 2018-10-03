@@ -509,7 +509,7 @@ class GameMaker:
         This launches a `textworld.play` session.
         """
         with make_temp_directory() as tmpdir:
-            game_file = self.compile(pjoin(tmpdir, "test_game"))
+            game_file = self.compile(pjoin(tmpdir, "test_game.ulx"))
             textworld.play(game_file)
 
     def record_quest(self, ask_for_state: bool = False) -> Quest:
@@ -527,7 +527,7 @@ class GameMaker:
             The resulting quest.
         """
         with make_temp_directory() as tmpdir:
-            game_file = self.compile(pjoin(tmpdir, "record_quest"))
+            game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
             recorder = Recorder()
             textworld.play(game_file, wrapper=recorder)
 
@@ -565,7 +565,7 @@ class GameMaker:
         """
         with make_temp_directory() as tmpdir:
             try:
-                game_file = self.compile(pjoin(tmpdir, "record_quest"))
+                game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
                 recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
                 textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
@@ -612,7 +612,7 @@ class GameMaker:
         """
         with make_temp_directory() as tmpdir:
             try:
-                game_file = self.compile(pjoin(tmpdir, "record_quest"))
+                game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
                 recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
                 textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
@@ -699,14 +699,14 @@ class GameMaker:
         self._game = game  # Keep track of previous build.
         return self._game
 
-    def compile(self, name: str) -> str:
+    def compile(self, path: str) -> str:
         """
         Compile this game.
 
         Parameters
         ----------
-        name :
-            Name of the generated game file (without extension).
+        path :
+            Path where to save the generated game.
 
         Returns
         -------
@@ -714,9 +714,7 @@ class GameMaker:
             Path to the game file.
         """
         self._working_game = self.build()
-        games_folder = os.path.dirname(os.path.abspath(name))
-        game_name = os.path.basename(os.path.splitext(name)[0])
-        game_file = textworld.generator.compile_game(self._working_game, game_name, force_recompile=True, games_folder=games_folder)
+        game_file = textworld.generator.compile_game(self._working_game, path, force_recompile=True)
         return game_file
 
     def __contains__(self, entity) -> bool:

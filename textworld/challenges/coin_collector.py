@@ -24,37 +24,19 @@ import textworld
 from textworld.generator.graph_networks import reverse_direction
 
 from textworld.utils import encode_seeds
-from textworld.generator.text_grammar import encode_flags
-
+from textworld.generator.game import GameOptions
 from textworld.challenges.utils import get_seeds_for_game_generation
 
 
-def make_game_from_level(level: int,
-                         grammar_flags: Mapping = {},
-                         seeds: Optional[Union[int, Dict[str, int]]] = None
-                         ) -> textworld.Game:
+def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> textworld.Game:
     """ Make a Coin Collector game of the desired difficulty level.
 
     Arguments:
         level: Difficulty level (see notes).
-        grammar_flags: Options for the grammar controlling the text generation
-                       process.
-        seeds: Seeds for the different generation processes.
-
-               * If `None`, seeds will be sampled from
-                 :py:data:`textworld.g_rng <textworld.utils.g_rng>`.
-               * If `int`, it acts as a seed for a random generator that will
-                 be used to sample the other seeds.
-               * If dict, the following keys can be set:
-
-                 * `'seed_map'`: control the map generation;
-                 * `'seed_objects'`: control the type of objects and their
-                   location;
-                 * `'seed_quest'`: control the quest generation;
-                 * `'seed_grammar'`: control the text generation.
-
-                 For any key missing, a random number gets assigned (sampled
-                 from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
+        options:
+            For customizing the game generation (see
+            :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
+            for the list of available options).
 
     Returns:
         Generated game.
@@ -70,16 +52,13 @@ def make_game_from_level(level: int,
         * ...
     """
     n_distractors = (level // 100)
-    quest_length = level % 100
-    n_rooms = (n_distractors + 1) * quest_length
+    options.quest_length = level % 100
+    options.nb_rooms = (n_distractors + 1) * options.quest_length
     distractor_mode = "random" if n_distractors > 2 else "simple"
-    return make_game(distractor_mode, n_rooms, quest_length, grammar_flags, seeds)
+    return make_game(distractor_mode, options)
 
 
-def make_game(mode: str, n_rooms: int, quest_length: int,
-              grammar_flags: Mapping = {},
-              seeds: Optional[Union[int, Dict[str, int]]] = None
-              ) -> textworld.Game:
+def make_game(mode: str, options: GameOptions) -> textworld.Game:
     """ Make a Coin Collector game.
 
     Arguments:
@@ -91,57 +70,38 @@ def make_game(mode: str, n_rooms: int, quest_length: int,
               * `'random'`: the distractor rooms are randomly place along the
                 chain. This means a player can wander for a while before
                 reaching a dead end.
-        n_rooms: Number of rooms in the game.
-        quest_length: Number of rooms in the chain. This also represents the
-                      number of commands for the optimal policy.
-        grammar_flags: Options for the grammar controlling the text generation
-                       process.
-        seeds: Seeds for the different generation processes.
-
-               * If `None`, seeds will be sampled from
-                 :py:data:`textworld.g_rng <textworld.utils.g_rng>`.
-               * If `int`, it acts as a seed for a random generator that will be
-                 used to sample the other seeds.
-               * If dict, the following keys can be set:
-
-                 * `'seed_map'`: control the map generation;
-                 * `'seed_objects'`: control the type of objects and their
-                   location;
-                 * `'seed_quest'`: control the quest generation;
-                 * `'seed_grammar'`: control the text generation.
-
-                 For any key missing, a random number gets assigned (sampled
-                 from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
+        options:
+            For customizing the game generation (see
+            :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
+            for the list of available options).
 
     Returns:
         Generated game.
     """
-    if mode == "simple" and float(n_rooms) / quest_length > 4:
+    if mode == "simple" and float(options.nb_rooms) / options.quest_length > 4:
         msg = ("Total number of rooms must be less than 4 * `quest_length` "
                "when distractor mode is 'simple'.")
         raise ValueError(msg)
 
-    # Deal with any missing random seeds.
-    seeds = get_seeds_for_game_generation(seeds)
-
     metadata = {}  # Collect infos for reproducibility.
     metadata["desc"] = "Coin Collector"
     metadata["mode"] = mode
-    metadata["seeds"] = seeds
-    metadata["world_size"] = n_rooms
-    metadata["quest_length"] = quest_length
-    metadata["grammar_flags"] = grammar_flags
+    metadata["seeds"] = options.seeds
+    metadata["world_size"] = options.nb_rooms
+    metadata["quest_length"] = options.quest_length
+    metadata["grammar_flags"] = options.grammar.encode()
 
-    rng_map = np.random.RandomState(seeds['seed_map'])
-    rng_grammar = np.random.RandomState(seeds['seed_grammar'])
+    rngs = options.rngs
+    rng_map = rngs['map']
+    rng_grammar = rngs['grammar']
 
     # Generate map.
     M = textworld.GameMaker()
-    M.grammar = textworld.generator.make_grammar(flags=grammar_flags, rng=rng_grammar)
+    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
 
     rooms = []
     walkthrough = []
-    for i in range(quest_length):
+    for i in range(options.quest_length):
         r = M.new_room()
         if i >= 1:
             # Connect it to the previous rooms.
@@ -186,9 +146,9 @@ def make_game(mode: str, n_rooms: int, quest_length: int,
     game = M.build()
     game.metadata = metadata
     mode_choice = 0 if mode == "simple" else 1
-    uuid = "tw-coin_collector-{specs}-{flags}-{seeds}"
-    uuid = uuid.format(specs=encode_seeds((mode_choice, n_rooms, quest_length)),
-                       flags=encode_flags(grammar_flags),
-                       seeds=encode_seeds([seeds[k] for k in sorted(seeds)]))
+    uuid = "tw-coin_collector-{specs}-{grammar}-{seeds}"
+    uuid = uuid.format(specs=encode_seeds((mode_choice, options.nb_rooms, options.quest_length)),
+                       grammar=options.grammar.uuid,
+                       seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
     return game

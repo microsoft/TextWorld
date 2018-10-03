@@ -34,14 +34,14 @@ def test_making_a_game_without_a_quest(play_the_game=False):
         "refer_by_name_only": True,
         "instruction_extension": [],
     }
-    grammar = textworld.generator.make_grammar(flags=grammar_flags, rng=rng_grammar)
+    grammar = textworld.generator.make_grammar(grammar_flags, rng=rng_grammar)
 
     # Generate the world representation.
     game = textworld.generator.make_game_with(world, quests, grammar)
 
     with make_temp_directory(prefix="test_render_wrapper") as tmpdir:
         game_name = "test_making_a_game_without_a_quest"
-        game_file = compile_game(game, game_name, games_folder=tmpdir)
+        game_file = compile_game(game, path=tmpdir)
 
         if play_the_game:
             textworld.play(game_file)
@@ -71,14 +71,14 @@ def test_making_a_game(play_the_game=False):
         "refer_by_name_only": True,
         "instruction_extension": [],
     }
-    grammar = textworld.generator.make_grammar(flags=grammar_flags, rng=rng_grammar)
+    grammar = textworld.generator.make_grammar(grammar_flags, rng=rng_grammar)
 
     # Generate the world representation.
     game = textworld.generator.make_game_with(world, [quest], grammar)
 
     with make_temp_directory(prefix="test_render_wrapper") as tmpdir:
         game_name = "test_making_a_game"
-        game_file = compile_game(game, game_name, games_folder=tmpdir)
+        game_file = compile_game(game, path=tmpdir)
 
         if play_the_game:
             textworld.play(game_file)

@@ -19,11 +19,15 @@ def test_play_generated_games():
         quest_length = rng.randint(2, 5)
         quest_breadth = rng.randint(3, 7)
         game_seed = rng.randint(0, 65365)
-        grammar_flags = {}  # Default grammar.
 
         with make_temp_directory(prefix="test_play_generated_games") as tmpdir:
-            game_file, game = textworld.make(world_size, nb_objects, quest_length, quest_breadth, grammar_flags,
-                                             seed=game_seed, games_dir=tmpdir)
+            options = textworld.GameOptions()
+            options.nb_rooms = world_size
+            options.nb_objects = nb_objects
+            options.quest_length = quest_length
+            options.quest_breadth = quest_breadth
+            options.seeds = game_seed
+            game_file, game = textworld.make(options, path=tmpdir)
 
             # Solve the game using WalkthroughAgent.
             agent = textworld.agents.WalkthroughAgent()

@@ -2,6 +2,7 @@
 # Licensed under the MIT license.
 
 
+import copy
 from collections import Counter
 from functools import total_ordering
 from numpy.random import RandomState
@@ -162,6 +163,9 @@ class ChainingOptions:
         """
 
         return type not in self.restricted_types
+
+    def copy(self) -> "ChainingOptions":
+        return copy.copy(self)
 
 
 @total_ordering
