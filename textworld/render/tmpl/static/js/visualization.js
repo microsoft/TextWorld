@@ -513,7 +513,7 @@ const Graph = (function(window, d3, rerendered) {
             $("#command-scroll-div").scrollTop($("#command-scroll-div")[0].scrollHeight);
         }
 
-        const svg = d3.select('#graph2');
+        const svg = d3.select('#world');
 
         const inventory = renderInventory(state.inventory);
 
@@ -703,7 +703,7 @@ var parseStyles = function(svg) {
 
 // Download button also not used
 // $('button.save-svg').click(() => {
-//     const svgData = document.getElementById('graph2')
+//     const svgData = document.getElementById('world')
 //     exportSVG(svgData)
 // });
 

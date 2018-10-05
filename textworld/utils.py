@@ -147,7 +147,7 @@ def make_temp_directory(suffix='', prefix='tmp', dir=None):
     """ Create temporary folder to used in a with statement. """
     temp_dir = tempfile.mkdtemp(suffix, prefix, dir)
     try:
-        yield temp_dir
+        yield os.path.join(temp_dir, "")  # So path ends with '/'.
     finally:
         if not str2bool(os.environ.get("TEXTWORLD_DEBUG", False)):
             shutil.rmtree(temp_dir)
@@ -190,7 +190,7 @@ def save_graph_to_svg(G, labels, filename, backward=False):
         n.set_fillcolor("#E5E5E5")
         n.set_width(0)
         n.set_height(0)
-        n.set_label(labels[name])
+        n.set_label(labels[name.strip('"')])
 
     pydot_graph.write_svg(filename)
 

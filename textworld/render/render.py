@@ -226,7 +226,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
                 v.name = k
 
     pos = {game_infos[k].name: v for k, v in pos.items()}
-    
+
     for room in world.rooms:
         rooms[room.id] = GraphRoom(game_infos[room.id].name, room)
 
@@ -310,7 +310,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
     return result
 
 
-def take_screenshot(url: str, id: str='graph2'):
+def take_screenshot(url: str, id: str='world'):
     """
     Takes a screenshot of DOM element given its id.
     :param url: URL of webpage to open headlessly.
@@ -335,6 +335,21 @@ def take_screenshot(url: str, id: str='graph2'):
     bottom = location['y'] + size['height']
     image = image.crop((left, top, right, bottom))
     return image
+
+def concat_images(*images):
+    from PIL import Image
+    widths, heights = zip(*(i.size for i in images))
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    new_im = Image.new('RGB', (total_width, max_height))
+
+    x_offset = 0
+    for im in images:
+        new_im.paste(im, (x_offset, 0))
+        x_offset += im.size[0]
+
+    return new_im
 
 
 def visualize(world: Union[Game, State, GlulxGameState, World],
@@ -375,7 +390,10 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
     with open(filename, 'w') as f:
         f.write(html)
 
-    image = take_screenshot(url)
+    img_graph = take_screenshot(url, id="world")
+    img_inventory = take_screenshot(url, id="inventory")
+    image = concat_images(img_inventory, img_graph,)
+
     if interactive:
         try:
             webbrowser.open(url)

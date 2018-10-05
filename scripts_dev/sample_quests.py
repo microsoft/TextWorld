@@ -6,23 +6,31 @@
 
 import os
 import argparse
-import numpy as np
+from os.path import join as pjoin
 
-import textworld
-import textworld.agents
+import numpy as np
 import networkx as nx
 
-from textworld.generator import data
-from textworld.generator.chaining import ActionTree
+import textworld
+
+from textworld.render import visualize
+from textworld.generator import Game
+from textworld.generator.inform7 import gen_commands_from_actions
+from textworld.generator.chaining import ChainingOptions
+from textworld.generator.chaining import sample_quest
 from textworld.utils import save_graph_to_svg
-from textworld.logic import Variable, Proposition
-from textworld.logic import print_chains
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("game",
+                        help="Use initial state of the provided game.")
+    parser.add_argument("--output", default="./",
+                        help="Output folder where to sample the images. Default: %(default)s")
     parser.add_argument("--quest-length", type=int, default=5,
                         help="Minimum nb. of actions required to complete the quest. Default: %(default)s")
+    parser.add_argument("--quest-breadth", type=int, default=1,
+                        help="Control how non-linear a quest can be.")
     parser.add_argument("--nb-quests", type=int, default=10,
                         help="Number of quests to sample. Default: %(default)s")
     parser.add_argument("--seed", type=int,
@@ -33,75 +41,63 @@ def parse_args():
     return parser.parse_args()
 
 
-def build_tree_from_chains(chains):
-    assert chains[0][0].parent.action is None or chains[0][0].action is None
-    state = chains[0][0].parent.state if chains[0][0].parent.action is None else chains[0][0].state
-    root = ActionTree(state)
+def build_tree_from_chains(chains, var_infos):
+    G = nx.DiGraph()
+    root = "root"
+    labels = {}
     for chain in chains:
-        parent = root
-        for n1 in chain:
-            new_child = True
-            for n2 in parent.children:
-                if n1.action == n2.action:
-                    parent = n2
-                    new_child = False
-                    break
+        commands = [root] + gen_commands_from_actions(chain.actions, var_infos)
+        G.add_nodes_from(commands)
+        G.add_edges_from(zip(commands[:-1], commands[1:]))
+        labels.update(dict(zip(commands, commands)))
 
-            if new_child:
-                child = ActionTree(n1.state, action=n1.action,
-                                   new_propositions=n1.new_propositions)
-                parent.children.append(child)
-                parent = child
+    return G, labels
 
-    return root
+
+def print_chains(chains, var_infos):
+    for i, chain in enumerate(chains):
+        commands = gen_commands_from_actions(chain.actions, var_infos)
+        print("{:2d}. {}".format(i + 1, " > ".join(commands)))
 
 
 def main():
     args = parse_args()
 
-    P = Variable("P")
-    # I = Variable("I")
-    room = Variable("room", "r")
-    kitchen = Variable("kitchen", "r")
-    state = [Proposition("at", [P, room]),
-             Proposition("north_of", [kitchen, room]),
-             Proposition("free", [kitchen, room]),
-             Proposition("free", [room, kitchen]),
-             Proposition("south_of", [room, kitchen])]
+    # Load game for which to sample quests for.
+    game = Game.load(args.game.replace(".ulx", ".json"))
+
+    options = ChainingOptions()
+    options.backward = False
+    options.max_depth = args.quest_length
+    options.max_breadth = args.quest_breadth
+    options.rules_per_depth = {}
+    options.create_variables = False
+    options.rng = np.random.RandomState(args.seed)
 
     # Sample quests.
-    rng = np.random.RandomState(args.seed)
     chains = []
-    # rules_per_depth = {0: [data.get_rules()["take/c"], data.get_rules()["take/s"]],
-    #                    1: [data.get_rules()["open/c"]],
-    #                    }
-    rules_per_depth = {0: [data.get_rules()["eat"]],
-                       1: data.get_rules().get_matching("take/s.*"),
-                       2: data.get_rules().get_matching("go.*"),
-                       3: [data.get_rules()["open/d"]],
-                       4: [data.get_rules()["unlock/d"]],
-                       5: data.get_rules().get_matching("take/s.*", "take/c.*")}
-
     for i in range(args.nb_quests):
-        chain = textworld.logic.sample_quest(state, rng, max_depth=args.quest_length,
-                                                       allow_partial_match=True,
-                                                       exceptions=[],
-                                                       rules_per_depth=rules_per_depth,
-                                                       backward=True)
-        chains.append(chain[::-1])
+        chain = sample_quest(game.world.state, options)
+        chains.append(chain)
 
-    print_chains(chains, verbose=args.verbose)
-    actions_tree = build_tree_from_chains(chains)
+    print_chains(chains, var_infos=game.infos)
 
-    # Convert tree to networkx graph/tree
-    filename = "sample_tree.svg"
-    G, labels = actions_tree.to_networkx()
+    # Convert chains to networkx graph/tree
+    filename_world = pjoin(args.output, "sample_world.png")
+    filename_tree = pjoin(args.output, "sample_tree.svg")
+    filename_graph = pjoin(args.output, "sample_graph.svg")
+    G, labels = build_tree_from_chains(chains, var_infos=game.infos)
     if len(G) > 0:
-        tree = nx.bfs_tree(G, actions_tree.no)
-        save_graph_to_svg(tree, labels, filename, backward=True)
+        image = visualize(game)
+        image.save(filename_world)
+        tree = nx.bfs_tree(G, "root")
+        save_graph_to_svg(tree, labels, filename_tree)
+        save_graph_to_svg(G, labels, filename_graph)
     else:
         try:
-            os.remove(filename)
+            os.remove(filename_world)
+            os.remove(filename_tree)
+            os.remove(filename_graph)
         except:
             pass
 
