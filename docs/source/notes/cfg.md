@@ -28,7 +28,7 @@ greeting:#greet_how# to meet you!;how are you?;have we met?
 greet_how:nice;great;wonderful
 ```
 
-And when expanding `introduction` we can obtain lines like `Hello, wonderful to meet you!` since the grammar will first expand `greeting` and then `greet_how`. Note that symbols cannot have spaces in them. Also note that when expanding, spacing will be preserved. Grammars are saved using the `.twf` extension (textworld flavour).
+And when expanding `introduction` we can obtain lines like `Hello, wonderful to meet you!` since the grammar will first expand `greeting` and then `greet_how`. Note that symbols cannot have spaces in them. Also, note that when expanding, spacing will be preserved. Grammars are saved using the `.twf` extension (textworld flavour).
 
 Lastly, comment-lines can be added in the grammar file by making the first character in the line `#`.
 
@@ -58,7 +58,7 @@ In the names folder, we must provide names for all the possible types in our wor
 
 ### Room Types
 
-Worlds in Inform are defined as a series of connected rooms. The text generator allows for the possibility of generating different room *types*, ie. rooms that have certain properties. For example we might expect to find different objects in a washroom vs. a kitchen. Room types are defined using a special symbol `room_types`, that **must** be present in the object names grammar. As an example, take the `house_obj` room types:
+Worlds in Inform are defined as a series of connected rooms. The text generator allows for the possibility of generating different room *types*, ie. rooms that have certain properties. For example, we might expect to find different objects in a washroom vs. a kitchen. Room types are defined using a special symbol `room_types`, that **must** be present in the object names grammar. As an example, take the `house_obj` room types:
 
 ```
 room_type:clean;cook;rest;work;storage
@@ -75,7 +75,7 @@ clean_(o)_adj:new;old;dusty
 clean_(o)_noun:broom;towel;vacuum
 ```
 
-This means that in a cleaning room, we may find a `new broom`, `old vacuum`, etc. Note that adjectives and nouns **must** be one word only, although hypens may be used to make compound words. Note that we must define adjectives and nouns for all possible room type and type combinations. This is burdensome, but we also define *general* naming rules to simplify things, and if `roomtype_(type)_adj` and `roomtype_(type)_noun` are not defined, then the grammar will default to the general rules. For example, since we assume all doors will be similar regardless of room in a house, the following is the definition for doors in the `house` flavour.
+This means that in a cleaning room, we may find a `new broom`, `old vacuum`, etc. Note that adjectives and nouns **must** be one word only, although hyphens may be used to make compound words. Note that we must define adjectives and nouns for all possible room type and type combinations. This is burdensome, but we also define *general* naming rules to simplify things, and if `roomtype_(type)_adj` and `roomtype_(type)_noun` are not defined, then the grammar will default to the general rules. For example, since we assume all doors will be similar regardless of room in a house, the following is the definition for doors in the `house` flavour.
 
 ```
 (d)_adj:wooden;oak;birch;maple;balsam;beech;mahogany;walnut;cedar;fir;pine;redwood
@@ -181,7 +181,7 @@ This will expand to, for example, `There are two red things here, a chest and a 
 The `room_desc_(type)_multi_noun/adj` do not have any special handling and can be authored as usual. They will be listed sequentially after the `room_desc_group` symbol.
 
 ### Exits
-Exits are automatically grouped together into a single phrase, so we would get `There are exits to the east and north` as opposed to `There is an exit to the east. There is an exit to the north.`. This is simlar to the multiple object grouping described above, and there is special handling to deal with the plurality problems. Specifically, there are three symbols which must be defined, `room_exit_desc`, `room_(d)_exit_desc_alt`, and `room_(d)_exit_desc`. The rules are as follows, if we have only exits that don't have doors, then we will expand `room_exit_desc`. If we have only exits with doors, then we use `room_(d)_exit_desc_alt`. Otherwise we list the exits using `room_exit_desc` and then use `room_(d)_exit_desc` to list the exits that have doors.
+Exits are automatically grouped together into a single phrase, so we would get `There are exits to the east and north` as opposed to `There is an exit to the east. There is an exit to the north.`. This is similar to the multiple object grouping described above, and there is special handling to deal with the plurality problems. Specifically, there are three symbols which must be defined, `room_exit_desc`, `room_(d)_exit_desc_alt`, and `room_(d)_exit_desc`. The rules are as follows, if we have only exits that don't have doors, then we will expand `room_exit_desc`. If we have only exits with doors, then we use `room_(d)_exit_desc_alt`. Otherwise we list the exits using `room_exit_desc` and then use `room_(d)_exit_desc` to list the exits that have doors.
 
 There are also special symbols and handling for these symbols, as with `room_desc_group`. In this case `(dir)` is the list of directions the list of exits leads, and `(name)`, `(name-n)` and `(name-adj)` refer to the lists of doors or door properties, in cases where we are defining doors. We also make use of a special embedded function `[a|b]` which is a context-sensitive function which, when expanding, will take the text from the left-hand side, `a`, if we are only referring to one object and the right-hand side, `b`, otherwise. As an example `There [is a door|are doors] here` would expand to `There is a door here` if we only have one door and `There are doors here` otherwise. As an example, take a subset of the definitions from the `house` flavour:
 
@@ -195,7 +195,7 @@ If we have one east exit, the generator will expand `room_exit_desc` to `There i
 
 ## Instructions
 
-Instructions grow linearly with actions, in the sense that we typically need one symbol per action. This symbol is usually just the name of the action. Currently, that means there must be symbols for take, insert, put, eat, open, close, unlock, lock, go/north, go/south, go/east, go/west, go/north/d, go/south/d, go/east/d, go/west/d and wait. When we generate lines of text, we keep track of what objects are involved and they can be referred to by using parantheses. For example, in `unlock` we can refer to the key by `(k)`. When generating instructions, the system will automatically make certain names ambiguous to make the instructions harder to figure out, e.g. referring to a `red key` just as `a key`. Ambiguity, however, is handled automatically and whatever ambiguity is selected, it will simply replace `(k)` with the result.
+Instructions grow linearly with actions, in the sense that we typically need one symbol per action. This symbol is usually just the name of the action. Currently, that means there must be symbols for take, insert, put, eat, open, close, unlock, lock, go/north, go/south, go/east, go/west, go/north/d, go/south/d, go/east/d, go/west/d and wait. When we generate lines of text, we keep track of what objects are involved and they can be referred to by using parentheses. For example, in `unlock` we can refer to the key by `(k)`. When generating instructions, the system will automatically make certain names ambiguous to make the instructions harder to figure out, e.g. referring to a `red key` just as `a key`. Ambiguity, however, is handled automatically and whatever ambiguity is selected, it will simply replace `(k)` with the result.
 
 Slightly more complex is the idea of object groups. This is a specific syntax to instructions and handles situations where certain actions may have different components. For example, we can `unlock` a door or container. For instructions, we use the syntax `(c|d)`, to state that, when expanding, replace this symbol by *either* the container or the door depending on what is involved in the action. We can use this for multiple objects, for example `(o|k|f|b)` refers to all the objects that can be in containers or on shelves, and are therefore specific to take, insert and put.
 
@@ -223,7 +223,7 @@ Inform 7 has some specific built-in functions that we may make use of for our gr
 In the chest [is-are a list of things in the chest]. -> In the chest are a pen and an apple.
 The chest has [a list of things in the chest] in it. -> The chest has a pen and an apple in it.
 
-#S upporters
+# Supporters
 On the shelf [is-are a list of things on the shelf]. -> On the shelf are a pen and an apple.
 The shelf has [a list of things on the shelf]. -> On the shelf are a pen and an apple.
 ```
@@ -233,10 +233,10 @@ This is useful for dynamically listing contents, for example if the player takes
 A similarly useful function for containers and doors is the `[if x is open][else if x is locked][otherwise][end if]` which will modify the sentence based on the state of the object. For example, for our chest we could say `The chest is [if chest is open]open[else if chest is locked]locked[otherwise]closed[end if].` When writing the line of text, Inform will automatically select the line which matches the if statement, so an open chest will result in `The chest is open`, a locked chest will result in `The chest is locked.`, etc (note that `open`, `closed` and `locked` are the three possible states of a container or door). We can also embed functions within each other, so `The chest is [if chest is open]open, and has [a list of things in the chest] in it.[else if chest is locked]locked[otherwise]closed[end if].` will also print a list of the chest's contents if the chest is open.
 
 ## Interesting Properties
-Using a grammar allows for several interesting aspects of natural language. These all emerge out of the way the grammar is authored, and some are suppored by underlying systems (e.g. Grouping similar objects)
+Using a grammar allows for several interesting aspects of natural language. These all emerge out of the way the grammar is authored, and some are supported by underlying systems (e.g. Grouping similar objects)
 * **Language Variability**: The most basic property of a grammar is that we have multiple ways to represent the same information. This allows for significant variation within the generated descriptions.
 * **Paraphrasing**: By using features such as grouping or adjective/noun only references, it is possible to present shorter or longer, and more or less detailed representations of the same information.
 * **Coreference**: By using multiple sentences for describing an object, we can use pronoun references such as "it", which must be resolved to the correct object in order for the information to make sense. eg `There is a chest. It is red` vs. `There is a red chest.`
 * **Entailment**: We can avoid listing certain information that can be concluded from other pieces of evidence. For example, if the contents of the container are listed, then we expect that the container is open.
-* **Ambiguity**: Using elements such as paraphrasing, grouping, coreference and other writing techniques, we can write information that is very ambiguous `There is a container in the room. It is red. It also has a pen in it.` or more specific `There is an open red chest in the room. The open red chest has a pen in it`. Likewise grouping can introduce complex amibuities, for example `There are two chests in the room, a red one and a blue one. The red one has a pen in it.` indicates that we have a red chest and a blue chest, and that the red chest is open and has a pen and the blue chest is either locked or closed.
+* **Ambiguity**: Using elements such as paraphrasing, grouping, coreference and other writing techniques, we can write information that is very ambiguous `There is a container in the room. It is red. It also has a pen in it.` or more specific `There is an open red chest in the room. The open red chest has a pen in it`. Likewise, grouping can introduce complex ambiguities, for example `There are two chests in the room, a red one and a blue one. The red one has a pen in it.` indicates that we have a red chest and a blue chest, and that the red chest is open and has a pen and the blue chest is either locked or closed.
 * **Distractors**: It is very easy to add decorative but meaningless text into a description that an agent must learn to ignore, for example `A chest, barely noticeably red underneath layers of dust and cobwebs, lies dormant in a forgotten corner.` really only contains the basic knowledge that a red chest is in the room (although likely more interesting to read for human players).
