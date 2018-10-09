@@ -17,13 +17,6 @@ def _pre_install(dir):
     from subprocess import check_call
     check_call(['./setup.sh'], shell=True, cwd=os.getcwd())
 
-    # Install local version of Jericho
-    try:
-        from pip import main as pipmain
-    except:
-        from pip._internal import main as pipmain
-    pipmain(['install', os.path.join(os.getcwd(), "jericho")])
-
 
 class CustomInstall(install):
     def run(self):
