@@ -117,10 +117,6 @@ class WorldEntity(Variable):
             self.properties.append(fact.name)
 
         self.related_facts.append(fact)
-        if fact.name == "match":
-            self.matching_entity_id = fact.arguments[1].name
-            if fact.arguments[1].name == self.name:
-                self.matching_entity_id = fact.arguments[0].name
 
     def get_attributes(self) -> List[Proposition]:
         return self.related_facts
@@ -319,6 +315,11 @@ class World:
 
             obj = self._get_entity(fact.arguments[0])
             obj.add_related_fact(fact)
+
+            if fact.name == "match":
+                other_obj = self._get_entity(fact.arguments[1])
+                obj.matching_entity_id = fact.arguments[1].name
+                other_obj.matching_entity_id = fact.arguments[0].name
 
             if fact.name in ["in", "on", "at"]:
                 holder = self._get_entity(fact.arguments[1])

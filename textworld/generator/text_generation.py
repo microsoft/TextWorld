@@ -98,7 +98,7 @@ def assign_description_to_object(obj, grammar, game_infos):
         game_infos[obj.id].desc = expand_clean_replace(desc_tag, grammar, obj, game_infos)
 
     # If we have an openable object, append an additional description
-    if obj.type in ["c", "d"]:
+    if data.get_types().is_descendant_of(obj.type, ["c", "d"]):
         game_infos[obj.id].desc += grammar.expand(" #openable_desc#")
 
 
