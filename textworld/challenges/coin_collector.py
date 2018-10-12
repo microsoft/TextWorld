@@ -89,7 +89,6 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     metadata["seeds"] = options.seeds
     metadata["world_size"] = options.nb_rooms
     metadata["quest_length"] = options.quest_length
-    metadata["grammar_flags"] = options.grammar.encode()
 
     rngs = options.rngs
     rng_map = rngs['map']
@@ -121,7 +120,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Add distractor rooms, if needed.
     chain_of_rooms = list(rooms)
-    while len(rooms) < n_rooms:
+    while len(rooms) < options.nb_rooms:
         if mode == "random":
             src = rng_map.choice(rooms)
         else:
