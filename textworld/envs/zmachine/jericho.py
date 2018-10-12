@@ -5,14 +5,20 @@
 import io
 import os
 import sys
+import warnings
 
 import jericho
 
 import textworld
 from textworld.core import GameState
+from textworld.core import GameNotRunningError
 
 
-class DefaultZGameState(GameState):
+class JerichoUnsupportedGameWarning(UserWarning):
+    pass
+
+
+class JerichoGameState(GameState):
 
     @property
     def nb_deaths(self):
@@ -32,8 +38,10 @@ class DefaultZGameState(GameState):
     def inventory(self):
         """ Player's inventory. """
         if not hasattr(self, "_inventory"):
-            # Issue the "inventory" command and parse its output.
-            self._inventory, _, _ = self._env.step("inventory")
+            self._inventory = ""
+            if not self.game_ended:
+                # Issue the "inventory" command and parse its output.
+                self._inventory, _, _, _ = self._env._jericho.step("inventory")
 
         return self._inventory
 
@@ -49,7 +57,7 @@ class DefaultZGameState(GameState):
     def max_score(self):
         """ Max score for this game. """
         if not hasattr(self, "_max_score"):
-            self._score = 0
+            self._max_score = 0
 
         return self._max_score
 
@@ -57,24 +65,32 @@ class DefaultZGameState(GameState):
     def description(self):
         """ Description of the current location. """
         if not hasattr(self, "_description"):
-            # Issue the "look" command and parse its output.
-            self._description, _, _ = self._env.step("look")
+            self._description = ""
+            if not self.game_ended:
+                # Issue the "look" command and parse its output.
+                self._description, _, _ , _= self._env._jericho.step("look")
 
         return self._description
 
     @property
     def has_won(self):
         """ Whether the player has won the game or not. """
-        return False
+        if not hasattr(self, "_has_won"):
+            self._has_won = False
+
+        return self._has_won
 
     @property
     def has_lost(self):
         """ Whether the player has lost the game or not. """
-        return False
+        if not hasattr(self, "_has_lost"):
+            self._has_lost = False
+
+        return self._has_lost
 
 
 class JerichoEnvironment(textworld.Environment):
-    GAME_STATE_CLASS = DefaultZGameState
+    GAME_STATE_CLASS = JerichoGameState
 
     metadata = {'render.modes': ['human', 'ansi', 'text']}
 
@@ -97,8 +113,19 @@ class JerichoEnvironment(textworld.Environment):
         if not os.path.isfile(self.game_filename):
             raise FileNotFoundError(game_filename)
 
-        if not jericho.FrotzEnv.is_fully_supported(self.game_filename):
-            raise ValueError("Game is not fully supported by Jericho: {}".format(game_filename))
+        # self.fully_supported = jericho.FrotzEnv.is_fully_supported(self.game_filename)
+        # if not self.fully_supported:
+        #     msg = ("Game '{}' is not fully supported. Score, move, change"
+        #            " detection are disabled.")
+        #     warnings.warn(msg, JerichoUnsupportedGameWarning)
+
+    def __del__(self) -> None:
+        self.close()
+
+    @property
+    def game_running(self) -> bool:
+        """ Determines if the game is still running. """
+        return self._jericho is not None
 
     def seed(self, seed=None):
         self._seed = seed
@@ -116,15 +143,22 @@ class JerichoEnvironment(textworld.Environment):
         self.game_state.init(start_output)
         self.game_state._score = self._jericho.get_score()
         self.game_state._max_score = self._jericho.get_max_score()
+        self.game_state._has_won = self._jericho.victory()
+        self.game_state._has_lost = self._jericho.game_over()
         return self.game_state
 
     def step(self, command):
+        if not self.game_running:
+            raise GameNotRunningError()
+
         command = command.strip()
-        output, reward, done, _ = self._jericho.step(command)
+        output, _, _, _ = self._jericho.step(command)
         self.game_state = self.game_state.update(command, output)
         self.game_state._score = self._jericho.get_score()
         self.game_state._max_score = self._jericho.get_max_score()
-        return self.game_state, reward, done
+        self.game_state._has_won = self._jericho.victory()
+        self.game_state._has_lost = self._jericho.game_over()
+        return self.game_state, self.game_state.score, self.game_state.game_ended
 
     def close(self):
         if self._jericho is not None:
@@ -150,3 +184,7 @@ class JerichoEnvironment(textworld.Environment):
 
         if mode == 'ansi':
             return outfile
+
+
+# By default disable warning related to unsupported games.
+warnings.simplefilter("ignore", JerichoUnsupportedGameWarning)

@@ -269,7 +269,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         test_template = "quest{} completed is true"
         game_winning_test = " and ".join(test_template.format(i) for i in range(len(quests)))
 
-    # Remove square bracket when printing score increases. Square brackets are conflicting with 
+    # Remove square bracket when printing score increases. Square brackets are conflicting with
     # Inform7's events parser in git_glulx_ml.py.
     # And add winning conditions for the game.
     source += textwrap.dedent("""\
@@ -435,7 +435,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         remove the list of doors from L;
         if the number of entries in L is greater than 0:
             say "There is [L with indefinite articles] on the floor.";
-        
+
     """)
 
     # Print properties of objects when listing the inventory contents and the room contents.
@@ -507,16 +507,16 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     source += textwrap.dedent("""\
     The taking action has an object called previous locale (matched as "from").
 
-    Setting action variables for taking: 
+    Setting action variables for taking:
         now previous locale is the holder of the noun.
 
-    Report taking something from the location: 
+    Report taking something from the location:
         say "You pick up [the noun] from the ground." instead.
 
-    Report taking something: 
+    Report taking something:
         say "You take [the noun] from [the previous locale]." instead.
 
-    Report dropping something: 
+    Report dropping something:
         say "You drop [the noun] on the ground." instead.
 
     """)
@@ -685,6 +685,17 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         if the restrict commands option is true and taking allowed flag is false:
             say "Can't see any [object] on the floor! Try taking the [object] from the [container] instead.";
             rule fails.
+
+    """)
+
+
+    # Special command to print the maximum score of a game.
+    source += textwrap.dedent("""\
+    Reporting max score is an action applying to nothing.
+    Carry out reporting max score:
+        say "[maximum score]".
+
+    Understand "tw-print max_score" as reporting max score.
 
     """)
 

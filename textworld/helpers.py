@@ -3,62 +3,43 @@
 
 
 import os
-from os.path import join as pjoin
 from typing import Optional, Mapping, Tuple
 
 from textworld.utils import g_rng
 
-from textworld.core import Environment, GameState, Agent
-from textworld.generator import Game, GameMaker, GameOptions
+from textworld.core import Environment, Agent
+from textworld.generator.game import Game, GameOptions
 
-from textworld.envs import FrotzEnvironment
 from textworld.envs import GlulxEnvironment
 from textworld.envs import JerichoEnvironment
-from textworld.envs import CUSTOM_ENVIRONMENTS
 
 from textworld.agents import HumanAgent
 
 from textworld.generator import make_game, compile_game
 
-# TODO: move that constant in a config file.
-DEFAULT_GAMES_REPOSITORY = pjoin(".", "games")
 
-
-def start(filename: str) -> Environment:
+def start(path: str) -> Environment:
     """ Starts a TextWorld environment to play a game.
 
     Args:
-        filename: Path to the game file.
+        path: Path to the game file.
 
     Returns:
         TextWorld environment running the provided game.
 
     """
     # Check the game file exists.
-    if not os.path.isfile(filename):
-        # Maybe it refers to a file in "games" directory.
-        tentative = pjoin(DEFAULT_GAMES_REPOSITORY, filename)
-
-        if not os.path.isfile(tentative):
-            msg = "Unable to find game: '{}' or '{}'"
-            msg = msg.format(os.path.abspath(filename), os.path.abspath(tentative))
-            raise IOError(msg)
-
-        filename = tentative
+    if not os.path.isfile(path):
+        msg = "Unable to find game '{}'.".format(os.path.abspath(path))
+        raise IOError(msg)
 
     # Guess the backend from the extension.
-    backend = "glulx" if filename.endswith(".ulx") else "zmachine"
+    backend = "glulx" if path.endswith(".ulx") else "zmachine"
 
     if backend == "zmachine":
-        if os.path.basename(filename) in CUSTOM_ENVIRONMENTS:
-            env = CUSTOM_ENVIRONMENTS[os.path.basename(filename)](filename)
-        elif JerichoEnvironment:
-            env = JerichoEnvironment(filename)
-        else:
-            env = FrotzEnvironment(filename)
-
+        env = JerichoEnvironment(path)
     elif backend == "glulx":
-        env = GlulxEnvironment(filename)
+        env = GlulxEnvironment(path)
     else:
         msg = "Unsupported backend: {}".format(backend)
         raise ValueError(msg)
