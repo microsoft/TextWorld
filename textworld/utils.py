@@ -4,6 +4,7 @@
 
 import os
 import re
+import time
 import shutil
 import tempfile
 import contextlib
@@ -67,6 +68,7 @@ def get_webdriver(path=None):
     from selenium import webdriver
 
     def chrome_driver(path=None):
+
         from selenium.webdriver.chrome.options import Options
         options = Options()
         options.add_argument('headless')
@@ -77,9 +79,16 @@ def get_webdriver(path=None):
         if path is not None:
             options.binary_location = path
 
-        driver = webdriver.Chrome(chrome_options=options)
+        SELENIUM_RETRIES = 10
+        SELENIUM_DELAY = 3  # seconds
+        for _ in range(SELENIUM_RETRIES):
+            try:
+                driver = webdriver.Chrome(chrome_options=options)
+                return driver
+            except ConnectionResetError:  # https://github.com/SeleniumHQ/selenium/issues/5296
+                time.sleep(SELENIUM_DELAY)
 
-        return driver
+        raise ConnectionResetError('Cannot connect to Chrome, giving up after {SELENIUM_RETRIES} attempts.')
 
     def firefox_driver(path=None):
         from selenium.webdriver.firefox.options import Options
