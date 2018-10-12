@@ -68,7 +68,7 @@ def get_webdriver(path=None):
     from selenium import webdriver
 
     def chrome_driver(path=None):
-
+        import urllib3
         from selenium.webdriver.chrome.options import Options
         options = Options()
         options.add_argument('headless')
@@ -83,9 +83,8 @@ def get_webdriver(path=None):
         SELENIUM_DELAY = 3  # seconds
         for _ in range(SELENIUM_RETRIES):
             try:
-                driver = webdriver.Chrome(chrome_options=options)
-                return driver
-            except ConnectionResetError:  # https://github.com/SeleniumHQ/selenium/issues/5296
+                return webdriver.Chrome(chrome_options=options)
+            except urllib3.exceptions.ProtocolError:  # https://github.com/SeleniumHQ/selenium/issues/5296
                 time.sleep(SELENIUM_DELAY)
 
         raise ConnectionResetError('Cannot connect to Chrome, giving up after {SELENIUM_RETRIES} attempts.')
