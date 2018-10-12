@@ -118,7 +118,6 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     metadata["seeds"] = options.seeds
     metadata["world_size"] = options.nb_rooms
     metadata["quest_length"] = options.quest_length
-    metadata["grammar_flags"] = options.grammar.encode()
 
     rngs = options.rngs
     rng_map = rngs['seed_map']
