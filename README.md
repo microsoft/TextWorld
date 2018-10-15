@@ -12,6 +12,10 @@ On a Debian/Ubuntu-based system, these can be installed with
 
     sudo apt install build-essential uuid-dev libffi-dev python3-dev curl
 
+And on macOS, with
+
+    brew install libffi curl
+
 ### Installing TextWorld
 
 The easiest way to install TextWorld is via `pip`.
