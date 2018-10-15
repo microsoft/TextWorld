@@ -2,33 +2,33 @@
 A learning environment sandbox for training and testing reinforcement learning (RL) agents on text-based games.
 
 ## Installation
-
+### Requirements
 TextWorld requires __Python 3__ and only supports __Linux__ and __Mac__ systems at the moment.
 
-### Requirements
+### Dependencies
 
 The following system libraries are required to install and run TextWorld:
 ```
 sudo apt-get -y install uuid-dev libffi-dev build-essential curl gcc make python3-dev
 ```
-as well as some Python libraries that can be installed separately using
+as well as some Python dependencies that can be installed separately using
 ```
 pip install -r requirements.txt
 ```
 
 ### Installing TextWorld
 
-The easiest way to install TextWorld is via `pip`.
+The easiest way to install TextWorld is via [`pip`](https://pypi.org/).
 
 After cloning the repo, go inside the root folder of the project (i.e. alongside `setup.py`) and run
 ```
 pip install .
 ```
-If you prefer a remote installation:
+Or, if you prefer a remote, installation:
 ```
 pip install https://github.com/Microsoft/TextWorld/archive/master.zip
 ```
-_** In any case, make sure `pip` is associated with your Python 3 installation_
+> **Note:** In any case, make sure `pip` is associated with your Python 3 installation!
 
 ### Extras
 If desired, one can install one or several extra functionalities for TextWorld. To do so, install TextWorld using
@@ -70,7 +70,7 @@ To play a game, one can use the `tw-play` script. For instance, the command to p
 tw-play gen_games/simple_game.ulx
 ```
 
-_* Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported._
+> **Note:** Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported.
 
 ### Playing a game (Python)
 
@@ -110,7 +110,7 @@ print("avg. steps: {:5.1f}; avg. score: {:4.1f} / 1.".format(sum(avg_moves)/N, s
 For more information about TextWorld, check the [documentation](https://aka.ms/textworld-docs).
 
 ## Notebooks
-Check the notebooks provided with the framework to see how the framework can be used.
+Check the [notebooks](notebooks) provided with the framework to see how the framework can be used.
 
 ## Citing TextWorld
 If you use TextWorld, please cite the following BibTex:
