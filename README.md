@@ -3,7 +3,7 @@ A learning environment sandbox for training and testing reinforcement learning (
 
 ## Installation
 
-TextWorld requires __Python 3__ and only supports __Linux__ and __Mac__ systems at the moment.
+TextWorld requires __Python 3__ and only supports __Linux__ and __macOS__ systems at the moment.
 
 ### Requirements
 
@@ -18,7 +18,7 @@ And on macOS, with
 
 ### Installing TextWorld
 
-The easiest way to install TextWorld is via `pip`.
+The easiest way to install TextWorld is via [`pip`](https://pypi.org/).
 
 After cloning the repo, go inside the root folder of the project (i.e. alongside `setup.py`) and run
 
@@ -49,7 +49,7 @@ To play a game, one can use the `tw-play` script. For instance, the command to p
 
     tw-play gen_games/simple_game.ulx
 
-_* Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported._
+> **Note:** Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported.
 
 ### Playing a game (Python)
 
@@ -89,7 +89,7 @@ print("avg. steps: {:5.1f}; avg. score: {:4.1f} / 1.".format(sum(avg_moves)/N, s
 For more information about TextWorld, check the [documentation](https://aka.ms/textworld-docs).
 
 ## Notebooks
-Check the notebooks provided with the framework to see how the framework can be used.
+Check the [notebooks](notebooks) provided with the framework to see how the framework can be used.
 
 ## Citing TextWorld
 If you use TextWorld, please cite the following BibTex:
