@@ -7,11 +7,11 @@ from collections import OrderedDict
 
 from textworld.utils import RegexDict
 from textworld.logic import Placeholder, Rule, TypeHierarchy
-from textworld.generator import data
+from textworld.generator.data import KB
 
 
 def get_reverse_action(action):
-    rev_rule = data.get_reverse_rules(action)
+    rev_rule = KB.reverse_rules(action)
     if rev_rule is None:
         return None
 

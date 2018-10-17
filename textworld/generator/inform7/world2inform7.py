@@ -14,7 +14,7 @@ from pkg_resources import Requirement, resource_filename
 
 from textworld.utils import make_temp_directory, str2bool
 
-from textworld.generator import data
+from textworld.generator.data import KB
 
 from textworld.generator.game import Quest
 from textworld.logic import Signature
@@ -46,7 +46,7 @@ def gen_source_for_map(src_room) -> str:
                                       door=door.name)
         else:
             sig = Signature("{}_of".format(src_exit), ["r", "r"])
-            _, template = data.INFORM7_PREDICATES[sig]
+            _, template = KB.inform7_predicates[sig]
             mapping = {'r': dest_room_id, "r'": src_room_id}
             source += template.format(**mapping) + ".\n"
 
@@ -54,7 +54,7 @@ def gen_source_for_map(src_room) -> str:
 
 
 def gen_source_for_attribute(attr) -> str:
-    pt = data.INFORM7_PREDICATES.get(attr.signature)
+    pt = KB.inform7_predicates.get(attr.signature)
     if pt is None:
         return None
 
@@ -121,14 +121,14 @@ def gen_source_for_objects(objects, var_infos, use_i7_description=False):
 
 def gen_commands_from_actions(actions, var_infos):
     def _get_name_mapping(action):
-        mapping = data.get_rules()[action.name].match(action)
+        mapping = KB.rules[action.name].match(action)
         return {ph.name: var_infos[var.name].name for ph, var in mapping.items()}
 
     commands = []
     for action in actions:
         command = "None"
         if action is not None:
-            command = data.INFORM7_COMMANDS[action.name]
+            command = KB.inform7_commands[action.name]
             command = command.format(**_get_name_mapping(action))
 
         commands.append(command)
@@ -138,11 +138,11 @@ def gen_commands_from_actions(actions, var_infos):
 
 def find_action_given_inform7_event(i7_event, actions, var_infos):
     def _get_name_mapping(action):
-        mapping = data.get_rules()[action.name].match(action)
+        mapping = KB.rules[action.name].match(action)
         return {ph.name: var_infos[var.name].name for ph, var in mapping.items()}
 
     for action in actions:
-        event = data.INFORM7_EVENTS[action.name]
+        event = KB.inform7_events[action.name]
 
         if event.format(**_get_name_mapping(action)) == i7_event:
             return action
@@ -162,7 +162,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
     source += "A room has a text called internal name.\n\n"
 
     # Define custom addons.
-    source += data.INFORM7_ADDONS_CODE + "\n"
+    source += KB.inform7_addons_code + "\n"
 
     # Declare all rooms.
     room_names = [room.id for room in world.rooms]
@@ -197,7 +197,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         source += gen_source_for_map(room)
 
     # Declare all objects
-    for vtype in data.get_types():
+    for vtype in KB.types:
         if vtype in ["P", "I"]:
             continue  # Skip player and inventory.
 
@@ -205,7 +205,7 @@ def generate_inform7_source(game, seed=1234, use_i7_description=False):
         if len(entities) == 0:
             continue  # No entity of that specific type.
 
-        kind = data.INFORM7_VARIABLES[vtype]
+        kind = KB.inform7_variables[vtype]
         names = [entity.id for entity in entities]
         source += "The " + " and the ".join(names) + " are {}s.\n".format(kind)
         # All objects are privately-named and we manually define all "Understand as" phrases needed.

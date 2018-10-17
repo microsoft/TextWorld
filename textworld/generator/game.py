@@ -12,7 +12,7 @@ from numpy.random import RandomState
 
 from textworld import g_rng
 from textworld.utils import encode_seeds
-from textworld.generator import data
+from textworld.generator.data import KB
 from textworld.generator.text_grammar import Grammar, GrammarOptions
 from textworld.generator.world import World
 from textworld.logic import Action, Proposition, Rule, State
@@ -41,14 +41,14 @@ class UnderspecifiedQuestError(NameError):
 
 def gen_commands_from_actions(actions):
     def _get_name_mapping(action):
-        mapping = data.get_rules()[action.name].match(action)
+        mapping = KB.rules[action.name].match(action)
         return {ph.name: var.name for ph, var in mapping.items()}
 
     commands = []
     for action in actions:
         command = "None"
         if action is not None:
-            command = data.INFORM7_COMMANDS[action.name]
+            command = KB.inform7_commands[action.name]
             command = command.format(**_get_name_mapping(action))
 
         commands.append(command)
@@ -279,8 +279,8 @@ class Game:
         self.metadata = {}
         self._objective = None
         self._infos = self._build_infos()
-        self._rules = data.get_rules()
-        self._types = data.get_types()
+        self._rules = KB.rules
+        self._types = KB.types
         self.change_grammar(grammar)
 
         self._main_quest = None
@@ -434,7 +434,7 @@ class Game:
     def verbs(self) -> List[str]:
         """ Verbs that should be recognized in this game. """
         # Retrieve commands templates for every rule.
-        commands = [data.INFORM7_COMMANDS[rule_name]
+        commands = [KB.inform7_commands[rule_name]
                     for rule_name in self._rules]
         verbs = [cmd.split()[0] for cmd in commands]
         verbs += ["look", "inventory", "examine", "wait"]

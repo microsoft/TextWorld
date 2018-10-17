@@ -14,7 +14,7 @@ from numpy.random import RandomState
 import textworld
 from textworld import g_rng
 from textworld.utils import uniquify
-from textworld.generator import data
+from textworld.generator.data import KB
 
 
 NB_EXPANSION_RETRIES = 20
@@ -120,10 +120,10 @@ class Grammar:
         grammar_contents = []
 
         # Load the object names file
-        files = os.listdir(data.get_text_grammars_path())
+        files = os.listdir(KB.text_grammars_path)
         files = [f for f in files if f.startswith(self.theme + "_") and f.endswith(".twg")]
         for filename in files:
-            with open(pjoin(data.get_text_grammars_path(), filename)) as f:
+            with open(pjoin(KB.text_grammars_path, filename)) as f:
                 grammar_contents.extend(f.readlines())
 
         self._parse(grammar_contents)
@@ -308,7 +308,7 @@ class Grammar:
                 msg = ("Not enough variation for '{}'. Falling back on using adjective '{}'."
                        " To avoid this message you can add more variation in the '{}'"
                        " related grammar files located in '{}'.")
-                msg = msg.format(symbol, adj, self.theme, data.get_text_grammars_path())
+                msg = msg.format(symbol, adj, self.theme, KB.text_grammars_path)
                 warnings.warn(msg, textworld.TextworldGenerationWarning)
                 return name, adj, noun
 
@@ -320,7 +320,7 @@ class Grammar:
                        " In last resort, you could always turn on the"
                        " 'allowed_variables_numbering=True' grammar flag"
                        " to append unique number to object name.")
-                msg = msg.format(symbol, self.theme, data.get_text_grammars_path())
+                msg = msg.format(symbol, self.theme, KB.text_grammars_path)
                 raise ValueError(msg)
 
             if obj_type not in self.overflow_dict:

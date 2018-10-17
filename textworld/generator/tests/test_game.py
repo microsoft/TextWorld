@@ -12,7 +12,7 @@ from textworld import g_rng
 from textworld import GameMaker
 from textworld.utils import make_temp_directory
 
-from textworld.generator import data
+from textworld.generator.data import KB
 from textworld.generator import World
 from textworld.generator import make_small_map, make_grammar, make_game_with
 
@@ -145,7 +145,7 @@ class TestQuest(unittest.TestCase):
         world = World.from_map(map_)
 
         for max_depth in range(1, 3):
-            for rule in data.get_rules().values():
+            for rule in KB.rules.values():
                 options = ChainingOptions()
                 options.backward = True
                 options.max_depth = max_depth
@@ -229,7 +229,7 @@ class TestGame(unittest.TestCase):
         assert set(self.game.directions_names) == expected
 
     def test_objects_types(self):
-        expected_types = set(data.get_types().types)
+        expected_types = set(KB.types.types)
         assert set(self.game.objects_types) == expected_types
 
     def test_objects_names(self):

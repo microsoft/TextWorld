@@ -9,7 +9,7 @@ import textworld
 from textworld import g_rng
 from textworld.utils import make_temp_directory
 
-from textworld.generator import data
+from textworld.generator.data import KB
 from textworld.generator import World, Quest
 from textworld.generator import compile_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
@@ -52,7 +52,7 @@ def test_quest_winning_condition():
     map_ = make_small_map(n_rooms=5, possible_door_states=["open"])
     world = World.from_map(map_)
 
-    for rule in data.get_rules().values():
+    for rule in KB.rules.values():
         options = ChainingOptions()
         options.backward = True
         options.max_depth = 1

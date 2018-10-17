@@ -8,7 +8,7 @@ from functools import total_ordering
 from numpy.random import RandomState
 from typing import Iterable, Mapping, Optional, Sequence
 
-from textworld.generator import data
+from textworld.generator.data import KB
 from textworld.logic import Action, GameLogic, Placeholder, Proposition, Rule, State, Variable
 
 
@@ -104,9 +104,9 @@ class ChainingOptions:
         self.subquests = False
         self.independent_chains = False
         self.create_variables = False
-        self.fixed_mapping = data.get_types().constants_mapping
+        self.fixed_mapping = KB.types.constants_mapping
         self.rng = None
-        self.logic = data.get_logic()
+        self.logic = KB.logic
         self.rules_per_depth = []
         self.restricted_types = frozenset()
 

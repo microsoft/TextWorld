@@ -6,7 +6,7 @@ import pickle
 import textwrap
 from collections import defaultdict
 
-from textworld.generator import data
+from textworld.generator.data import KB
 
 __all__ = ["GameLogger"]
 
@@ -100,7 +100,7 @@ class GameLogger(object):
             dist_obj_type[obj.type] += 1
 
         nb_objects = 0
-        for type_ in data.get_types():
+        for type_ in KB.types:
             if type_ in ["I", "P", "t", "r"]:
                 continue
 
