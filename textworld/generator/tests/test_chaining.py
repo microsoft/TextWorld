@@ -3,7 +3,7 @@
 
 
 from textworld import testing
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.chaining import ChainingOptions, get_chains
 from textworld.logic import GameLogic, Proposition, State, Variable
 
@@ -50,12 +50,12 @@ def test_chaining():
     # The following test depends on the available rules,
     # so instead of depending on what is in rules.txt,
     # we define the allowed_rules to used.
-    allowed_rules = KB.rules.get_matching("take/.*")
-    allowed_rules += KB.rules.get_matching("go.*")
-    allowed_rules += KB.rules.get_matching("insert.*", "put.*")
-    allowed_rules += KB.rules.get_matching("open.*", "close.*")
-    allowed_rules += KB.rules.get_matching("lock.*", "unlock.*")
-    allowed_rules += KB.rules.get_matching("eat.*")
+    allowed_rules = KnowledgeBase.default().rules.get_matching("take/.*")
+    allowed_rules += KnowledgeBase.default().rules.get_matching("go.*")
+    allowed_rules += KnowledgeBase.default().rules.get_matching("insert.*", "put.*")
+    allowed_rules += KnowledgeBase.default().rules.get_matching("open.*", "close.*")
+    allowed_rules += KnowledgeBase.default().rules.get_matching("lock.*", "unlock.*")
+    allowed_rules += KnowledgeBase.default().rules.get_matching("eat.*")
 
     class Options(ChainingOptions):
         def get_rules(self, depth):
@@ -117,9 +117,9 @@ def test_going_through_door():
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
-        [KB.rules["take/c"], KB.rules["take/s"]],
-        KB.rules.get_matching("go.*"),
-        [KB.rules["open/d"]],
+        [KnowledgeBase.default().rules["take/c"], KnowledgeBase.default().rules["take/s"]],
+        KnowledgeBase.default().rules.get_matching("go.*"),
+        [KnowledgeBase.default().rules["open/d"]],
     ]
 
     chains = list(get_chains(state, options))
@@ -160,8 +160,8 @@ def test_backward_chaining():
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
-        [KB.rules["take/c"], KB.rules["take/s"]],
-        [KB.rules["open/c"]],
+        [KnowledgeBase.default().rules["take/c"], KnowledgeBase.default().rules["take/s"]],
+        [KnowledgeBase.default().rules["open/c"]],
     ]
     options.restricted_types = {"d"}
 
@@ -174,9 +174,9 @@ def test_backward_chaining():
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
-        [KB.rules["put"]],
-        [KB.rules["go/north"]],
-        [KB.rules["take/c"]],
+        [KnowledgeBase.default().rules["put"]],
+        [KnowledgeBase.default().rules["go/north"]],
+        [KnowledgeBase.default().rules["take/c"]],
     ]
     options.restricted_types = {"d"}
 

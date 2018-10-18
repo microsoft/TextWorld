@@ -11,7 +11,7 @@ from numpy.random import RandomState
 
 from textworld import g_rng
 from textworld.utils import uniquify
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
 
 from textworld.generator.graph_networks import direction
@@ -248,7 +248,7 @@ class World:
 
     def _process_rooms(self) -> None:
         for fact in self.facts:
-            if not KB.types.is_descendant_of(fact.arguments[0].type, 'r'):
+            if not KnowledgeBase.default().types.is_descendant_of(fact.arguments[0].type, 'r'):
                 continue  # Skip non room facts.
 
             room = self._get_room(fact.arguments[0])
@@ -310,7 +310,7 @@ class World:
 
     def _process_objects(self) -> None:
         for fact in self.facts:
-            if KB.types.is_descendant_of(fact.arguments[0].type, 'r'):
+            if KnowledgeBase.default().types.is_descendant_of(fact.arguments[0].type, 'r'):
                 continue  # Skip room facts.
 
             obj = self._get_entity(fact.arguments[0])
@@ -388,7 +388,7 @@ class World:
                       object_types_probs: Optional[Dict[str, float]] = None) -> List[Proposition]:
         rng = g_rng.next() if rng is None else rng
         state = []
-        types_counts = KB.types.count(self.state)
+        types_counts = KnowledgeBase.default().types.count(self.state)
 
         inventory = Variable("I", "I")
         objects_holder = [inventory, room]
@@ -415,10 +415,10 @@ class World:
                 # Prioritize adding key if there are locked or closed things in the room.
                 obj_type = "k"
             else:
-                obj_type = KB.types.sample(parent_type='t', rng=rng, exceptions=["d", "r"],
+                obj_type = KnowledgeBase.default().types.sample(parent_type='t', rng=rng, exceptions=["d", "r"],
                                                    include_parent=False, probs=object_types_probs)
 
-            if KB.types.is_descendant_of(obj_type, "o"):
+            if KnowledgeBase.default().types.is_descendant_of(obj_type, "o"):
                 obj_name = get_new(obj_type, types_counts)
                 obj = Variable(obj_name, obj_type)
                 allowed_objects_holder = list(objects_holder)
@@ -449,24 +449,24 @@ class World:
 
                 # Place the object somewhere.
                 obj_holder = rng.choice(allowed_objects_holder)
-                if KB.types.is_descendant_of(obj_holder.type, "s"):
+                if KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "s"):
                     state.append(Proposition("on", [obj, obj_holder]))
-                elif KB.types.is_descendant_of(obj_holder.type, "c"):
+                elif KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "c"):
                     state.append(Proposition("in", [obj, obj_holder]))
-                elif KB.types.is_descendant_of(obj_holder.type, "I"):
+                elif KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "I"):
                     state.append(Proposition("in", [obj, obj_holder]))
-                elif KB.types.is_descendant_of(obj_holder.type, "r"):
+                elif KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "r"):
                     state.append(Proposition("at", [obj, obj_holder]))
                 else:
                     raise ValueError("Unknown type for object holder: {}".format(obj_holder))
 
-            elif KB.types.is_descendant_of(obj_type, "s"):
+            elif KnowledgeBase.default().types.is_descendant_of(obj_type, "s"):
                 supporter_name = get_new(obj_type, types_counts)
                 supporter = Variable(supporter_name, obj_type)
                 state.append(Proposition("at", [supporter, room]))
                 objects_holder.append(supporter)
 
-            elif KB.types.is_descendant_of(obj_type, "c"):
+            elif KnowledgeBase.default().types.is_descendant_of(obj_type, "c"):
                 container_name = get_new(obj_type, types_counts)
                 container = Variable(container_name, obj_type)
                 state.append(Proposition("at", [container, room]))
@@ -533,26 +533,26 @@ class World:
             obj = objects[idx]
             obj_type = obj.type
 
-            if KB.types.is_descendant_of(obj_type, "o"):
+            if KnowledgeBase.default().types.is_descendant_of(obj_type, "o"):
                 allowed_objects_holder = list(objects_holder)
 
                 # Place the object somewhere.
                 obj_holder = rng.choice(allowed_objects_holder)
-                if KB.types.is_descendant_of(obj_holder.type, "s"):
+                if KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "s"):
                     state.append(Proposition("on", [obj, obj_holder]))
-                elif KB.types.is_descendant_of(obj_holder.type, "c"):
+                elif KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "c"):
                     state.append(Proposition("in", [obj, obj_holder]))
-                elif KB.types.is_descendant_of(obj_holder.type, "r"):
+                elif KnowledgeBase.default().types.is_descendant_of(obj_holder.type, "r"):
                     state.append(Proposition("at", [obj, obj_holder]))
                 else:
                     raise ValueError("Unknown type for object holder: {}".format(obj_holder))
 
-            elif KB.types.is_descendant_of(obj_type, "s"):
+            elif KnowledgeBase.default().types.is_descendant_of(obj_type, "s"):
                 supporter = obj
                 state.append(Proposition("at", [supporter, room]))
                 objects_holder.append(supporter)
 
-            elif KB.types.is_descendant_of(obj_type, "c"):
+            elif KnowledgeBase.default().types.is_descendant_of(obj_type, "c"):
                 container = obj
                 state.append(Proposition("at", [container, room]))
                 objects_holder.append(container)

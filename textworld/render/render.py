@@ -19,7 +19,7 @@ from textworld.generator import World, Game
 from textworld.utils import maybe_mkdir, get_webdriver
 
 from textworld.generator.game import EntityInfo
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 
 
 XSCALE, YSCALE = 6, 3
@@ -246,7 +246,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
     # add all items first, in case properties are "out of order"
     for obj in objects:
         cur_item = GraphItem(obj.type, game_infos[obj.id].name)
-        cur_item.portable = KB.types.is_descendant_of(cur_item.type, "o")
+        cur_item.portable = KnowledgeBase.default().types.is_descendant_of(cur_item.type, "o")
         all_items[obj.id] = cur_item
 
     for obj in sorted(objects, key=lambda obj: obj.name):

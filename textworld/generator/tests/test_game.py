@@ -12,7 +12,7 @@ from textworld import g_rng
 from textworld import GameMaker
 from textworld.utils import make_temp_directory
 
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.generator import World
 from textworld.generator import make_small_map, make_grammar, make_game_with
 
@@ -23,16 +23,15 @@ from textworld.generator.game import Quest, Game
 from textworld.generator.game import QuestProgression, GameProgression
 from textworld.generator.game import UnderspecifiedQuestError
 from textworld.generator.game import ActionDependencyTree, ActionDependencyTreeElement
-from textworld.generator.inform7 import gen_commands_from_actions
+from textworld.generator.inform7 import Inform7Game
 
 from textworld.logic import Proposition
 
 
-def _apply_command(command: str, game_progression: GameProgression) -> None:
+def _apply_command(command: str, game_progression: GameProgression, inform7: Inform7Game) -> None:
     """ Apply a text command to a game_progression object.
     """
-    valid_commands = gen_commands_from_actions(game_progression.valid_actions, game_progression.game.infos)
-
+    valid_commands = inform7.gen_commands_from_actions(game_progression.valid_actions)
     for action, cmd in zip(game_progression.valid_actions, valid_commands):
         if command == cmd:
             game_progression.update(action)
@@ -145,7 +144,7 @@ class TestQuest(unittest.TestCase):
         world = World.from_map(map_)
 
         for max_depth in range(1, 3):
-            for rule in KB.rules.values():
+            for rule in KnowledgeBase.default().rules.values():
                 options = ChainingOptions()
                 options.backward = True
                 options.max_depth = max_depth
@@ -184,8 +183,8 @@ class TestQuest(unittest.TestCase):
         state = self.game.world.state.copy()
         assert not state.is_applicable(self.quest.fail_action)
 
-        actions = list(state.all_applicable_actions(self.game._rules.values(),
-                                                    self.game._types.constants_mapping))
+        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
+                                                    self.game.kb.types.constants_mapping))
         for action in actions:
             state = self.game.world.state.copy()
             state.apply(action)
@@ -229,7 +228,7 @@ class TestGame(unittest.TestCase):
         assert set(self.game.directions_names) == expected
 
     def test_objects_types(self):
-        expected_types = set(KB.types.types)
+        expected_types = set(KnowledgeBase.default().types.types)
         assert set(self.game.objects_types) == expected_types
 
     def test_objects_names(self):
@@ -286,13 +285,13 @@ class TestQuestProgression(unittest.TestCase):
         cls.game = M.build()
 
     def test_winning_policy(self):
-        quest = QuestProgression(self.quest)
+        quest = QuestProgression(self.quest, KnowledgeBase.default())
         assert quest.winning_policy == self.quest.actions
         quest.update(self.quest.actions[0], state=State())
         assert tuple(quest.winning_policy) == self.quest.actions[1:]
 
     def test_failing_quest(self):
-        quest = QuestProgression(self.quest)
+        quest = QuestProgression(self.quest, KnowledgeBase.default())
 
         state = self.game.state.copy()
         for action in self.eating_quest.actions:
@@ -379,22 +378,23 @@ class TestGameProgression(unittest.TestCase):
         commands = ["go north", "take carrot"]
         M.set_quest_from_commands(commands)
         game = M.build()
+        inform7 = Inform7Game(game)
         game_progression = GameProgression(game)
 
-        _apply_command("go south", game_progression)
+        _apply_command("go south", game_progression, inform7)
         expected_commands = ["go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        winning_commands = inform7.gen_commands_from_actions(game_progression.winning_policy)
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
-        _apply_command("go east", game_progression)
-        _apply_command("go north", game_progression)
+        _apply_command("go east", game_progression, inform7)
+        _apply_command("go north", game_progression, inform7)
         expected_commands = ["go south", "go west", "go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        winning_commands = inform7.gen_commands_from_actions(game_progression.winning_policy)
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
-        _apply_command("go west", game_progression)  # Found shortcut
+        _apply_command("go west", game_progression, inform7)  # Found shortcut
         expected_commands = commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        winning_commands = inform7.gen_commands_from_actions(game_progression.winning_policy)
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
         # Quest where player's has to pick up the carrot first.
@@ -404,19 +404,19 @@ class TestGameProgression(unittest.TestCase):
         game = M.build()
         game_progression = GameProgression(game)
 
-        _apply_command("go south", game_progression)
+        _apply_command("go south", game_progression, inform7)
         expected_commands = ["go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        winning_commands = inform7.gen_commands_from_actions(game_progression.winning_policy)
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
-        _apply_command("go east", game_progression)
+        _apply_command("go east", game_progression, inform7)
         expected_commands = ["go west", "go north"] + commands
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        winning_commands = inform7.gen_commands_from_actions(game_progression.winning_policy)
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
-        _apply_command("go north", game_progression)  # Found shortcut
+        _apply_command("go north", game_progression, inform7)  # Found shortcut
         expected_commands = commands[1:]
-        winning_commands = gen_commands_from_actions(game_progression.winning_policy, game.infos)
+        winning_commands = inform7.gen_commands_from_actions(game_progression.winning_policy)
         assert winning_commands == expected_commands, "{} != {}".format(winning_commands, expected_commands)
 
     def test_game_with_multiple_quests(self):
@@ -462,6 +462,7 @@ class TestGameProgression(unittest.TestCase):
         assert len(M._quests) == len(commands)
         game = M.build()
 
+        inform7 = Inform7Game(game)
         game_progress = GameProgression(game)
         assert len(game_progress.quest_progressions) == len(game.quests)
 
@@ -484,19 +485,19 @@ class TestGameProgression(unittest.TestCase):
         # Try solving the second quest (i.e. bringing back the lettuce) first.
         game_progress = GameProgression(game)
         for command in ["open wooden door", "go west", "take lettuce", "go east", "drop lettuce"]:
-            _apply_command(command, game_progress)
+            _apply_command(command, game_progress, inform7)
 
         assert not game_progress.quest_progressions[0].done
         assert game_progress.quest_progressions[1].done
 
         for command in ["go west", "take carrot", "go east", "drop carrot"]:
-            _apply_command(command, game_progress)
+            _apply_command(command, game_progress, inform7)
 
         assert game_progress.quest_progressions[0].done
         assert game_progress.quest_progressions[1].done
 
         for command in ["take lettuce", "take carrot", "insert carrot into chest", "insert lettuce into chest", "close chest"]:
-            _apply_command(command, game_progress)
+            _apply_command(command, game_progress, inform7)
 
         assert game_progress.done
 
@@ -505,7 +506,7 @@ class TestGameProgression(unittest.TestCase):
 
         for command in ["open wooden door", "go west", "take carrot", "eat carrot"]:
             assert not game_progress.done
-            _apply_command(command, game_progress)
+            _apply_command(command, game_progress, inform7)
 
         assert game_progress.done
 

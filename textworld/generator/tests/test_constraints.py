@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.logic import Action, Proposition, State, Variable
 
 
@@ -10,7 +10,7 @@ def check_state(state):
     fail = Proposition("fail", [])
     debug = Proposition("debug", [])
 
-    constraints = state.all_applicable_actions(KB.constraints.values())
+    constraints = state.all_applicable_actions(KnowledgeBase.default().constraints.values())
     for constraint in constraints:
         if state.is_applicable(constraint):
             # Optimistically delay copying the state
@@ -40,7 +40,7 @@ def test_constraints():
 
     # Make sure the number of basic constraints matches the number
     # of constraints in constraints.txt
-    basic_constraints = [k for k in KB.constraints.keys() if "-" not in k]
+    basic_constraints = [k for k in KnowledgeBase.default().constraints.keys() if "-" not in k]
     # assert len(basic_constraints) == 32
 
     # Doors can only have one state.

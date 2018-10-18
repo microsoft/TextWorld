@@ -6,8 +6,6 @@ import pickle
 import textwrap
 from collections import defaultdict
 
-from textworld.generator.data import KB
-
 __all__ = ["GameLogger"]
 
 
@@ -39,7 +37,7 @@ def merge_bincout(arr1, arr2):
     return arr
 
 
-class GameLogger(object):
+class GameLogger:
     def __init__(self, group_actions=True):
         self.group_actions = group_actions
 
@@ -100,7 +98,7 @@ class GameLogger(object):
             dist_obj_type[obj.type] += 1
 
         nb_objects = 0
-        for type_ in KB.types:
+        for type_ in game.kb.types:
             if type_ in ["I", "P", "t", "r"]:
                 continue
 

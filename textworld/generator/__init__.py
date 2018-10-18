@@ -22,7 +22,7 @@ from textworld.generator import inform7
 from textworld.generator.inform7 import generate_inform7_source, compile_inform7_game
 from textworld.generator.inform7 import CouldNotCompileGameError
 
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.text_grammar import Grammar
 from textworld.generator.maker import GameMaker
 from textworld.generator.logger import GameLogger
@@ -168,7 +168,7 @@ def make_game(options: GameOptions) -> Game:
 
     # Sample a quest.
     chaining_options = options.chaining.copy()
-    chaining_options.rules_per_depth = [KB.rules.get_matching("^(?!go.*).*")]
+    chaining_options.rules_per_depth = [options.kb.rules.get_matching("^(?!go.*).*")]
     chaining_options.backward = True
     chaining_options.create_variables = True
     chaining_options.rng = rngs['quest']

@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import NotEnoughNounsError, get_new
 from textworld.logic import Action, Placeholder, Proposition, Rule, State, Variable
 
@@ -23,7 +23,7 @@ robe = Variable("robe", "o")
 
 
 def maybe_instantiate_variables(rule, mapping, state, max_types_counts=None):
-    types_counts = KB.types.count(state)
+    types_counts = KnowledgeBase.default().types.count(state)
 
     # Instantiate variables if needed
     try:
@@ -79,58 +79,46 @@ def test_propositions():
 def test_rules():
     # Make sure the number of basic rules matches the number
     # of rules in rules.txt
-    basic_rules = [k for k in KB.rules.keys() if "-" not in k]
+    basic_rules = [k for k in KnowledgeBase.default().rules.keys() if "-" not in k]
     assert len(basic_rules) == 19
 
-    for rule in KB.rules.values():
+    for rule in KnowledgeBase.default().rules.values():
         infos = rule.serialize()
         loaded_rule = Rule.deserialize(infos)
         assert loaded_rule == rule
 
 
-def test_get_reverse_rules(verbose=False):
-    for rule in KB.rules.values():
-        r_rule = KB.reverse_rules(rule)
-
-        if verbose:
-            print(rule, r_rule)
+def test_get_reverse_action():
+    kb = KnowledgeBase.default()
+    for rule in kb.rules.values():
+        action = maybe_instantiate_variables(rule, kb.types.constants_mapping.copy(), State([]))
+        r_action = kb.get_reverse_action(action)
 
         if rule.name.startswith("eat"):
-            assert r_rule is None
+            assert r_action is None
         else:
-            # Check if that when applying the reverse rule we can reobtain
+            assert r_action is not None
+
+            # Check if that when applying the reverse rule we can re-obtain
             # the previous state.
-            action = maybe_instantiate_variables(rule, KB.types.constants_mapping.copy(), State([]))
             state = State(action.preconditions)
 
             new_state = state.copy()
             assert new_state.apply(action)
 
-            assert r_rule is not None
-            actions = list(new_state.all_applicable_actions([r_rule], KB.types.constants_mapping))
-            if len(actions) != 1:
-                print(actions)
-                print(r_rule)
-                print(new_state)
-                print(list(new_state.all_instantiations(r_rule, KB.types.constants_mapping)))
-                assert len(actions) == 1
             r_state = new_state.copy()
-            r_state.apply(actions[0])
+            r_state.apply(r_action)
             assert state == r_state
 
 
 def test_serialization_deserialization():
-    rule = KB.rules["go/east"]
+    rule = KnowledgeBase.default().rules["go/east"]
     mapping = {
         Placeholder("r'"): Variable("room1", "r"),
         Placeholder("r"): Variable("room2"),
     }
-    mapping.update(KB.types.constants_mapping)
+    mapping.update(KnowledgeBase.default().types.constants_mapping)
     action = rule.instantiate(mapping)
     infos = action.serialize()
     action2 = Action.deserialize(infos)
     assert action == action2
-
-
-if __name__ == "__main__":
-    test_get_reverse_rules()

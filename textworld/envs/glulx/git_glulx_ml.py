@@ -19,8 +19,7 @@ from io import StringIO
 
 import textworld
 from textworld.generator.game import Game, GameProgression
-from textworld.generator.inform7 import gen_commands_from_actions
-from textworld.generator.inform7 import find_action_given_inform7_event
+from textworld.generator.inform7 import Inform7Game
 from textworld.logic import Action, State
 from textworld.core import GameNotRunningError
 
@@ -147,6 +146,7 @@ class GlulxGameState(textworld.GameState):
         output = _strip_input_prompt_symbol(output)
         super().init(output)
         self._game_progression = GameProgression(game, track_quests=compute_intermediate_reward)
+        self._inform7 = Inform7Game(game)
         self._state_tracking = state_tracking
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0
         self._objective = game.objective
@@ -200,6 +200,7 @@ class GlulxGameState(textworld.GameState):
         game_state.previous_state = self.view()
         game_state._objective = self.objective
         game_state._max_score = self.max_score
+        game_state._inform7 = self._inform7
         game_state._game_progression = self._game_progression
         game_state._state_tracking = self._state_tracking
         game_state._compute_intermediate_reward = self._compute_intermediate_reward
@@ -209,9 +210,7 @@ class GlulxGameState(textworld.GameState):
         if self._state_tracking:
             for i7_event in i7_events:
                 valid_actions = self._game_progression.valid_actions
-                game_state._action = find_action_given_inform7_event(i7_event,
-                                                                     valid_actions,
-                                                                     self.game_infos)
+                game_state._action = self._inform7.detect_action(i7_event, valid_actions)
                 if game_state._action is not None:
                     # An action that affects the state of the game.
                     game_state._game_progression.update(game_state._action)
@@ -287,7 +286,7 @@ class GlulxGameState(textworld.GameState):
             self._policy_commands = []
             if self._game_progression.winning_policy is not None:
                 winning_policy = self._game_progression.winning_policy
-                self._policy_commands = gen_commands_from_actions(winning_policy, self.game_infos)
+                self._policy_commands = self._inform7.gen_commands_from_actions(winning_policy)
 
         return self._policy_commands
 
@@ -389,7 +388,7 @@ class GlulxGameState(textworld.GameState):
             if not self._state_tracking:
                 raise StateTrackingIsRequiredError("admissible_commands")
 
-            all_valid_commands = gen_commands_from_actions(self._game_progression.valid_actions, self.game_infos)
+            all_valid_commands = self._inform7.gen_commands_from_actions(self._game_progression.valid_actions)
             # Add single-word commands.
             all_valid_commands.append("look")
             all_valid_commands.append("inventory")

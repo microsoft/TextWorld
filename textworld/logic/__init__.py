@@ -1292,6 +1292,7 @@ class GameLogic:
     """
 
     def __init__(self):
+        self._document = ""
         self.types = TypeHierarchy()
         self.predicates = set()
         self.aliases = {}
@@ -1336,6 +1337,7 @@ class GameLogic:
     def _parse(self, document: str, path: Optional[str] = None):
         model = _PARSER.parse(document, filename=path)
         _ModelConverter(self).walk(model)
+        self._document += document + "\n"
 
     def _initialize(self):
         self.aliases = {sig: self._expand_alias(alias) for sig, alias in self.aliases.items()}
@@ -1414,6 +1416,13 @@ class GameLogic:
                 result._parse(f.read(), path=path)
         result._initialize()
         return result
+
+    @classmethod
+    def deserialize(cls, data: str) -> "GameLogic":
+        return cls.parse(data)
+
+    def serialize(self) -> str:
+        return self._document
 
 
 class State:

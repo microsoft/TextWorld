@@ -8,7 +8,7 @@ from copy import deepcopy
 
 from numpy.testing import assert_raises
 
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.logic import State, Proposition, Variable
 from textworld.generator.vtypes import VariableTypeTree, VariableType
 from textworld.generator.vtypes import parse_variable_types, get_new
@@ -95,9 +95,9 @@ def test_variable_type_serialization_deserialization():
 
 def test_get_new():
     rng = np.random.RandomState(1234)
-    types_counts = {t: rng.randint(2, 10) for t in KB.types}
+    types_counts = {t: rng.randint(2, 10) for t in KnowledgeBase.default().types}
     orig_types_counts = deepcopy(types_counts)
-    for t in KB.types:
+    for t in KnowledgeBase.default().types:
         name = get_new(t, types_counts)
         splits = name.split("_")
         assert splits[0] == t

@@ -5,7 +5,7 @@
 import re
 from collections import OrderedDict
 
-from textworld.generator.data import KB
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.game import Quest
 
 from textworld.generator.text_grammar import Grammar
@@ -98,7 +98,7 @@ def assign_description_to_object(obj, grammar, game_infos):
         game_infos[obj.id].desc = expand_clean_replace(desc_tag, grammar, obj, game_infos)
 
     # If we have an openable object, append an additional description
-    if KB.types.is_descendant_of(obj.type, ["c", "d"]):
+    if KnowledgeBase.default().types.is_descendant_of(obj.type, ["c", "d"]):
         game_infos[obj.id].desc += grammar.expand(" #openable_desc#")
 
 
@@ -157,7 +157,7 @@ def assign_description_to_room(room, game, grammar):
     room_desc = expand_clean_replace("#dec#\n\n", grammar, room, game.infos)
 
     # Convert the objects into groupings based on adj/noun/type
-    objs = [o for o in room.content if KB.types.is_descendant_of(o.type, KB.types.CLASS_HOLDER)]
+    objs = [o for o in room.content if KnowledgeBase.default().types.is_descendant_of(o.type, KnowledgeBase.default().types.CLASS_HOLDER)]
     groups = OrderedDict()
     groups["adj"] = OrderedDict()
     groups["noun"] = OrderedDict()
@@ -200,8 +200,8 @@ def assign_description_to_room(room, game, grammar):
 
                     for o2 in group_filt:
                         ignore.append(o2.id)
-                        if KB.types.is_descendant_of(o2.type, KB.types.CLASS_HOLDER):
-                            for vtype in [o2.type] + KB.types.get_ancestors(o2.type):
+                        if KnowledgeBase.default().types.is_descendant_of(o2.type, KnowledgeBase.default().types.CLASS_HOLDER):
+                            for vtype in [o2.type] + KnowledgeBase.default().types.get_ancestors(o2.type):
                                 tag = "#room_desc_({})_multi_{}#".format(vtype, "adj" if type == "noun" else "noun")
                                 if grammar.has_tag(tag):
                                     desc += expand_clean_replace(" " + tag, grammar, o2, game.infos)
@@ -214,7 +214,7 @@ def assign_description_to_room(room, game, grammar):
                 continue
 
         if obj.type not in ["P", "I", "d"]:
-            for vtype in [obj.type] + KB.types.get_ancestors(obj.type):
+            for vtype in [obj.type] + KnowledgeBase.default().types.get_ancestors(obj.type):
                 tag = "#room_desc_({})#".format(vtype)
                 if grammar.has_tag(tag):
                     room_desc += expand_clean_replace(" " + tag, grammar, obj, game.infos)
@@ -333,7 +333,7 @@ def generate_instruction(action, grammar, game_infos, world, counts):
     if isinstance(action, MergeAction):
         action_mapping = action.mapping
     else:
-        action_mapping = KB.rules[action.name].match(action)
+        action_mapping = KnowledgeBase.default().rules[action.name].match(action)
 
     for ph, var in action_mapping.items():
         if var.type == "r":
@@ -360,10 +360,10 @@ def generate_instruction(action, grammar, game_infos, world, counts):
                         if t == "noun":
                             choices.append(getattr(obj_infos, t))
                         elif t == "type":
-                            choices.append(KB.types.get_description(getattr(obj_infos, t)))
+                            choices.append(KnowledgeBase.default().types.get_description(getattr(obj_infos, t)))
                         else:
                             # For adj, we pick an abstraction on the type
-                            atype = KB.types.get_description(grammar.rng.choice(KB.types.get_ancestors(obj.type)))
+                            atype = KnowledgeBase.default().types.get_description(grammar.rng.choice(KnowledgeBase.default().types.get_ancestors(obj.type)))
                             choices.append("{} {}".format(getattr(obj_infos, t), atype))
 
                 # If we have no possibilities, use the name (ie. prioritize abstractions)
@@ -478,14 +478,14 @@ def is_seq(chain, game_infos):
 
     room_placeholder = Placeholder('r')
 
-    action_mapping = KB.rules[chain[0].name].match(chain[0])
+    action_mapping = KnowledgeBase.default().rules[chain[0].name].match(chain[0])
     for ph, var in action_mapping.items():
         if ph.type not in ["P", "I"]:
             seq.mapping[ph] = var
             seq.const.append(var)
 
     for c in chain:
-        c_action_mapping = KB.rules[c.name].match(c)
+        c_action_mapping = KnowledgeBase.default().rules[c.name].match(c)
 
         # Update our action name
         seq.name += "_{}".format(c.name.split("/")[0])
@@ -534,7 +534,7 @@ def expand_clean_replace(symbol, grammar, obj, game_infos):
     phrase = phrase.replace("(name-n)", obj_infos.noun if obj_infos.adj is not None else obj_infos.name)
     phrase = phrase.replace("(name-adj)", obj_infos.adj if obj_infos.adj is not None else grammar.expand("#ordinary_adj#"))
     if obj.type != "":
-        phrase = phrase.replace("(name-t)", KB.types.get_description(obj.type))
+        phrase = phrase.replace("(name-t)", KnowledgeBase.default().types.get_description(obj.type))
     else:
         assert False, "Does this even happen?"
 

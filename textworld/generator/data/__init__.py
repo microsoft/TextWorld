@@ -7,7 +7,7 @@ import os
 import glob
 from os.path import join as pjoin
 from shutil import copyfile, copytree, rmtree
-from typing import Optional
+from typing import Optional, Mapping
 
 from textworld.logic import GameLogic
 from textworld.generator.vtypes import VariableType, VariableTypeTree
@@ -89,26 +89,7 @@ def _to_regex_dict(rules):
     return RegexDict(rules_dict)
 
 
-def _to_reverse_mapper(rules, reverse_rules):
-    def _get_reverse_rule(rule):
-        splits = rule.name.split("-")
-        name = splits[0]
-
-        reverse_rule_name = reverse_rules.get(name)
-        if reverse_rule_name is None:
-            return None
-
-        if len(splits) > 1:
-            extension = "-".join(splits[1:])
-            reverse_rule_name += "-" + extension
-
-        return rules.get(reverse_rule_name)
-
-    return _get_reverse_rule
-
-
 class KnowledgeBase:
-
     def __init__(self, logic: GameLogic, text_grammars_path: str):
 
         self.logic = logic
@@ -116,7 +97,6 @@ class KnowledgeBase:
 
         self.types = _to_type_tree(self.logic.types)
         self.rules = _to_regex_dict(self.logic.rules.values())
-        self.reverse_rules = _to_reverse_mapper(self.rules, self.logic.reverse_rules)
         self.constraints = _to_regex_dict(self.logic.constraints.values())
         self.inform7_commands = {i7cmd.rule: i7cmd.command for i7cmd in self.logic.inform7.commands.values()}
         self.inform7_events = {i7cmd.rule: i7cmd.event for i7cmd in self.logic.inform7.commands.values()}
@@ -124,6 +104,10 @@ class KnowledgeBase:
         self.inform7_variables = {i7type.name: i7type.kind for i7type in self.logic.inform7.types.values()}
         self.inform7_variables_description = {i7type.name: i7type.definition for i7type in self.logic.inform7.types.values()}
         self.inform7_addons_code = self.logic.inform7.code
+
+    @classmethod
+    def default(cls):
+        return KB
 
     @classmethod
     def load(cls, target_dir: Optional[str] = None):
@@ -140,6 +124,28 @@ class KnowledgeBase:
         # Load text generation related files.
         text_grammars_path = pjoin(target_dir, "text_grammars")
         return cls(logic, text_grammars_path)
+
+    def get_reverse_action(self, action):
+        r_action = action.inverse()
+        for rule in self.rules.values():
+            r_action.name = rule.name
+            if rule.match(r_action):
+                return r_action
+
+        return None
+
+    @classmethod
+    def deserialize(cls, data: Mapping) -> "KnowledgeBase":
+        logic = GameLogic.deserialize(data["logic"])
+        text_grammars_path = data["text_grammars_path"]
+        return cls(logic, text_grammars_path)
+
+    def serialize(self) -> str:
+        data = {
+            "logic": self.logic.serialize(),
+            "text_grammars_path": self.text_grammars_path,
+        }
+        return data
 
 
 # On module load.
