@@ -16,7 +16,8 @@ import textworld
 
 from textworld.utils import make_temp_directory
 
-from textworld.generator import data, user_query
+from textworld.generator.data import KnowledgeBase
+from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
 from textworld.generator.game import Game, World, Quest
@@ -29,7 +30,7 @@ def get_failing_constraints(state):
     fail = Proposition("fail", [])
 
     failed_constraints = []
-    constraints = state.all_applicable_actions(data.get_constraints().values())
+    constraints = state.all_applicable_actions(KnowledgeBase.default().constraints.values())
     for constraint in constraints:
         if state.is_applicable(constraint):
             # Optimistically delay copying the state
@@ -145,11 +146,11 @@ class WorldEntity:
 
     def add(self, *entities: List["WorldEntity"]) -> None:
         """ Add children to this entity. """
-        if data.get_types().is_descendant_of(self.type, "r"):
+        if KnowledgeBase.default().types.is_descendant_of(self.type, "r"):
             name = "at"
-        elif data.get_types().is_descendant_of(self.type, ["c", "I"]):
+        elif KnowledgeBase.default().types.is_descendant_of(self.type, ["c", "I"]):
             name = "in"
-        elif data.get_types().is_descendant_of(self.type, "s"):
+        elif KnowledgeBase.default().types.is_descendant_of(self.type, "s"):
             name = "on"
         else:
             raise ValueError("Unexpected type {}".format(self.type))
@@ -276,7 +277,7 @@ class WorldPath:
 
     @door.setter
     def door(self, door: WorldEntity) -> None:
-        if door is not None and not data.get_types().is_descendant_of(door.type, "d"):
+        if door is not None and not KnowledgeBase.default().types.is_descendant_of(door.type, "d"):
             msg = "Expecting a WorldEntity of 'door' type."
             raise TypeError(msg)
 
@@ -322,7 +323,7 @@ class GameMaker:
         self._quests = []
         self.rooms = []
         self.paths = []
-        self._types_counts = data.get_types().count(State())
+        self._types_counts = KnowledgeBase.default().types.count(State())
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.grammar = textworld.generator.make_grammar()
@@ -402,7 +403,7 @@ class GameMaker:
             * Otherwise, a `WorldEntity` is returned.
         """
         var_id = type
-        if not data.get_types().is_constant(type):
+        if not KnowledgeBase.default().types.is_constant(type):
             var_id = get_new(type, self._types_counts)
 
         var = Variable(var_id, type)

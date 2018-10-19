@@ -12,12 +12,11 @@ from numpy.random import RandomState
 
 from textworld import g_rng
 from textworld.utils import encode_seeds
-from textworld.generator import data
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.text_grammar import Grammar, GrammarOptions
 from textworld.generator.world import World
 from textworld.logic import Action, Proposition, Rule, State
 from textworld.generator.vtypes import VariableTypeTree
-from textworld.generator.grammar import get_reverse_action
 from textworld.generator.graph_networks import DIRECTIONS
 
 from textworld.generator.chaining import ChainingOptions
@@ -39,16 +38,17 @@ class UnderspecifiedQuestError(NameError):
         super().__init__(msg)
 
 
-def gen_commands_from_actions(actions):
+def gen_commands_from_actions(actions: Iterable[Action], kb: Optional[KnowledgeBase] = None) -> List[str]:
+    kb = kb or KnowledgeBase.default()
     def _get_name_mapping(action):
-        mapping = data.get_rules()[action.name].match(action)
+        mapping = kb.rules[action.name].match(action)
         return {ph.name: var.name for ph, var in mapping.items()}
 
     commands = []
     for action in actions:
         command = "None"
         if action is not None:
-            command = data.INFORM7_COMMANDS[action.name]
+            command = kb.inform7_commands[action.name]
             command = command.format(**_get_name_mapping(action))
 
         commands.append(command)
@@ -266,7 +266,8 @@ class Game:
     """
 
     def __init__(self, world: World, grammar: Optional[Grammar] = None,
-                 quests: Optional[List[Quest]] = None) -> None:
+                 quests: Optional[List[Quest]] = None,
+                 kb: Optional[KnowledgeBase] = None) -> None:
         """
         Args:
             world: The world to use for the game.
@@ -279,8 +280,7 @@ class Game:
         self.metadata = {}
         self._objective = None
         self._infos = self._build_infos()
-        self._rules = data.get_rules()
-        self._types = data.get_types()
+        self.kb = kb or KnowledgeBase.default()
         self.change_grammar(grammar)
 
         self._main_quest = None
@@ -288,11 +288,12 @@ class Game:
     @property
     def main_quest(self):
         if self._main_quest is None:
-            from textworld.generator import inform7
+            from textworld.generator.inform7 import Inform7Game
             from textworld.generator.text_generation import assign_description_to_quest
+            inform7 = Inform7Game(self)
             self._main_quest = Quest(actions=GameProgression(self).winning_policy)
             self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
-            self._main_quest.commands = inform7.gen_commands_from_actions(self._main_quest.actions, self.infos)
+            self._main_quest.commands = inform7.gen_commands_from_actions(self._main_quest.actions)
 
         return self._main_quest
 
@@ -311,27 +312,28 @@ class Game:
 
     def copy(self) -> "Game":
         """ Make a shallow copy of this game. """
-        game = Game(self.world, self.grammar, self.quests)
+        game = Game(self.world, self.grammar, self.quests, self.kb)
         game._infos = self.infos
         game.state = self.state.copy()
-        game._rules = self._rules
-        game._types = self._types
+        game.kb = self.kb
         game._objective = self._objective
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
         """ Changes the grammar used and regenerate all text. """
-        from textworld.generator import inform7
-        from textworld.generator.text_generation import generate_text_from_grammar
         self.grammar = grammar
         if self.grammar is None:
             return
+
+        from textworld.generator.inform7 import Inform7Game
+        from textworld.generator.text_generation import generate_text_from_grammar
+        inform7 = Inform7Game(self)
 
         generate_text_from_grammar(self, self.grammar)
         for quest in self.quests:
             # TODO: should have a generic way of generating text commands from actions
             #       instead of relying on inform7 convention.
-            quest.commands = inform7.gen_commands_from_actions(quest.actions, self.infos)
+            quest.commands = inform7.gen_commands_from_actions(quest.actions)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -361,9 +363,7 @@ class Game:
         game._infos = {k: EntityInfo.deserialize(v)
                        for k, v in data["infos"]}
         game.state = State.deserialize(data["state"])
-        game._rules = {k: Rule.deserialize(v)
-                       for k, v in data["rules"]}
-        game._types = VariableTypeTree.deserialize(data["types"])
+        game.kb = KnowledgeBase.deserialize(data["KB"])
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
 
@@ -382,8 +382,7 @@ class Game:
             data["grammar"] = self.grammar.options.serialize()
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
-        data["rules"] = [(k, v.serialize()) for k, v in self._rules.items()]
-        data["types"] = self._types.serialize()
+        data["KB"] = self.kb.serialize()
         data["metadata"] = self.metadata
         data["objective"] = self._objective
         return data
@@ -410,7 +409,7 @@ class Game:
     @property
     def objects_types(self) -> List[str]:
         """ All types of objects in this game. """
-        return sorted(self._types.types)
+        return sorted(self.kb.types.types)
 
     @property
     def objects_names(self) -> List[str]:
@@ -434,8 +433,8 @@ class Game:
     def verbs(self) -> List[str]:
         """ Verbs that should be recognized in this game. """
         # Retrieve commands templates for every rule.
-        commands = [data.INFORM7_COMMANDS[rule_name]
-                    for rule_name in self._rules]
+        commands = [self.kb.inform7_commands[rule_name]
+                    for rule_name in self.kb.rules]
         verbs = [cmd.split()[0] for cmd in commands]
         verbs += ["look", "inventory", "examine", "wait"]
         return sorted(set(verbs))
@@ -530,11 +529,15 @@ class ActionDependencyTreeElement(DependencyTreeElement):
 
 class ActionDependencyTree(DependencyTree):
 
+    def __init__(self, *args, kb: Optional[KnowledgeBase] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._kb = kb or KnowledgeBase.default()
+
     def remove(self, action: Action) -> Optional[Action]:
         super().remove(action)
 
         # The last action might have impacted one of the subquests.
-        reverse_action = get_reverse_action(action)
+        reverse_action = self._kb.get_reverse_action(action)
         if reverse_action is not None:
             self.push(reverse_action)
 
@@ -558,6 +561,11 @@ class ActionDependencyTree(DependencyTree):
             yield leaf.action
             last_reverse_action = tree.remove(leaf.action)
 
+    def copy(self) -> "ActionDependencyTree":
+        tree = super().copy()
+        tree._kb = self._kb
+        return tree
+
 
 class QuestProgression:
     """ QuestProgression keeps track of the completion of a quest.
@@ -566,18 +574,20 @@ class QuestProgression:
     relevant actions to be performed.
     """
 
-    def __init__(self, quest: Quest) -> None:
+    def __init__(self, quest: Quest, kb: KnowledgeBase) -> None:
         """
         Args:
             quest: The quest to keep track of its completion.
         """
+        self._kb = kb or KnowledgeBase.default()
         self.quest = quest
         self._completed = False
         self._failed = False
         self._unfinishable = False
 
         # Build a tree representation of the quest.
-        self._tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+        self._tree = ActionDependencyTree(kb=self._kb,
+                                          element_type=ActionDependencyTreeElement)
         self._tree.push(quest.win_action)
         for action in quest.actions[::-1]:
             self._tree.push(action)
@@ -658,7 +668,8 @@ class QuestProgression:
                 for i in range(j + 1, len(policy))[::-1]:
                     shorter_policy = policy[:j] + policy[i:]
                     if state.is_sequence_applicable(shorter_policy):
-                        self._tree = ActionDependencyTree(element_type=ActionDependencyTreeElement)
+                        self._tree = ActionDependencyTree(kb=self._kb,
+                                                          element_type=ActionDependencyTreeElement)
                         for action in shorter_policy[::-1]:
                             self._tree.push(action)
 
@@ -691,12 +702,12 @@ class GameProgression:
         """
         self.game = game
         self.state = game.state.copy()
-        self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
-                                                                     self.game._types.constants_mapping))
+        self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
+                                                                     self.game.kb.types.constants_mapping))
 
         self.quest_progressions = []
         if track_quests:
-            self.quest_progressions = [QuestProgression(quest) for quest in game.quests]
+            self.quest_progressions = [QuestProgression(quest, game.kb) for quest in game.quests]
             for quest_progression in self.quest_progressions:
                 quest_progression.update(action=None, state=self.state)
 
@@ -758,7 +769,8 @@ class GameProgression:
 
         # Greedily build a new winning policy by merging all individual quests' tree.
         trees = [quest._tree for quest in self.quest_progressions if not quest.done]
-        master_quest_tree = ActionDependencyTree(element_type=ActionDependencyTreeElement,
+        master_quest_tree = ActionDependencyTree(kb=self.game.kb,
+                                                 element_type=ActionDependencyTreeElement,
                                                  trees=trees)
 
         return tuple(a for a in master_quest_tree.flatten() if a.name != "win")
@@ -773,8 +785,8 @@ class GameProgression:
         self.state.apply(action)
 
         # Get valid actions.
-        self._valid_actions = list(self.state.all_applicable_actions(self.game._rules.values(),
-                                                                     self.game._types.constants_mapping))
+        self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
+                                                                     self.game.kb.types.constants_mapping))
 
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:
@@ -817,6 +829,10 @@ class GameOptions:
 
                  For any key missing, a random number gets assigned (sampled
                  from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
+        kb:
+            The knowledge base containing the logic and the text grammars (see
+            :py:class:`textworld.generator.KnowledgeBase <textworld.generator.data.KnowledgeBase>`
+            for more information).
         chaining:
             For customizing the quest generation (see
             :py:class:`textworld.generator.ChainingOptions <textworld.generator.chaining.ChainingOptions>`
@@ -830,6 +846,7 @@ class GameOptions:
     def __init__(self):
         self.chaining = ChainingOptions()
         self.grammar = GrammarOptions()
+        self._kb = None
         self._seeds = None
 
         self.nb_rooms = 1
@@ -889,6 +906,19 @@ class GameOptions:
             rngs[key] = RandomState(seed)
 
         return rngs
+
+    @property
+    def kb(self) -> KnowledgeBase:
+        if self._kb is None:
+            self.kb = KnowledgeBase.load()
+
+        return self._kb
+
+    @kb.setter
+    def kb(self, value: KnowledgeBase) -> None:
+        self._kb = value
+        self.chaining.logic = self._kb.logic
+        self.chaining.fixed_mapping = self._kb.types.constants_mapping
 
     def copy(self) -> "GameOptions":
         return copy.copy(self)
