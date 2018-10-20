@@ -17,7 +17,7 @@ digit::0;1;2;3;4;5;6;7;8;9
 (r)_noun:room
 (r)_adj:#adj_stripped#
 #Containers
-# Each roomType must has specific containers
+# Each roomType must have specific containers
 #-------------------
 (c):#(c)_adj#|#number##(c)_noun#
 (c)_noun:box
@@ -26,13 +26,13 @@ X_(c):#X_(c)_adj#|#number##X_(c)_noun#
 X_(c)_noun:box
 X_(c)_adj:#adj_stripped#
 #Doors
-# Each roomType must has specific doors
+# Each roomType must have specific doors
 #-------------------
 (d):#(d)_adj#|#number##(d)_noun#
 (d)_adj:#adj_stripped#
 (d)_noun:door
 #Supporters
-# Each roomType must has specific supporters
+# Each roomType must have specific supporters
 #-------------------
 (s):#(s)_adj#|#number##(s)_noun#
 (s)_noun:stand
