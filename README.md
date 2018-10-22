@@ -88,7 +88,32 @@ print("avg. steps: {:5.1f}; avg. score: {:4.1f} / 1.".format(sum(avg_moves)/N, s
 ## Documentation
 For more information about TextWorld, check the [documentation](https://aka.ms/textworld-docs).
 
-## Notebooks
+*contents of documentation :*
+
+**Notes**
+
+- What is TextWorld?
+- Custom Environment
+- Known Issues
+
+**Package:**
+
+- textworld
+- textworld.envs
+- textworld.agents
+- textworld.generator
+- textworld.challenges
+- textworld.logic
+- textworld.render
+- textworld.utils
+
+**Indices and tables**
+
+- Index
+- Module Index
+- Search Page
+
+ ## Notebooks
 Check the [notebooks](notebooks) provided with the framework to see how the framework can be used.
 
 ## Citing TextWorld
