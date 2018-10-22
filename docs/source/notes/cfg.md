@@ -52,7 +52,7 @@ spaceship_question.twf
 
 Each file has certain requirements and rules, so we will discuss each in more depth in the following sections. You can also refer to `house_obj.twf`, `house_room.twf`, `house_instruction.twf` and `house_question.twf` to see how the `house` flavour is defined.
 
-##Names
+## Names
 
 In the names folder, we must provide names for all the possible types in our world, ie. the rooms, containers, supporters, foods, burgers, keys, doors, objects, and any additional types that may have been defined.
 
@@ -139,7 +139,7 @@ match:red;green;blue
 ```
 Means that if we see, say, a `red chest`, then we know we can unlock it with a `red` key, and same for a `blue door` and `blue key`, etc. Typically, we should define ~10 different unique adjectives for matches to reduce the possibility of repetition (worlds with a high number of keys are unlikely). Note that some regular adjectives for keys should also be defined, in the case that a key is generated that is not matched to any container or door (and is thus a distractor).
 
-###Object Descriptors
+### Object Descriptors
 Object descriptors must be defined, and will be the output provided if the player *examines* the particular object. We therefore must define a `(type)_desc` for each of our possible types. Some examples from the `house` flavour are:
 
 ```
