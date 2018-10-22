@@ -338,17 +338,17 @@ class TypeHierarchy:
         return len(self._types)
 
     def closure(self, type: Type, expand: Callable[[Type], Iterable[Type]]) -> Iterable[Type]:
-        """
+        r"""
         Compute the transitive closure in a type lattice according to some type
         relationship (generally direct sub-/super-types).
 
-        Such a lattice may look something like this:
+        Such a lattice may look something like this::
 
-          A
-         / \
-        B   C
-         \ /
-          D
+              A
+             / \
+            B   C
+             \ /
+              D
 
         so the closure of D would be something like [B, C, A].
         """
@@ -367,34 +367,33 @@ class TypeHierarchy:
                 yield tuple(expansion)
 
     def multi_closure(self, types: Collection[Type], expand: Callable[[Type], Iterable[Type]]) -> Iterable[Collection[Type]]:
-        """
+        r"""
         Compute the transitive closure of a sequence of types in a type lattice
         induced by some per-type relationship (generally direct sub-/super-types).
 
-        For a single type, such a lattice may look something like this:
+        For a single type, such a lattice may look something like this::
 
-          A
-         / \
-        B   C
-         \ /
-          D
+              A
+             / \
+            B   C
+             \ /
+              D
 
         so the closure of D would be something like [B, C, A].  For multiple
-        types at once, the lattice is more complicated:
+        types at once, the lattice is more complicated::
 
-                    __ (A,A) __
-                   /   |   |   \
-              (A,B) (A,C) (B,A) (C,A)
-          *******************************
-        (A,D) (B,B) (B,C) (C,B) (C,C) (D,A)
-          *******************************
-              (B,D) (C,D) (D,B) (D,C)
-                   \   |   |   /
-                    \_ (D,D) _/
+                        __ (A,A) __
+                       /   |   |   \
+                  (A,B) (A,C) (B,A) (C,A)
+              *******************************
+            (A,D) (B,B) (B,C) (C,B) (C,C) (D,A)
+              *******************************
+                  (B,D) (C,D) (D,B) (D,C)
+                       \   |   |   /
+                        \_ (D,D) _/
         """
 
         return self._bfs_unique(types, lambda ts: self._multi_expand(ts, expand))
-
 
     def _bfs_unique(self, start, expand):
         """
