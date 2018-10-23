@@ -14,7 +14,7 @@ from numpy.random import RandomState
 from textworld import g_rng
 from textworld.utils import maybe_mkdir, str2bool
 from textworld.generator.chaining import ChainingOptions, sample_quest
-from textworld.generator.game import Game, Quest, World, GameOptions
+from textworld.generator.game import Game, Quest, Event, World, GameOptions
 from textworld.generator.graph_networks import create_map, create_small_map
 from textworld.generator.text_generation import generate_text_from_grammar
 
@@ -127,7 +127,8 @@ def make_quest(world, quest_length, rng=None, rules_per_depth=(), backward=False
     options.rng = rng
     options.rules_per_depth = rules_per_depth
     chain = sample_quest(state, options)
-    return Quest(chain.actions)
+    event = Event(chain.actions)
+    return Quest(win_events=[event])
 
 
 def make_grammar(options: Mapping = {}, rng: Optional[RandomState] = None) -> Grammar:
@@ -178,11 +179,11 @@ def make_game(options: GameOptions) -> Game:
     subquests = []
     for i in range(1, len(chain.nodes)):
         if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
-            quest = Quest(chain.actions[:i])
-            subquests.append(quest)
+            event = Event(chain.actions[:i])
+            subquests.append(Quest(win_events=[event]))
 
-    quest = Quest(chain.actions)
-    subquests.append(quest)
+    event = Event(chain.actions)
+    subquests.append(Quest(win_events=[event]))
 
     # Set the initial state required for the quest.
     world.state = chain.initial_state

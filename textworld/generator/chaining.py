@@ -429,13 +429,9 @@ class _Chainer:
 
         constraints = state.all_applicable_actions(self.constraints)
         for constraint in constraints:
-            if state.is_applicable(constraint):
-                # Optimistically delay copying the state
-                copy = state.copy()
-                copy.apply(constraint)
-
-                if copy.is_fact(fail):
-                    return False
+            copy = state.apply_on_copy(constraint)
+            if copy and copy.is_fact(fail):
+                return False
 
         return True
 

@@ -10,7 +10,7 @@ from textworld import g_rng
 from textworld.utils import make_temp_directory
 
 from textworld.generator.data import KnowledgeBase
-from textworld.generator import World, Quest
+from textworld.generator import World, Quest, Event
 from textworld.generator import compile_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
 from textworld.generator.chaining import ChainingOptions, sample_quest
@@ -61,7 +61,8 @@ def test_quest_winning_condition():
         options.restricted_types = {"r"}
         chain = sample_quest(world.state, options)
         assert len(chain.actions) > 0, rule.name
-        quest = Quest(chain.actions)
+        event = Event(chain.actions)
+        quest = Quest(win_events=[event])
 
         # Set the initial state required for the quest.
         tmp_world = World.from_facts(chain.initial_state.facts)
@@ -82,17 +83,14 @@ def test_quest_winning_condition():
             assert not done
             assert not game_state.has_won
 
-            game_state, _, done = env.step(quest.commands[0])
+            game_state, _, done = env.step(event.commands[0])
             assert done
             assert game_state.has_won
 
 
-def test_quest_losing_condition():
+def test_quest_with_multiple_winning_and_losing_conditions():
     g_rng.set_seed(2018)
     M = textworld.GameMaker()
-
-    # The goal
-    commands = ["go east", "insert carrot into chest"]
 
     # Create a 'bedroom' room.
     R1 = M.new_room("bedroom")
@@ -104,32 +102,160 @@ def test_quest_losing_condition():
     path.door.add_property("open")
 
     carrot = M.new(type='f', name='carrot')
+    lettuce = M.new(type='f', name='lettuce')
     M.inventory.add(carrot)
+    M.inventory.add(lettuce)
 
     # Add a closed chest in R2.
     chest = M.new(type='c', name='chest')
     chest.add_property("open")
     R2.add(chest)
 
-    failing_conditions = (Proposition("eaten", [carrot.var]),)
-    quest = M.set_quest_from_commands(commands)
-    quest.set_failing_conditions(failing_conditions)
+    # The goal
+    quest = Quest(win_events=[Event(conditions={M.new_fact("in", carrot, chest),
+                                                     M.new_fact("closed", chest)}),
+                              Event(conditions={M.new_fact("eaten", lettuce)})],
+                  fail_events=[Event(conditions={M.new_fact("in", lettuce, chest),
+                                                      M.new_fact("closed", chest)}),
+                               Event(conditions={M.new_fact("eaten", carrot)})])
+    M.quests = [quest]
     game = M.build()
 
-    game_name = "test_quest_losing_condition"
+    game_name = "test_quest_with_multiple_winning_and_losing_conditions"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
-        env.reset()
         # Make sure we do not rely on the quest progression to
         # determine if the game was lost.
         assert not env._compute_intermediate_reward
 
+        # Failing - 1
+        env.reset()
         game_state, _, done = env.step("eat carrot")
         assert done
         assert game_state.has_lost
         assert not game_state.has_won
+
+        # Failing - 2
+        env.reset()
+        game_state, _, done = env.step("go east")
+        assert not done
+        game_state, _, done = env.step("insert lettuce into chest")
+        assert not done
+        game_state, _, done = env.step("close chest")
+        assert done
+        assert game_state.has_lost
+        assert not game_state.has_won
+
+        # Failing - 1
+        env.reset()
+        game_state, _, done = env.step("eat lettuce")
+        assert done
+        assert not game_state.has_lost
+        assert game_state.has_won
+
+        # Winning - 2
+        env.reset()
+        game_state, _, done = env.step("go east")
+        assert not done
+        game_state, _, done = env.step("insert carrot into chest")
+        assert not done
+        game_state, _, done = env.step("close chest")
+        assert done
+        assert not game_state.has_lost
+        assert game_state.has_won
+
+
+def test_cannot_win_or_lose_a_quest_twice():
+    g_rng.set_seed(2018)
+    M = textworld.GameMaker()
+
+    # Create a 'bedroom' room.
+    R1 = M.new_room("bedroom")
+    R2 = M.new_room("kitchen")
+    M.set_player(R1)
+
+    path = M.connect(R1.east, R2.west)
+    path.door = M.new(type='d', name='wooden door')
+    path.door.add_property("open")
+
+    carrot = M.new(type='f', name='carrot')
+    lettuce = M.new(type='f', name='lettuce')
+    M.inventory.add(carrot)
+    M.inventory.add(lettuce)
+
+    # Add a closed chest in R2.
+    chest = M.new(type='c', name='chest')
+    chest.add_property("open")
+    R2.add(chest)
+
+    # The goals
+    event_carrot_in_closed_chest = Event(conditions={M.new_fact("in", carrot, chest),
+                                                          M.new_fact("closed", chest)})
+    event_drop_carrot_R1 = Event(conditions={M.new_fact("at", carrot, R1)})
+    event_drop_carrot_R2 = Event(conditions={M.new_fact("at", carrot, R2)})
+
+    quest1 = Quest(win_events=[event_carrot_in_closed_chest],
+                   fail_events=[event_drop_carrot_R1, event_drop_carrot_R2])
+
+    event_lettuce_in_closed_chest = Event(conditions={M.new_fact("in", lettuce, chest),
+                                                           M.new_fact("closed", chest)})
+    event_drop_lettuce_R1 = Event(conditions={M.new_fact("at", lettuce, R1)})
+    event_drop_lettuce_R2 = Event(conditions={M.new_fact("at", lettuce, R2)})
+
+    quest2 = Quest(win_events=[event_lettuce_in_closed_chest],
+                   fail_events=[event_drop_lettuce_R1, event_drop_lettuce_R2])
+
+    M.quests = [quest1, quest2]
+    game = M.build()
+
+    game_name = "test_cannot_win_or_lose_a_quest_twice"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = compile_game(game, path=tmpdir)
+
+        env = textworld.start(game_file)
+        # Make sure we do not rely on the quest progression to
+        # determine if the game was lost.
+        assert not env._compute_intermediate_reward
+
+        # Complete quest1 then fail it.
+        env.reset()
+        game_state, score, done = env.step("go east")
+        assert score == 0
+        game_state, score, done = env.step("insert carrot into chest")
+        assert score == 0
+        game_state, score, done = env.step("close chest")
+        assert score == 1
+        assert not done
+        game_state, score, done = env.step("open chest")
+
+        # Re-completing quest1 doesn't award more points.
+        game_state, score, done = env.step("close chest")
+        assert score == 1
+        assert not done
+
+        game_state, score, done = env.step("open chest")
+        game_state, score, done = env.step("take carrot from chest")
+        game_state, score, done = env.step("drop carrot")
+        assert score == 1
+        assert not done
+
+        # Then fail quest2.
+        game_state, score, done = env.step("drop lettuce")
+        assert done
+        assert game_state.has_lost
+        assert not game_state.has_won
+
+        env.reset()
+        game_state, score, done = env.step("go east")
+        game_state, score, done = env.step("insert carrot into chest")
+        game_state, score, done = env.step("insert lettuce into chest")
+        game_state, score, done = env.step("close chest")
+        assert score == 2
+        assert done
+        assert not game_state.has_lost
+        assert game_state.has_won
 
 
 def test_names_disambiguation():

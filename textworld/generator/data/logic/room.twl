@@ -59,6 +59,7 @@ type r {
         predicates {
             at(P, r) :: "The player is in {r}";
             at(t, r) :: "The {t} is in {r}";
+            free(r, r') :: "";  # No equivalent in Inform7.
 
             north_of(r, r') :: "The {r} is mapped north of {r'}";
             south_of(r, r') :: "The {r} is mapped south of {r'}";

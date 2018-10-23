@@ -132,7 +132,7 @@ class DependencyTree:
         self._update()  # Recompute leaves.
         return added
 
-    def remove(self, value: Any) -> None:
+    def remove(self, value: Any) -> bool:
         """ Remove all leaves having the given value.
 
         The value to remove needs to belong to at least one leaf in this tree.
@@ -184,6 +184,10 @@ class DependencyTree:
     def __iter__(self) -> Iterable["DependencyTree._Node"]:
         for root in self.roots:
             yield from list(root)
+
+    @property
+    def empty(self) -> bool:
+        return len(self.roots) == 0
 
     @property
     def values(self) -> List[Any]:

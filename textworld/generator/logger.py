@@ -73,20 +73,21 @@ class GameLogger:
         # Collect distribution of nb. of commands.
         update_bincount(self.dist_quest_count, len(game.quests))
 
-        # Collect distribution of command's types.
+        # Collect distribution of commands leading to winning events.
         for quest in game.quests:
-            actions = quest.actions
             self.quests.add(quest.desc)
-            update_bincount(self.dist_quest_length_count, len(actions))
+            for event in quest.win_events:
+                actions = event.actions
+                update_bincount(self.dist_quest_length_count, len(actions))
 
-            for action in actions:
-                action_name = action.name
-                if self.group_actions:
-                    action_name = action_name.split("-")[0].split("/")[0]
+                for action in actions:
+                    action_name = action.name
+                    if self.group_actions:
+                        action_name = action_name.split("-")[0].split("/")[0]
 
-                self.dist_cmd_type[action_name] += 1
+                    self.dist_cmd_type[action_name] += 1
 
-            self.dist_final_cmd_type[action_name] += 1
+                self.dist_final_cmd_type[action_name] += 1
 
         # Collect distribution of object's types.
         dist_obj_type = defaultdict(lambda: 0)
