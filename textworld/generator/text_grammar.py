@@ -9,7 +9,7 @@ import warnings
 from os.path import join as pjoin
 from collections import OrderedDict, defaultdict
 from tatsu.model import NodeWalker
-from typing import Optional, Mapping, List, Tuple, Container, Union
+from typing import Any, Optional, Mapping, List, Tuple, Container, Union
 
 from numpy.random import RandomState
 
@@ -51,21 +51,45 @@ class GrammarOptions:
 
         options = options or kwargs
 
+        #: str: Grammar theme's name. All `*.twg` files starting with that name will be loaded.
         self.theme = options.get("theme", "house")
+        #: List[str]: List of names the text generation should not use.
         self.names_to_exclude = options.get("names_to_exclude", [])
+        #: bool: Append numbers after an object name if there is not enough variation for it.
         self.allowed_variables_numbering = options.get("allowed_variables_numbering", False)
+        #: bool: When True, #symbol# are force to be expanded to unique text.
         self.unique_expansion = options.get("unique_expansion", False)
+        #: bool: When True, object names can be preceeded by an adjective.
         self.include_adj = options.get("include_adj", False)
+        #: bool: When True, only the last action of a quest will be described
+        #:       in the generated objective.
         self.only_last_action = options.get("only_last_action", False)
+        #: bool: When True, consecutive actions to be accomplished might be
+        #:       described in a single sentence rather than separate ones.
         self.blend_instructions = options.get("blend_instructions", False)
+        #: bool: When True, objects sharing some properties might be described
+        #:       in a single sentence rather than separate consecutive ones.
         self.blend_descriptions = options.get("blend_descriptions", False)
+        #: bool: When True, in the game objective, objects of interest might
+        #:       be refer to by their type or adjective rather than full name.
         self.ambiguous_instructions = options.get("ambiguous_instructions", False)
 
     def serialize(self) -> Mapping:
+        """ Serialize this object.
+
+        Results:
+            GrammarOptions's data serialized to be JSON compatible.
+        """
         return {slot: getattr(self, slot) for slot in self.__slots__}
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "GrammarOptions":
+        """ Creates a `GrammarOptions` from serialized data.
+
+        Args:
+            data: Serialized data with the needed information to build a
+                  `GrammarOptions` object.
+        """
         return cls(data)
 
     def __eq__(self, other) -> bool:
@@ -109,17 +133,15 @@ class Grammar:
 
     _cache = {}
 
-    def __init__(self, options: Union[GrammarOptions, Mapping] = {}, rng: Optional[RandomState] = None):
+    def __init__(self, options: Union[GrammarOptions, Mapping[str, Any]] = {}, rng: Optional[RandomState] = None):
         """
-        Create a grammar.
-
         Arguments:
-        options:
-            For customizing text generation process (see
-            :py:class:`textworld.generator.GrammarOptions <textworld.generator.text_grammar.GrammarOptions>`
-            for the list of available options).
-        :param rng:
-            Random generator used for sampling tag expansions.
+            options:
+                For customizing text generation process (see
+                :py:class:`textworld.generator.GrammarOptions <textworld.generator.text_grammar.GrammarOptions>`
+                for the list of available options).
+            rng:
+                Random generator used for sampling tag expansions.
         """
         self.options = GrammarOptions(options)
         self.grammar = OrderedDict()

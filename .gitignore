@@ -6,7 +6,6 @@
 *.ulx
 *.ni
 *.iml
-*.rst
 **/.idea/*
 **/cmake-build-debug/*
 .tox/
