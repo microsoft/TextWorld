@@ -2,11 +2,13 @@
 # Licensed under the MIT license.
 
 
+import glob
 import os
 import re
 import warnings
 from os.path import join as pjoin
 from collections import OrderedDict, defaultdict
+from tatsu.model import NodeWalker
 from typing import Optional, Mapping, List, Tuple, Container, Union
 
 from numpy.random import RandomState
@@ -15,6 +17,8 @@ import textworld
 from textworld import g_rng
 from textworld.utils import uniquify
 from textworld.generator.data import KnowledgeBase
+from textworld.textgen.model import AdjectiveNoun, Match, TextGrammarModelBuilderSemantics
+from textworld.textgen.parser import TextGrammarParser
 
 
 NB_EXPANSION_RETRIES = 20
@@ -87,10 +91,23 @@ class GrammarOptions:
         return self.theme + "-" + hashids.encode(int(option))
 
 
+class _Stringifier(NodeWalker):
+    def walk_str(self, node):
+        return node.replace("\\n", "\n")
+
+    def walk_AdjectiveNoun(self, node):
+        return self.walk(node.adjective) + " | " + self.walk(node.noun)
+
+    def walk_Match(self, node):
+        return self.walk(node.lhs) + " <-> " + self.walk(node.rhs)
+
+
 class Grammar:
     """
     Context-Free Grammar for text generation.
     """
+
+    _cache = {}
 
     def __init__(self, options: Union[GrammarOptions, Mapping] = {}, rng: Optional[RandomState] = None):
         """
@@ -117,16 +134,14 @@ class Grammar:
 
         # Load the grammar associated to the provided theme.
         self.theme = self.options.theme
-        grammar_contents = []
 
         # Load the object names file
-        files = os.listdir(KnowledgeBase.default().text_grammars_path)
-        files = [f for f in files if f.startswith(self.theme + "_") and f.endswith(".twg")]
+        files = glob.glob(pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "_*.twg"))
         for filename in files:
-            with open(pjoin(KnowledgeBase.default().text_grammars_path, filename)) as f:
-                grammar_contents.extend(f.readlines())
+            self._parse(filename)
 
-        self._parse(grammar_contents)
+        for k, v in self.grammar.items():
+            self.grammar[k] = tuple(v)
 
     def __eq__(self, other):
         return (isinstance(other, Grammar) and
@@ -135,29 +150,26 @@ class Grammar:
                 self.options.uuid == other.options.uuid and
                 self.used_names == other.used_names)
 
-    def _parse(self, lines: List[str]):
+    def _parse(self, path: str):
         """
         Parse lines and add them to the grammar.
         """
-        for line in lines:
-            if not line.startswith("#") and line.strip() != "":
-                line = line.strip()
-                line = line.replace("\\n", "\n")
-                symbol = "#" + line.split(":")[0] + "#"
-                tokens = line.split(":", 1)[1].split(";")
+        if path not in self._cache:
+            parser = TextGrammarParser(semantics=TextGrammarModelBuilderSemantics(), parseinfo=True)
+            stringifier = _Stringifier()
+            with open(path) as f:
+                parsed = parser.parse(f.read(), filename=path)
+                grammar = {}
+                for rule in parsed.rules:
+                    symbol = "#" + rule.symbol + "#"
+                    alts = grammar.setdefault(symbol, [])
+                    for alt in rule.alternatives:
+                        string = stringifier.walk(alt)
+                        if string != "":
+                            alts.append(string)
+                self._cache[path] = grammar
 
-                # Remove empty tokens
-                for token in tokens:
-                    if token == "":
-                        tokens.remove(token)
-
-                if symbol not in self.grammar:
-                    self.grammar[symbol] = []
-
-                self.grammar[symbol].extend(tokens)
-
-        for k, v in self.grammar.items():
-            self.grammar[k] = tuple(v)
+        self.grammar.update(self._cache[path])
 
     def has_tag(self, tag: str) -> bool:
         """
