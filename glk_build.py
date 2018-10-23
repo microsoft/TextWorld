@@ -8,12 +8,12 @@ import platform
 
 ffibuilder = FFI()
 
-with open('src/glk_comm.c') as f:
+with open('src/glk_comm.c') as file:
     libraries = []
     if platform.system() == 'Linux':
         libraries.append("uuid")
 
-    ffibuilder.set_source("glk", f.read(), libraries=libraries)
+    ffibuilder.set_source("glk", file.read(), libraries=libraries)
 
     ffibuilder.cdef(r"""
         struct sock_names {
