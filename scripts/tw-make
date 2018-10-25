@@ -4,12 +4,33 @@
 # Licensed under the MIT license.
 
 import os
+import sys
 import argparse
 from os.path import join as pjoin
 
 import numpy as np
 
 import textworld
+import textworld.challenges
+
+
+def _get_available_challenges():
+    challenges = []
+    for challenge in textworld.challenges.CHALLENGES:
+        challenges.append("tw-{}-level{{N}}".format(challenge))
+
+    return challenges
+
+def exit_listing_challenges(challenge=None):
+    msg = ""
+    if challenge is not None:
+        msg += "Unknown challenge: {}\n\n".format(args.challenge)
+
+    msg += "Available challenges:\n  "
+    msg += "\n  ".join(_get_available_challenges())
+    msg += "\nwhere {N} is an integer."
+    print(msg)
+    sys.exit(1)
 
 
 def parse_args():
@@ -22,6 +43,7 @@ def parse_args():
     general_group.add_argument("--view", action="store_true",
                                help="Display the resulting game.")
     general_group.add_argument("-v", "--verbose", action="store_true")
+    general_group.add_argument("-f", "--force", action="store_true")
 
     cfg_group = general_parser.add_argument_group('Grammar settings')
     cfg_group.add_argument("--theme", default="house",
@@ -67,6 +89,8 @@ if __name__ == "__main__":
     print("Global seed: {}".format(args.seed))
 
     options = textworld.GameOptions()
+    options.seeds = args.seed
+    options.force_recompile = args.force
     options.grammar.theme = args.theme
     options.grammar.include_adj = args.include_adj
     options.grammar.only_last_action = args.only_last_action
@@ -79,18 +103,22 @@ if __name__ == "__main__":
         options.nb_objects = args.nb_objects
         options.quest_length = args.quest_length
         options.quest_breadth = args.quest_breadth
-        options.seeds = args.seed
         game_file, game = textworld.make(options, args.output)
 
     elif args.subcommand == "challenge":
-        _, challenge, level = args.challenge.split("-")
+        try:
+            # Expected pattern: "tw-challenge-levelN"
+            _, challenge, level = args.challenge.split("-")
+        except ValueError:
+            exit_listing_challenges()
+
         if challenge not in textworld.challenges.CHALLENGES:
-            raise ValueError("Unknown challenge: {}".format(args.challenge))
+            exit_listing_challenges(args.challenge)
 
         level = int(level.lstrip("level"))
         make_game = textworld.challenges.CHALLENGES[challenge]
         game = make_game(level, options)
-        game_file = textworld.generator.compile_game(game, args.output)
+        game_file = textworld.generator.compile_game(game, args.output, force_recompile=args.force)
 
     print("Game generated: {}".format(game_file))
     if args.verbose:

@@ -29,7 +29,7 @@ import textworld
 from textworld.utils import uniquify
 from textworld.logic import Variable, Proposition
 from textworld.generator import Quest, World
-from textworld.generator import data
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
 from textworld.challenges.utils import get_seeds_for_game_generation
 
@@ -112,6 +112,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     Returns:
         Generated game.
     """
+    kb = KnowledgeBase.default()
+
     metadata = {}  # Collect infos for reproducibility.
     metadata["desc"] = "Treasure Hunter"
     metadata["mode"] = mode
@@ -120,10 +122,10 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     metadata["quest_length"] = options.quest_length
 
     rngs = options.rngs
-    rng_map = rngs['seed_map']
-    rng_objects = rngs['seed_objects']
-    rng_quest = rngs['seed_quest']
-    rng_grammar = rngs['seed_grammar']
+    rng_map = rngs['map']
+    rng_objects = rngs['objects']
+    rng_quest = rngs['quest']
+    rng_grammar = rngs['grammar']
 
     modes = ["easy", "medium", "hard"]
     if mode == "easy":
@@ -149,21 +151,20 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
         starting_room = rng_map.choice(world.rooms)
 
     world.set_player_room(starting_room)
-
     # Add object the player has to pick up.
-    types_counts = data.get_types().count(world.state)
-    obj_type = data.get_types().sample(parent_type='o', rng=rng_objects,
+    types_counts = kb.types.count(world.state)
+    obj_type = kb.types.sample(parent_type='o', rng=rng_objects,
                                        include_parent=True)
     var_id = get_new(obj_type, types_counts)
     right_obj = Variable(var_id, obj_type)
     world.add_fact(Proposition("in", [right_obj, world.inventory]))
 
     # Add containers and supporters to the world.
-    types_counts = data.get_types().count(world.state)
+    types_counts = kb.types.count(world.state)
     objects = []
     distractor_types = uniquify(['c', 's'] +
-                                data.get_types().descendants('c') +
-                                data.get_types().descendants('s'))
+                                kb.types.descendants('c') +
+                                kb.types.descendants('s'))
     for i in range(n_distractors):
         obj_type = rng_objects.choice(distractor_types)
         var_id = get_new(obj_type, types_counts)  # This update the types_counts.
@@ -172,8 +173,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     world.populate_with(objects, rng=rng_objects)
 
     # Add object the player should not pick up.
-    types_counts = data.get_types().count(world.state)
-    obj_type = data.get_types().sample(parent_type='o', rng=rng_objects,
+    types_counts = kb.types.count(world.state)
+    obj_type = kb.types.sample(parent_type='o', rng=rng_objects,
                                        include_parent=True)
     var_id = get_new(obj_type, types_counts)
     wrong_obj = Variable(var_id, obj_type)
@@ -182,7 +183,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Generate a quest that finishes by taking something (i.e. the right
     #  object since it's the only one in the inventory).
-    options.chaining.rules_per_depth = [data.get_rules().get_matching("take.*")]
+    options.chaining.rules_per_depth = [kb.rules.get_matching("take.*")]
     options.chaining.backward = True
     options.chaining.rng = rng_quest
     #options.chaining.restricted_types = exceptions
@@ -190,8 +191,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     chain = textworld.generator.sample_quest(world.state, options.chaining)
 
     # Add objects needed for the quest.
-    world.state = chain[0].state
-    quest = Quest([c.action for c in chain])
+    world.state = chain.initial_state
+    quest = Quest(chain.actions)
     quest.set_failing_conditions([Proposition("in", [wrong_obj, world.inventory])])
 
     grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
