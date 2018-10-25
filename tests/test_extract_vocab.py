@@ -8,11 +8,11 @@ from subprocess import check_output
 import textworld
 from textworld.utils import make_temp_directory
 
-SCRIPTS_DEV_PATH = os.path.abspath(pjoin(__file__, "..", ".."))
+SCRIPTS_PATH = os.path.abspath(pjoin(__file__, "..", "..", "scripts"))
 
 
-def test_check_generated_game():
-    script = pjoin(SCRIPTS_DEV_PATH, "extract_vocab.py")
+def test_extract_vocab():
+    script = pjoin(SCRIPTS_PATH, "extract_vocab.py")
 
     with make_temp_directory(prefix="test_extract_vocab") as tmpdir:
         outfile = pjoin(tmpdir, "vocab.txt")

@@ -5,11 +5,12 @@
 import re
 import os
 from os.path import join as pjoin
+from typing import Optional, List
 
 import numpy as np
 
-from textworld.generator import Grammar
-from textworld.generator import data
+from textworld.generator.data import KnowledgeBase
+from textworld.generator.text_grammar import Grammar, GrammarOptions
 
 
 def remove_extra_spaces(output):
@@ -113,25 +114,21 @@ def remove_header(text):
     return "\n".join(lines)
 
 
-def extract_vocab(grammar_flags):
-    rng_grammar = np.random.RandomState(1234)
-    grammar = Grammar(grammar_flags, rng=rng_grammar)
+def extract_vocab(grammar_options: GrammarOptions, kb: Optional[KnowledgeBase] = None) -> List[str]:
+    kb = kb or KnowledgeBase.default()
 
-    tokens = set()
-    filenames = os.listdir(data.get_data_path())
-    filenames = [f for f in filenames if f.endswith(".txt")]
+    # Extract words from logic.
+    text = kb.logic.serialize()
 
-    for filename in filenames:
-        with open(pjoin(data.get_data_path(), filename)) as f:
-            tokens |= set(f.read().split())
-
+    # Extract words from text grammar.
+    rng_grammar = np.random.RandomState(1234)  # Fix generator. #XXX really needed?
+    grammar = Grammar(grammar_options, rng=rng_grammar)
     grammar_words = grammar.get_vocabulary()
-    tokens |= set(grammar_words)
 
-    text = " ".join(tokens).lower()
+    text += " ".join(set(grammar_words)).lower()
 
-    # Next strip out all non-alphabetic characters
-    text = re.sub("[^a-z0-9\- ']", " ", text)
+    # Strip out all non-alphanumeric characters.
+    text = re.sub(r"[^a-z0-9\-_ ']", " ", text)
     words = text.split()
     vocab = sorted(set(words))
 

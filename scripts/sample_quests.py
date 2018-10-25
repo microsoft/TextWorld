@@ -15,7 +15,7 @@ import textworld
 
 from textworld.render import visualize
 from textworld.generator import Game
-from textworld.generator.inform7 import gen_commands_from_actions
+from textworld.generator.inform7 import Inform7Game
 from textworld.generator.chaining import ChainingOptions
 from textworld.generator.chaining import sample_quest
 from textworld.utils import save_graph_to_svg
@@ -41,12 +41,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def build_tree_from_chains(chains, var_infos):
+def build_tree_from_chains(chains, inform7):
     G = nx.DiGraph()
     root = "root"
     labels = {}
     for chain in chains:
-        commands = [root] + gen_commands_from_actions(chain.actions, var_infos)
+        commands = [root] + inform7.gen_commands_from_actions(chain.actions)
         G.add_nodes_from(commands)
         G.add_edges_from(zip(commands[:-1], commands[1:]))
         labels.update(dict(zip(commands, commands)))
@@ -54,9 +54,9 @@ def build_tree_from_chains(chains, var_infos):
     return G, labels
 
 
-def print_chains(chains, var_infos):
+def print_chains(chains, inform7):
     for i, chain in enumerate(chains):
-        commands = gen_commands_from_actions(chain.actions, var_infos)
+        commands = inform7.gen_commands_from_actions(chain.actions)
         print("{:2d}. {}".format(i + 1, " > ".join(commands)))
 
 
@@ -80,13 +80,14 @@ def main():
         chain = sample_quest(game.world.state, options)
         chains.append(chain)
 
-    print_chains(chains, var_infos=game.infos)
+    inform7 = Inform7Game(game)
+    print_chains(chains, inform7)
 
     # Convert chains to networkx graph/tree
     filename_world = pjoin(args.output, "sample_world.png")
     filename_tree = pjoin(args.output, "sample_tree.svg")
     filename_graph = pjoin(args.output, "sample_graph.svg")
-    G, labels = build_tree_from_chains(chains, var_infos=game.infos)
+    G, labels = build_tree_from_chains(chains, inform7)
     if len(G) > 0:
         image = visualize(game)
         image.save(filename_world)

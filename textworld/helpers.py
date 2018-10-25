@@ -115,5 +115,5 @@ def make(options: GameOptions, path: str) -> Tuple[str, Game]:
         A tuple containing the path to the game file, and its corresponding Game's object.
     """
     game = make_game(options)
-    game_file = compile_game(game, path, force_recompile=True)
+    game_file = compile_game(game, path, force_recompile=options.force_recompile)
     return game_file, game

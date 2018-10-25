@@ -8,6 +8,7 @@ from os.path import join as pjoin
 
 import textworld
 import textworld.agents
+import textworld.challenges
 from textworld.utils import make_temp_directory
 
 
@@ -60,3 +61,19 @@ def test_making_a_custom_game():
         # Solve the game using WalkthroughAgent.
         agent = textworld.agents.WalkthroughAgent()
         textworld.play(output_folder + ".ulx", agent=agent, silent=True)
+
+def test_making_challenge_game():
+    with make_temp_directory(prefix="test_tw-challenge") as tmpdir:
+        for challenge in textworld.challenges.CHALLENGES:
+            env_id = "tw-{}-level1".format(challenge)
+            output_folder = pjoin(tmpdir, "gen_games")
+            game_file = pjoin(output_folder, env_id + ".ulx")
+            command = ["tw-make", "challenge", env_id, "--seed", "1234", "--output", game_file]
+            assert check_call(command) == 0
+
+            assert os.path.isdir(output_folder)
+            assert os.path.isfile(game_file)
+
+            # Solve the game using WalkthroughAgent.
+            agent = textworld.agents.WalkthroughAgent()
+            textworld.play(game_file, agent=agent, silent=True)
