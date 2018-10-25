@@ -8,12 +8,12 @@ from subprocess import check_output
 import textworld
 from textworld.utils import make_temp_directory
 
-SCRIPTS_DEV_PATH = os.path.abspath(pjoin(__file__, "..", ".."))
+SCRIPTS_PATH = os.path.abspath(pjoin(__file__, "..", "..", "scripts"))
 
 
 def test_check_generated_game():
     NB_GAMES = 3
-    script = pjoin(SCRIPTS_DEV_PATH, "check_generated_games.py")
+    script = pjoin(SCRIPTS_PATH, "check_generated_games.py")
     with make_temp_directory(prefix="test_check_generated_game") as tmpdir:
         for i in range(NB_GAMES):
             command = ["tw-make", "custom", "--seed", str(i), "--output", tmpdir]
