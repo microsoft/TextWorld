@@ -16,6 +16,7 @@ addons:
       - libffi-dev
       - uuid-dev
       - wget
+      - graphviz
 
 matrix:
   include:
