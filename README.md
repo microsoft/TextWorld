@@ -14,7 +14,7 @@ On a Debian/Ubuntu-based system, these can be installed with
 
 And on macOS, with
 
-    brew install libffi curl
+    brew install libffi curl git
 
 ### Installing TextWorld
 
