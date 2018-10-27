@@ -10,11 +10,11 @@ TextWorld requires __Python 3__ and only supports __Linux__ and __macOS__ system
 TextWorld requires some system libraries for its native components.
 On a Debian/Ubuntu-based system, these can be installed with
 
-    sudo apt install build-essential uuid-dev libffi-dev python3-dev curl
+    sudo apt install build-essential uuid-dev libffi-dev python3-dev curl git
 
 And on macOS, with
 
-    brew install libffi curl
+    brew install libffi curl git
 
 ### Installing TextWorld
 
