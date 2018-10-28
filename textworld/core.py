@@ -141,29 +141,34 @@ class Environment:
     Here's a minimal example of how to interact with an `Environment`
 
     >>> import textworld
-    >>> game_file, _ = textworld.make(seed=1234)  # Generate a random game.
+    >>> options = textworld.GameOptions()
+    >>> options.seeds = 1234
+    >>> options.nb_objects = 5
+    >>> options.quest_length = 2
+    >>> game_file, _ = textworld.make(options, path='./')  # Generate a random game.
     >>> env = textworld.start(game_file)  # Load the game.
     >>> game_state = env.reset()  # Start a new game.
     >>> env.render()
-    I hope your ready to go into rooms and interact with objects, because you've
-    just entered TextWorld! Here is your task for today. First of all, recover the
-    keycard from the shelf. After that, sit the keycard on the rack. Got that? Good!
+    I hope you're ready to go into rooms and interact with objects, because you've
+    just entered TextWorld! Here is how to play! First thing I need you to do is to
+    ensure that the type G chest is open. And then, pick up the keycard from the
+    type G chest inside the attic. Got that? Good!
     <BLANKLINE>
     -= Attic =-
-    You are in an attic. A typical kind of place.
+    You arrive in an attic. A normal kind of place. You begin to take stock of
+    what's in the room.
     <BLANKLINE>
-    You make out a type 3 chest. The type 3 chest is empty! This is the worst thing
-    that could possibly happen, ever! You can see a rack. But the thing is empty,
-    unfortunately. You can make out a shelf. The shelf is usual. On the shelf you
-    can see a keycard and a lightbulb. You see a stand. Why don't you take a picture
-    of it, it'll last longer! On the stand you can see a shoe.
+    You make out a type G chest. You can see a TextWorld style locker. The TextWorld
+    style locker contains a frisbee and a sock.
     <BLANKLINE>
-    There is a type 3 keycard on the floor.
     <BLANKLINE>
-    >>> command = "take keycard"  # Command to send to the game.
+    <BLANKLINE>
+    There is a TextWorld style key on the floor.
+    >>> command = "take key"  # Command to send to the game.
     >>> game_state, reward, done = env.step(command)
     >>> env.render()
-    You pick up the keycard from the ground.
+    (the TextWorld style key)
+    You pick up the TextWorld style key from the ground.
     """
 
     @property
