@@ -3,7 +3,7 @@
 
 
 from collections import Counter, defaultdict, deque, namedtuple
-from functools import total_ordering
+from functools import total_ordering, lru_cache
 import itertools
 import re
 from tatsu.model import NodeWalker
@@ -1401,6 +1401,7 @@ class GameLogic:
                 rules[new_name] = new_rule
 
     @classmethod
+    @lru_cache(maxsize=128, typed=False)
     def parse(cls, document: str) -> "GameLogic":
         result = cls()
         result._parse(document)
