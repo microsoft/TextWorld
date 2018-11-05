@@ -29,6 +29,10 @@ class ModelBase(Node):
     pass
 
 
+class Literal(ModelBase):
+    value = None
+
+
 class AdjectiveNoun(ModelBase):
     adjective = None
     noun = None

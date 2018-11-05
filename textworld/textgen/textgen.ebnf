@@ -9,11 +9,13 @@ symbol = ?"[\w()/!<>-]+" ;
 
 literal = ?"(([^;|<>\n\[\]()]|\[[^\[\]]*\]|\([^()]*\))+(?<!\s))?" ;
 
+literalAlternative::Literal = value:literal ;
+
 adjectiveNoun::AdjectiveNoun = adjective:literal "|" noun:literal ;
 
 match::Match = lhs:adjectiveNoun "<->" rhs:adjectiveNoun ;
 
-alternative = match | adjectiveNoun | literal;
+alternative = match | adjectiveNoun | literalAlternative;
 
 alternatives = ";".{alternative}+ ;
 
