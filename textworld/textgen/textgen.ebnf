@@ -9,9 +9,11 @@ symbol = ?"[\w()/!<>-]+" ;
 
 literal = ?"(([^;|<>\n\[\]()]|\[[^\[\]]*\]|\([^()]*\))+(?<!\s))?" ;
 
+literalAlternative::Literal = value:literal ;
+
 adjectiveNoun::AdjectiveNoun = adjective:literal "|" noun:literal ;
 
-entity = adjectiveNoun | literal ;
+entity = adjectiveNoun | literalAlternative ;
 
 match::Match = lhs:entity "<->" rhs:entity ;
 
