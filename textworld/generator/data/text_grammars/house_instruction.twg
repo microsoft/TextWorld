@@ -49,7 +49,7 @@ closed_syn:closed;shut
 eat_var:#eat_types#;#eat_types#
 on_var:#on_types#;#on_types# #in_the_(r)#
 unlock:#unlock_key#;#unlock_no_key#
-unlock_key:unlock the #lock_type_var# #by_the_syn# (k).;check that the #lock_type_var# is unlocked #by_the_syn# (k).;#make_syn_v# that the #lock_type_var# is unlocked #by_the_syn# (k).;Insert the (k) into the #lock_type_var#'s lock to unlock it.
+unlock_key:unlock the #lock_type_var# #by_the_syn# (k).;check that the #lock_type_var# is unlocked #by_the_syn# (k).;#make_syn_v# that the #lock_type_var# is unlocked #by_the_syn# (k).;insert the (k) into the #lock_type_var#'s lock to unlock it.
 unlock_no_key:unlock the #lock_type_var#.;#make_syn_v# that the #lock_type_var# is unlocked.
 lock:#lock_key#;#lock_no_key#
 lock_key:lock the #lock_type_var# #by_the_syn# (k).;#make_syn_v# that the #lock_type_var# is locked #by_the_syn# (k).;#insert_syn_u# the (k) into the #lock_type_var# to lock it.
@@ -78,7 +78,7 @@ ig_unlock_open_take:open the locked #lock_types# using the (k) and take the #obj
 ig_open_take:take the #obj_types# from the (c).;open the (c) and take the #obj_types#.;from in the closed (c), take the #obj_types#.
 ig_take/c_unlock:take the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
 ig_take/s_unlock:take the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
-ig_take_unlock:#pick-up_synonym_v# the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
+ig_take_unlock:#pick-up_synonym_1# the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
 ig_open_insert:open the (c) and place the #obj_types# in it.;put the #obj_types# in the closed (c).;
 ig_insert_close:place the #obj_types# in the (c) and close it.;close (c) after placing the #obj_types# in it.
 ig_close_lock:close the #lock_types# and lock it.;close the #lock_types# and lock it with the (k).
@@ -92,7 +92,7 @@ newsentence:First off,;First of all,;First stop,;First step,;Your first objectiv
 action_separator: Then, ; Next, ; Following that, ; If you can #do# that, ; Once you #do# that, ; That done, ; With that over with, ; With that accomplished, ; With that done, ; Okay, and then, ; And then, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
 epilogue:Once that's all handled, you can stop!;And once you've done that, you win!;And if you do that, you're the winner!;That's it!;Got that? Good!;Alright, thanks!
 do:manage;do;accomplish;get around to doing;finish;succeed at;get through with
-welcome:Welcome to TextWorld;You are now playing a #exciting# #game# of TextWorld;Welcome to another #exciting# #game# of TextWorld;It's time to explore the amazing world of TextWorld;Get ready to pick stuff up and put it in places, because you've just entered TextWorld;I hope your ready to go into rooms and interact with objects, because you've just entered TextWorld;Who's got a virtual machine and is about to play through an #exciting# round of TextWorld? You do;
+welcome:Welcome to TextWorld;You are now playing a #exciting# #game# of TextWorld;Welcome to another #exciting# #game# of TextWorld;It's time to explore the amazing world of TextWorld;Get ready to pick stuff up and put it in places, because you've just entered TextWorld;I hope you're ready to go into rooms and interact with objects, because you've just entered TextWorld;Who's got a virtual machine and is about to play through an #exciting# round of TextWorld? You do;
 exciting:exciting;fast paced;life changing;profound
 game:game;round;session;episode
 ##Action separators

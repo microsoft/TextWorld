@@ -414,7 +414,7 @@ def assign_description_to_quest(quest, game, grammar):
             actions_desc, _ = generate_instruction(quest.actions[-1], grammar, game.infos, game.world, counts)
             only_one_action = True
         else:
-            actions_desc = ""
+            actions_desc_list = []
             # Decide if we blend instructions together or not
             if grammar.options.blend_instructions:
                 instructions = get_action_chains(quest.actions, grammar, game.infos)
@@ -424,9 +424,10 @@ def assign_description_to_quest(quest, game, grammar):
             only_one_action = len(instructions) < 2
             for c in instructions:
                 desc, separator = generate_instruction(c, grammar, game.infos, game.world, counts)
-                actions_desc += desc
+                actions_desc_list.append(desc)
                 if c != instructions[-1] and len(separator) > 0:
-                    actions_desc += separator
+                    actions_desc_list.append(separator)
+            actions_desc = " ".join(actions_desc_list)
 
         if only_one_action:
             quest_tag = grammar.get_random_expansion("#quest_one_action#")
@@ -437,6 +438,9 @@ def assign_description_to_quest(quest, game, grammar):
             quest_tag = quest_tag.replace("(list_of_actions)", actions_desc.strip())
 
         quest_desc = grammar.expand(quest_tag)
+        quest_desc = re.sub(r"(^|(?<=[?!.]))\s*([a-z])",
+                            lambda pat: pat.group(1) + ' ' + pat.group(2).upper(),
+                            quest_desc)
 
     return quest_desc
 
