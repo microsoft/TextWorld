@@ -36,7 +36,7 @@ If you have Chrome already installed you can use the following command to instal
 
 ### Generating a game
 
-TextWorld provide an easy way of generating simple text-based games via the `tw-make` script. For instance,
+TextWorld provides an easy way of generating simple text-based games via the `tw-make` script. For instance,
 
     tw-make custom --world-size 5 --nb-objects 10 --quest-length 5 --seed 1234 --output gen_games/
 
