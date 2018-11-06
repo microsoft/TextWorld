@@ -8,7 +8,7 @@ TextWorld requires __Python 3__ and only supports __Linux__ and __macOS__ system
 ### Requirements
 
 TextWorld requires some system libraries for its native components.
-On a Debian/Ubuntu-based system, these can be installed with the following command
+On a Debian/Ubuntu-based system, these can be installed with
 
     sudo apt install build-essential uuid-dev libffi-dev python3-dev curl git
 
@@ -26,8 +26,8 @@ After cloning the repo, go inside the root folder of the project (i.e. alongside
 
 ### Extras
 
-In order to make use of `take_screenshot` or `visualize` functions in `textworld.render`, you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) or [Firefox](https://github.com/mozilla/geckodriver) web driver (depending on which browser you have installed).
-If you've Chrome installed you can use the following command to install the chromedriver
+In order to use the `take_screenshot` or `visualize` functions in `textworld.render`, you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on which browser you have installed).
+If you have Chrome already installed you can use the following command to install chromedriver
 
     pip install chromedriver_installer
 
@@ -86,7 +86,7 @@ print("avg. steps: {:5.1f}; avg. score: {:4.1f} / 1.".format(sum(avg_moves)/N, s
 ```
 
 ## Documentation
-For more information about TextWorld, checkout the [documentation](https://aka.ms/textworld-docs).
+For more information about TextWorld, check the [documentation](https://aka.ms/textworld-docs).
 
 ## Notebooks
 Check the [notebooks](notebooks) provided with the framework to see how the framework can be used.
@@ -117,7 +117,7 @@ If you use TextWorld, please cite the following BibTex:
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to and actually do, grant us
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
 When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
