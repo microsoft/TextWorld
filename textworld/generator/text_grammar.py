@@ -372,6 +372,8 @@ class Grammar:
         seen = set()
         all_words = set()
         pattern = re.compile(r'[#][^#]*[#]')
+        i7_pattern = re.compile(r'\[[^]]*\]')
+        tw_pattern = re.compile(r'\((obj|name[^)]*|action|list_of_actions)\)')
         to_expand = list(self.grammar.keys())
         while len(to_expand) > 0:
             tag = to_expand.pop()
@@ -380,9 +382,14 @@ class Grammar:
 
             seen.add(tag)
 
+            # Remove i7 code snippets.
+            tag = i7_pattern.sub(" ", tag)
+            # Remove all TW placeholders.
+            tag = tw_pattern.sub(" ", tag)
+
             words = tag.split()
             for word in words:
-                if pattern.match(word):
+                if pattern.search(word):
                     for to_replace in pattern.findall(word):
                         for replacement in self.grammar[to_replace]:
                             to_expand.append(word.replace(to_replace, replacement))

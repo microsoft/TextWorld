@@ -5,10 +5,11 @@
 import re
 import os
 from os.path import join as pjoin
-from typing import Optional, List
+from typing import Optional, List, Iterable
 
 import numpy as np
 
+from textworld.generator.game import Game
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.text_grammar import Grammar, GrammarOptions
 
@@ -114,22 +115,40 @@ def remove_header(text):
     return "\n".join(lines)
 
 
-def extract_vocab(grammar_options: GrammarOptions, kb: Optional[KnowledgeBase] = None) -> List[str]:
-    kb = kb or KnowledgeBase.default()
+def extract_vocab(games: Iterable[Game]) -> List[str]:
+    i7_pattern = re.compile(r'\[[^]]*\]')  # Found in object descriptions.
 
-    # Extract words from logic.
-    text = kb.logic.serialize()
+    text = ""
+    seen = set()
+    for game in games:
+        if game.kb not in seen:
+            seen.add(game.kb)
+            # Extract words from logic (only stuff related to Inform7).
+            text += game.kb.inform7_addons_code + "\n"
+            text += " ".join(game.kb.inform7_commands.values()) + "\n"
+            text += " ".join(game.kb.inform7_events.values()) + "\n"
+            text += " ".join(game.kb.inform7_variables.values()) + "\n"
+            text += " ".join(game.kb.inform7_variables.values()) + "\n"
+            text += " ".join(t for t in game.kb.inform7_variables_description.values() if t) + "\n"
 
-    # Extract words from text grammar.
-    rng_grammar = np.random.RandomState(1234)  # Fix generator. #XXX really needed?
-    grammar = Grammar(grammar_options, rng=rng_grammar)
-    grammar_words = grammar.get_vocabulary()
+        if game.grammar.options.uuid not in seen:
+            seen.add(game.grammar.options.uuid)
+            # Extract words from text grammar.
+            grammar = Grammar(game.grammar.options)
+            grammar_words = grammar.get_vocabulary()
+            text += " ".join(set(grammar_words)).lower() + "\n"
 
-    text += " ".join(set(grammar_words)).lower()
+        # Parse game specific entity names and descriptions.
+        text += game.objective + "\n"
+        for infos in game.infos.values():
+            if infos.name:
+                text += infos.name + " "
 
-    # Strip out all non-alphanumeric characters.
-    text = re.sub(r"[^a-z0-9\-_ ']", " ", text)
+            if infos.desc:
+                text += i7_pattern.sub(" ", infos.desc) + "\n"
+
+    # Next strip out all non-alphabetic characters
+    text = re.sub(r"[^a-z0-9\-_ ']", " ", text.lower())
     words = text.split()
-    vocab = sorted(set(words))
-
+    vocab = sorted(set(word.strip("-'_") for word in words))
     return vocab
