@@ -6,7 +6,7 @@ import re
 from collections import OrderedDict
 
 from textworld.generator.data import KnowledgeBase
-from textworld.generator.game import Quest
+from textworld.generator.game import Quest, Event, Game
 
 from textworld.generator.text_grammar import Grammar
 from textworld.generator.text_grammar import fix_determinant
@@ -138,13 +138,6 @@ def generate_text_from_grammar(game, grammar: Grammar):
     for quest in game.quests:
         if quest.desc is None:  # Skip quests which already have a description.
             quest.desc = assign_description_to_quest(quest, game, grammar)
-
-    if grammar.options.only_last_action and len(game.quests) > 1:
-        main_quest = Quest(actions=[quest.actions[-1] for quest in game.quests])
-        only_last_action_bkp = grammar.options.only_last_action
-        grammar.options.only_last_action = False
-        game.objective = assign_description_to_quest(main_quest, game, grammar)
-        grammar.options.only_last_action = only_last_action_bkp
 
     return game
 
@@ -384,7 +377,16 @@ def generate_instruction(action, grammar, game_infos, world, counts):
     return desc, separator
 
 
-def assign_description_to_quest(quest, game, grammar):
+def assign_description_to_quest(quest: Quest, game: Game, grammar: Grammar):
+    event_descriptions = []
+    for event in quest.win_events:
+        event_descriptions += [describe_event(event, game, grammar)]
+
+    quest_desc = " OR ".join(desc for desc in event_descriptions if desc)
+    return quest_desc
+
+
+def describe_event(event: Event, game: Game, grammar: Grammar) -> str:
     """
     Assign a descripton to a quest.
     """
@@ -405,21 +407,21 @@ def assign_description_to_quest(quest, game, grammar):
         counts['noun'][obj_infos.noun] += 1
         counts['type'][obj.type] += 1
 
-    if len(quest.actions) == 0:
+    if len(event.actions) == 0:
         # We don't need to say anything if the quest is empty
-        quest_desc = "Choose your own adventure!"
+        event_desc = ""
     else:
         # Generate a description for either the last, or all commands
         if grammar.options.only_last_action:
-            actions_desc, _ = generate_instruction(quest.actions[-1], grammar, game.infos, game.world, counts)
+            actions_desc, _ = generate_instruction(event.actions[-1], grammar, game.infos, game.world, counts)
             only_one_action = True
         else:
             actions_desc_list = []
             # Decide if we blend instructions together or not
             if grammar.options.blend_instructions:
-                instructions = get_action_chains(quest.actions, grammar, game.infos)
+                instructions = get_action_chains(event.actions, grammar, game.infos)
             else:
-                instructions = quest.actions
+                instructions = event.actions
 
             only_one_action = len(instructions) < 2
             for c in instructions:
@@ -437,12 +439,12 @@ def assign_description_to_quest(quest, game, grammar):
             quest_tag = grammar.get_random_expansion("#quest#")
             quest_tag = quest_tag.replace("(list_of_actions)", actions_desc.strip())
 
-        quest_desc = grammar.expand(quest_tag)
-        quest_desc = re.sub(r"(^|(?<=[?!.]))\s*([a-z])",
+        event_desc = grammar.expand(quest_tag)
+        event_desc = re.sub(r"(^|(?<=[?!.]))\s*([a-z])",
                             lambda pat: pat.group(1) + ' ' + pat.group(2).upper(),
-                            quest_desc)
+                            event_desc)
 
-    return quest_desc
+    return event_desc
 
 
 def get_action_chains(actions, grammar, game_infos):

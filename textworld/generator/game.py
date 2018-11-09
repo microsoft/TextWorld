@@ -32,9 +32,15 @@ except ImportError:
     from typing import Iterable as Collection
 
 
+class UnderspecifiedEventError(NameError):
+    def __init__(self):
+        msg = "Either the actions or the conditions is needed to create an event."
+        super().__init__(msg)
+
+
 class UnderspecifiedQuestError(NameError):
     def __init__(self):
-        msg = "Either the list of actions or the win_condition  he quest must have "
+        msg = "At least one winning or failing event is needed to create a quest."
         super().__init__(msg)
 
 
@@ -56,96 +62,170 @@ def gen_commands_from_actions(actions: Iterable[Action], kb: Optional[KnowledgeB
     return commands
 
 
-class Quest:
-    """ Quest presentation in TextWorld.
+class Event:
+    """
+    Event happening in TextWorld.
 
-    A quest is a sequence of :py:class:`Action <textworld.logic.Action>`
-    undertaken with a goal.
+    An event gets triggered when its set of conditions become all statisfied.
+
+    Attributes:
+        actions: Actions to be performed to trigger this event
+        commands: Human readable version of the actions.
+        condition: :py:class:`textworld.logic.Action` that can only be applied
+                    when all conditions are statisfied.
     """
 
-    def __init__(self, actions: Optional[Iterable[Action]] = None,
-                 winning_conditions: Optional[Collection[Proposition]] = None,
-                 failing_conditions: Optional[Collection[Proposition]] = None,
-                 desc: Optional[str] = None) -> None:
+    def __init__(self, actions: Iterable[Action] = [],
+                 conditions: Iterable[Proposition] = []) -> None:
         """
         Args:
-            actions: The actions to be performed to complete the quest.
-                     If `None` or an empty list, then `winning_conditions`
-                     must be provided.
-            winning_conditions: Set of propositions that need to be true
-                                before marking the quest as completed.
-                                Default: postconditions of the last action.
-            failing_conditions: Set of propositions that if are all true
-                                means the quest is failed.
-                                Default: can't fail the quest.
-            desc: A text description of the quest.
+            actions: The actions to be performed to trigger this event.
+                     If an empty list, then `conditions` must be provided.
+            conditions: Set of propositions which need to
+                        be all true in order for this event
+                        to get triggered.
         """
-        self.actions = tuple(actions) if actions else ()
-        self.desc = desc
+        self.actions = tuple(actions)
         self.commands = gen_commands_from_actions(self.actions)
-        self.reward = 1
-        self.win_action = self.set_winning_conditions(winning_conditions)
-        self.fail_action = self.set_failing_conditions(failing_conditions)
+        self.condition = self.set_conditions(conditions)
 
-    def set_winning_conditions(self, winning_conditions: Optional[Collection[Proposition]]) -> Action:
-        """ Sets wining conditions for this quest.
+    def is_triggering(self, state: State) -> bool:
+        """ Check if this event would be triggered in a given state. """
+        return state.is_applicable(self.condition)
+
+    def set_conditions(self, conditions: Iterable[Proposition]) -> Action:
+        """
+        Set the triggering conditions for this event.
 
         Args:
-            winning_conditions: Set of propositions that need to be true
-                                before marking the quest as completed.
-                                Default: postconditions of the last action.
+            conditions: Set of propositions which need to
+                        be all true in order for this event
+                        to get triggered.
         Returns:
-            An action that is only applicable when the quest is finished.
+            Action that can only be applied when all conditions are statisfied.
         """
-        if winning_conditions is None:
+        if not conditions:
             if len(self.actions) == 0:
-                raise UnderspecifiedQuestError()
+                raise UnderspecifiedEventError()
 
             # The default winning conditions are the postconditions of the
             # last action in the quest.
-            winning_conditions = self.actions[-1].postconditions
+            conditions = self.actions[-1].postconditions
 
-        # TODO: Make win propositions distinguishable by adding arguments?
-        win_fact = Proposition("win")
-        self.win_action = Action("win", preconditions=winning_conditions,
-                                        postconditions=list(winning_conditions) + [win_fact])
-        return self.win_action
-
-    def set_failing_conditions(self, failing_conditions: Optional[Collection[Proposition]]) -> Optional[Action]:
-        """ Sets the failing conditions of this quest.
-
-        Args:
-            failing_conditions: Set of propositions that if are all true
-                                means the quest is failed.
-                                Default: can't fail the quest.
-        Returns:
-            An action that is only applicable when the quest has failed or `None`
-            if the quest can be failed.
-        """
-        self.fail_action = None
-        if failing_conditions is not None:
-            # TODO: Make fail propositions distinguishable by adding arguments?
-            fail_fact = Proposition("fail")
-            self.fail_action = Action("fail", preconditions=failing_conditions,
-                                              postconditions=list(failing_conditions) + [fail_fact])
-
-        return self.fail_action
+        variables = sorted(set([v for c in conditions for v in c.arguments]))
+        event = Proposition("event", arguments=variables)
+        self.condition = Action("trigger", preconditions=conditions,
+                                postconditions=list(conditions) + [event])
+        return self.condition
 
     def __hash__(self) -> int:
         return hash((self.actions,
-                     self.win_action,
-                     self.fail_action,
-                     self.desc,
-                     tuple(self.commands)))
+                     tuple(self.commands),
+                     self.condition))
+
+    def __eq__(self, other: Any) -> bool:
+        return (isinstance(other, Event) and
+                self.actions == other.actions and
+                self.commands == other.commands and
+                self.condition == other.condition)
+
+    @classmethod
+    def deserialize(cls, data: Mapping) -> "Event":
+        """ Creates an `Event` from serialized data.
+
+        Args:
+            data: Serialized data with the needed information to build a
+                  `Event` object.
+        """
+        actions = [Action.deserialize(d) for d in data["actions"]]
+        condition = Action.deserialize(data["condition"])
+        event = cls(actions=actions, conditions=condition.preconditions)
+        event.commands = data["commands"]
+        return event
+
+    def serialize(self) -> Mapping:
+        """ Serialize this event.
+
+        Results:
+            `Event`'s data serialized to be JSON compatible.
+        """
+        data = {}
+        data["commands"] = self.commands
+        data["actions"] = [action.serialize() for action in self.actions]
+        data["condition"] = self.condition.serialize()
+        return data
+
+    def copy(self) -> "Event":
+        """ Copy this event. """
+        return self.deserialize(self.serialize())
+
+
+class Quest:
+    """ Quest representation in TextWorld.
+
+    A quest is defined by a mutually exclusive set of winning events and
+    a mutually exclusive set of failing events.
+
+    Attributes:
+        win_events: Mutually exclusive set of winning events. That is,
+                    only one such event needs to be triggered in order
+                    to complete this quest.
+        fail_events: Mutually exclusive set of failing events. That is,
+                     only one such event needs to be triggered in order
+                     to fail this quest.
+        reward: Reward given for completing this quest.
+        desc: A text description of the quest.
+    """
+
+    def __init__(self,
+                 win_events: Iterable[Event] = [],
+                 fail_events: Iterable[Event] = [],
+                 reward: Optional[int] = None,
+                 desc: Optional[str] = None) -> None:
+        r"""
+        Args:
+            win_events: Mutually exclusive set of winning events. That is,
+                        only one such event needs to be triggered in order
+                        to complete this quest.
+            fail_events: Mutually exclusive set of failing events. That is,
+                         only one such event needs to be triggered in order
+                         to fail this quest.
+            reward: Reward given for completing this quest. By default,
+                    reward is set to 1 if there is at least one winning events
+                    otherwise it is set to 0.
+            desc: A text description of the quest.
+        """
+        self.win_events = tuple(win_events)
+        self.fail_events = tuple(fail_events)
+        self.desc = desc
+
+        # Unless explicitly provided, reward is set to 1 if there is at least
+        # one winning events otherwise it is set to 0.
+        self.reward = int(len(win_events) > 0) if reward is None else reward
+
+        if len(self.win_events) == 0 and len(self.fail_events) == 0:
+            raise UnderspecifiedQuestError()
+
+    def is_winning(self, state: State) -> bool:
+        """ Check if this quest is winning in that particular state. """
+        return any(event.is_triggering(state) for event in self.win_events)
+
+    def is_failing(self, state: State) -> bool:
+        """ Check if this quest is failing in that particular state. """
+        return any(event.is_triggering(state) for event in self.fail_events)
+
+    def __hash__(self) -> int:
+        return hash((self.win_events,
+                     self.fail_events,
+                     self.reward,
+                     self.desc))
 
     def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Quest) and
-                self.actions == other.actions and
-                self.win_action == other.win_action and
-                self.fail_action == other.fail_action and
-                self.desc == other.desc and
+                self.win_events == other.win_events and
+                self.fail_events == other.fail_events and
                 self.reward == other.reward and
-                self.commands == other.commands)
+                self.desc == other.desc)
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Quest":
@@ -155,18 +235,11 @@ class Quest:
             data: Serialized data with the needed information to build a
                   `Quest` object.
         """
-        actions = [Action.deserialize(d) for d in data["actions"]]
-        win_action = Action.deserialize(data["win_action"])
-        failing_conditions = None
-        if data["fail_action"] is not None:
-            fail_action = Action.deserialize(data["fail_action"])
-            failing_conditions = fail_action.preconditions
-
+        win_events = [Event.deserialize(d) for d in data["win_events"]]
+        fail_events = [Event.deserialize(d) for d in data["fail_events"]]
+        reward = data["reward"]
         desc = data["desc"]
-        quest = cls(actions, win_action.preconditions, failing_conditions, desc=desc)
-        quest.commands = data["commands"]
-        quest.reward = data.get("reward", 1)
-        return quest
+        return cls(win_events, fail_events, reward, desc)
 
     def serialize(self) -> Mapping:
         """ Serialize this quest.
@@ -177,30 +250,13 @@ class Quest:
         data = {}
         data["desc"] = self.desc
         data["reward"] = self.reward
-        data["commands"] = self.commands
-        data["actions"] = [action.serialize() for action in self.actions]
-        data["win_action"] = self.win_action.serialize()
-        data["fail_action"] = self.fail_action
-        if self.fail_action is not None:
-            data["fail_action"] = self.fail_action.serialize()
-
+        data["win_events"] = [event.serialize() for event in self.win_events]
+        data["fail_events"] = [event.serialize() for event in self.fail_events]
         return data
 
     def copy(self) -> "Quest":
         """ Copy this quest. """
         return self.deserialize(self.serialize())
-
-    def __str__(self) -> str:
-        return " -> ".join(map(str, self.actions))
-
-    def __repr__(self) -> str:
-        txt = "Quest({!r}, winning_conditions={!r}, failing_conditions={!r} desc={!r})"
-        failing_conditions = None
-        if self.fail_action is not None:
-            failing_conditions = self.fail_action.preconditions
-
-        return txt.format(self.actions, self.win_action.preconditions,
-                          failing_conditions, self.desc)
 
 
 class EntityInfo:
@@ -266,23 +322,21 @@ class Game:
     """
 
     def __init__(self, world: World, grammar: Optional[Grammar] = None,
-                 quests: Optional[List[Quest]] = None,
+                 quests: Iterable[Quest] = (),
                  kb: Optional[KnowledgeBase] = None) -> None:
         """
         Args:
             world: The world to use for the game.
-            quests: The quests to done in the game.
+            quests: The quests to be done in the game.
             grammar: The grammar to control the text generation.
         """
         self.world = world
-        self.state = world.state.copy()  # Current state of the game.
-        self.quests = [] if quests is None else quests
+        self.quests = tuple(quests)
         self.metadata = {}
         self._objective = None
         self._infos = self._build_infos()
         self.kb = kb or KnowledgeBase.default()
         self.change_grammar(grammar)
-
         self._main_quest = None
 
     @property
@@ -291,9 +345,16 @@ class Game:
             from textworld.generator.inform7 import Inform7Game
             from textworld.generator.text_generation import assign_description_to_quest
             inform7 = Inform7Game(self)
-            self._main_quest = Quest(actions=GameProgression(self).winning_policy)
-            self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
-            self._main_quest.commands = inform7.gen_commands_from_actions(self._main_quest.actions)
+            # TODO: defining the main quest using the actions might not be precise enough
+            #     since it only looks at the final action's postconditions.
+
+            # Check if we can derive a winning policy from the quests.
+            policy = GameProgression(self).winning_policy
+            if policy:
+                win_event = Event(actions=GameProgression(self).winning_policy)
+                self._main_quest = Quest(win_events=[win_event])
+                self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
+                self._main_quest.commands = inform7.gen_commands_from_actions(win_event.actions)
 
         return self._main_quest
 
@@ -313,10 +374,9 @@ class Game:
     def copy(self) -> "Game":
         """ Make a shallow copy of this game. """
         game = Game(self.world, self.grammar, self.quests, self.kb)
-        game._infos = self.infos
-        game.state = self.state.copy()
-        game.kb = self.kb
+        game._infos = dict(self.infos)
         game._objective = self._objective
+        game.metadata = dict(self.metadata)
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
@@ -333,7 +393,8 @@ class Game:
         for quest in self.quests:
             # TODO: should have a generic way of generating text commands from actions
             #       instead of relying on inform7 convention.
-            quest.commands = inform7.gen_commands_from_actions(quest.actions)
+            for event in quest.win_events:
+                event.commands = inform7.gen_commands_from_actions(event.actions)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -356,17 +417,12 @@ class Game:
         """
         world = World.deserialize(data["world"])
         game = cls(world)
-        if "grammar" in data:
-            game.grammar = Grammar(data["grammar"])
-
-        game.quests = [Quest.deserialize(d) for d in data["quests"]]
-        game._infos = {k: EntityInfo.deserialize(v)
-                       for k, v in data["infos"]}
-        game.state = State.deserialize(data["state"])
+        game.grammar = Grammar(data["grammar"])
+        game.quests = tuple([Quest.deserialize(d) for d in data["quests"]])
+        game._infos = {k: EntityInfo.deserialize(v) for k, v in data["infos"]}
         game.kb = KnowledgeBase.deserialize(data["KB"])
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
-
         return game
 
     def serialize(self) -> Mapping:
@@ -377,9 +433,7 @@ class Game:
         """
         data = {}
         data["world"] = self.world.serialize()
-        data["state"] = self.state.serialize()
-        if self.grammar is not None:
-            data["grammar"] = self.grammar.options.serialize()
+        data["grammar"] = self.grammar.options.serialize() if self.grammar else {}
         data["quests"] = [quest.serialize() for quest in self.quests]
         data["infos"] = [(k, v.serialize()) for k, v in self._infos.items()]
         data["KB"] = self.kb.serialize()
@@ -449,10 +503,11 @@ class Game:
         if self._objective is not None:
             return self._objective
 
-        if len(self.quests) == 0:
-            return ""
+        # TODO: Find a better way of describing the objective of the game with several quests.
+        self._objective = "\nAND\n".join(quest.desc for quest in self.quests if quest.desc)
+        if self.main_quest:
+            self._objective = self.main_quest.desc
 
-        self._objective = self.main_quest.desc
         return self._objective
 
     @objective.setter
@@ -567,100 +622,94 @@ class ActionDependencyTree(DependencyTree):
         return tree
 
 
-class QuestProgression:
-    """ QuestProgression keeps track of the completion of a quest.
+class EventProgression:
+    """ EventProgression monitors a particular event.
 
-    Internally, the quest is represented as a dependency tree of
+    Internally, the event is represented as a dependency tree of
     relevant actions to be performed.
     """
 
-    def __init__(self, quest: Quest, kb: KnowledgeBase) -> None:
+    def __init__(self, event: Event, kb: KnowledgeBase) -> None:
         """
         Args:
             quest: The quest to keep track of its completion.
         """
         self._kb = kb or KnowledgeBase.default()
-        self.quest = quest
-        self._completed = False
-        self._failed = False
-        self._unfinishable = False
+        self.event = event
+        self._triggered = False
+        self._untriggerable = False
+        self._policy = ()
 
         # Build a tree representation of the quest.
         self._tree = ActionDependencyTree(kb=self._kb,
                                           element_type=ActionDependencyTreeElement)
-        self._tree.push(quest.win_action)
-        for action in quest.actions[::-1]:
-            self._tree.push(action)
 
-        self._winning_policy = quest.actions + (quest.win_action,)
+        if len(event.actions) > 0:
+            self._tree.push(event.condition)
+
+            for action in event.actions[::-1]:
+                self._tree.push(action)
+
+            self._policy = event.actions + (event.condition,)
 
     @property
-    def winning_policy(self) -> List[Action]:
-        """ Actions to be performed in order to complete the quest. """
+    def triggering_policy(self) -> List[Action]:
+        """ Actions to be performed in order to trigger the event. """
         if self.done:
-            return []
+            return ()
 
-        return self._winning_policy[:-1]  # Discard "win" action.
+        # Discard all "trigger" actions.
+        return tuple(a for a in self._policy if a.name != "trigger")
 
     @property
     def done(self) -> bool:
-        """ Check if the quest is done (i.e. completed, failed or unfinishable). """
-        return self.completed or self.failed or self.unfinishable
+        """ Check if the quest is done (i.e. triggered or untriggerable). """
+        return self.triggered or self.untriggerable
 
     @property
-    def completed(self) -> bool:
-        """ Check whether the quest is completed. """
-        return self._completed
+    def triggered(self) -> bool:
+        """ Check whether the event has been triggered. """
+        return self._triggered
 
     @property
-    def failed(self) -> bool:
-        """ Check whether the quest has failed. """
-        return self._failed
-
-    @property
-    def unfinishable(self) -> bool:
-        """ Check whether the quest is in an unfinishable state. """
-        return self._unfinishable
+    def untriggerable(self) -> bool:
+        """ Check whether the event is in an untriggerable state. """
+        return self._untriggerable
 
     def update(self, action: Optional[Action] = None, state: Optional[State] = None) -> None:
-        """ Update quest progression given available information.
+        """ Update event progression given available information.
 
         Args:
-            action: Action potentially affecting the quest progression.
+            action: Action potentially affecting the event progression.
             state: Current game state.
         """
         if self.done:
             return  # Nothing to do, the quest is already done.
 
         if state is not None:
-            # Check if quest is completed.
-            if self.quest.win_action is not None:
-                self._completed = state.is_applicable(self.quest.win_action)
-
-            # Check if quest has failed.
-            if self.quest.fail_action is not None:
-                self._failed = state.is_applicable(self.quest.fail_action)
+            # Check if event is triggered.
+            self._triggered = self.event.is_triggering(state)
 
             # Try compressing the winning policy given the new game state.
-            if self.compress_winning_policy(state):
+            if self.compress_policy(state):
                 return  # A shorter winning policy has been found.
 
-        if action is not None:
+        if action is not None and not self._tree.empty:
             # Determine if we moved away from the goal or closer to it.
             reverse_action = self._tree.remove(action)
             if reverse_action is None:  # Irreversible action.
-                self._unfinishable = True  # Can't track quest anymore.
+                self._untriggerable = True  # Can't track quest anymore.
 
-            self._winning_policy = tuple(self._tree.flatten())  # Rebuild policy.
+            self._policy = tuple(self._tree.flatten())  # Rebuild policy.
 
-    def compress_winning_policy(self, state: State) -> bool:
-        """ Compress the winning policy given a game state.
+    def compress_policy(self, state: State) -> bool:
+        """ Compress the policy given a game state.
 
         Args:
             state: Current game state.
 
         Returns:
-            Whether the winning policy was compressed or not.
+            Whether the policy was compressed or not.
         """
 
         def _find_shorter_policy(policy):
@@ -678,13 +727,84 @@ class QuestProgression:
             return None
 
         compressed = False
-        policy = _find_shorter_policy(self._winning_policy)
+        policy = _find_shorter_policy(self._policy)
         while policy is not None:
             compressed = True
-            self._winning_policy = policy
+            self._policy = policy
             policy = _find_shorter_policy(policy)
 
         return compressed
+
+
+class QuestProgression:
+    """ QuestProgression keeps track of the completion of a quest.
+
+    Internally, the quest is represented as a dependency tree of
+    relevant actions to be performed.
+    """
+
+    def __init__(self, quest: Quest, kb: KnowledgeBase) -> None:
+        """
+        Args:
+            quest: The quest to keep track of its completion.
+        """
+        self.quest = quest
+        self.win_events = [EventProgression(event, kb) for event in quest.win_events]
+        self.fail_events = [EventProgression(event, kb) for event in quest.fail_events]
+
+    @property
+    def _tree(self) -> Optional[List[ActionDependencyTree]]:
+        events = [event for event in self.win_events if len(event.triggering_policy) > 0]
+        if len(events) == 0:
+            return None
+
+        event = min(events, key=lambda event: len(event.triggering_policy))
+        return event._tree
+
+    @property
+    def winning_policy(self) -> Optional[List[Action]]:
+        """ Actions to be performed in order to complete the quest. """
+        if self.done:
+            return None
+
+        winning_policies = [event.triggering_policy for event in self.win_events if len(event.triggering_policy) > 0]
+        if len(winning_policies) == 0:
+            return None
+
+        return min(winning_policies, key=lambda policy: len(policy))
+
+    @property
+    def done(self) -> bool:
+        """ Check if the quest is done (i.e. completed, failed or unfinishable). """
+        return self.completed or self.failed or self.unfinishable
+
+    @property
+    def completed(self) -> bool:
+        """ Check whether the quest is completed. """
+        return any(event.triggered for event in self.win_events)
+
+    @property
+    def failed(self) -> bool:
+        """ Check whether the quest has failed. """
+        return any(event.triggered for event in self.fail_events)
+
+    @property
+    def unfinishable(self) -> bool:
+        """ Check whether the quest is in an unfinishable state. """
+        return any(event.untriggerable for event in self.win_events)
+
+    def update(self, action: Optional[Action] = None, state: Optional[State] = None) -> None:
+        """ Update quest progression given available information.
+
+        Args:
+            action: Action potentially affecting the quest progression.
+            state: Current game state.
+        """
+        if self.done:
+            return  # Nothing to do, the quest is already done.
+
+        for event in (self.win_events + self.fail_events):
+            event.update(action, state)
 
 
 class GameProgression:
@@ -701,7 +821,7 @@ class GameProgression:
             track_quests: whether quest progressions are being tracked.
         """
         self.game = game
-        self.state = game.state.copy()
+        self.state = game.world.state.copy()
         self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
                                                                      self.game.kb.types.constants_mapping))
 
@@ -763,17 +883,21 @@ class GameProgression:
         if not self.tracking_quests:
             return None
 
-        # Check if any quest has failed.
-        if any(quest.failed or quest.unfinishable for quest in self.quest_progressions):
+        if self.done:
             return None
 
-        # Greedily build a new winning policy by merging all individual quests' tree.
+        # Greedily build a new winning policy by merging all quest trees.
         trees = [quest._tree for quest in self.quest_progressions if not quest.done]
+        if None in trees:
+            # Some quests don't have triggering policy.
+            return None
+
         master_quest_tree = ActionDependencyTree(kb=self.game.kb,
                                                  element_type=ActionDependencyTreeElement,
                                                  trees=trees)
 
-        return tuple(a for a in master_quest_tree.flatten() if a.name != "win")
+        # Discard all "trigger" actions.
+        return tuple(a for a in master_quest_tree.flatten() if a.name != "trigger")
 
     def update(self, action: Action) -> None:
         """ Update the state of the game given the provided action.

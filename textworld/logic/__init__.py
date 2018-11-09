@@ -1602,6 +1602,27 @@ class State:
         else:
             return False
 
+    def apply_on_copy(self, action: Action) -> Optional["State"]:
+        """
+        Apply an action to a copy of this state.
+
+        Parameters
+        ----------
+        action :
+            The action to apply.
+
+        Returns
+        -------
+        The copied state after the action has been applied or `None` if action
+        wasn't applicable.
+        """
+        if not self.is_applicable(action):
+            return None
+
+        state = self.copy()
+        state.apply(action)
+        return state
+
     def all_applicable_actions(self, rules: Iterable[Rule], mapping: Mapping[Placeholder, Variable] = None) -> Iterable[Action]:
         """
         Get all the rule instantiations that would be valid actions in this state.

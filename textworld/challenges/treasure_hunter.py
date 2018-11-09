@@ -28,7 +28,8 @@ from typing import Mapping, Union, Dict, Optional
 import textworld
 from textworld.utils import uniquify
 from textworld.logic import Variable, Proposition
-from textworld.generator import Quest, World
+from textworld.generator import World
+from textworld.generator.game import Quest, Event
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
 from textworld.challenges.utils import get_seeds_for_game_generation
@@ -192,8 +193,9 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Add objects needed for the quest.
     world.state = chain.initial_state
-    quest = Quest(chain.actions)
-    quest.set_failing_conditions([Proposition("in", [wrong_obj, world.inventory])])
+    event = Event(chain.actions)
+    quest = Quest(win_events=[event],
+                  fail_events=[Event(conditions={Proposition("in", [wrong_obj, world.inventory])})])
 
     grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
     game = textworld.generator.make_game_with(world, [quest], grammar)

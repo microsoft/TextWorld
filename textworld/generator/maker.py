@@ -20,7 +20,7 @@ from textworld.generator.data import KnowledgeBase
 from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
-from textworld.generator.game import Game, World, Quest
+from textworld.generator.game import Game, World, Quest, Event
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
@@ -320,7 +320,7 @@ class GameMaker:
         Creates an empty world, with a player and an empty inventory.
         """
         self._entities = {}
-        self._quests = []
+        self.quests = []
         self.rooms = []
         self.paths = []
         self._types_counts = KnowledgeBase.default().types.count(State())
@@ -486,7 +486,7 @@ class GameMaker:
         world = World.from_facts(self.facts)
         self._distractors_facts = world.populate(nb_distractors)
 
-    def new_quest(self, max_length: int) -> Quest:
+    def add_random_quest(self, max_length: int) -> Quest:
         """ Generates a random quest for the game.
 
         Calling this method replaced all previous quests.
@@ -498,11 +498,11 @@ class GameMaker:
             The generated quest.
         """
         world = World.from_facts(self.facts)
-        self._quests = [textworld.generator.make_quest(world, max_length)]
+        self.quests.append(textworld.generator.make_quest(world, max_length))
 
         # Calling build will generate the description for the quest.
         self.build()
-        return self._quests[0]
+        return self.quests[-1]
 
     def test(self) -> None:
         """ Test the game being built.
@@ -539,15 +539,15 @@ class GameMaker:
         # (if not, we assume the last action contains all the relevant facts)
         winning_facts = None
         if ask_for_state and recorder.last_game_state is not None:
-            winning_facts = user_query.query_for_important_facts(actions=recorder.actions,
-                                                                 facts=recorder.last_game_state.state.facts,
-                                                                 varinfos=self._working_game.infos)
+            winning_facts = [user_query.query_for_important_facts(actions=recorder.actions,
+                                                                  facts=recorder.last_game_state.state.facts,
+                                                                  varinfos=self._working_game.infos)]
 
-        self._quests = [Quest(actions=actions, winning_conditions=winning_facts)]
+        event = Event(actions=actions, conditions=winning_facts)
+        self.quests.append(Quest(win_events=[event]))
         # Calling build will generate the description for the quest.
         self.build()
-
-        return self._quests[0]
+        return self.quests[-1]
 
     def set_quest_from_commands(self, commands: List[str], ask_for_state: bool = False) -> Quest:
         """ Defines the game's quest using predefined text commands.
@@ -580,15 +580,16 @@ class GameMaker:
         # (if not, we assume the last action contains all the relevant facts)
         winning_facts = None
         if ask_for_state and recorder.last_game_state is not None:
-            winning_facts = user_query.query_for_important_facts(actions=recorder.actions,
-                                                                 facts=recorder.last_game_state.state.facts,
-                                                                 varinfos=self._working_game.infos)
+            winning_facts = [user_query.query_for_important_facts(actions=recorder.actions,
+                                                                  facts=recorder.last_game_state.state.facts,
+                                                                  varinfos=self._working_game.infos)]
 
-        self._quests = [Quest(actions=actions, winning_conditions=winning_facts)]
+        event = Event(actions=actions, conditions=winning_facts)
+        self.quests = [Quest(win_events=[event])]
 
         # Calling build will generate the description for the quest.
         self.build()
-        return self._quests[0]
+        return self.quests[-1]
 
     def new_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
         """ Create new fact.
@@ -599,6 +600,31 @@ class GameMaker:
         """
         args = [entity.var for entity in entities]
         return Proposition(name, args)
+
+    def new_event_using_commands(self, commands: List[str]) -> Event:
+        """ Creates a new event using predefined text commands.
+
+        This launches a `textworld.play` session to execute provided commands.
+
+        Args:
+            commands: Text commands.
+
+        Returns:
+            The resulting event.
+        """
+        with make_temp_directory() as tmpdir:
+            try:
+                game_file = self.compile(pjoin(tmpdir, "record_event.ulx"))
+                recorder = Recorder()
+                agent = textworld.agents.WalkthroughAgent(commands)
+                textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
+            except textworld.agents.WalkthroughDone:
+                pass  # Quest is done.
+
+        # Skip "None" actions.
+        actions = [action for action in recorder.actions if action is not None]
+        event = Event(actions=actions)
+        return event
 
     def new_quest_using_commands(self, commands: List[str]) -> Quest:
         """ Creates a new quest using predefined text commands.
@@ -611,38 +637,8 @@ class GameMaker:
         Returns:
             The resulting quest.
         """
-        with make_temp_directory() as tmpdir:
-            try:
-                game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
-                recorder = Recorder()
-                agent = textworld.agents.WalkthroughAgent(commands)
-                textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
-            except textworld.agents.WalkthroughDone:
-                pass  # Quest is done.
-
-        # Skip "None" actions.
-        actions = [action for action in recorder.actions if action is not None]
-        return Quest(actions=actions)
-
-    def set_quest_from_final_state(self, final_state: Collection[Proposition]) -> Quest:
-        """ Defines the game's quest using a collection of facts.
-
-        The quest will be considered as finished as soon as all the provided
-        facts are true.
-
-        Args:
-            final_state: List of all facts that will have to be true for
-                         the quest to be considered as completed.
-
-        Returns:
-            The resulting quest.
-        """
-        quest = Quest(actions=None, winning_conditions=final_state)
-        self._quests = [quest]
-
-        # Calling build will generate the description for the quest
-        self.build()
-        return self._quests[0]
+        event = self.new_event_using_commands(commands)
+        return Quest(win_events=[event])
 
     def validate(self) -> bool:
         """ Check if the world is valid and can be compiled.
@@ -677,7 +673,7 @@ class GameMaker:
             self.validate()  # Validate the state of the world.
 
         world = World.from_facts(self.facts)
-        game = Game(world, quests=self._quests)
+        game = Game(world, quests=self.quests)
 
         # Keep names and descriptions that were manually provided.
         for k, var_infos in game.infos.items():

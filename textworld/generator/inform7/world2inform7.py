@@ -6,6 +6,7 @@ import re
 import json
 import os
 import shutil
+import warnings
 import subprocess
 import textwrap
 from os.path import join as pjoin
@@ -23,6 +24,9 @@ from textworld.logic import Signature, Proposition, Action
 
 I7_DEFAULT_PATH = resource_filename(Requirement.parse('textworld'), 'textworld/thirdparty/inform7-6M62')
 
+
+class TextworldInform7Warning(UserWarning):
+    pass
 
 class CouldNotCompileGameError(RuntimeError):
     pass
@@ -62,6 +66,8 @@ class Inform7Game:
     def gen_source_for_attribute(self, attr: Proposition) -> Optional[str]:
         pt = self.kb.inform7_predicates.get(attr.signature)
         if pt is None:
+            msg = "Undefined Inform7's predicate: {}".format(attr.signature)
+            warnings.warn(msg, TextworldInform7Warning)
             return None
 
         pred, template = pt
@@ -103,7 +109,7 @@ class Inform7Game:
             obj_infos = self.entity_infos[obj.id]
             if not self.use_i7_description:
                 # Describe the object.
-                source += 'The description of {} is "{}".\n'.format(obj_infos.id, obj_infos.desc)
+                source += 'The description of {} is "{}".\n'.format(obj_infos.id, obj_infos.desc.replace("\n", "[line break]"))
                 source += 'The printed name of {} is "{}".\n'.format(obj_infos.id, obj_infos.name)
 
                 # Since we use objects' id in Inform7 source code, we need to specify how to refer to them.
@@ -178,6 +184,8 @@ class Inform7Game:
         Returns:
             Action corresponding to the provided Inform7 event.
         """
+        # Prioritze actions with many precondition terms.
+        actions = sorted(actions, key=lambda a: len(a.preconditions), reverse=True)
         for action in actions:
             event = self.kb.inform7_events[action.name]
             if event.format(**self._get_name_mapping(action)) == i7_event:
@@ -248,11 +256,9 @@ class Inform7Game:
         # Place the player.
         source += "The player is in {}.\n\n".format(self.entity_infos[self.game.world.player_room.id].id)
 
-        objective = self.game.objective
+        objective = self.game.objective.replace("\n", "[line break]")
         maximum_score = 0
         for quest_id, quest in enumerate(self.game.quests):
-            commands = self.gen_commands_from_actions(quest.actions)
-            quest.commands = commands
             maximum_score += quest.reward
 
             quest_completed = textwrap.dedent("""\
@@ -261,31 +267,42 @@ class Inform7Game:
             """)
             source += quest_completed.format(quest_id=quest_id)
 
-            walkthrough = '\nTest quest{} with "{}"\n\n'.format(quest_id, " / ".join(commands))
-            source += walkthrough
+            for event_id, event in enumerate(quest.win_events):
+                commands = self.gen_commands_from_actions(event.actions)
+                event.commands = commands
+
+                walkthrough = '\nTest quest{}_{} with "{}"\n\n'.format(quest_id, event_id, " / ".join(commands))
+                source += walkthrough
 
             # Add winning and losing conditions for quest.
-            quest_ending_condition = """\
-            Every turn:
-                if {losing_tests}:
-                    end the story; [Lost]
-                else if quest{quest_id} completed is false and {winning_tests}:
-                    increase the score by {reward}; [Quest completed]
-                    Now the quest{quest_id} completed is true.
+            quest_ending_conditions = textwrap.dedent("""\
+            if quest{quest_id} completed is true:
+                say "";""".format(quest_id=quest_id))
 
-            """
+            fail_template = textwrap.dedent("""
+            else if {conditions}:
+                end the story; [Lost]""")
 
-            winning_tests = self.gen_source_for_conditions(quest.win_action.preconditions)
+            win_template = textwrap.dedent("""
+            else if {conditions}:
+                increase the score by {reward}; [Quest completed]
+                Now the quest{quest_id} completed is true;""")
 
-            losing_tests = "1 is 0 [always false]"
-            if quest.fail_action is not None:
-                losing_tests = self.gen_source_for_conditions(quest.fail_action.preconditions)
+            for fail_event in quest.fail_events:
+                conditions = self.gen_source_for_conditions(fail_event.condition.preconditions)
+                quest_ending_conditions += fail_template.format(conditions=conditions)
 
-            quest_ending_condition = quest_ending_condition.format(losing_tests=losing_tests,
-                                                                   winning_tests=winning_tests,
-                                                                   reward=quest.reward,
-                                                                   quest_id=quest_id)
-            source += textwrap.dedent(quest_ending_condition)
+            for win_event in quest.win_events:
+                conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
+                quest_ending_conditions += win_template.format(conditions=conditions,
+                                                               reward=quest.reward,
+                                                               quest_id=quest_id)
+
+            quest_ending = """\
+            Every turn:\n{conditions}
+
+            """.format(conditions=textwrap.indent(quest_ending_conditions, "                "))
+            source += textwrap.dedent(quest_ending)
 
         # Enable scoring is at least one quest has nonzero reward.
         if maximum_score != 0:
@@ -294,8 +311,7 @@ class Inform7Game:
         # Build test condition for winning the game.
         game_winning_test = "1 is 0 [always false]"
         if len(self.game.quests) > 0:
-            test_template = "quest{} completed is true"
-            game_winning_test = " and ".join(test_template.format(i) for i in range(len(self.game.quests)))
+            game_winning_test = "score is maximum score"
 
         # Remove square bracket when printing score increases. Square brackets are conflicting with
         # Inform7's events parser in git_glulx_ml.py.

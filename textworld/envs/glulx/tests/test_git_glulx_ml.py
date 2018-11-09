@@ -18,6 +18,7 @@ from textworld import testing
 from textworld.generator.maker import GameMaker
 from textworld.utils import make_temp_directory
 from textworld.generator import data
+from textworld.generator.game import Quest, Event
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.envs.glulx.git_glulx_ml import StateTrackingIsRequiredError
 from textworld.envs.glulx.git_glulx_ml import OraclePolicyIsRequiredError
@@ -27,9 +28,6 @@ from textworld.envs.glulx.git_glulx_ml import GameNotRunningError
 
 def build_test_game():
     M = GameMaker()
-
-    # The goal
-    commands = ["go east", "insert carrot into chest"]
 
     # Create a 'bedroom' room.
     R1 = M.new_room("bedroom")
@@ -48,12 +46,13 @@ def build_test_game():
     chest.add_property("open")
     R2.add(chest)
 
+    commands = ["go east", "insert carrot into chest"]
     quest1 = M.new_quest_using_commands(commands)
     quest1.reward = 2
-    quest2 = M.new_quest_using_commands(commands + ["close chest"])
-    quest2.set_winning_conditions([M.new_fact("in", carrot, chest),
-                                   M.new_fact("closed", chest)])
-    M._quests = [quest1, quest2]
+    commands = ["go east", "insert carrot into chest", "close chest"]
+    event = M.new_event_using_commands(commands)
+    quest2 = Quest(win_events=[event])
+    M.quests = [quest1, quest2]
     game = M.build()
     return game
 

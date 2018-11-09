@@ -125,7 +125,7 @@ def test_playing_generated_games():
                     msg = "Finished before playing `max_steps` steps because of command '{}'.".format(command)
                     if game_state.has_won:
                         msg += " (winning)"
-                        assert len(game_state._game_progression.winning_policy) == 0
+                        assert game_state._game_progression.winning_policy is None
 
                     if game_state.has_lost:
                         msg += " (losing)"
