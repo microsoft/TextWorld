@@ -169,7 +169,9 @@ def make_game(options: GameOptions) -> Game:
 
     # Sample a quest.
     chaining_options = options.chaining.copy()
-    chaining_options.rules_per_depth = [options.kb.rules.get_matching("^(?!(go.*|examine.*|look.*|inventory.*)).*")]
+    # Go, examine, look and inventory shouldn't be used for chaining.
+    exclude = ["go.*", "examine.*", "look.*", "inventory.*"]
+    chaining_options.rules_per_depth = [options.kb.rules.get_matching(".*", exclude=exclude)]
     chaining_options.backward = True
     chaining_options.create_variables = True
     chaining_options.rng = rngs['quest']

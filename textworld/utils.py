@@ -9,6 +9,7 @@ import shutil
 import tempfile
 import contextlib
 from collections import OrderedDict
+from typing import List, Any
 
 import numpy as np
 
@@ -119,11 +120,29 @@ class RegexDict(OrderedDict):
     Adapted from
     https://stackoverflow.com/questions/21024822/python-accessing-dictionary-with-wildcards.
     """
-    def get_matching(self, *regexes):
-        """ Query the dictionary using a regex. """
+    def get_matching(self, *regexes: List[str], exclude: List[str] = []) -> List[Any]:
+        r"""
+        Query the dictionary using one or several regular expressions.
+
+        Arguments:
+            \*regexes: List of regular expressions determining which keys
+                       of this dictionary are relevant to this query.
+            exclude: List of regular expressions determining which keys
+                     of this dictionary should be excluded from this query.
+
+        Returns:
+           The value associated to each relevant (and not excluded) keys.
+
+        """
         matches = []
         for regex in regexes:
             matches += [self[key] for key in self if re.fullmatch(regex, key)]
+
+        to_exclude = []
+        for regex in exclude:
+            to_exclude += [self[key] for key in self if re.fullmatch(regex, key)]
+
+        matches = [m for m in matches if m not in to_exclude]
 
         if len(matches) == 0:
             raise ValueError("No rule matches your regex: {}.".format(regexes))

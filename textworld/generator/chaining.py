@@ -132,7 +132,8 @@ class ChainingOptions:
             return self.rules_per_depth[depth]
         else:
             # Examine, look and inventory shouldn't be used for chaining.
-            return self.kb.rules.get_matching("^(?!(examine.*|look.*|inventory.*)).*")
+            exclude = ["examine.*", "look.*", "inventory.*"]
+            return self.kb.rules.get_matching(".*", exclude=exclude)
 
     def check_action(self, state: State, action: Action) -> bool:
         """
