@@ -104,11 +104,18 @@ class ChainingOptions:
         self.subquests = False
         self.independent_chains = False
         self.create_variables = False
-        self.fixed_mapping = KnowledgeBase.default().types.constants_mapping
+        self.kb = KnowledgeBase.default()
         self.rng = None
-        self.logic = KnowledgeBase.default().logic
         self.rules_per_depth = []
         self.restricted_types = frozenset()
+
+    @property
+    def logic(self) -> GameLogic:
+        return self.kb.logic
+
+    @property
+    def fixed_mapping(self) -> GameLogic:
+        return self.kb.types.constants_mapping
 
     def get_rules(self, depth: int) -> Iterable[Rule]:
         """
@@ -124,7 +131,8 @@ class ChainingOptions:
         if depth < len(self.rules_per_depth):
             return self.rules_per_depth[depth]
         else:
-            return self.logic.rules.values()
+            # Examine, look and inventory shouldn't be used for chaining.
+            return self.kb.rules.get_matching("^(?!(examine.*|look.*|inventory.*)).*")
 
     def check_action(self, state: State, action: Action) -> bool:
         """

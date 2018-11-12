@@ -219,7 +219,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
     rooms = {}
     player_room = world.player_room
     if game_infos is None:
-        new_game = Game(world, [])
+        new_game = Game(world)
         game_infos = new_game.infos
         for k, v in game_infos.items():
             if v.name is None:

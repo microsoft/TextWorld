@@ -5,6 +5,8 @@ type I {
     }
 
     rules {
+        inventory :: at(P, r) -> at(P, r);  # Nothing changes.
+
         take :: $at(P, r) & at(o, r) -> in(o, I);
         drop :: $at(P, r) & in(o, I) -> at(o, r);
 
@@ -13,6 +15,10 @@ type I {
 
         take/s :: $at(P, r) & $at(s, r) & on(o, s) -> in(o, I);
         put    :: $at(P, r) & $at(s, r) & in(o, I) -> on(o, s);
+
+        examine/I :: in(o, I) -> in(o, I);  # Nothing changes.
+        examine/s :: at(P, r) & $at(s, r) & $on(o, s) -> at(P, r);  # Nothing changes.
+        examine/c :: at(P, r) & $at(c, r) & $open(c) & $in(o, c) -> at(P, r);  # Nothing changes.
     }
 
     reverse_rules {
@@ -37,6 +43,10 @@ type I {
             put :: "put {o} on {s}" :: "putting the {o} on the {s}";
 
             inventory :: "inventory" :: "taking inventory";
+
+            examine/I :: "examine {o}" :: "examining the {o}";
+            examine/s :: "examine {o}" :: "examining the {o}";
+            examine/c :: "examine {o}" :: "examining the {o}";
         }
     }
 }

@@ -200,6 +200,7 @@ def test_parallel_quests():
             }
         }
     """)
+    kb = KnowledgeBase(logic, "")
 
     state = State([
         Proposition.parse("a(foo)"),
@@ -209,7 +210,7 @@ def test_parallel_quests():
 
     options = ChainingOptions()
     options.backward = True
-    options.logic = logic
+    options.kb = kb
 
     options.max_depth = 3
     options.max_breadth = 1
@@ -285,6 +286,7 @@ def test_parallel_quests_navigation():
             }
         }
     """)
+    kb = KnowledgeBase(logic, "")
 
     state = State([
         Proposition.parse("at(P, r3: r)"),
@@ -292,8 +294,8 @@ def test_parallel_quests_navigation():
         Proposition.parse("free(r1: r, r2: r)"),
     ])
 
-    bake = [logic.rules["bake"]]
-    non_bake = [r for r in logic.rules.values() if r.name != "bake"]
+    bake = [kb.logic.rules["bake"]]
+    non_bake = [r for r in kb.logic.rules.values() if r.name != "bake"]
 
     options = ChainingOptions()
     options.backward = True
@@ -302,7 +304,7 @@ def test_parallel_quests_navigation():
     options.max_depth = 3
     options.min_breadth = 2
     options.max_breadth = 2
-    options.logic = logic
+    options.kb = kb
     options.rules_per_depth = [bake, non_bake, non_bake]
     options.restricted_types = {"P", "r"}
     chains = list(get_chains(state, options))

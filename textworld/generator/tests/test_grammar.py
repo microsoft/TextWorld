@@ -77,11 +77,6 @@ def test_propositions():
 
 
 def test_rules():
-    # Make sure the number of basic rules matches the number
-    # of rules in rules.txt
-    basic_rules = [k for k in KnowledgeBase.default().rules.keys() if "-" not in k]
-    assert len(basic_rules) == 19
-
     for rule in KnowledgeBase.default().rules.values():
         infos = rule.serialize()
         loaded_rule = Rule.deserialize(infos)

@@ -1,8 +1,11 @@
 # Player
 type P {
+    rules {
+        look :: at(P, r) -> at(P, r);  # Nothing changes.
+    }
+
     inform7 {
         commands {
-            wait :: "wait" :: "waiting";
             look :: "look" :: "looking";
         }
     }
