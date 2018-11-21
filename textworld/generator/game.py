@@ -75,8 +75,9 @@ class Event:
                     when all conditions are statisfied.
     """
 
-    def __init__(self, actions: Iterable[Action] = [],
-                 conditions: Iterable[Proposition] = []) -> None:
+    def __init__(self, actions: Iterable[Action] = (),
+                 conditions: Iterable[Proposition] = (),
+                 commands: Iterable[str] = ()) -> None:
         """
         Args:
             actions: The actions to be performed to trigger this event.
@@ -84,9 +85,10 @@ class Event:
             conditions: Set of propositions which need to
                         be all true in order for this event
                         to get triggered.
+            commands: Human readable version of the actions.
         """
         self.actions = tuple(actions)
-        self.commands = gen_commands_from_actions(self.actions)
+        self.commands = tuple(commands)
         self.condition = self.set_conditions(conditions)
 
     def is_triggering(self, state: State) -> bool:
@@ -119,7 +121,7 @@ class Event:
         return self.condition
 
     def __hash__(self) -> int:
-        return hash((self.actions,
+        return hash((tuple(self.actions),
                      tuple(self.commands),
                      self.condition))
 
@@ -139,8 +141,7 @@ class Event:
         """
         actions = [Action.deserialize(d) for d in data["actions"]]
         condition = Action.deserialize(data["condition"])
-        event = cls(actions=actions, conditions=condition.preconditions)
-        event.commands = data["commands"]
+        event = cls(actions, condition.preconditions, data["commands"])
         return event
 
     def serialize(self) -> Mapping:
@@ -175,13 +176,15 @@ class Quest:
                      to fail this quest.
         reward: Reward given for completing this quest.
         desc: A text description of the quest.
+        commands: List of text commands leading to this quest completion.
     """
 
     def __init__(self,
-                 win_events: Iterable[Event] = [],
-                 fail_events: Iterable[Event] = [],
+                 win_events: Iterable[Event] = (),
+                 fail_events: Iterable[Event] = (),
                  reward: Optional[int] = None,
-                 desc: Optional[str] = None) -> None:
+                 desc: Optional[str] = None,
+                 commands: Iterable[str] = ()) -> None:
         r"""
         Args:
             win_events: Mutually exclusive set of winning events. That is,
@@ -194,10 +197,12 @@ class Quest:
                     reward is set to 1 if there is at least one winning events
                     otherwise it is set to 0.
             desc: A text description of the quest.
+            commands: List of text commands leading to this quest completion.
         """
         self.win_events = tuple(win_events)
         self.fail_events = tuple(fail_events)
         self.desc = desc
+        self.commands = tuple(commands)
 
         # Unless explicitly provided, reward is set to 1 if there is at least
         # one winning events otherwise it is set to 0.
@@ -215,17 +220,19 @@ class Quest:
         return any(event.is_triggering(state) for event in self.fail_events)
 
     def __hash__(self) -> int:
-        return hash((self.win_events,
-                     self.fail_events,
+        return hash((tuple(self.win_events),
+                     tuple(self.fail_events),
                      self.reward,
-                     self.desc))
+                     self.desc,
+                     tuple(self.commands)))
 
     def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Quest) and
                 self.win_events == other.win_events and
                 self.fail_events == other.fail_events and
                 self.reward == other.reward and
-                self.desc == other.desc)
+                self.desc == other.desc,
+                self.commands == other.commands)
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Quest":
@@ -237,9 +244,10 @@ class Quest:
         """
         win_events = [Event.deserialize(d) for d in data["win_events"]]
         fail_events = [Event.deserialize(d) for d in data["fail_events"]]
+        commands = data.get("commands", [])
         reward = data["reward"]
         desc = data["desc"]
-        return cls(win_events, fail_events, reward, desc)
+        return cls(win_events, fail_events, reward, desc, commands)
 
     def serialize(self) -> Mapping:
         """ Serialize this quest.
@@ -250,6 +258,7 @@ class Quest:
         data = {}
         data["desc"] = self.desc
         data["reward"] = self.reward
+        data["commands"] = self.commands
         data["win_events"] = [event.serialize() for event in self.win_events]
         data["fail_events"] = [event.serialize() for event in self.fail_events]
         return data
@@ -336,27 +345,15 @@ class Game:
         self._objective = None
         self._infos = self._build_infos()
         self.kb = kb or KnowledgeBase.default()
+
+        # Check if we can derive a global winning policy from the quests.
+        self.main_quest = None
+        policy = GameProgression(self).winning_policy
+        if policy:
+            win_event = Event(actions=GameProgression(self).winning_policy)
+            self.main_quest = Quest(win_events=[win_event])
+
         self.change_grammar(grammar)
-        self._main_quest = None
-
-    @property
-    def main_quest(self):
-        if self._main_quest is None:
-            from textworld.generator.inform7 import Inform7Game
-            from textworld.generator.text_generation import assign_description_to_quest
-            inform7 = Inform7Game(self)
-            # TODO: defining the main quest using the actions might not be precise enough
-            #     since it only looks at the final action's postconditions.
-
-            # Check if we can derive a winning policy from the quests.
-            policy = GameProgression(self).winning_policy
-            if policy:
-                win_event = Event(actions=GameProgression(self).winning_policy)
-                self._main_quest = Quest(win_events=[win_event])
-                self._main_quest.desc = assign_description_to_quest(self._main_quest, self, self.grammar)
-                self._main_quest.commands = inform7.gen_commands_from_actions(win_event.actions)
-
-        return self._main_quest
 
     @property
     def infos(self) -> Dict[str, EntityInfo]:
@@ -396,6 +393,10 @@ class Game:
             for event in quest.win_events:
                 event.commands = inform7.gen_commands_from_actions(event.actions)
 
+        if self.main_quest:
+            win_event = self.main_quest.win_events[0]
+            self.main_quest.commands = inform7.gen_commands_from_actions(win_event.actions)
+
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
         with open(filename, 'w') as f:
@@ -423,6 +424,9 @@ class Game:
         game.kb = KnowledgeBase.deserialize(data["KB"])
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
+        if "main_quest" in data:
+            game.main_quest = Quest.deserialize(data["main_quest"])
+
         return game
 
     def serialize(self) -> Mapping:
@@ -439,6 +443,9 @@ class Game:
         data["KB"] = self.kb.serialize()
         data["metadata"] = self.metadata
         data["objective"] = self._objective
+        if self.main_quest:
+            data["main_quest"] = self.main_quest.serialize()
+
         return data
 
     def __eq__(self, other: Any) -> bool:
@@ -446,6 +453,7 @@ class Game:
                 self.world == other.world and
                 self.infos == other.infos and
                 self.quests == other.quests and
+                self.main_quest == other.main_quest and
                 self._objective == other._objective)
 
     def __hash__(self) -> int:
