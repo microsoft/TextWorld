@@ -345,6 +345,7 @@ class Game:
         self._objective = None
         self._infos = self._build_infos()
         self.kb = kb or KnowledgeBase.default()
+        self.extras = {}
 
         # Check if we can derive a global winning policy from the quests.
         self.main_quest = None
@@ -374,6 +375,7 @@ class Game:
         game._infos = dict(self.infos)
         game._objective = self._objective
         game.metadata = dict(self.metadata)
+        game.extras = dict(self.extras)
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
@@ -424,6 +426,7 @@ class Game:
         game.kb = KnowledgeBase.deserialize(data["KB"])
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
+        game.extras = data.get("extras", {})
         if "main_quest" in data:
             game.main_quest = Quest.deserialize(data["main_quest"])
 
@@ -443,6 +446,7 @@ class Game:
         data["KB"] = self.kb.serialize()
         data["metadata"] = self.metadata
         data["objective"] = self._objective
+        data["extras"] = self.extras
         if self.main_quest:
             data["main_quest"] = self.main_quest.serialize()
 
@@ -453,6 +457,7 @@ class Game:
                 self.world == other.world and
                 self.infos == other.infos and
                 self.quests == other.quests and
+                self.extras == other.extras and
                 self.main_quest == other.main_quest and
                 self._objective == other._objective)
 
@@ -460,9 +465,15 @@ class Game:
         state = (self.world,
                  frozenset(self.quests),
                  frozenset(self.infos.items()),
+                 frozenset(self.extras.items()),
                  self._objective)
 
         return hash(state)
+
+    @property
+    def command_templates(self) -> List[str]:
+        """ All command templates understood in this game. """
+        return sorted(set(cmd for cmd in self.kb.inform7_commands.values()))
 
     @property
     def directions_names(self) -> List[str]:
@@ -477,16 +488,20 @@ class Game:
     def objects_names(self) -> List[str]:
         """ The names of all relevant objects in this game. """
         def _filter_unnamed_and_room_entities(e):
-            return e.name and e.type != "r"
+            return e.name is not None and e.type != "r"
 
         entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
         return [info.name for info in entities_infos]
 
     @property
+    def entity_names(self) -> List[str]:
+        return self.objects_names + self.directions_names
+
+    @property
     def objects_names_and_types(self) -> List[str]:
         """ The names of all non-player objects along with their type in this game. """
         def _filter_unnamed_and_room_entities(e):
-            return e.name and e.type != "r"
+            return e.name is not None and e.type != "r"
 
         entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
         return [(info.name, info.type) for info in entities_infos]
@@ -495,11 +510,7 @@ class Game:
     def verbs(self) -> List[str]:
         """ Verbs that should be recognized in this game. """
         # Retrieve commands templates for every rule.
-        commands = [self.kb.inform7_commands[rule_name]
-                    for rule_name in self.kb.rules]
-        verbs = [cmd.split()[0] for cmd in commands]
-        verbs += ["look", "inventory", "examine", "wait"]
-        return sorted(set(verbs))
+        return sorted(set(cmd.split()[0] for cmd in self.command_templates))
 
     @property
     def win_condition(self) -> List[Collection[Proposition]]:
@@ -1049,8 +1060,7 @@ class GameOptions:
     @kb.setter
     def kb(self, value: KnowledgeBase) -> None:
         self._kb = value
-        self.chaining.logic = self._kb.logic
-        self.chaining.fixed_mapping = self._kb.types.constants_mapping
+        self.chaining.kb = self._kb
 
     def copy(self) -> "GameOptions":
         return copy.copy(self)

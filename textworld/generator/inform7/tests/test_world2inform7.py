@@ -52,7 +52,23 @@ def test_quest_winning_condition():
     map_ = make_small_map(n_rooms=5, possible_door_states=["open"])
     world = World.from_map(map_)
 
+    def _rule_to_skip(rule):
+        # Examine, look and inventory shouldn't be used for chaining.
+        if rule.name.startswith("look"):
+            return True
+
+        if rule.name.startswith("inventory"):
+            return True
+
+        if rule.name.startswith("examine"):
+            return True
+
+        return False
+
     for rule in KnowledgeBase.default().rules.values():
+        if _rule_to_skip(rule):
+            continue
+
         options = ChainingOptions()
         options.backward = True
         options.max_depth = 1

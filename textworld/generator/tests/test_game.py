@@ -211,8 +211,24 @@ class TestQuest(unittest.TestCase):
         map_ = make_small_map(n_rooms=5, possible_door_states=["open"])
         world = World.from_map(map_)
 
+        def _rule_to_skip(rule):
+            # Examine, look and inventory shouldn't be used for chaining.
+            if rule.name.startswith("look"):
+                return True
+
+            if rule.name.startswith("inventory"):
+                return True
+
+            if rule.name.startswith("examine"):
+                return True
+
+            return False
+
         for max_depth in range(1, 3):
             for rule in KnowledgeBase.default().rules.values():
+                if _rule_to_skip(rule):
+                    continue
+
                 options = ChainingOptions()
                 options.backward = True
                 options.max_depth = max_depth
@@ -364,8 +380,19 @@ class TestGame(unittest.TestCase):
     def test_verbs(self):
         expected_verbs = {"drop", "take", "insert", "put", "open", "close",
                           "lock", "unlock", "go", "eat", "look",
-                          "inventory", "examine", "wait"}
+                          "inventory", "examine"}
         assert set(self.game.verbs) == expected_verbs
+
+    def test_command_templates(self):
+        expected_templates = {
+            'close {c}', 'close {d}', 'drop {o}', 'eat {f}', 'examine {d}',
+            'examine {o}', 'examine {t}', 'go east', 'go north', 'go south',
+            'go west', 'insert {o} into {c}', 'inventory', 'lock {c} with {k}',
+            'lock {d} with {k}', 'look', 'open {c}', 'open {d}', 'put {o} on {s}',
+            'take {o}', 'take {o} from {c}', 'take {o} from {s}',
+            'unlock {c} with {k}', 'unlock {d} with {k}'
+            }
+        assert set(self.game.command_templates) == expected_templates
 
     def test_serialization(self):
         data = self.game.serialize()

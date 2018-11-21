@@ -273,11 +273,20 @@ class TestGlulxGameState(unittest.TestCase):
 
     def test_admissible_commands(self):
         game_state = self.env.reset()
+        # Make sure examine, look and inventory are in the admissible commands.
+        assert "examine carrot" in game_state.admissible_commands
+        assert "examine wooden door" in game_state.admissible_commands
+
         for command in self.game.main_quest.commands:
+            assert "look" in game_state.admissible_commands
+            assert "inventory" in game_state.admissible_commands
             assert command in game_state.admissible_commands
             game_state, _, done = self.env.step(command)
 
         assert done
+        # Can't examine objects that are inside closed containers.
+        assert "examine chest" in game_state.admissible_commands
+        assert "examine carrot" not in game_state.admissible_commands
 
     def test_view(self):
         view = self.game_state.view()

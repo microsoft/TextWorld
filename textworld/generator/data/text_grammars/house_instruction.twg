@@ -19,6 +19,9 @@ init_syn:in it;inside;placed inside
 into_syn:into;inside
 #actions
 ##actions should start with a verb (ie:ensure, make sure, etc (these could probably just be a tag))
+look:look around in (r).
+examine:examine (o|k|f|d|c|s|t).
+inventory:examine your inventory.
 take:#take_synonym_1# the #obj_types# in the (r).;#take_synonym_1# the #obj_types# from the (r).;#take_synonym_1# the #obj_types# that's in the (r).
 take_synonym_1:take;retrieve;recover;pick up
 take/s:#take_synonym_1# the #obj_types# from the #on_var#.

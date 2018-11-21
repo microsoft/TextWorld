@@ -145,6 +145,7 @@ class GlulxGameState(textworld.GameState):
         """
         output = _strip_input_prompt_symbol(output)
         super().init(output)
+        self._game = game
         self._game_progression = GameProgression(game, track_quests=compute_intermediate_reward)
         self._inform7 = Inform7Game(game)
         self._state_tracking = state_tracking
@@ -201,6 +202,7 @@ class GlulxGameState(textworld.GameState):
         game_state._objective = self.objective
         game_state._max_score = self.max_score
         game_state._inform7 = self._inform7
+        game_state._game = self._game
         game_state._game_progression = self._game_progression
         game_state._state_tracking = self._state_tracking
         game_state._compute_intermediate_reward = self._compute_intermediate_reward
@@ -363,7 +365,7 @@ class GlulxGameState(textworld.GameState):
     @property
     def game_infos(self) -> Mapping:
         """ Additional information about the game. """
-        return self._game_progression.game.infos
+        return self._game.infos
 
     @property
     def state(self) -> State:
@@ -389,15 +391,28 @@ class GlulxGameState(textworld.GameState):
                 raise StateTrackingIsRequiredError("admissible_commands")
 
             all_valid_commands = self._inform7.gen_commands_from_actions(self._game_progression.valid_actions)
-            # Add single-word commands.
-            all_valid_commands.append("look")
-            all_valid_commands.append("inventory")
-            # TODO: Manually add 'examine <obj>' given objects in the room?
             # To guarantee the order from one execution to another, we sort the commands.
             # Remove any potential duplicate commands (they would lead to the same result anyway).
             self._admissible_commands = sorted(set(all_valid_commands))
 
         return self._admissible_commands
+
+    @property
+    def command_templates(self):
+        return self._game.command_templates
+
+    @property
+    def verbs(self):
+        return self._game.verbs
+
+    @property
+    def entities(self):
+        return self._game.entity_names
+
+    @property
+    def extras(self):
+        return self._game.extras
+
 
 
 class GitGlulxMLEnvironment(textworld.Environment):
