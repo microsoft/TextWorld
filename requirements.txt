@@ -6,7 +6,7 @@ networkx>=2
 pyyaml>=3.12
 urwid>=2.0.1
 more_itertools
-tatsu>=4.2.5
+tatsu>=4.3.0
 hashids>=1.2.0
 jericho>=1.1.1
 
