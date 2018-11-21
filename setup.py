@@ -54,6 +54,7 @@ setup(
         "scripts/tw-play",
         "scripts/tw-make",
         "scripts/tw-stats",
+        "scripts/tw-extract",
     ],
     license='',
     zip_safe=False,

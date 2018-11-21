@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+import os
+import sys
+import pprint
+import argparse
+
+import textworld
+from textworld.text_utils import extract_vocab
+from textworld.generator import Game
+
+
+def parse_args():
+    DESCRIPTION = "Extract information from of a list of TextWorld games."
+    general_parser = argparse.ArgumentParser(add_help=False)
+
+    general_group = general_parser.add_argument_group('General settings')
+    general_group.add_argument("-v", "--verbose", action="store_true")
+    general_group.add_argument("-f", "--force", action="store_true")
+
+    parser = argparse.ArgumentParser(parents=[general_parser], description=DESCRIPTION)
+    subparsers = parser.add_subparsers(dest="subcommand",
+                                       help='Type of information to extract.')
+
+    vocab_parser = subparsers.add_parser("vocab", parents=[general_parser],
+                                          help='Extract vocabulary.')
+    vocab_parser.add_argument("games", metavar="game", nargs="+",
+                               help="List of TextWorld games (.ulx|.json).")
+    vocab_parser.add_argument("--output", default="vocab.txt",
+                              help="Output file containing all words (.txt). Default: %(default)s")
+
+    entities_parser = subparsers.add_parser("entities", parents=[general_parser],
+                                             help='Extract entity names.')
+    entities_parser.add_argument("games", metavar="game", nargs="+",
+                                 help="List of TextWorld games (.ulx|.json).")
+    entities_parser.add_argument("--output", default="entities.txt",
+                                 help="Output file containing all entity names (.txt). Default: %(default)s")
+
+    return parser.parse_args(), parser
+
+
+def main():
+    args, parser = parse_args()
+
+    if not args.subcommand:
+        parser.error("A subcommand is required.")
+
+    if args.subcommand == "entities":
+        unit = ["entity", "entities"]
+        infos = set()
+        for gamefile in args.games:
+            game = Game.load(gamefile.replace(".ulx", ".json"))
+            infos |= set(game.objects_names)
+
+    elif args.subcommand == "vocab":
+        unit = ["word", "words"]
+        games_iter = (Game.load(gamefile.replace(".ulx", ".json"))
+                      for gamefile in args.games)
+        infos = extract_vocab(games_iter)
+
+    infos = sorted(infos)
+
+    if args.verbose:
+        pprint.pprint(infos)
+
+    length = len(infos)
+    unit = unit[1] if len(infos) > 1 else unit[1]
+    print("Extracted {} {}.".format(length, unit))
+
+    if os.path.isfile(args.output) and not args.force:
+        msg = "{} already exists. Use --force to overwrite."
+        print(msg.format(args.output))
+        sys.exit(1)
+
+    with open(args.output, "w") as f:
+        f.write("\n".join(infos))
+
+
+if __name__ == "__main__":
+    main()

@@ -113,14 +113,15 @@ class Inform7Game:
                 source += 'The printed name of {} is "{}".\n'.format(obj_infos.id, obj_infos.name)
 
                 # Since we use objects' id in Inform7 source code, we need to specify how to refer to them.
-                source += 'Understand "{}" as {}.\n'.format(obj_infos.name, obj_infos.id)
+                if obj_infos.name:
+                    source += 'Understand "{}" as {}.\n'.format(obj_infos.name, obj_infos.id)
 
-                # If an object's name is composed of multiple words, make them all refer to the object.
-                words = obj_infos.name.split()
-                if len(words) > 1:
-                    for word in words:
-                        if word.lower() not in ["the", "of"]:
-                            source += 'Understand "{}" as {}.\n'.format(word, obj_infos.id)
+                    # If an object's name is composed of multiple words, make them all refer to the object.
+                    words = obj_infos.name.split()
+                    if len(words) > 1:
+                        for word in words:
+                            if word.lower() not in ["the", "of"]:
+                                source += 'Understand "{}" as {}.\n'.format(word, obj_infos.id)
 
             # List object's attributes
             source += self.gen_source_for_attributes(obj.get_attributes())

@@ -477,7 +477,7 @@ class Game:
     def objects_names(self) -> List[str]:
         """ The names of all relevant objects in this game. """
         def _filter_unnamed_and_room_entities(e):
-            return e.name is not None and e.type != "r"
+            return e.name and e.type != "r"
 
         entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
         return [info.name for info in entities_infos]
@@ -486,7 +486,7 @@ class Game:
     def objects_names_and_types(self) -> List[str]:
         """ The names of all non-player objects along with their type in this game. """
         def _filter_unnamed_and_room_entities(e):
-            return e.name is not None and e.type != "r"
+            return e.name and e.type != "r"
 
         entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
         return [(info.name, info.type) for info in entities_infos]

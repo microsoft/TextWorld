@@ -1,0 +1,47 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+import os
+from os.path import join as pjoin
+from subprocess import check_output
+
+import textworld
+from textworld.utils import make_temp_directory
+
+
+def test_extract_vocab():
+    with make_temp_directory(prefix="test_tw-extract") as tmpdir:
+        options = textworld.GameOptions()
+        options.nb_rooms = 5
+        options.nb_objects = 10
+        options.quest_length = 5
+        options.quest_breadth = 4
+        options.seeds = 1234
+        game_file1, _ = textworld.make(options, path=tmpdir)
+        options.seeds = 12345
+        game_file2, _ = textworld.make(options, path=tmpdir)
+
+        outfile = pjoin(tmpdir, "vocab.txt")
+        command = ["tw-extract", "vocab", game_file1, game_file2, "--output", outfile]
+        stdout = check_output(command).decode()
+        assert os.path.isfile(outfile)
+        nb_words = len(open(outfile).readlines())
+        assert "Extracted {}".format(nb_words) in stdout
+
+
+def test_extract_entities():
+    with make_temp_directory(prefix="test_tw-extract") as tmpdir:
+        options = textworld.GameOptions()
+        options.nb_rooms = 5
+        options.nb_objects = 10
+        options.quest_length = 5
+        options.quest_breadth = 4
+        options.seeds = 1234
+        game_file, _ = textworld.make(options, path=tmpdir)
+
+        outfile = pjoin(tmpdir, "entities.txt")
+        command = ["tw-extract", "entities", game_file, "--output", outfile]
+        stdout = check_output(command).decode()
+        assert os.path.isfile(outfile)
+        nb_entities = len(open(outfile).readlines())
+        assert "Extracted {}".format(nb_entities) in stdout
