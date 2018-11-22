@@ -21,3 +21,6 @@ pydot>=1.2.4
 
 # For advanced prompt
 prompt-toolkit<2.0.0,>=1.0.15
+
+# For gym support
+gym==0.10.4
