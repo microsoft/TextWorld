@@ -2,6 +2,7 @@ import gym
 
 import textworld
 import textworld.gym
+from textworld import EnvInfos
 from textworld.utils import make_temp_directory
 
 
@@ -10,12 +11,13 @@ def test_register_game():
         options = textworld.GameOptions()
         options.seeds = 1234
         gamefile, game = textworld.make(options, tmpdir)
-        requested_infos = ["inventory", "description", "admissible_commands"]
+        env_options = EnvInfos(inventory=True, description=True,
+                               admissible_commands=True)
 
-        env_id = textworld.gym.register_game("test-single", gamefile, requested_infos)
+        env_id = textworld.gym.register_games([gamefile], env_options, name="test-single")
         env = gym.make(env_id)
         obs, infos = env.reset()
-        assert len(infos) == len(requested_infos)
+        assert len(infos) == len(env_options)
 
         for cmd in game.main_quest.commands:
             obs, score, done, infos = env.step(cmd)
@@ -31,14 +33,15 @@ def test_register_games():
         gamefile1, game1 = textworld.make(options, tmpdir)
         options.seeds = 4321
         gamefile2, game2 = textworld.make(options, tmpdir)
-        requested_infos = ["inventory", "description", "admissible_commands"]
+        env_options = EnvInfos(inventory=True, description=True,
+                               admissible_commands=True)
 
-        env_id = textworld.gym.register_games("test-multi", [gamefile1, gamefile2], requested_infos)
+        env_id = textworld.gym.register_games([gamefile1, gamefile2], env_options, name="test-multi")
         env = gym.make(env_id)
         env.seed(2)  # Make game2 starts on the first reset call.
 
         obs, infos = env.reset()
-        assert len(infos) == len(requested_infos)
+        assert len(infos) == len(env_options)
 
         for cmd in game2.main_quest.commands:
             obs, score, done, infos = env.step(cmd)
@@ -47,7 +50,7 @@ def test_register_games():
         assert score == 1
 
         obs, infos = env.reset()
-        assert len(infos) == len(requested_infos)
+        assert len(infos) == len(env_options)
         for cmd in game1.main_quest.commands:
             obs, score, done, infos = env.step(cmd)
 
@@ -66,17 +69,18 @@ def test_batch():
         options.seeds = 1234
         gamefile, game = textworld.make(options, tmpdir)
 
-        requested_infos = ["inventory", "description", "admissible_commands"]
-        env_id = textworld.gym.register_game("test-batch", gamefile, requested_infos)
+        env_options = EnvInfos(inventory=True, description=True,
+                               admissible_commands=True)
+        env_id = textworld.gym.register_games([gamefile], env_options, name="test-batch")
         env_id = textworld.gym.make_batch(env_id, batch_size)
         env = gym.make(env_id)
 
         obs, infos = env.reset()
         assert len(obs) == batch_size
         assert len(set(obs)) == 1  # All the same game.
-        assert len(infos) == len(requested_infos)
-        for key in requested_infos:
-            assert len(infos[key]) == batch_size
+        assert len(infos) == len(env_options)
+        for values in infos.values():
+            assert len(values) == batch_size
 
         for cmd in game.main_quest.commands:
             obs, scores, dones, infos = env.step([cmd] * batch_size)
@@ -94,17 +98,18 @@ def test_batch_parallel():
         options.seeds = 1234
         gamefile, game = textworld.make(options, tmpdir)
 
-        requested_infos = ["inventory", "description", "admissible_commands"]
-        env_id = textworld.gym.register_game("test-batch-parallel", gamefile, requested_infos)
+        env_options = EnvInfos(inventory=True, description=True,
+                               admissible_commands=True)
+        env_id = textworld.gym.register_games([gamefile], env_options, name="test-batch-parallel")
         env_id = textworld.gym.make_batch(env_id, batch_size, parallel=True)
         env = gym.make(env_id)
 
         obs, infos = env.reset()
         assert len(obs) == batch_size
         assert len(set(obs)) == 1  # All the same game.
-        assert len(infos) == len(requested_infos)
-        for key in requested_infos:
-            assert len(infos[key]) == batch_size
+        assert len(infos) == len(env_options)
+        for values in infos.values():
+            assert len(values) == batch_size
 
         for cmd in game.main_quest.commands:
             obs, scores, dones, infos = env.step([cmd] * batch_size)

@@ -941,21 +941,21 @@ class GameOptions:
     Options for customizing the game generation.
 
     Attributes:
-        nb_rooms:
+        nb_rooms (int):
             Number of rooms in the game.
-        nb_objects:
+        nb_objects (int):
             Number of objects in the game.
-        quest_length:
+        quest_length (int):
             Minimum number of actions the quest requires to be completed.
-        quest_breadth:
+        quest_breadth (int):
             Control how nonlinear a quest can be (1: linear).
-        games_dir:
+        games_dir (str):
             Path to the directory where the game will be saved.
-        force_recompile:
+        force_recompile (bool):
             If `True`, recompile game even if it already exists.
-        file_type:
+        file_type (str):
             Type of the generated game file. Either .z8 (Z-Machine) or .ulx (Glulx).
-        seeds:
+        seeds (Optional[Union[int, Dict]]):
             Seeds for the different generation processes.
 
                * If `None`, seeds will be sampled from
@@ -972,15 +972,15 @@ class GameOptions:
 
                  For any key missing, a random number gets assigned (sampled
                  from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
-        kb:
+        kb (KnowledgeBase):
             The knowledge base containing the logic and the text grammars (see
             :py:class:`textworld.generator.KnowledgeBase <textworld.generator.data.KnowledgeBase>`
             for more information).
-        chaining:
+        chaining (ChainingOptions):
             For customizing the quest generation (see
             :py:class:`textworld.generator.ChainingOptions <textworld.generator.chaining.ChainingOptions>`
             for the list of available options).
-        grammar:
+        grammar (GrammarOptions):
             For customizing the text generation (see
             :py:class:`textworld.generator.GrammarOptions <textworld.generator.text_grammar.GrammarOptions>`
             for the list of available options).

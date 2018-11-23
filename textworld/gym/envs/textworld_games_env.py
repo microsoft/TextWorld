@@ -1,10 +1,11 @@
 import re
 import os
 import sys
+import textwrap
 from glob import glob
 from io import StringIO
 from os.path import join as pjoin
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Dict, Any, Tuple, Union
 
 import numpy as np
 import gym
@@ -12,135 +13,34 @@ from gym.utils import colorize
 
 import textworld
 import textworld.text_utils
+from textworld import EnvInfos
 from textworld.envs.wrappers import Filter
 
 from textworld.gym.spaces import text_spaces
-from textworld.gym.utils import make_looping_shuffled_iterator
-
-
-class TextworldGameEnv(gym.Env):
-    metadata = {'render.modes': ['human', 'ansi']}
-
-    def __init__(self, game_file: str, request_infos: List[str] = [],
-                 action_space: Optional[gym.Space] = None,
-                 observation_space: Optional[gym.Space] = None):
-        """
-        Environment for a single TextWorld game.
-
-        Arguments:
-            game_file:
-                Path to a TextWorld game (.ulx + .json).
-            request_infos:
-                Specify which additional information from the `GameState` object
-                should be available in the `infos` dictionary returned by
-                `env.reset()` and `env.step()`. Possible choices are:
-
-                 * `'description'`: text description of the current room,
-                   i.e. output of the `look` command;
-                 * `'inventory'`: text listing of the player's inventory,
-                   i.e. output of the `inventory` command;
-                 * `'max_score'`: maximum reachable score of the game;
-                 * `'objective'`: objective of the game described in text;
-                 * `'entities'`: names of all entities in the game;
-                 * `'verbs'`: verbs understood by the the game;
-                 * `'command_templates'`: templates for commands understood
-                   by the the game;
-                 * `'admissible_commands'`: all commands relevant to the
-                   current state;
-                 * `'extras:<name>'`: extras information unique to some games;
-            action_space:
-                The action space of this TextWorld environment. By default, a
-                :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`
-                instance is used with a `max_length` of 8 and a vocabulary
-                extracted from the TextWorld game.
-            observation_space:
-                The observation space of this TextWorld environment. By default, a
-                :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`
-                instance is used with a `max_length` of 200 and a vocabulary
-                extracted from the TextWorld game.
-
-        """
-        self.game_file = game_file
-        self.request_infos = request_infos
-
-        self.game = textworld.Game.load(os.path.splitext(self.game_file)[0] + ".json")
-        env = textworld.start(self.game_file)
-        self.textworld_env = Filter(self.request_infos)(env)
-        self.last_command = None
-
-        if action_space is None or observation_space is None:
-            # Extract vocabulary from game.
-            vocab = textworld.text_utils.extract_vocab([self.game])
-
-        self.action_space = action_space or text_spaces.Word(max_length=8, vocab=vocab)
-        self.observation_space = observation_space or text_spaces.Word(max_length=200, vocab=vocab)
-
-    def seed(self, seed=None):
-        return [seed]
-
-    def reset(self):
-        self.infos = {}
-        ob, infos = self.textworld_env.reset()
-        return ob, infos
-
-    def step(self, action):
-        self.last_command = action
-        ob, score, done, infos = self.textworld_env.step(self.last_command)
-        return ob, score, done, infos
-
-    def render(self, mode='human'):
-        outfile = StringIO() if mode == 'ansi' else sys.stdout
-
-        if self.last_command is not None:
-            command = colorize("> " + self.last_command, "yellow", highlight=False)
-            outfile.write(command + "\n\n")
-
-        outfile.write(self.game_state.feedback + "\n")
-
-        if mode != 'human':
-            return outfile
-
-    def close(self):
-        if self.textworld_env is not None:
-            self.textworld_env.close()
-
-        self.textworld_env = None
+from textworld.gym.envs.utils import shuffled_cycle
 
 
 class TextworldGamesEnv(gym.Env):
-    metadata = {'render.modes': ['human', 'ansi']}
+    metadata = {'render.modes': ['human', 'ansi', 'text']}
 
-    def __init__(self, game_files: List[str], request_infos: List[str] = [],
+    def __init__(self, game_files: List[str],
+                 request_infos: Optional[EnvInfos] = None,
                  action_space: Optional[gym.Space] = None,
-                 observation_space: Optional[gym.Space] = None):
-        """
-        Environment for a pool of TextWorld games.
+                 observation_space: Optional[gym.Space] = None) -> None:
+        """ Environment for playing TextWorld games.
 
         Each time `TextworldGamesEnv.reset()` is called, a new game from the
-        pool starts. Each game is guaranteed to be played once before a
-        same game is played for a second time.
+        pool starts. Each game of the pool is guaranteed to be played exactly
+        once before a same game is played for a second time.
 
         Arguments:
             game_files:
                 Paths of every TextWorld game composing the pool (.ulx + .json).
             request_infos:
-                Specify which additional information from the `GameState` object
-                should be available in the `infos` dictionary returned by
-                `env.reset()` and `env.step()`. Possible choices are:
-
-                 * `'description'`: text description of the current room,
-                   i.e. output of the `look` command;
-                 * `'inventory'`: text listing of the player's inventory,
-                   i.e. output of the `inventory` command;
-                 * `'max_score'`: maximum reachable score of the game;
-                 * `'objective'`: objective of the game described in text;
-                 * `'entities'`: names of all entities in the game;
-                 * `'verbs'`: verbs understood by the the game;
-                 * `'command_templates'`: templates for commands understood
-                   by the the game;
-                 * `'admissible_commands'`: all commands relevant to the
-                   current state;
-                 * `'extras:<name>'`: extras information unique to some games;
+                For customizing the information returned by this environment
+                (see
+                :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+                for the list of available information).
             action_space:
                 The action space of this TextWorld environment. By default, a
                 :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`
@@ -151,15 +51,14 @@ class TextworldGamesEnv(gym.Env):
                 :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`
                 instance is used with a `max_length` of 200 and a vocabulary
                 extracted from the TextWorld game.
-
         """
-
         self.gamefiles = game_files
-        self.seed(1234)
-        self.request_infos = request_infos
-        self.current_game = None
+        self.request_infos = request_infos or EnvInfos()
+        self.ob = None
         self.last_command = None
         self.textworld_env = None
+        self.current_gamefile = None
+        self.seed(1234)
 
         if action_space is None or observation_space is None:
             # Extract vocabulary from games.
@@ -169,55 +68,125 @@ class TextworldGamesEnv(gym.Env):
         self.action_space = action_space or text_spaces.Word(max_length=8, vocab=vocab)
         self.observation_space = observation_space or text_spaces.Word(max_length=200, vocab=vocab)
 
-    def seed(self, seed=None):
-        self.rng_games = np.random.RandomState(1234)  # To shuffle games between epochs.
+    def seed(self, seed: Optional[int] = None) -> List[int]:
+        """ Set the seed for this environment's random generator(s).
 
+        This environment use a random generator to shuffle the order in which
+        the games are played.
+
+        Arguments:
+            seed: Number that will be used to seed the random generators.
+
+        Returns:
+            All the seeds used to set this environment's random generator(s).
+        """
         # We shuffle the order in which the game will be seen.
         rng = np.random.RandomState(seed)
         rng.shuffle(self.gamefiles)
 
         # Prepare iterator used for looping through the games.
-        self._gamefiles_iterator = make_looping_shuffled_iterator(self.gamefiles,
-                                                                  rng=self.rng_games)
-
+        self._gamefiles_iterator = shuffled_cycle(self.gamefiles, rng=rng)
         return [seed]
 
-    def reset(self):
-        self.current_game = next(self._gamefiles_iterator)
-        self.infos = {}
+    def reset(self) -> Tuple[str, Dict[str, Any]]:
+        """ Resets the text-based environment.
 
+        Resetting this environment means starting the next game in the pool.
+
+        Returns:
+            A tuple (observation, info) where
+
+            * observation: text observed in the initial state;
+            * infos: additional information as requested.
+        """
         if self.textworld_env is not None:
             self.textworld_env.close()
 
-        env = textworld.start(self.current_game)
+        self.current_gamefile = next(self._gamefiles_iterator)
+        env = textworld.start(self.current_gamefile)
         self.textworld_env = Filter(self.request_infos)(env)
 
-        ob, infos = self.textworld_env.reset()
-        return ob, infos
+        self.ob, infos = self.textworld_env.reset()
+        return self.ob, infos
 
-    def skip(self, ngames=1):
-        for i in range(ngames):
+    def skip(self, nb_games: int = 1) -> None:
+        """ Skip games.
+
+        Arguments:
+            nb_games: Number of games to skip.
+        """
+        for _ in range(nb_games):
             next(self._gamefiles_iterator)
 
-    def step(self, action):
-        self.last_command = action
-        ob, score, done, infos = self.textworld_env.step(self.last_command)
-        return ob, score, done, infos
+    def step(self, command) -> Tuple[str, Dict[str, Any]]:
+        """ Runs a command in the text-based environment.
 
-    def render(self, mode='human'):
-        outfile = StringIO() if mode == 'ansi' else sys.stdout
+        Arguments:
+            command: Text command to send to the game interpreter.
 
-        if self.last_command is not None:
-            command = colorize("> " + self.last_command, "yellow", highlight=False)
-            outfile.write(command + "\n\n")
+        Returns:
+            A tuple (observation, score, done, info) where
 
-        outfile.write(self.game_state.feedback + "\n")
+            * observation: text observed in the new state;
+            * score: total number of points accumulated so far;
+            * done: whether the game is finished or not;
+            * infos: additional information as requested.
+        """
+        self.last_command = command
+        self.ob, score, done, infos = self.textworld_env.step(self.last_command)
+        return self.ob, score, done, infos
 
-        if mode != 'human':
-            return outfile
+    def close(self) -> None:
+        """ Close this environment. """
 
-    def close(self):
         if self.textworld_env is not None:
             self.textworld_env.close()
 
         self.textworld_env = None
+
+    def render(self, mode: str = 'human') -> Optional[Union[StringIO, str]]:
+        """ Renders the current state of this environment.
+
+        The rendering is composed of the previous text command (if there's one) and
+        the text describing the current observation.
+
+        Arguments:
+            mode:
+                Controls where and how the text is rendered. Supported modes are:
+
+                    * human: Display text to the current display or terminal and
+                      return nothing.
+                    * ansi: Return a `StringIO` containing a terminal-style
+                      text representation. The text can include newlines and ANSI
+                      escape sequences (e.g. for colors).
+                    * text: Return a string (`str`) containing the text without
+                      any ANSI escape sequences.
+
+        Returns:
+            Depending on the `mode`, this method returns either nothing, a
+            string, or a `StringIO` object.
+        """
+        outfile = StringIO() if mode in ['ansi', "text"] else sys.stdout
+
+        msg = self.ob.rstrip() + "\n"
+        if self.last_command is not None:
+            command = "> " + self.last_command
+            if mode in ["ansi", "human"]:
+                command = colorize(command, "yellow", highlight=False)
+
+            msg = command + "\n" + msg
+
+        if mode == "human":
+            # Wrap each paragraph at 80 characters.
+            paragraphs = msg.split("\n")
+            paragraphs = ["\n".join(textwrap.wrap(paragraph, width=80)) for paragraph in paragraphs]
+            msg = "\n".join(paragraphs)
+
+        outfile.write(msg + "\n")
+
+        if mode == "text":
+            outfile.seek(0)
+            return outfile.read()
+
+        if mode == 'ansi':
+            return outfile

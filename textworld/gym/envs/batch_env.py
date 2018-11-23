@@ -44,6 +44,7 @@ class _ChildEnv:
     def __init__(self, id):
         self._pipe, child_pipe = mp.Pipe()
         self._process = mp.Process(target=_child, args=(id, child_pipe))
+        self._process.daemon = True
         self._process.start()
 
     def call(self, method, *args):
