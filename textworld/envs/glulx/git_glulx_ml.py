@@ -146,7 +146,7 @@ class GlulxGameState(textworld.GameState):
         output = _strip_input_prompt_symbol(output)
         super().init(output)
         self._game = game
-        self._game_progression = GameProgression(game, track_quests=compute_intermediate_reward)
+        self._game_progression = GameProgression(game, track_quests=state_tracking)
         self._inform7 = Inform7Game(game)
         self._state_tracking = state_tracking
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0

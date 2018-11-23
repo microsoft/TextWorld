@@ -10,11 +10,12 @@ def test_register_game():
         options = textworld.GameOptions()
         options.seeds = 1234
         gamefile, game = textworld.make(options, tmpdir)
+        requested_infos = ["inventory", "description", "admissible_commands"]
 
-        env_id = textworld.gym.register_game("test-single", gamefile)
+        env_id = textworld.gym.register_game("test-single", gamefile, requested_infos)
         env = gym.make(env_id)
         obs, infos = env.reset()
-        assert len(infos) == 0  # No requested infos.
+        assert len(infos) == len(requested_infos)
 
         for cmd in game.main_quest.commands:
             obs, score, done, infos = env.step(cmd)
@@ -30,13 +31,14 @@ def test_register_games():
         gamefile1, game1 = textworld.make(options, tmpdir)
         options.seeds = 4321
         gamefile2, game2 = textworld.make(options, tmpdir)
+        requested_infos = ["inventory", "description", "admissible_commands"]
 
-        env_id = textworld.gym.register_games("test-multi", [gamefile1, gamefile2])
+        env_id = textworld.gym.register_games("test-multi", [gamefile1, gamefile2], requested_infos)
         env = gym.make(env_id)
         env.seed(2)  # Make game2 starts on the first reset call.
 
         obs, infos = env.reset()
-        assert len(infos) == 0  # No requested infos.
+        assert len(infos) == len(requested_infos)
 
         for cmd in game2.main_quest.commands:
             obs, score, done, infos = env.step(cmd)
@@ -45,7 +47,7 @@ def test_register_games():
         assert score == 1
 
         obs, infos = env.reset()
-        assert len(infos) == 0  # No requested infos.
+        assert len(infos) == len(requested_infos)
         for cmd in game1.main_quest.commands:
             obs, score, done, infos = env.step(cmd)
 

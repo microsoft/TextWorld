@@ -12,6 +12,7 @@ from gym.utils import colorize
 
 import textworld
 import textworld.text_utils
+from textworld.envs.wrappers import Filter
 
 from textworld.gym.spaces import text_spaces
 from textworld.gym.utils import make_looping_shuffled_iterator
@@ -63,7 +64,9 @@ class TextworldGameEnv(gym.Env):
         self.request_infos = request_infos
 
         self.game = textworld.Game.load(os.path.splitext(self.game_file)[0] + ".json")
-        self.textworld_env = textworld.start(self.game_file)
+        env = textworld.start(self.game_file)
+        self.textworld_env = Filter(self.request_infos)(env)
+        self.last_command = None
 
         if action_space is None or observation_space is None:
             # Extract vocabulary from game.
@@ -72,42 +75,18 @@ class TextworldGameEnv(gym.Env):
         self.action_space = action_space or text_spaces.Word(max_length=8, vocab=vocab)
         self.observation_space = observation_space or text_spaces.Word(max_length=200, vocab=vocab)
 
-        self.last_command = None
-        self.infos = None
-
-        if "admissible_commands" in self.request_infos:
-            self.textworld_env.activate_state_tracking()
-
-        if "intermediate_reward" in self.request_infos:
-            self.textworld_env.activate_state_tracking()
-            self.textworld_env.compute_intermediate_reward()
-
     def seed(self, seed=None):
         return [seed]
 
     def reset(self):
         self.infos = {}
-        self.game_state = self.textworld_env.reset()
-        ob = self.game_state.feedback
-        self._update_requested_infos()
-        return ob, self.infos
-
-    def _update_requested_infos(self):
-        # Make sure requested infos are available.
-        for attr in self.request_infos:
-            # The following will take care of retrieving the information
-            # from the game interpreter if needed.
-            if attr.startswith("extra:"):
-                self.infos[attr] = self.game_state.extras.get(attr.split(":")[-1])
-            else:
-                self.infos[attr] = getattr(self.game_state, attr)
+        ob, infos = self.textworld_env.reset()
+        return ob, infos
 
     def step(self, action):
         self.last_command = action
-        self.game_state, reward, done = self.textworld_env.step(self.last_command)
-        ob = self.game_state.feedback
-        self._update_requested_infos()
-        return ob, reward, done, self.infos
+        ob, score, done, infos = self.textworld_env.step(self.last_command)
+        return ob, score, done, infos
 
     def render(self, mode='human'):
         outfile = StringIO() if mode == 'ansi' else sys.stdout
@@ -179,6 +158,7 @@ class TextworldGamesEnv(gym.Env):
         self.seed(1234)
         self.request_infos = request_infos
         self.current_game = None
+        self.last_command = None
         self.textworld_env = None
 
         if action_space is None or observation_space is None:
@@ -188,9 +168,6 @@ class TextworldGamesEnv(gym.Env):
 
         self.action_space = action_space or text_spaces.Word(max_length=8, vocab=vocab)
         self.observation_space = observation_space or text_spaces.Word(max_length=200, vocab=vocab)
-
-        self.last_command = None
-        self.infos = None
 
     def seed(self, seed=None):
         self.rng_games = np.random.RandomState(1234)  # To shuffle games between epochs.
@@ -212,29 +189,11 @@ class TextworldGamesEnv(gym.Env):
         if self.textworld_env is not None:
             self.textworld_env.close()
 
-        self.textworld_env = textworld.start(self.current_game)
+        env = textworld.start(self.current_game)
+        self.textworld_env = Filter(self.request_infos)(env)
 
-        if "admissible_commands" in self.request_infos:
-            self.textworld_env.activate_state_tracking()
-
-        if "intermediate_reward" in self.request_infos:
-            self.textworld_env.activate_state_tracking()
-            self.textworld_env.compute_intermediate_reward()
-
-        self.game_state = self.textworld_env.reset()
-        ob = self.game_state.feedback
-        self._update_requested_infos()
-        return ob, self.infos
-
-    def _update_requested_infos(self):
-        # Make sure requested infos are available.
-        for attr in self.request_infos:
-            # The following will take care of retrieving the information
-            # from the game interpreter if needed.
-            if attr.startswith("extra:"):
-                self.infos[attr] = self.game_state.extras.get(attr.split(":")[-1])
-            else:
-                self.infos[attr] = getattr(self.game_state, attr)
+        ob, infos = self.textworld_env.reset()
+        return ob, infos
 
     def skip(self, ngames=1):
         for i in range(ngames):
@@ -242,10 +201,8 @@ class TextworldGamesEnv(gym.Env):
 
     def step(self, action):
         self.last_command = action
-        self.game_state, reward, done = self.textworld_env.step(self.last_command)
-        ob = self.game_state.feedback
-        self._update_requested_infos()
-        return ob, reward, done, self.infos
+        ob, score, done, infos = self.textworld_env.step(self.last_command)
+        return ob, score, done, infos
 
     def render(self, mode='human'):
         outfile = StringIO() if mode == 'ansi' else sys.stdout
