@@ -18,7 +18,7 @@ except ImportError:
 
 from textworld.logic.model import GameLogicModelBuilderSemantics
 from textworld.logic.parser import GameLogicParser
-from textworld.utils import uniquify
+from textworld.utils import uniquify, unique_product
 
 
 # We use first-order logic to represent the state of the world, and the actions
@@ -1157,7 +1157,9 @@ class Rule:
         for ph in self.placeholders:
             candidates.append([var for var in action.variables if var.type == ph.type])
 
-        for assignment in itertools.product(*candidates):
+        # A same variable can't be assigned to different placeholders.
+        # Using `unique_product` avoids generating those in the first place.
+        for assignment in unique_product(*candidates):
             mapping = {ph: var for ph, var in zip(self.placeholders, assignment)}
             if self.instantiate(mapping) == action:
                 return mapping
