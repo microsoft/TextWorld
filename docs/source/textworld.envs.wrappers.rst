@@ -16,4 +16,7 @@ Wrappers
     :undoc-members:
     :show-inheritance:
 
-
+.. automodule:: textworld.envs.wrappers.filter
+    :members:
+    :undoc-members:
+    :show-inheritance:
