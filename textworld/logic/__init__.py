@@ -4,7 +4,6 @@
 
 from collections import Counter, defaultdict, deque, namedtuple
 from functools import total_ordering, lru_cache
-import itertools
 import re
 from tatsu.model import NodeWalker
 import textwrap
@@ -1781,7 +1780,7 @@ class State:
                 matched_vars.append(None)
             candidates.append(matched_vars)
 
-        for assignment in itertools.product(*candidates):
+        for assignment in unique_product(*candidates):
             for ph, var in zip(placeholders, assignment):
                 if var is not None and var in used_vars:
                     # Distinct placeholders can't be assigned the same variable
