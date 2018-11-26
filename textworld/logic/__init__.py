@@ -1777,17 +1777,19 @@ class State:
             matched_vars = list(self.variables_of_type(ph.type) - used_vars)
             if partial and allow_partial(ph):
                 # Allow new variables to be created
-                matched_vars.append(None)
+                matched_vars.append(ph)
             candidates.append(matched_vars)
 
         for assignment in unique_product(*candidates):
             for ph, var in zip(placeholders, assignment):
-                if var is not None and var in used_vars:
-                    # Distinct placeholders can't be assigned the same variable
-                    break
-                else:
+                if var == ph:
+                    mapping[ph] = None
+                elif var not in used_vars:
                     mapping[ph] = var
                     used_vars.add(var)
+                else:
+                    # Distinct placeholders can't be assigned the same variable
+                    break
             else:
                 yield mapping.copy()
 
