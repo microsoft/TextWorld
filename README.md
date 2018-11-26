@@ -1,5 +1,5 @@
 # TextWorld
-A learning environment sandbox for training and testing reinforcement learning (RL) agents on text-based games.
+A text-based game generator and extensible sandbox learning environment for training and testing reinforcement learning (RL) agents. Also check out aka.ms/textworld for more info about TextWorld and its creators.
 
 ## Installation
 
