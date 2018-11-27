@@ -192,18 +192,6 @@ def uniquify(seq):
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
-def _unique_product_recursive(pools, result, i):
-    if i >= len(pools):
-        yield tuple(result)
-        return
-
-    for e in pools[i]:
-        if e not in result:
-            result[i] = e
-            yield from _unique_product_recursive(pools, result, i + 1)
-            result[i] = None
-
-
 def unique_product(*iterables):
     """ Cartesian product of input iterables with pruning.
 
@@ -220,8 +208,22 @@ def unique_product(*iterables):
         >>>         yield result
 
     """
+    _SENTINEL = object()
+
+    def _unique_product_recursive(pools, result, i):
+        if i >= len(pools):
+            yield tuple(result)
+            return
+
+        for e in pools[i]:
+            if e not in result:
+                result[i] = e
+                yield from _unique_product_recursive(pools, result, i + 1)
+                result[i] = _SENTINEL
+
+
     pools = [tuple(pool) for pool in iterables]
-    result = [None] * len(pools)
+    result = [_SENTINEL] * len(pools)
     return _unique_product_recursive(pools, result, 0)
 
 
