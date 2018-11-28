@@ -1,10 +1,12 @@
-from typing import List
+from typing import List, Optional
 
 from gym.envs.registration import register, spec
 
+from textworld import EnvInfos
+
 
 def register_games(game_files: List[str],
-                   request_infos: List[str] = [],
+                   request_infos: Optional[EnvInfos] = None,
                    max_episode_steps: int = 50,
                    name: str = "") -> str:
     """ Make an environment that will cycle through a list of games.
