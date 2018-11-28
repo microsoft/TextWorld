@@ -82,10 +82,11 @@ class TextworldGamesEnv(gym.Env):
         """
         # We shuffle the order in which the game will be seen.
         rng = np.random.RandomState(seed)
-        rng.shuffle(self.gamefiles)
+        gamefiles = list(self.gamefiles)  # Soft copy to avoid shuffling original list.
+        rng.shuffle(gamefiles)
 
         # Prepare iterator used for looping through the games.
-        self._gamefiles_iterator = shuffled_cycle(self.gamefiles, rng=rng)
+        self._gamefiles_iterator = shuffled_cycle(gamefiles, rng=rng)
         return [seed]
 
     def reset(self) -> Tuple[str, Dict[str, Any]]:
