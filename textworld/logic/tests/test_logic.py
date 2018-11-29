@@ -191,3 +191,27 @@ def test_match():
     # Predicate matches can't conflict
     action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r) & $free(r2: r, r1: r) & $free(r1: r, r2: r) -> at(P, r3: r)")
     assert rule.match(action) == None
+
+
+def test_match_complex():
+    rule = Rule.parse("combine/3 :: $at(P, r) & $correct_location(r) & $in(tool, I) & $in(tool', I) & $in(tool'', I) & in(o, I) & in(o', I) & in(o'', I) & $out(o''') & $used(slot) & used(slot') & used(slot'') -> in(o''', I) & free(slot') & free(slot'')")
+
+    mapping = {
+        Placeholder.parse("P"): Variable.parse("P"),
+        Placeholder.parse("I"): Variable.parse("I"),
+        Placeholder.parse("r"): Variable.parse("r"),
+        Placeholder.parse("o"): Variable.parse("o1: o"),
+        Placeholder.parse("o'"): Variable.parse("o2: o"),
+        Placeholder.parse("o''"): Variable.parse("o3: o"),
+        Placeholder.parse("o'''"): Variable.parse("o4: o"),
+        Placeholder.parse("tool"): Variable.parse("tool1: tool"),
+        Placeholder.parse("tool'"): Variable.parse("tool2: tool"),
+        Placeholder.parse("tool''"): Variable.parse("tool3: tool"),
+        Placeholder.parse("slot"): Variable.parse("slot1: slot"),
+        Placeholder.parse("slot'"): Variable.parse("slot2: slot"),
+        Placeholder.parse("slot''"): Variable.parse("slot3: slot"),
+    }
+
+    action = Action.parse("combine/3 :: $at(P, r) & $correct_location(r) & $in(tool1: tool, I) & $in(tool2: tool, I) & $in(tool3: tool, I) & in(o1: o, I) & in(o2: o, I) & in(o3: o, I) & $out(o4: o) & $used(slot1: slot) & used(slot2: slot) & used(slot3: slot) -> in(o4: o, I) & free(slot2: slot) & free(slot3: slot)")
+    for _ in range(10000):
+        assert rule.match(action) == mapping

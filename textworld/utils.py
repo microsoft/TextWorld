@@ -192,6 +192,41 @@ def uniquify(seq):
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
+def unique_product(*iterables):
+    """ Cartesian product of input iterables with pruning.
+
+    This method prunes any product tuple with duplicate elements in it.
+
+    Example:
+        unique_product('ABC', 'Ax', 'xy') --> Axy BAx BAy Bxy CAx CAy Cxy
+
+    Notes:
+        This method is faster than the following equivalent code:
+
+        >>> for result in itertools.product(*args):
+        >>>     if len(set(result)) == len(result):
+        >>>         yield result
+
+    """
+    _SENTINEL = object()
+
+    def _unique_product_recursive(pools, result, i):
+        if i >= len(pools):
+            yield tuple(result)
+            return
+
+        for e in pools[i]:
+            if e not in result:
+                result[i] = e
+                yield from _unique_product_recursive(pools, result, i + 1)
+                result[i] = _SENTINEL
+
+
+    pools = [tuple(pool) for pool in iterables]
+    result = [_SENTINEL] * len(pools)
+    return _unique_product_recursive(pools, result, 0)
+
+
 def encode_seeds(seeds):
     """ Generate UID from a list of seeds.
     """
