@@ -19,6 +19,7 @@ class EnvInfos:
 
     __slots__ = ['description', 'inventory', 'location',
                  'facts',
+                 'has_won', 'has_lost',
                  'max_score', 'objective',
                  'entities', 'verbs', 'command_templates',
                  'admissible_commands', 'intermediate_reward',
@@ -40,6 +41,12 @@ class EnvInfos:
         #: bool: All the facts that are currently true about the world.
         #:       This information changes from one step to another.
         self.facts = kwargs.get("facts", False)
+        #: bool: Whether the player won the game.
+        #:       This information changes from one step to another.
+        self.has_won = kwargs.get("has_won", False)
+        #: bool: Whether the player lost the game.
+        #:       This information changes from one step to another.
+        self.has_lost = kwargs.get("has_lost", False)
         #: bool: All commands relevant to the current state.
         #:       This information changes from one step to another.
         self.admissible_commands = kwargs.get("admissible_commands", False)
