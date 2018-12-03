@@ -44,7 +44,7 @@ def register_games(game_files: List[str],
         >>> env_id = textworld.gym.register_games([game_file], request_infos)
         >>> env = gym.make(env_id)
         >>> ob, infos = env.reset()
-        >>> print(infos["extras"]["more"])
+        >>> print(infos["extra.more"])
         This is extra information.
 
     """

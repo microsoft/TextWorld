@@ -86,6 +86,26 @@ class EnvInfos:
 class Filter(Wrapper):
     """
     Environment wrapper to filter what information is made available.
+
+    Requested information will be included within the `infos` dictionary
+    returned by `Filter.reset()` and `Filter.step(...)`. To request
+    specific information, create a
+    :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+    and set the appropriate attributes to `True`. Then, instantiate a `Filter`
+    wrapper with the `EnvInfos` object.
+
+    Example:
+        Here is an example of how to request information and retrieve it.
+
+        >>> from textworld import EnvInfos
+        >>> from textworld.envs.wrappers import Filter
+        >>> request_infos = EnvInfos(description=True, inventory=True, extras=["more"])
+        ...
+        >>> env = Filter(env)
+        >>> ob, infos = env.reset()
+        >>> print(infos["description"])
+        >>> print(infos["inventory"])
+        >>> print(infos["extra.more"])
     """
 
     def __init__(self, options: EnvInfos) -> None:
@@ -104,8 +124,8 @@ class Filter(Wrapper):
         infos = {attr: getattr(game_state, attr) for attr in self.options.basics}
 
         if self.options.extras:
-            infos["extras"] = {attr: game_state.extras.get(attr)
-                               for attr in self.options.extras}
+            for attr in self.options.extras:
+                infos["extra.{}".format(attr)] = game_state.extras.get(attr)
 
         return infos
 
