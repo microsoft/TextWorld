@@ -21,7 +21,7 @@ from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
 from textworld.generator.game import Game, World, Quest, Event
-from textworld.generator.graph_networks import DIRECTIONS
+from textworld.generator.graph_networks import DIRECTIONS, reverse_direction
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
 
@@ -330,6 +330,19 @@ class GameMaker:
         self._game = None
         self._distractors_facts = []
 
+    def _get(self, entity: WorldEntity) -> WorldEntity:
+        return self._entities[entity.id]
+
+    def _get_path(self, path: WorldPath) -> WorldPath:
+        for path_ in self.paths:
+            if (path_.src.id == path.src.id and
+                path_.src_exit == path.src_exit and
+                path_.dest.id == path.dest.id and
+                path_.dest_exit == path.dest_exit):
+                return path_
+
+        return None
+
     @property
     def state(self) -> State:
         """ Current state of the world. """
@@ -357,7 +370,19 @@ class GameMaker:
             name: The name of the new fact.
             *entities: A list of `WorldEntity` as arguments to this fact.
         """
+        entities = [self._get(entity) for entity in entities]
         entities[0].add_fact(name, *entities)
+
+    def add(self, holder, *entities: List["WorldEntity"]) -> None:
+        """ Add a list of entities to the holder entity.
+
+        Args:
+            holder: The entity where to add the other entities.
+            *entities: A list of `WorldEntity` to be added.
+        """
+        holder = self._get(holder)
+        entities = [self._get(entity) for entity in entities]
+        holder.add(*entities)
 
     def new_door(self, path: WorldPath, name: Optional[str] = None,
                  desc: Optional[str] = None) -> WorldEntity:
@@ -371,6 +396,7 @@ class GameMaker:
         Returns:
             The newly created door.
         """
+        path = self._get_path(path)
         path.door = self.new(type='d', name=name, desc=desc)
         return path.door
 
@@ -448,6 +474,7 @@ class GameMaker:
         if self.player in self:
             raise PlayerAlreadySetError()
 
+        room = self._get(room)
         room.add(self.player)
 
     def connect(self, exit1: WorldRoomExit, exit2: WorldRoomExit) -> WorldPath:
@@ -460,6 +487,11 @@ class GameMaker:
         Returns:
             The path created by the link between two rooms, with no door.
         """
+        if exit1.direction != reverse_direction(exit2.direction):
+            msg = ("Only reciprocal connections are supported at the moment,"
+                   " i.e. north-south, south-north, east-west or west-east.")
+            raise ValueError(msg)
+
         if exit1.dest is not None:
             msg = "{}.{} is already linked to {}.{}"
             msg = msg.format(exit1.src, exit1.direction,
@@ -654,6 +686,12 @@ class GameMaker:
         failed_constraints = get_failing_constraints(self.state)
         if len(failed_constraints) > 0:
             raise FailedConstraintsError(failed_constraints)
+
+        connected_rooms = set(room.id for path in self.paths for room in (path.src, path.dest))
+        all_rooms = set(room.id for room in self.rooms)
+        if len(all_rooms - connected_rooms) > 0 and len(self.rooms) > 1:
+            msg = "Every room needs to be connected to another if there is more than one."
+            raise ValueError(msg)
 
         return True
 

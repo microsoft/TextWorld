@@ -47,7 +47,7 @@ revisit:You have re-entered the (name).;You re-enter the (name). You're so confu
 010:Ah, the (name-n). This is some kind of (name-n), really great (name-adj) vibes in this place, a wonderful (name-adj) atmosphere
 011:You have #dec_entered# the most (name-adj) of all possible (name-n)s
 012:Of every (name-n) you could have #dec_walked_into#, you had to #dec_walk_into# a (name-adj) one
-013:You have #dec_entered# a (name-n). Not the (name-n) you'd expect. No, this is a (name)
+013:You have #dec_entered# a (name-n). Not the (name-n) you'd expect. No, this is a (name-adj) (name-n)
 014:You are in a (name-n). It seems to be pretty (name-adj) here
 015:You #dec_what# in a (name-adj) kind of place. That is to say, you're in a (name-n)
 016:#dec_find-yourself# in a (name-n). A (name-adj) one

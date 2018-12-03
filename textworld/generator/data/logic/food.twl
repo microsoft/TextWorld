@@ -6,7 +6,7 @@ type f : o {
     }
 
     rules {
-        eat :: in(f, I) -> eaten(f);
+        eat :: in(f, I) & edible(f) -> eaten(f);
     }
 
     constraints {

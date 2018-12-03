@@ -53,7 +53,7 @@ def play(game_file: str, agent: Optional[Agent] = None, max_nb_steps: int = 1000
 
     Args:
         game_file: Path to the game file.
-        agent: Agent that will play the game. Default: HumanAgent(autocompletion=True).
+        agent: Agent that will play the game. Default: `HumanAgent()`.
         max_nb_steps: Maximum number of steps allowed. Default: 1000.
         wrapper: Wrapper to apply to the environment.
         silent: Do not render anything to screen.
@@ -62,11 +62,7 @@ def play(game_file: str, agent: Optional[Agent] = None, max_nb_steps: int = 1000
         Use script :command:`tw-play` for more options.
     """
     env = start(game_file)
-    if agent is None:
-        try:
-            agent = HumanAgent(autocompletion=True)
-        except AttributeError:
-            agent = HumanAgent()
+    agent = agent or HumanAgent()
 
     agent.reset(env)
     if wrapper is not None:
