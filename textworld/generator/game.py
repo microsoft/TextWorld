@@ -270,7 +270,7 @@ class Quest:
 
 class EntityInfo:
     """ Additional information about entities in the game. """
-    __slots__ = ['id', 'type', 'name', 'noun', 'adj', 'desc', 'room_type']
+    __slots__ = ['id', 'type', 'name', 'noun', 'adj', 'desc', 'room_type', 'definite', 'indefinite', 'synonyms']
 
     def __init__(self, id: str, type: str) -> None:
         #: str: Unique name for this entity. It is used when generating
@@ -283,6 +283,12 @@ class EntityInfo:
         self.noun = None
         #: str: The adjective (i.e. descriptive) part of the name, if available.
         self.adj = None
+        #: str: The definite article to use for this entity.
+        self.definite = None
+        #: str: The indefinite article to use for this entity.
+        self.indefinite = None
+        #: List[str]: Alternative names that can be used to refer to this entity.
+        self.synonyms = None
         #: str: Text description displayed when examining this entity in the game.
         self.desc = None
         #: str: Type of the room this entity belongs to. It used to influence
@@ -310,7 +316,7 @@ class EntityInfo:
         """
         info = cls(data["id"], data["type"])
         for slot in cls.__slots__:
-            setattr(info, slot, data[slot])
+            setattr(info, slot, data.get(slot))
 
         return info
 

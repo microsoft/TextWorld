@@ -338,7 +338,9 @@ def test_names_disambiguation():
         env.reset()
         game_state, _, done = env.step("take keycard")
         assert "keycard" in game_state.inventory
-        game_state, _, done = env.step("take keycard")
+        game_state, _, done = env.step("take keycard")  # Already in your inventory.
+        assert "rectangular keycard" not in game_state.inventory
+        game_state, _, done = env.step("take rectangular keycard")
         assert "rectangular keycard" in game_state.inventory
 
         game_state, _, done = env.step("unlock gateway with rectangular keycard")

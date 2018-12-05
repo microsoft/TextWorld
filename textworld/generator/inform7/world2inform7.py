@@ -112,6 +112,16 @@ class Inform7Game:
                 source += 'The description of {} is "{}".\n'.format(obj_infos.id, obj_infos.desc.replace("\n", "[line break]"))
                 source += 'The printed name of {} is "{}".\n'.format(obj_infos.id, obj_infos.name)
 
+                if obj_infos.indefinite:
+                    source += 'The indefinite article of {} is "{}".\n'.format(obj_infos.id, obj_infos.indefinite)
+
+                if obj_infos.definite:
+                    source += 'The definite article of {} is "{}".\n'.format(obj_infos.id, obj_infos.definite)
+
+                if obj_infos.synonyms:
+                    for synonym in obj_infos.synonyms:
+                       source += 'Understand "{}" as {}.\n'.format(synonym, obj_infos.id)
+
                 # Since we use objects' id in Inform7 source code, we need to specify how to refer to them.
                 if obj_infos.name:
                     source += 'Understand "{}" as {}.\n'.format(obj_infos.name, obj_infos.id)
@@ -278,7 +288,7 @@ class Inform7Game:
             # Add winning and losing conditions for quest.
             quest_ending_conditions = textwrap.dedent("""\
             if quest{quest_id} completed is true:
-                say "";""".format(quest_id=quest_id))
+                do nothing;""".format(quest_id=quest_id))
 
             fail_template = textwrap.dedent("""
             else if {conditions}:
@@ -426,6 +436,7 @@ class Inform7Game:
                 say "The [target] is fixed in place.";
             otherwise:
                 say "You need to take the [target] first.";
+                set pronouns from target;
             stop.
 
         """)
@@ -439,6 +450,7 @@ class Inform7Game:
                 it is likely;
             if the noun is not nothing and the second noun is not nothing and the player's command matches the text printed name of the noun and the player's command matches the text printed name of the second noun:
                 it is very likely.  [Handle action with two arguments.]
+
         """)
 
         # Useful for listing room contents with their properties.
@@ -698,8 +710,9 @@ class Inform7Game:
         # Disable take/get all.
         source += textwrap.dedent("""\
             Taking all is an action applying to nothing.
-            Carry out taking all:
-                say "You have to be more specific!".
+            Check taking all:
+                say "You have to be more specific!";
+                rule fails.
 
             Understand "take all" as taking all.
             Understand "get all" as taking all.
@@ -751,8 +764,18 @@ class Inform7Game:
                 say "Can't see any [object] on the floor! Try taking the [object] from the [container] instead.";
                 rule fails.
 
-        """)
+        Understand "take [something]" as removing it from.
 
+        Rule for supplying a missing second noun while removing:
+            if restrict commands option is false and noun is on a supporter (called the supporter):
+                now the second noun is the supporter;
+            else if restrict commands option is false and noun is in a container (called the container):
+                now the second noun is the container;
+            else:
+                try taking the noun;
+                say ""; [Needed to avoid printing a default message.]
+
+        """)
 
         # Special command to print the maximum score of a game.
         source += textwrap.dedent("""\
