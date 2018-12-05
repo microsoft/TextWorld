@@ -254,6 +254,11 @@ class GlulxGameState(textworld.GameState):
         """
         if not hasattr(self, "_command_feedback"):
             command_feedback = self.feedback
+
+            # On the first move, command_feedback should be empty.
+            if self.nb_moves == 0:
+                command_feedback = ""
+
             # Remove room description from command feedback.
             if len(self.description.strip()) > 0:
                 regex = "\s*" + re.escape(self.description.strip()) + "\s*"
