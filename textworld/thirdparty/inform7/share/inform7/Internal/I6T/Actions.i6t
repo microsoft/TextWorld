@@ -1,3 +1,7 @@
+! This file was modified for TextWorld such that `trace_actions` can be called
+! even in release mode.
+! The original can be found here http://inform7.com/sources/webs/#i6-template
+
 B/actt: Actions Template.
 
 @Purpose: To try actions by people in the model world, processing the

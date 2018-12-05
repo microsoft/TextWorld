@@ -852,6 +852,24 @@ class Inform7Game:
 
         """)
 
+        # Special command to print the maximum score of a game.
+        source += textwrap.dedent("""\
+        To print id of (something - thing):
+            (- print {something}, "^"; -).
+
+        Printing the id of player is an action applying to nothing.
+        Carry out printing the id of player:
+            print id of player.
+
+        Printing the id of EndOfObject is an action applying to nothing.
+        Carry out printing the id of EndOfObject:
+            print id of EndOfObject.
+
+        Understand "tw-print player id" as printing the id of player.
+        Understand "tw-print EndOfObject id" as printing the id of EndOfObject.
+
+        """)
+
         # Add dummy object to detect end of the objects tree.
         source += textwrap.dedent("""\
             There is a EndOfObject.
