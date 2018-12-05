@@ -201,7 +201,7 @@ def make_game(options: GameOptions) -> Game:
     return game
 
 
-def compile_game(game: Game, path: str, force_recompile: bool = False):
+def compile_game(game: Game, path: str, force_recompile: bool = False, file_ext: str = ".ulx"):
     """
     Compile a game.
 
@@ -210,6 +210,8 @@ def compile_game(game: Game, path: str, force_recompile: bool = False):
         path: Path of the compiled game (.ulx or .z8). Also, the source (.ni)
               and metadata (.json) files will be saved along with it.
         force_recompile: If `True`, recompile game even if it already exists.
+        file_ext: Format to use when compiling the game. Either '.ulx' or '.z8'.
+                  If `path` already has an extension, this is ignored.
 
     Returns:
         The path to compiled game.
@@ -221,10 +223,7 @@ def compile_game(game: Game, path: str, force_recompile: bool = False):
 
     filename, ext = os.path.splitext(filename)
     if not ext:
-        ext = ".ulx"  # Add default extension, if needed.
-
-    if str2bool(os.environ.get("TEXTWORLD_FORCE_ZFILE", False)):
-        ext = ".z8"
+        ext = file_ext  # Add default extension, if needed.
 
     source = generate_inform7_source(game)
 

@@ -40,10 +40,15 @@ def parse_args():
     general_group.add_argument("--output", default="./tw_games/", metavar="PATH",
                                help="Path where to save the generated game.")
     general_group.add_argument('--seed', type=int)
+    general_group.add_argument('--format', choices=["ulx", "z8"], default="ulx",
+                               help="Which format to use when compiling the game. Default: %(default)s")
     general_group.add_argument("--view", action="store_true",
                                help="Display the resulting game.")
-    general_group.add_argument("-v", "--verbose", action="store_true")
     general_group.add_argument("-f", "--force", action="store_true")
+
+    verbosity_group = general_group.add_mutually_exclusive_group()
+    verbosity_group.add_argument("--silent", action="store_true")
+    verbosity_group.add_argument("-v", "--verbose", action="store_true")
 
     cfg_group = general_parser.add_argument_group('Grammar settings')
     cfg_group.add_argument("--theme", default="house",
@@ -86,10 +91,12 @@ if __name__ == "__main__":
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
-    print("Global seed: {}".format(args.seed))
+    if not args.silent:
+        print("Global seed: {}".format(args.seed))
 
     options = textworld.GameOptions()
     options.seeds = args.seed
+    options.file_ext = "." + args.format
     options.force_recompile = args.force
     options.grammar.theme = args.theme
     options.grammar.include_adj = args.include_adj
@@ -118,9 +125,12 @@ if __name__ == "__main__":
         level = int(level.lstrip("level"))
         make_game = textworld.challenges.CHALLENGES[challenge]
         game = make_game(level, options)
-        game_file = textworld.generator.compile_game(game, args.output, force_recompile=args.force)
+        game_file = textworld.generator.compile_game(game, args.output, force_recompile=args.force,
+                                                     file_ext="." + args.format)
 
-    print("Game generated: {}".format(game_file))
+    if not args.silent:
+        print("Game generated: {}".format(game_file))
+
     if args.verbose:
         print(game.objective)
 

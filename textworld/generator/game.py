@@ -953,7 +953,7 @@ class GameOptions:
             Path to the directory where the game will be saved.
         force_recompile (bool):
             If `True`, recompile game even if it already exists.
-        file_type (str):
+        file_ext (str):
             Type of the generated game file. Either .z8 (Z-Machine) or .ulx (Glulx).
         seeds (Optional[Union[int, Dict]]):
             Seeds for the different generation processes.
@@ -997,6 +997,7 @@ class GameOptions:
         self.quest_length = 1
         self.quest_breadth = 1
         self.force_recompile = False
+        self.file_ext = ".ulx"
 
     @property
     def quest_length(self) -> int:
