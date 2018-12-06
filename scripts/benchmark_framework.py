@@ -34,7 +34,10 @@ def generate_never_ending_game(args):
 
     game_name = "neverending"
     path = pjoin(args.output, game_name + ".ulx")
-    game_file = textworld.generator.compile_game(game, path, force_recompile=True)
+    options = textworld.GameOptions()
+    options.path = path
+    options.force_recompile = True
+    game_file = textworld.generator.compile_game(game, options)
     return game_file
 
 

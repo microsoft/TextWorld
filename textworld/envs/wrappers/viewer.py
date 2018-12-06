@@ -80,8 +80,7 @@ class HtmlViewer(Wrapper):
             self._server = VisualizationService(game_state, self.open_automatically)
             self._server.start(threading.current_thread(), port=self.port)
         except ModuleNotFoundError:
-            print("Importing HtmlViewer without installed dependencies. Try running `pip install textworld[vis]`")
-
+            print("Importing HtmlViewer without installed dependencies. Try re-installing textworld.")
 
         return game_state
 

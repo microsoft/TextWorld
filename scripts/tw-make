@@ -96,6 +96,7 @@ if __name__ == "__main__":
 
     options = textworld.GameOptions()
     options.seeds = args.seed
+    options.path = args.output
     options.file_ext = "." + args.format
     options.force_recompile = args.force
     options.grammar.theme = args.theme
@@ -110,7 +111,7 @@ if __name__ == "__main__":
         options.nb_objects = args.nb_objects
         options.quest_length = args.quest_length
         options.quest_breadth = args.quest_breadth
-        game_file, game = textworld.make(options, args.output)
+        game_file, game = textworld.make(options)
 
     elif args.subcommand == "challenge":
         try:
@@ -125,8 +126,7 @@ if __name__ == "__main__":
         level = int(level.lstrip("level"))
         make_game = textworld.challenges.CHALLENGES[challenge]
         game = make_game(level, options)
-        game_file = textworld.generator.compile_game(game, args.output, force_recompile=args.force,
-                                                     file_ext="." + args.format)
+        game_file = textworld.generator.compile_game(game, options)
 
     if not args.silent:
         print("Game generated: {}".format(game_file))

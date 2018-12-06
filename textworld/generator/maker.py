@@ -711,7 +711,10 @@ class GameMaker:
             Path to the game file.
         """
         self._working_game = self.build()
-        game_file = textworld.generator.compile_game(self._working_game, path, force_recompile=True)
+        options = textworld.GameOptions()
+        options.path = path
+        options.force_recompile = True
+        game_file = textworld.generator.compile_game(self._working_game, options)
         return game_file
 
     def __contains__(self, entity) -> bool:

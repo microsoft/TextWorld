@@ -17,6 +17,12 @@ from textworld.generator.chaining import ChainingOptions, sample_quest
 from textworld.logic import Proposition
 
 
+def _compile_game(game, path):
+    options = textworld.GameOptions()
+    options.path = path
+    return compile_game(game, options)
+
+
 def test_quest_winning_condition_go():
     M = textworld.GameMaker()
 
@@ -34,7 +40,7 @@ def test_quest_winning_condition_go():
     game = M.build()
     game_name = "test_quest_winning_condition_go"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
         env.reset()
@@ -91,7 +97,7 @@ def test_quest_winning_condition():
 
         game_name = "test_quest_winning_condition_" + rule.name.replace("/", "_")
         with make_temp_directory(prefix=game_name) as tmpdir:
-            game_file = compile_game(game, path=tmpdir)
+            game_file = _compile_game(game, path=tmpdir)
 
             env = textworld.start(game_file)
             env.reset()
@@ -139,7 +145,7 @@ def test_quest_with_multiple_winning_and_losing_conditions():
 
     game_name = "test_quest_with_multiple_winning_and_losing_conditions"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
         # Make sure we do not rely on the quest progression to
@@ -228,7 +234,7 @@ def test_cannot_win_or_lose_a_quest_twice():
 
     game_name = "test_cannot_win_or_lose_a_quest_twice"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
         # Make sure we do not rely on the quest progression to
@@ -288,7 +294,7 @@ def test_names_disambiguation():
     game = M.build()
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
         env.reset()
         game_state, _, done = env.step("take tasty apple")
@@ -333,7 +339,7 @@ def test_names_disambiguation():
     game = M.build()
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
         env.reset()
         game_state, _, done = env.step("take keycard")
@@ -374,7 +380,7 @@ def test_names_disambiguation():
     game = M.build()
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
         game_state = env.reset()
         game_state, _, done = env.step("take key from safe")
@@ -397,7 +403,7 @@ def test_names_disambiguation():
     game = M.build()
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
         game_state = env.reset()
         game_state, _, done = env.step("take key from safe")
@@ -414,7 +420,7 @@ def test_take_all_and_variants():
     game = M.build()
     game_name = "test_take_all_and_variants"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
         env.reset()
 
@@ -432,7 +438,7 @@ def test_take_all_and_variants():
     game = M.build()
     game_name = "test_take_all_and_variants2"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
         env.reset()
 

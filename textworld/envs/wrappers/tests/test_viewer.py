@@ -25,7 +25,8 @@ def test_html_viewer():
 
     game_name = "test_html_viewer_wrapper"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = compile_game(game, path=tmpdir)
+        options.path = tmpdir
+        game_file = compile_game(game, options)
 
         env = textworld.start(game_file)
         env = HtmlViewer(env, open_automatically=False, port=8080)
