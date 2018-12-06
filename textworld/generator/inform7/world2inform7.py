@@ -375,6 +375,26 @@ class Inform7Game:
         # Replace default banner with a greeting message and the quest description.
         source += textwrap.dedent("""\
         Rule for printing the banner text:
+            say "[fixed letter spacing]";
+            say "                    ________  ________  __    __  ________        [line break]";
+            say "                   |        \|        \|  \  |  \|        \       [line break]";
+            say "                    \$$$$$$$$| $$$$$$$$| $$  | $$ \$$$$$$$$       [line break]";
+            say "                      | $$   | $$__     \$$\/  $$   | $$          [line break]";
+            say "                      | $$   | $$  \     >$$  $$    | $$          [line break]";
+            say "                      | $$   | $$$$$    /  $$$$\    | $$          [line break]";
+            say "                      | $$   | $$_____ |  $$ \$$\   | $$          [line break]";
+            say "                      | $$   | $$     \| $$  | $$   | $$          [line break]";
+            say "                       \$$    \$$$$$$$$ \$$   \$$    \$$          [line break]";
+            say "              __       __   ______   _______   __        _______  [line break]";
+            say "             |  \  _  |  \ /      \ |       \ |  \      |       \ [line break]";
+            say "             | $$ / \ | $$|  $$$$$$\| $$$$$$$\| $$      | $$$$$$$\[line break]";
+            say "             | $$/  $\| $$| $$  | $$| $$__| $$| $$      | $$  | $$[line break]";
+            say "             | $$  $$$\ $$| $$  | $$| $$    $$| $$      | $$  | $$[line break]";
+            say "             | $$ $$\$$\$$| $$  | $$| $$$$$$$\| $$      | $$  | $$[line break]";
+            say "             | $$$$  \$$$$| $$__/ $$| $$  | $$| $$_____ | $$__/ $$[line break]";
+            say "             | $$$    \$$$ \$$    $$| $$  | $$| $$     \| $$    $$[line break]";
+            say "              \$$      \$$  \$$$$$$  \$$   \$$ \$$$$$$$$ \$$$$$$$ [line break]";
+            say "[variable letter spacing][line break]";
             say "{objective}[line break]".
 
         """.format(objective=objective))
@@ -655,21 +675,21 @@ class Inform7Game:
         Displaying help message is an action applying to nothing.
         Carry out displaying help message:
             say "[fixed letter spacing]Available commands:[line break]";
-            say "  look:                                describe the current room[line break]";
-            say "  goal:                                print the goal of this game[line break]";
-            say "  inventory:                           print player's inventory[line break]";
-            say "  go <dir>:                            move the player north, east, south or west[line break]";
-            say "  examine <something>:                 examine something more closely[line break]";
-            say "  eat <something>:                     eat something edible[line break]";
-            say "  open <something>:                    open a door or a container[line break]";
-            say "  close <something>:                   close a door or a container[line break]";
-            say "  drop <something>:                    drop an object on the floor[line break]";
-            say "  take <something>:                    take an object that is on the floor[line break]";
-            say "  put <something> on <something>:      place an object on a supporter[line break]";
-            say "  take <something> from <something>:   take an object from a container or a supporter[line break]";
-            say "  insert <something> into <something>: place an object into a container[line break]";
-            say "  lock <something> with <something>:   lock a door or a container with a key[line break]";
-            say "  unlock <something> with <something>: unlock a door or a container with a key[line break]";
+            say "  look:                describe the current room[line break]";
+            say "  goal:                print the goal of this game[line break]";
+            say "  inventory:           print player's inventory[line break]";
+            say "  go <dir>:            move the player north, east, south or west[line break]";
+            say "  examine ...:         examine something more closely[line break]";
+            say "  eat ...:             eat edible food[line break]";
+            say "  open ...:            open a door or a container[line break]";
+            say "  close ...:           close a door or a container[line break]";
+            say "  drop ...:            drop an object on the floor[line break]";
+            say "  take ...:            take an object that is on the floor[line break]";
+            say "  put ... on ...:      place an object on a supporter[line break]";
+            say "  take ... from ...:   take an object from a container or a supporter[line break]";
+            say "  insert ... into ...: place an object into a container[line break]";
+            say "  lock ... with ...:   lock a door or a container with a key[line break]";
+            say "  unlock ... with ...: unlock a door or a container with a key[line break]";
 
         Understand "help" as displaying help message.
 
