@@ -20,6 +20,7 @@ from textworld.utils import make_temp_directory
 from textworld.generator import data
 from textworld.generator.game import Quest, Event
 from textworld.generator.graph_networks import DIRECTIONS
+from textworld.envs.glulx.git_glulx_ml import ExtraInfosIsMissingError
 from textworld.envs.glulx.git_glulx_ml import StateTrackingIsRequiredError
 from textworld.envs.glulx.git_glulx_ml import OraclePolicyIsRequiredError
 from textworld.envs.glulx.git_glulx_ml import MissingGameInfosError
@@ -95,6 +96,8 @@ class TestGlulxGameState(unittest.TestCase):
         self.env = textworld.start(self.game_file)
         self.env.activate_state_tracking()
         self.env.compute_intermediate_reward()
+        self.env.enable_extra_info("description")
+        self.env.enable_extra_info("inventory")
         self.game_state = self.env.reset()
 
     def tearDown(self):
@@ -139,7 +142,7 @@ class TestGlulxGameState(unittest.TestCase):
         assert "carrying nothing" in game_state.inventory
 
         game_state, _, _ = self.env.step("close chest")
-        assert game_state.inventory == ""  # Game has ended
+        assert game_state.inventory != ""  # Game has ended
 
     def test_objective(self):
         assert self.game_state.objective.strip() in self.game_state.feedback
@@ -147,6 +150,10 @@ class TestGlulxGameState(unittest.TestCase):
         assert game_state.feedback.strip() == self.game_state.objective
 
     def test_description(self):
+        env = textworld.start(self.game_file)
+        game_state = env.reset()
+        npt.assert_raises(ExtraInfosIsMissingError, getattr, game_state, "description")
+
         game_state, _, _ = self.env.step("look")
         assert game_state.feedback.strip() == self.game_state.description.strip()
         assert game_state.feedback.strip() == game_state.description.strip()
@@ -157,7 +164,7 @@ class TestGlulxGameState(unittest.TestCase):
         # End the game.
         game_state, _, _ = self.env.step("insert carrot into chest")
         game_state, _, _ = self.env.step("close chest")
-        assert game_state.description == ""
+        assert game_state.description != ""
 
     def test_score(self):
         assert self.game_state.score == 0

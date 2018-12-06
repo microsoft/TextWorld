@@ -62,6 +62,17 @@ class OraclePolicyIsRequiredError(NameError):
         super().__init__(msg.format(info))
 
 
+class ExtraInfosIsMissingError(NameError):
+    """
+    Thrown if extra information is required without enabling it first via `tw-extra-infos CMD`.
+    """
+
+    def __init__(self, info):
+        msg = ("To access extra info '{info}', it needs to be enabled via `tw-extra-infos {info}` first."
+               " Make sure env.enable_extra_info({info}) is called *before* env.reset().")
+        super().__init__(msg.format(info=info))
+
+
 def _strip_input_prompt_symbol(text: str) -> str:
     if text.endswith("\n>"):
         return text[:-2]
@@ -72,6 +83,33 @@ def _strip_input_prompt_symbol(text: str) -> str:
 def _strip_i7_event_debug_tags(text: str) -> str:
     _, text = _detect_i7_events_debug_tags(text)
     return text
+
+
+def _detect_extra_infos(text: str) -> Mapping[str, str]:
+    """ Detect extra information printed out at every turn.
+
+    Extra information can be enabled via the special command:
+    `tw-extra-infos COMMAND`. The extra information is displayed
+    between tags that look like this: <COMMAND> ... </COMMAND>.
+
+    Args:
+        text: Text outputted by the game.
+
+    Returns:
+        A dictionary where the keys are text commands and the corresponding
+        values are the extra information displayed between tags.
+    """
+    tags = ["description", "inventory", "score"]
+    matches = {}
+    for tag in tags:
+        regex = re.compile(r"<{tag}>\n(.*)</{tag}>".format(tag=tag), re.DOTALL)
+        match = re.search(regex, text)
+        if match:
+            _, cleaned_text = _detect_i7_events_debug_tags(match.group(1))
+            matches[tag] = cleaned_text
+            text = re.sub(regex, "", text)
+
+    return matches, text
 
 
 def _detect_i7_events_debug_tags(text: str) -> Tuple[List[str], str]:
@@ -144,6 +182,9 @@ class GlulxGameState(textworld.GameState):
         :param compute_intermediate_reward: Whether to compute the intermediate reward
         """
         output = _strip_input_prompt_symbol(output)
+        _, output = _detect_i7_events_debug_tags(output)
+        self._extra_infos, output = _detect_extra_infos(output)
+
         super().init(output)
         self._game = game
         self._game_progression = GameProgression(game, track_quests=state_tracking)
@@ -197,6 +238,9 @@ class GlulxGameState(textworld.GameState):
         """
         output = _strip_input_prompt_symbol(output)
 
+        # Detect any extra information displayed at every turn.
+        extra_infos, output = _detect_extra_infos(output)
+
         game_state = super().update(command, output)
         game_state.previous_state = self.view()
         game_state._objective = self.objective
@@ -206,6 +250,7 @@ class GlulxGameState(textworld.GameState):
         game_state._game_progression = self._game_progression
         game_state._state_tracking = self._state_tracking
         game_state._compute_intermediate_reward = self._compute_intermediate_reward
+        game_state._extra_infos = {**self._extra_infos, **extra_infos}
 
         # Detect what events just happened in the game.
         i7_events, game_state._feedback = _detect_i7_events_debug_tags(output)
@@ -222,26 +267,20 @@ class GlulxGameState(textworld.GameState):
     @property
     def description(self):
         if not hasattr(self, "_description"):
-            if self.game_ended:
-                return ""
+            if "description" not in self._extra_infos:
+                raise ExtraInfosIsMissingError("description")
 
-            output = self._env._send("look")
-            output = _strip_i7_event_debug_tags(output)
-            output = _strip_input_prompt_symbol(output)
-            self._description = output
+            self._description = self._extra_infos["description"]
 
         return self._description
 
     @property
     def inventory(self):
         if not hasattr(self, "_inventory"):
-            if self.game_ended:
-                return ""
+            if "inventory" not in self._extra_infos:
+                raise ExtraInfosIsMissingError("inventory")
 
-            output = self._env._send("inventory")
-            output = _strip_i7_event_debug_tags(output)
-            output = _strip_input_prompt_symbol(output)
-            self._inventory = output
+            self._inventory = self._extra_infos["inventory"]
 
         return self._inventory
 
@@ -322,19 +361,10 @@ class GlulxGameState(textworld.GameState):
             if self._state_tracking:
                 self._score = self._game_progression.score
             else:
+                if "score" not in self._extra_infos:
+                    raise ExtraInfosIsMissingError("score")
 
-                # Check if there was any Inform7 events.
-                if self._feedback == self._raw:
-                    self._score = self.previous_state.score
-                else:
-                    output = self._raw
-                    if not self.game_ended:
-                        output = self._env._send("score")
-
-                    match = re.search("scored (?P<score>[0-9]+) out of a possible (?P<max_score>[0-9]+),", output)
-                    self._score = 0
-                    if match:
-                        self._score = int(match.groupdict()["score"])
+                self._score = int(self._extra_infos["score"])
 
         return self._score
 
@@ -458,6 +488,10 @@ class GitGlulxMLEnvironment(textworld.Environment):
         self._compute_intermediate_reward = False
         self.game = Game.load(game_json)
         self.game_state = None
+        self.extra_info = set()
+
+    def enable_extra_info(self, info) -> None:
+        self.extra_info.add(info)
 
     def activate_state_tracking(self) -> None:
         self._state_tracking = True
@@ -519,14 +553,21 @@ class GitGlulxMLEnvironment(textworld.Environment):
 
         start_output = ffi.string(c_feedback).decode('utf-8')
 
-        self.game_state = GlulxGameState(self)
-        self.game_state.init(start_output, self.game, self._state_tracking, self._compute_intermediate_reward)
+        if not self._state_tracking:
+            self.enable_extra_info("score")
 
         # TODO: check if the game was compiled in debug mode. You could parse
         #       the output of the following command to check whether debug mode
         #       was used or not (i.e. invalid action not found).
         self._send('actions')  # Turn on debug print for Inform7 action events.
         self._send('restrict commands')  # Restrict Inform7 commands.
+        _extra_output = ""
+        for info in self.extra_info:
+            _extra_output = self._send('tw-extra-infos {}'.format(info))
+
+        start_output = start_output[:-1] + _extra_output[:-1]  # Add extra infos minus the prompts '>'.
+        self.game_state = GlulxGameState(self)
+        self.game_state.init(start_output, self.game, self._state_tracking, self._compute_intermediate_reward)
 
         return self.game_state
 

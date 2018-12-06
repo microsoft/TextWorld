@@ -32,6 +32,7 @@ class HtmlViewer(Wrapper):
 
         # Rendering requires state tracking.
         self.activate_state_tracking()
+        self._wrapped_env.enable_extra_info("inventory")
 
     def _stop_server(self) -> None:
         """

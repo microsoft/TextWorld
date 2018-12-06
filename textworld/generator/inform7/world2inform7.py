@@ -642,6 +642,16 @@ class Inform7Game:
                 try printing the entire state;
 
         Every turn:
+            if extra description command option is true:
+                say "<description>";
+                try looking;
+                say "</description>";
+            if extra inventory command option is true:
+                say "<inventory>";
+                try taking inventory;
+                say "</inventory>";
+            if extra score command option is true:
+                say "<score>[line break][score][line break]</score>";
             if print state option is true:
                 try printing the entire state;
 
@@ -725,6 +735,48 @@ class Inform7Game:
             Understand "take everything" as taking all.
             Understand "get everything" as taking all.
             Understand "pick up everything" as taking all.
+
+        """)
+
+        # Special command to issue "look" command at every step.
+        source += textwrap.dedent("""\
+        The extra description command option is a truth state that varies.
+        The extra description command option is usually false.
+
+        Turning on the extra description command option is an action applying to nothing.
+        Carry out turning on the extra description command option:
+            Decrease turn count by 1;
+            Now the extra description command option is true.
+
+        Understand "tw-extra-infos description" as turning on the extra description command option.
+
+        """)
+
+        # Special command to issue "inventory" command at every step.
+        source += textwrap.dedent("""\
+        The extra inventory command option is a truth state that varies.
+        The extra inventory command option is usually false.
+
+        Turning on the extra inventory command option is an action applying to nothing.
+        Carry out turning on the extra inventory command option:
+            Decrease turn count by 1;
+            Now the extra inventory command option is true.
+
+        Understand "tw-extra-infos inventory" as turning on the extra inventory command option.
+
+        """)
+
+        # Special command to issue "score" command at every step.
+        source += textwrap.dedent("""\
+        The extra score command option is a truth state that varies.
+        The extra score command option is usually false.
+
+        Turning on the extra score command option is an action applying to nothing.
+        Carry out turning on the extra score command option:
+            Decrease turn count by 1;
+            Now the extra score command option is true.
+
+        Understand "tw-extra-infos score" as turning on the extra score command option.
 
         """)
 

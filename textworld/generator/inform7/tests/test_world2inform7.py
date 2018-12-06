@@ -280,6 +280,45 @@ def test_cannot_win_or_lose_a_quest_twice():
         assert game_state.has_won
 
 
+def test_disambiguation_questions():
+    M = textworld.GameMaker()
+    room = M.new_room("room")
+    M.set_player(room)
+
+    tasty_apple = M.new(type="o", name="tasty apple")
+    tasty_orange = M.new(type="o", name="tasty orange")
+    room.add(tasty_apple, tasty_orange)
+
+    game = M.build()
+    game_name = "test_names_disambiguation"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = _compile_game(game, path=tmpdir)
+        env = textworld.start(game_file)
+        env.enable_extra_info("description")
+        env.enable_extra_info("inventory")
+
+        game_state = env.reset()
+        previous_inventory = game_state.inventory
+        previous_description = game_state.description
+
+        game_state, _, _ = env.step("take tasty")
+        assert "?" in game_state.feedback  # Disambiguation question.
+
+        # When there is a question in Inform7, the next string sent to the game
+        # will be considered as the answer. We now make sure that asking for
+        # extra information like `description` or `inventory` before answering
+        # the question works.
+        assert game_state.description == previous_description
+        assert game_state.inventory  == previous_inventory
+
+        # Now answering the question.
+        game_state, _, _ = env.step("apple")
+        assert "That's not a verb I recognise." not in game_state.feedback
+        assert "tasty orange" not in game_state.inventory
+        assert "tasty apple" in game_state.inventory
+        assert "tasty apple" not in game_state.description
+
+
 def test_names_disambiguation():
     M = textworld.GameMaker()
     room = M.new_room("room")
@@ -296,6 +335,8 @@ def test_names_disambiguation():
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
+        env.enable_extra_info("description")
+        env.enable_extra_info("inventory")
         env.reset()
         game_state, _, done = env.step("take tasty apple")
         assert "tasty apple" in game_state.inventory
@@ -341,6 +382,8 @@ def test_names_disambiguation():
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
+        env.enable_extra_info("description")
+        env.enable_extra_info("inventory")
         env.reset()
         game_state, _, done = env.step("take keycard")
         assert "keycard" in game_state.inventory
@@ -384,6 +427,7 @@ def test_names_disambiguation():
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
+        env.enable_extra_info("inventory")
         game_state = env.reset()
         game_state, _, done = env.step("take key from safe")
         assert "key" in game_state.inventory
@@ -407,6 +451,7 @@ def test_names_disambiguation():
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
+        env.enable_extra_info("inventory")
         game_state = env.reset()
         game_state, _, done = env.step("take key from safe")
         assert "key" in game_state.inventory
@@ -442,6 +487,7 @@ def test_take_all_and_variants():
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
         env = textworld.start(game_file)
+        env.enable_extra_info("inventory")
         env.reset()
 
         game_state, _, done = env.step("take all ball")
