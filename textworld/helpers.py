@@ -100,7 +100,7 @@ def play(game_file: str, agent: Optional[Agent] = None, max_nb_steps: int = 1000
         print(msg)
 
 
-def make(options: GameOptions, path: str) -> Tuple[str, Game]:
+def make(options: GameOptions) -> Tuple[str, Game]:
     """ Makes a text-based game.
 
     Arguments:
@@ -108,12 +108,10 @@ def make(options: GameOptions, path: str) -> Tuple[str, Game]:
             For customizing the game generation (see
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
             for the list of available options).
-        path: Path of the compiled game (.ulx or .z8). Also, the source (.ni)
-              and metadata (.json) files will be saved along with it.
 
     Returns:
         A tuple containing the path to the game file, and its corresponding Game's object.
     """
     game = make_game(options)
-    game_file = compile_game(game, path, force_recompile=options.force_recompile)
+    game_file = compile_game(game, options)
     return game_file, game

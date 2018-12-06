@@ -16,7 +16,7 @@ from textworld.generator.maker import MissingPlayerError
 from textworld.generator.maker import PlayerAlreadySetError
 
 
-def compile_game(game, folder):
+def _compile_game(game, folder):
     grammar_flags = {
         "theme": "house",
         "include_adj": False,
@@ -30,8 +30,9 @@ def compile_game(game, folder):
     grammar = textworld.generator.make_grammar(grammar_flags, rng=rng_grammar)
     game.change_grammar(grammar)
 
-    game_name = "test_game"
-    game_file = textworld.generator.compile_game(game, path=folder)
+    options = textworld.GameOptions()
+    options.path = folder
+    game_file = textworld.generator.compile_game(game, options)
     return game_file
 
 
@@ -140,7 +141,7 @@ def test_making_a_small_game(play_the_game=False):
     assert "GameMaker" in game.metadata["desc"]
 
     with make_temp_directory(prefix="test_making_a_small_game") as tmpdir:
-        game_file = compile_game(game, folder=tmpdir)
+        game_file = _compile_game(game, folder=tmpdir)
 
         if play_the_game:
             textworld.play(game_file)
@@ -173,7 +174,7 @@ def test_record_quest_from_commands(play_the_game=False):
     game = M.build()
 
     with make_temp_directory(prefix="test_record_quest_from_commands") as tmpdir:
-        game_file = compile_game(game, folder=tmpdir)
+        game_file = _compile_game(game, folder=tmpdir)
 
         if play_the_game:
             textworld.play(game_file)

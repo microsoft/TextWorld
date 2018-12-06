@@ -955,12 +955,14 @@ class GameOptions:
             Minimum number of actions the quest requires to be completed.
         quest_breadth (int):
             Control how nonlinear a quest can be (1: linear).
-        games_dir (str):
-            Path to the directory where the game will be saved.
+        path (str):
+            Path of the compiled game (.ulx or .z8). Also, the source (.ni)
+            and metadata (.json) files will be saved along with it.
         force_recompile (bool):
             If `True`, recompile game even if it already exists.
-        file_type (str):
+        file_ext (str):
             Type of the generated game file. Either .z8 (Z-Machine) or .ulx (Glulx).
+            If `path` already has an extension, this is ignored.
         seeds (Optional[Union[int, Dict]]):
             Seeds for the different generation processes.
 
@@ -1003,6 +1005,8 @@ class GameOptions:
         self.quest_length = 1
         self.quest_breadth = 1
         self.force_recompile = False
+        self.file_ext = ".ulx"
+        self.path = "./tw_games/"
 
     @property
     def quest_length(self) -> int:

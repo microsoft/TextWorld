@@ -57,7 +57,7 @@ def build_test_game():
     return game
 
 
-def compile_game(game, folder):
+def _compile_game(game, folder):
     grammar_flags = {
         "theme": "house",
         "include_adj": False,
@@ -72,8 +72,9 @@ def compile_game(game, folder):
     game.change_grammar(grammar)
 
     game_name = "test_game"
-    path = pjoin(folder, game_name + ".ulx")
-    game_file = textworld.generator.compile_game(game, path)
+    options = textworld.GameOptions()
+    options.path = pjoin(folder, game_name + ".ulx")
+    game_file = textworld.generator.compile_game(game, options)
     return game_file
 
 
@@ -84,7 +85,7 @@ class TestGlulxGameState(unittest.TestCase):
         g_rng.set_seed(201809)
         cls.game = build_test_game()
         cls.tmpdir = tempfile.mkdtemp()
-        cls.game_file = compile_game(cls.game, folder=cls.tmpdir)
+        cls.game_file = _compile_game(cls.game, folder=cls.tmpdir)
 
     @classmethod
     def tearDownClass(cls):
@@ -180,7 +181,9 @@ class TestGlulxGameState(unittest.TestCase):
         game = M.build()
         game_name = "test_game_ended_when_no_quest"
         with make_temp_directory(prefix=game_name) as tmpdir:
-            game_file = textworld.generator.compile_game(game, path=tmpdir)
+            options = textworld.GameOptions()
+            options.path = tmpdir
+            game_file = textworld.generator.compile_game(game, options)
 
             env = textworld.start(game_file)
             env.activate_state_tracking()
@@ -309,7 +312,7 @@ class TestGitGlulxMLEnvironment(unittest.TestCase):
     def setUpClass(cls):
         cls.game = build_test_game()
         cls.tmpdir = tempfile.mkdtemp()
-        cls.game_file = compile_game(cls.game, folder=cls.tmpdir)
+        cls.game_file = _compile_game(cls.game, folder=cls.tmpdir)
 
     @classmethod
     def tearDownClass(cls):

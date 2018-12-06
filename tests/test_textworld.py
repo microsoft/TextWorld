@@ -18,11 +18,12 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp(prefix="test_textworld")
         options = textworld.GameOptions()
+        options.path = self.tmpdir
         options.nb_rooms = 5
         options.nb_objects = 10
         options.quest_length = 10
         options.seeds = 1234
-        self.game_file, self.game = textworld.make(options, path=self.tmpdir)
+        self.game_file, self.game = textworld.make(options)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -92,12 +93,13 @@ def test_playing_generated_games():
 
         with make_temp_directory(prefix="test_play_generated_games") as tmpdir:
             options = textworld.GameOptions()
+            options.path = tmpdir
             options.nb_rooms = world_size
             options.nb_objects = nb_objects
             options.quest_length = quest_length
             options.quest_breadth = quest_breadth
             options.seeds = game_seed
-            game_file, game = textworld.make(options, path=tmpdir)
+            game_file, game = textworld.make(options)
 
             # Solve the game using WalkthroughAgent.
             agent = textworld.agents.WalkthroughAgent()

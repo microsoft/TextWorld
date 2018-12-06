@@ -40,8 +40,9 @@ def test_making_a_game_without_a_quest(play_the_game=False):
     game = textworld.generator.make_game_with(world, quests, grammar)
 
     with make_temp_directory(prefix="test_render_wrapper") as tmpdir:
-        game_name = "test_making_a_game_without_a_quest"
-        game_file = compile_game(game, path=tmpdir)
+        options = textworld.GameOptions()
+        options.path = tmpdir
+        game_file = compile_game(game, options)
 
         if play_the_game:
             textworld.play(game_file)
@@ -77,8 +78,9 @@ def test_making_a_game(play_the_game=False):
     game = textworld.generator.make_game_with(world, [quest], grammar)
 
     with make_temp_directory(prefix="test_render_wrapper") as tmpdir:
-        game_name = "test_making_a_game"
-        game_file = compile_game(game, path=tmpdir)
+        options = textworld.GameOptions()
+        options.path = tmpdir
+        game_file = compile_game(game, options)
 
         if play_the_game:
             textworld.play(game_file)

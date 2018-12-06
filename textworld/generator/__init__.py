@@ -201,30 +201,29 @@ def make_game(options: GameOptions) -> Game:
     return game
 
 
-def compile_game(game: Game, path: str, force_recompile: bool = False):
+def compile_game(game: Game, options: Optional[GameOptions] = None):
     """
     Compile a game.
 
     Arguments:
         game: Game object to compile.
-        path: Path of the compiled game (.ulx or .z8). Also, the source (.ni)
-              and metadata (.json) files will be saved along with it.
-        force_recompile: If `True`, recompile game even if it already exists.
+        options:
+            For customizing the game generation (see
+            :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
+            for the list of available options).
 
     Returns:
         The path to compiled game.
     """
+    options = options or GameOptions()
 
-    folder, filename = os.path.split(path)
+    folder, filename = os.path.split(options.path)
     if not filename:
         filename = game.metadata.get("uuid", str(uuid.uuid4()))
 
     filename, ext = os.path.splitext(filename)
     if not ext:
-        ext = ".ulx"  # Add default extension, if needed.
-
-    if str2bool(os.environ.get("TEXTWORLD_FORCE_ZFILE", False)):
-        ext = ".z8"
+        ext = options.file_ext  # Add default extension, if needed.
 
     source = generate_inform7_source(game)
 
@@ -233,14 +232,14 @@ def compile_game(game: Game, path: str, force_recompile: bool = False):
     game_file = pjoin(folder, filename + ext)
 
     already_compiled = False  # Check if game is already compiled.
-    if not force_recompile and os.path.isfile(game_file) and os.path.isfile(game_json):
+    if not options.force_recompile and os.path.isfile(game_file) and os.path.isfile(game_json):
         already_compiled = game == Game.load(game_json)
         msg = ("It's highly unprobable that two games with the same id have different structures."
                " That would mean the generator has been modified."
                " Please clean already generated games found in '{}'.".format(folder))
         assert already_compiled, msg
 
-    if not already_compiled or force_recompile:
+    if not already_compiled or options.force_recompile:
         game.save(game_json)
         compile_inform7_game(source, game_file)
 

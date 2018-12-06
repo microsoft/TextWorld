@@ -35,7 +35,7 @@ def register_games(game_files: List[str],
         >>> options.seeds = 1234
         >>> game = make_game(options)
         >>> game.extras["more"] = "This is extra information."
-        >>> game_file = compile_game(game, './tw_games/')
+        >>> game_file = compile_game(game)
         <BLANKLINE>
         >>> import gym
         >>> import textworld.gym

@@ -9,8 +9,9 @@ from textworld.utils import make_temp_directory
 def test_register_game():
     with make_temp_directory() as tmpdir:
         options = textworld.GameOptions()
+        options.path = tmpdir
         options.seeds = 1234
-        gamefile, game = textworld.make(options, tmpdir)
+        gamefile, game = textworld.make(options)
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
 
@@ -29,10 +30,11 @@ def test_register_game():
 def test_register_games():
     with make_temp_directory() as tmpdir:
         options = textworld.GameOptions()
+        options.path = tmpdir
         options.seeds = 1234
-        gamefile1, game1 = textworld.make(options, tmpdir)
+        gamefile1, game1 = textworld.make(options)
         options.seeds = 4321
-        gamefile2, game2 = textworld.make(options, tmpdir)
+        gamefile2, game2 = textworld.make(options)
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
 
@@ -66,8 +68,9 @@ def test_batch():
     batch_size = 5
     with make_temp_directory() as tmpdir:
         options = textworld.GameOptions()
+        options.path = tmpdir
         options.seeds = 1234
-        gamefile, game = textworld.make(options, tmpdir)
+        gamefile, game = textworld.make(options)
 
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
@@ -95,8 +98,9 @@ def test_batch_parallel():
     batch_size = 5
     with make_temp_directory() as tmpdir:
         options = textworld.GameOptions()
+        options.path = tmpdir
         options.seeds = 1234
-        gamefile, game = textworld.make(options, tmpdir)
+        gamefile, game = textworld.make(options)
 
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
