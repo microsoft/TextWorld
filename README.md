@@ -1,4 +1,6 @@
 # TextWorld
+[![Build Status](https://travis-ci.org/Microsoft/TextWorld.svg?branch=master)](https://travis-ci.org/Microsoft/TextWorld) [![PyPI version](https://badge.fury.io/py/textworld.svg)](https://badge.fury.io/py/textworld)
+
 A text-based game generator and extensible sandbox learning environment for training and testing reinforcement learning (RL) agents. Also check out aka.ms/textworld for more info about TextWorld and its creators.
 
 ## Installation
@@ -53,7 +55,7 @@ To play a game, one can use the `tw-play` script. For instance, the command to p
 
 ### Playing a game (Python)
 
-Here's how you can interact with a text-based game from within Python. 
+Here's how you can interact with a text-based game from within Python.
 
 ```python
 import textworld
