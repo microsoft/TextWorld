@@ -37,6 +37,9 @@ fi
     echo "Installing Inform7 CLI"
     cd inform7-6M62/
     ./install-inform7.sh --prefix $PWD
+    cd ..
+    rm -f inform7-6M62/share/inform7/Internal/I6T/Actions.i6t
+    cp inform7/share/inform7/Internal/I6T/Actions.i6t inform7-6M62/share/inform7/Internal/I6T/Actions.i6t
 )
 
 # Mount DMG if we're using a Mac

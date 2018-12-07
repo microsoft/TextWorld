@@ -780,6 +780,19 @@ class Inform7Game:
 
         """)
 
+        # Tracing actions.
+        source += textwrap.dedent("""\
+            To trace the actions:
+                (- trace_actions = 1; -).
+
+            Tracing the actions is an action applying to nothing.
+            Carry out tracing the actions:
+                trace the actions;
+
+            Understand "tw-trace-actions" as tracing the actions.
+
+        """)
+
         # Special command to restrict possible actions.
         source += textwrap.dedent("""\
         The restrict commands option is a truth state that varies.
@@ -836,6 +849,24 @@ class Inform7Game:
             say "[maximum score]".
 
         Understand "tw-print max_score" as reporting max score.
+
+        """)
+
+        # Special command to print the maximum score of a game.
+        source += textwrap.dedent("""\
+        To print id of (something - thing):
+            (- print {something}, "^"; -).
+
+        Printing the id of player is an action applying to nothing.
+        Carry out printing the id of player:
+            print id of player.
+
+        Printing the id of EndOfObject is an action applying to nothing.
+        Carry out printing the id of EndOfObject:
+            print id of EndOfObject.
+
+        Understand "tw-print player id" as printing the id of player.
+        Understand "tw-print EndOfObject id" as printing the id of EndOfObject.
 
         """)
 
@@ -913,8 +944,8 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
 
         i6_options = "-"
         # i6_options += "k"  # Debug file, maybe useful to extract vocab?
-        if str2bool(os.environ.get("TEXTWORLD_I6_DEBUG", True)):
-            i6_options += "D"  # Debug mode, so we can do "actions on" and get Inform7 action events.
+        if str2bool(os.environ.get("TEXTWORLD_I6_DEBUG", False)):
+            i6_options += "D"  # Debug mode, enables Inform7 testing commands.
 
         i6_options += "E2wS"
         i6_options += "G" if ext == ".ulx" else "v8"

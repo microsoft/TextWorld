@@ -81,7 +81,8 @@ def _compile_game(game, folder):
     options = textworld.GameOptions()
     options.path = pjoin(folder, game_name + ".z8")
     game_file = textworld.generator.compile_game(game, options)
-    shutil.copyfile(game_file, "/tmp/tw-test.z8")
+    # Enable the following to regenerate the test game for Jericho.
+    # shutil.copyfile(game_file, "/tmp/tw-game.z8")
     return game_file
 
 
