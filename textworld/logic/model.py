@@ -16,17 +16,17 @@ from tatsu.objectmodel import Node
 from tatsu.semantics import ModelBuilderSemantics
 
 
+class ModelBase(Node):
+    pass
+
+
 class GameLogicModelBuilderSemantics(ModelBuilderSemantics):
-    def __init__(self):
+    def __init__(self, context=None, types=None):
         types = [
             t for t in globals().values()
             if type(t) is type and issubclass(t, ModelBase)
-        ]
-        super(GameLogicModelBuilderSemantics, self).__init__(types=types)
-
-
-class ModelBase(Node):
-    pass
+        ] + (types or [])
+        super(GameLogicModelBuilderSemantics, self).__init__(context=context, types=types)
 
 
 class VariableNode(ModelBase):

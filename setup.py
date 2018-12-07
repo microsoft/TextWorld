@@ -40,7 +40,7 @@ class CustomBuildPy(build_py):
 
 setup(
     name='textworld',
-    version='0.0.3',
+    version=open(os.path.join("textworld", "version.py")).read().split("=")[-1].strip("' \n"),
     author='',
     cmdclass={
         'build_py': CustomBuildPy,
