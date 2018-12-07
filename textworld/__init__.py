@@ -3,6 +3,7 @@
 
 import warnings
 
+from textworld.version import __version__
 from textworld.utils import g_rng
 
 from textworld.core import Environment, GameState, Agent

@@ -81,27 +81,27 @@ class GameLogicParser(Parser):
 
     @tatsumasu()
     def _str_(self):  # noqa
-        self._pattern(r'"[^"]*"')
+        self._pattern('"[^"]*"')
 
     @tatsumasu()
     def _strBlock_(self):  # noqa
-        self._pattern(r'"""(.|\n)*?"""')
+        self._pattern('"""(.|\\n)*?"""')
 
     @tatsumasu()
     def _name_(self):  # noqa
-        self._pattern(r'\w+')
+        self._pattern('\\w+')
 
     @tatsumasu()
     def _phName_(self):  # noqa
-        self._pattern(r"[\w']+")
+        self._pattern("[\\w']+")
 
     @tatsumasu()
     def _predName_(self):  # noqa
-        self._pattern(r'[\w/]+')
+        self._pattern('[\\w/]+')
 
     @tatsumasu()
     def _ruleName_(self):  # noqa
-        self._pattern(r'[\w/]+')
+        self._pattern('[\\w/]+')
 
     @tatsumasu('VariableNode')
     def _variable_(self):  # noqa

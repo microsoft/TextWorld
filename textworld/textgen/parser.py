@@ -81,11 +81,11 @@ class TextGrammarParser(Parser):
 
     @tatsumasu()
     def _symbol_(self):  # noqa
-        self._pattern(r'[\w()/!<>-]+')
+        self._pattern('[\\w()/!<>-]+')
 
     @tatsumasu()
     def _literal_(self):  # noqa
-        self._pattern(r'(([^;|<>\n\[\]()]|\[[^\[\]]*\]|\([^()]*\))+(?<!\s))?')
+        self._pattern('(([^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]*\\))+(?<!\\s))?')
 
     @tatsumasu('AdjectiveNoun')
     def _adjectiveNoun_(self):  # noqa
