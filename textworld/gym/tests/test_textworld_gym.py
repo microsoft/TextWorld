@@ -15,7 +15,7 @@ def test_register_game():
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
 
-        env_id = textworld.gym.register_games([gamefile], env_options, name="test-single")
+        env_id = textworld.gym.register_game(gamefile, env_options, name="test-single")
         env = gym.make(env_id)
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
@@ -104,7 +104,7 @@ def test_batch_parallel():
 
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
-        env_id = textworld.gym.register_games([gamefile], env_options, name="test-batch-parallel")
+        env_id = textworld.gym.register_game(gamefile, env_options, name="test-batch-parallel")
         env_id = textworld.gym.make_batch(env_id, batch_size, parallel=True)
         env = gym.make(env_id)
 
