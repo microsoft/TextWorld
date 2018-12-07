@@ -68,6 +68,52 @@ def register_games(game_files: List[str],
     return env_id
 
 
+def register_game(game_file: str,
+                  request_infos: Optional[EnvInfos] = None,
+                  max_episode_steps: int = 50,
+                  name: str = "") -> str:
+    """ Make an environment for a particular game.
+
+    Arguments:
+        game_file:
+            Path for the TextWorld game (.ulx).
+        request_infos:
+            For customizing the information returned by this environment
+            (see
+            :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+            for the list of available information).
+        max_episode_steps:
+            Terminate a game after that many steps.
+        name:
+            Name for the new environment, i.e. "tw-{name}-v0". By default,
+            the returned env_id is "tw-v0".
+
+    Returns:
+        The corresponding gym-compatible env_id to use.
+
+    Example:
+
+        >>> from textworld.generator import make_game, compile_game
+        >>> options = textworld.GameOptions()
+        >>> options.seeds = 1234
+        >>> game = make_game(options)
+        >>> game.extras["more"] = "This is extra information."
+        >>> game_file = compile_game(game)
+        <BLANKLINE>
+        >>> import gym
+        >>> import textworld.gym
+        >>> from textworld import EnvInfos
+        >>> request_infos = EnvInfos(description=True, inventory=True, extras=["more"])
+        >>> env_id = textworld.gym.register_game(game_file, request_infos)
+        >>> env = gym.make(env_id)
+        >>> ob, infos = env.reset()
+        >>> print(infos["extra.more"])
+        This is extra information.
+
+    """
+    return register_games([game_file], request_infos, max_episode_steps, name)
+
+
 def make_batch(env_id: str, batch_size: int, parallel: bool = False) -> str:
     """ Make an environment that runs multiple games independently.
 
