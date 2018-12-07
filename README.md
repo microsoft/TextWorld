@@ -20,9 +20,11 @@ And on macOS, with
 
 ### Installing TextWorld
 
-The easiest way to install TextWorld is via [`pip`](https://pypi.org/).
+The easiest way to install TextWorld is via [`pip`](https://pypi.org/):
 
-After cloning the repo, go inside the root folder of the project (i.e. alongside `setup.py`) and run
+    pip install textworld
+
+Or, after cloning the repo, go inside the root folder of the project (i.e. alongside `setup.py`) and run
 
     pip install .
 
