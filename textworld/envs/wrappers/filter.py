@@ -143,6 +143,12 @@ class Filter(Wrapper):
             self.activate_state_tracking()
             self.compute_intermediate_reward()
 
+        if self.options.description:
+            self._wrapped_env.enable_extra_info("description")
+
+        if self.options.inventory:
+            self._wrapped_env.enable_extra_info("inventory")
+
         game_state = super().reset()
         ob = game_state.feedback
         infos = self._get_requested_infos(game_state)
