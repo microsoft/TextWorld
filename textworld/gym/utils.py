@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from gym.envs.registration import register, spec
+from gym.envs.registration import register, spec, registry
 
 from textworld import EnvInfos
 
@@ -49,6 +49,12 @@ def register_games(game_files: List[str],
 
     """
     env_id = "tw-{}-v0".format(name) if name else "tw-v0"
+
+    # If env already registered, bump the version number.
+    if env_id in registry.env_specs:
+        base, _ = env_id.rsplit("-v", 1)
+        versions = [int(env_id.rsplit("-v", 1)[-1]) for env_id in registry.env_specs if env_id.startswith(base)]
+        env_id = "{}-v{}".format(base, max(versions) + 1)
 
     register(
         id=env_id,
