@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <uuid/uuid.h>
 
 /* sockets */
 #include <arpa/inet.h>

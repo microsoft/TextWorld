@@ -19,7 +19,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <uuid/uuid.h>
 /* socket */
 #include <arpa/inet.h>
 #include <sys/socket.h>
