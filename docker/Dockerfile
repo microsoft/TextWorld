@@ -15,7 +15,6 @@ RUN apt-get install -qy \
     libffi-dev \
     python3-dev \
     python3-pip \
-    uuid-dev \
     wget \
     graphviz
 
