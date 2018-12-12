@@ -123,7 +123,11 @@ def make_quest(world, quest_length, rng=None, rules_per_depth=(), backward=False
     # Sample a quest according to quest_length.
     options = ChainingOptions()
     options.backward = backward
+    options.min_depth = 1
     options.max_depth = quest_length
+    options.min_breadth = 1
+    options.max_breadth = quest_length
+    options.chain_length = quest_length
     options.rng = rng
     options.rules_per_depth = rules_per_depth
     chain = sample_quest(state, options)

@@ -401,6 +401,8 @@ class Game:
             for event in quest.win_events:
                 event.commands = inform7.gen_commands_from_actions(event.actions)
 
+            quest.commands = quest.win_events[0].commands
+
         if self.main_quest:
             win_event = self.main_quest.win_events[0]
             self.main_quest.commands = inform7.gen_commands_from_actions(win_event.actions)
@@ -1010,12 +1012,15 @@ class GameOptions:
 
     @property
     def quest_length(self) -> int:
-        return self.chaining.max_depth
+        return self.chaining.chain_length
 
     @quest_length.setter
     def quest_length(self, value: int) -> None:
         self.chaining.min_depth = 1
         self.chaining.max_depth = value
+        self.chaining.min_breadth = 1
+        self.chaining.max_breadth = value
+        self.chaining.chain_length = value
 
     @property
     def quest_breadth(self) -> int:

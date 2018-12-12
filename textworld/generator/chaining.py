@@ -101,6 +101,7 @@ class ChainingOptions:
         self.max_depth = 1
         self.min_breadth = 1
         self.max_breadth = 1
+        self.chain_length = 1
         self.subquests = False
         self.independent_chains = False
         self.create_variables = False
@@ -508,7 +509,10 @@ def get_chains(state: State, options: ChainingOptions) -> Iterable[Chain]:
                 stack.append(child)
 
             if node.depth >= options.min_depth and node.breadth >= options.min_breadth:
-                yield chainer.make_chain(node)
+                chain = chainer.make_chain(node)
+
+                if len(chain.actions) >= options.chain_length:
+                    yield chain
 
 
 def sample_quest(state: State, options: ChainingOptions) -> Optional[Chain]:
