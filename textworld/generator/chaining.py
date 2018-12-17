@@ -63,12 +63,16 @@ class ChainingOptions:
             produces a sequence of actions that start at the provided state,
             while backward chaining produces a sequence of actions that end up
             at the provided state.
+        min_length:
+            The minimum length of the generated quests.
+        max_length:
+            The maximum length of the generated quests.
         min_depth:
-            The minimum depth (length) of the generated quests.
+            The minimum depth (length) of the generated independent subquests.
         max_depth:
-            The maximum depth of the generated quests.
+            The maximum depth (length) of the generated independent subquests.
         min_breadth:
-            The minimum breadth of the generated quests.  When this is higher
+            The minimum breadth of the generated quests. When this is higher
             than 1, the generated quests will have multiple parallel subquests.
             In this case, min_depth and max_depth limit the length of these
             independent subquests, not the total size of the quest.
@@ -101,7 +105,8 @@ class ChainingOptions:
         self.max_depth = 1
         self.min_breadth = 1
         self.max_breadth = 1
-        self.chain_length = 1
+        self.min_length = 1
+        self.max_length = 1
         self.subquests = False
         self.independent_chains = False
         self.create_variables = False
@@ -210,15 +215,16 @@ class _Node:
     each node stores the actions that have already been used at that depth.
     """
 
-    def __init__(self, parent, dep_parent, state, action, rules, used, depth, breadth):
+    def __init__(self, parent, dep_parent, state, action, rules, used, breadth):
         self.parent = parent
         self.dep_parent = dep_parent
         self.state = state
         self.action = action
         self.rules = rules
         self.used = used
-        self.depth = depth
         self.breadth = breadth
+        self.depth = dep_parent.depth + 1 if dep_parent else 0
+        self.length = parent.length + 1 if parent else 0
 
 
 class _Chainer:
@@ -231,6 +237,7 @@ class _Chainer:
         self.options = options
         self.backward = options.backward
         self.max_depth = options.max_depth
+        self.max_length = options.max_length
         self.max_breadth = options.max_breadth
         self.create_variables = options.create_variables
         self.fixed_mapping = options.fixed_mapping
@@ -239,14 +246,14 @@ class _Chainer:
 
     def root(self) -> _Node:
         """Create the root node for chaining."""
-        return _Node(None, None, self.state, None, [], set(), 0, 1)
+        return _Node(None, None, self.state, None, [], set(), 1)
 
     def chain(self, node: _Node) -> Iterable[_Node]:
         """
         Perform direct forward/backward chaining.
         """
 
-        if node.depth >= self.max_depth:
+        if node.depth >= self.max_depth or node.length >= self.max_length:
             return
 
         rules = self.options.get_rules(node.depth)
@@ -269,14 +276,14 @@ class _Chainer:
                 continue
 
             used = used | {action}
-            yield _Node(node, node, state, action, rules, used, node.depth + 1, node.breadth)
+            yield _Node(node, node, state, action, rules, used, node.breadth)
 
     def backtrack(self, node: _Node) -> Iterable[_Node]:
         """
         Backtrack to earlier choices to generate parallel quests.
         """
 
-        if node.breadth >= self.max_breadth:
+        if node.breadth >= self.max_breadth or node.length >= self.max_length:
             return
 
         parent = node
@@ -311,7 +318,7 @@ class _Chainer:
                     continue
 
                 used = sibling.used | {action}
-                yield _Node(node, parent, state, action, rules, used, sibling.depth, node.breadth + 1)
+                yield _Node(node, parent, state, action, rules, used, node.breadth + 1)
 
     def all_assignments(self, node: _Node, rules: Iterable[Rule]) -> Iterable[_PartialAction]:
         """
@@ -508,11 +515,8 @@ def get_chains(state: State, options: ChainingOptions) -> Iterable[Chain]:
             for child in chainer.backtrack(node):
                 stack.append(child)
 
-            if node.depth >= options.min_depth and node.breadth >= options.min_breadth:
-                chain = chainer.make_chain(node)
-
-                if len(chain.actions) >= options.chain_length:
-                    yield chain
+            if node.depth >= options.min_depth and node.breadth >= options.min_breadth and node.length >= options.min_length:
+                yield chainer.make_chain(node)
 
 
 def sample_quest(state: State, options: ChainingOptions) -> Optional[Chain]:

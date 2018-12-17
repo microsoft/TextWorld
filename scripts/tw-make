@@ -13,6 +13,13 @@ import numpy as np
 import textworld
 import textworld.challenges
 
+from textworld.generator import TextworldNoSuchQuestExistError
+
+
+MAX_BREADTH = 5
+MAX_DEPTH = 5
+MAX_LENGTH = 5
+
 
 def _get_available_challenges():
     challenges = []
@@ -20,6 +27,7 @@ def _get_available_challenges():
         challenges.append("tw-{}-level{{N}}".format(challenge))
 
     return challenges
+
 
 def exit_listing_challenges(challenge=None):
     msg = ""
@@ -73,21 +81,45 @@ def parse_args():
                                help="Nb. of rooms in the world.")
     custom_parser.add_argument("--nb-objects", type=int, default=10, metavar="NB",
                                help="Nb. of objects in the world.")
-    custom_parser.add_argument("--quest-length", type=int, default=5, metavar="LENGTH",
-                               help="Minimum nb. of actions the quest requires to be completed.")
-    custom_parser.add_argument("--quest-breadth", type=int, default=3, metavar="BREADTH",
-                               help="Control how non-linear a quest can be.")
+
+    quest_group = custom_parser.add_argument_group('Quest settings')
+    quest_group.add_argument("--quest-min-length", type=int, default=1, metavar="LENGTH",
+                               help="Minimum nb. of actions the quest requires to be completed. Default: %(default)s.")
+    quest_group.add_argument("--quest-max-length", type=int, default=5, metavar="LENGTH",
+                               help="Maximum nb. of actions the quest requires to be completed."
+                                    " Default: {} unless --quest-depth or --quest-breadth are specified.".format(MAX_LENGTH))
+    quest_group.add_argument("--quest-length", type=int, metavar="LENGTH",
+                               help="Nb. of actions the quest requires to be completed.")
+
+    quest_group.add_argument("--quest-min-depth", type=int, default=1, metavar="DEPTH",
+                               help="Minimum nb. of actions the subquests can have. Default: %(default)s.")
+    quest_group.add_argument("--quest-max-depth", type=int, metavar="DEPTH",
+                               help="Maximum nb. of actions the subquests can have."
+                                    " Default: {} unless --quest-length is specified.".format(MAX_DEPTH))
+    quest_group.add_argument("--quest-depth", type=int, metavar="DEPTH",
+                               help="Nb. of actions the subquests will have.")
+
+    quest_group.add_argument("--quest-min-breadth", type=int, default=1, metavar="BREADTH",
+                               help="Minimum nb. of subquests the quests can have. Default: %(default)s.")
+    quest_group.add_argument("--quest-max-breadth", type=int, metavar="BREADTH",
+                               help="Maxmimum nb. of subquests the quests can have."
+                                    " Default: {} unless --quest-length is specified.".format(MAX_BREADTH))
+    quest_group.add_argument("--quest-breadth", type=int, metavar="BREADTH",
+                               help="Nb. of subquests the quests will have.")
+
+    quest_group.add_argument("--nb-parallel-quests", type=int, default=1,
+                               help="Nb. of parallel quests the game will have. Default: %(default)s.")
 
     challenge_parser = subparsers.add_parser("challenge", parents=[general_parser],
                                              help='Generate a game for one of the challenges.')
     challenge_parser.add_argument("challenge",
                                   help="Name of the builtin challenges, e.g. `tw-coin_collector-level210`")
 
-    return parser.parse_args()
+    return parser.parse_args(), parser
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    args, parser = parse_args()
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
@@ -109,9 +141,44 @@ if __name__ == "__main__":
     if args.subcommand == "custom":
         options.nb_rooms = args.world_size
         options.nb_objects = args.nb_objects
-        options.quest_length = args.quest_length
-        options.quest_breadth = args.quest_breadth
-        game_file, game = textworld.make(options)
+        options.chaining.min_breadth = args.quest_min_breadth
+        options.chaining.min_depth = args.quest_min_depth
+        options.chaining.min_length = args.quest_min_length
+        options.nb_parallel_quests = args.nb_parallel_quests
+
+        if args.quest_length:
+            options.quest_length = args.quest_length
+        else:
+            args.quest_max_depth = MAX_DEPTH
+            args.quest_max_breadth = MAX_BREADTH
+
+        if args.quest_breadth:
+            options.quest_breadth = args.quest_breadth
+        else:
+            args.quest_max_length = MAX_LENGTH
+
+        if args.quest_depth:
+            options.quest_depth = args.quest_depth
+        else:
+            args.quest_max_length = MAX_LENGTH
+
+        if args.quest_max_breadth:
+            options.chaining.max_breadth = args.quest_max_breadth
+
+        if args.quest_max_depth:
+            options.chaining.max_depth = args.quest_max_depth
+
+        if args.quest_max_length:
+            options.chaining.max_length = args.quest_max_length
+
+        try:
+            game_file, game = textworld.make(options)
+        except TextworldNoSuchQuestExistError:
+            # TODO: Display current values of `options` to help understanding why no game could be generated.
+            msg = ("No quest can be generated with the provided options."
+                   " Try relaxing the quest generation constraints, e.g."
+                   " using `--quest-min-length` instead of `--quest-length`.")
+            parser.error(msg)
 
     elif args.subcommand == "challenge":
         try:
@@ -133,6 +200,7 @@ if __name__ == "__main__":
 
     if args.verbose:
         print(game.objective)
+        print(" > ".join(game.main_quest.commands))
 
     if args.view:
         textworld.render.visualize(game, interactive=True)

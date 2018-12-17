@@ -357,7 +357,7 @@ class Game:
         self.main_quest = None
         policy = GameProgression(self).winning_policy
         if policy:
-            win_event = Event(actions=GameProgression(self).winning_policy)
+            win_event = Event(actions=policy)
             self.main_quest = Quest(win_events=[win_event])
 
         self.change_grammar(grammar)
@@ -386,26 +386,27 @@ class Game:
 
     def change_grammar(self, grammar: Grammar) -> None:
         """ Changes the grammar used and regenerate all text. """
-        self.grammar = grammar
-        if self.grammar is None:
-            return
-
         from textworld.generator.inform7 import Inform7Game
         from textworld.generator.text_generation import generate_text_from_grammar
-        inform7 = Inform7Game(self)
 
-        generate_text_from_grammar(self, self.grammar)
+        self.grammar = grammar
+        _gen_commands = gen_commands_from_actions
+        if self.grammar:
+            inform7 = Inform7Game(self)
+            _gen_commands = inform7.gen_commands_from_actions
+            generate_text_from_grammar(self, self.grammar)
+
         for quest in self.quests:
             # TODO: should have a generic way of generating text commands from actions
             #       instead of relying on inform7 convention.
             for event in quest.win_events:
-                event.commands = inform7.gen_commands_from_actions(event.actions)
+                event.commands = _gen_commands(event.actions)
 
             quest.commands = quest.win_events[0].commands
 
         if self.main_quest:
             win_event = self.main_quest.win_events[0]
-            self.main_quest.commands = inform7.gen_commands_from_actions(win_event.actions)
+            self.main_quest.commands = _gen_commands(win_event.actions)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -953,10 +954,15 @@ class GameOptions:
             Number of rooms in the game.
         nb_objects (int):
             Number of objects in the game.
+        nb_parallel_quests (int):
+            Number of parallel quests, i.e. not sharing a common goal.
         quest_length (int):
-            Minimum number of actions the quest requires to be completed.
+            Number of actions that need to be performed to complete the game.
         quest_breadth (int):
-            Control how nonlinear a quest can be (1: linear).
+            Number of subquests per independent quest. It controls how nonlinear
+            a quest can be (1: linear).
+        quest_depth (int):
+            Number of actions that need to be performed to solve a subquest.
         path (str):
             Path of the compiled game (.ulx or .z8). Also, the source (.ni)
             and metadata (.json) files will be saved along with it.
@@ -1002,34 +1008,46 @@ class GameOptions:
         self._kb = None
         self._seeds = None
 
+        self.nb_parallel_quests = 1
         self.nb_rooms = 1
         self.nb_objects = 1
-        self.quest_length = 1
-        self.quest_breadth = 1
         self.force_recompile = False
         self.file_ext = ".ulx"
         self.path = "./tw_games/"
 
     @property
     def quest_length(self) -> int:
-        return self.chaining.chain_length
+        assert self.chaining.min_length == self.chaining.max_length
+        return self.chaining.min_length
 
     @quest_length.setter
     def quest_length(self, value: int) -> None:
-        self.chaining.min_depth = 1
+        self.chaining.min_length = value
+        self.chaining.max_length = value
         self.chaining.max_depth = value
-        self.chaining.min_breadth = 1
         self.chaining.max_breadth = value
-        self.chaining.chain_length = value
+
+    @property
+    def quest_depth(self) -> int:
+        assert self.chaining.min_depth == self.chaining.max_depth
+        return self.chaining.min_depth
+
+    @quest_depth.setter
+    def quest_depth(self, value: int) -> None:
+        self.chaining.min_depth = value
+        self.chaining.max_depth = value
+        self.chaining.max_length = value
 
     @property
     def quest_breadth(self) -> int:
-        return self.chaining.max_breadth
+        assert self.chaining.min_breadth == self.chaining.max_breadth
+        return self.chaining.min_breadth
 
     @quest_breadth.setter
     def quest_breadth(self, value: int) -> None:
-        self.chaining.min_breadth = 1
+        self.chaining.min_breadth = value
         self.chaining.max_breadth = value
+        self.chaining.max_length = value
 
     @property
     def seeds(self):
@@ -1083,8 +1101,11 @@ class GameOptions:
     @property
     def uuid(self) -> str:
         # TODO: generate uuid from chaining options?
-        uuid = "tw-game-{specs}-{grammar}-{seeds}"
-        uuid = uuid.format(specs=encode_seeds((self.nb_rooms, self.nb_objects, self.quest_length, self.quest_breadth)),
+        uuid = "tw-{specs}-{grammar}-{seeds}"
+        uuid = uuid.format(specs=encode_seeds((self.nb_rooms, self.nb_objects, self.nb_parallel_quests,
+                                               self.chaining.min_length, self.chaining.max_length,
+                                               self.chaining.min_depth, self.chaining.max_depth,
+                                               self.chaining.min_breadth, self.chaining.max_breadth)),
                            grammar=self.grammar.uuid,
                            seeds=encode_seeds([self.seeds[k] for k in sorted(self._seeds)]))
         return uuid
