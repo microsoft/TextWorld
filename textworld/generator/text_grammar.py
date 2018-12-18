@@ -343,7 +343,7 @@ class Grammar:
                        " To avoid this message you can add more variation in the '{}'"
                        " related grammar files located in '{}'.")
                 msg = msg.format(symbol, adj, self.theme, KnowledgeBase.default().text_grammars_path)
-                warnings.warn(msg, textworld.TextworldGenerationWarning)
+                warnings.warn(msg, textworld.GenerationWarning)
                 return name, adj, noun
 
             # Still not enough variation for the object we want to name.

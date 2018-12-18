@@ -30,11 +30,11 @@ from textworld.generator.maker import GameMaker
 from textworld.generator.logger import GameLogger
 
 
-class TextworldGenerationWarning(UserWarning):
+class GenerationWarning(UserWarning):
     pass
 
 
-class TextworldNoSuchQuestExistError(NameError):
+class NoSuchQuestExistError(NameError):
     pass
 
 
@@ -135,10 +135,10 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
         chain = sample_quest(state, options.chaining)
         if chain is None:
             msg = "No quest can be generated with the provided options."
-            raise TextworldNoSuchQuestExistError(msg)
+            raise NoSuchQuestExistError(msg)
 
         chains.append(chain)
-        state = chain.initial_state  # TODO: the name initial_state doesn't make sense when backward=False
+        state = chain.initial_state  # State might have changed, i.e. options.create_variable is True.
 
     if options.chaining.backward and hasattr(world, "state"):
         world.state = state

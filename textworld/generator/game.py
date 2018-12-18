@@ -1025,18 +1025,6 @@ class GameOptions:
         self.chaining.min_length = value
         self.chaining.max_length = value
         self.chaining.max_depth = value
-        # self.chaining.max_breadth = value
-
-    # @property
-    # def quest_depth(self) -> int:
-    #     assert self.chaining.min_depth == self.chaining.max_depth
-    #     return self.chaining.min_depth
-
-    # @quest_depth.setter
-    # def quest_depth(self, value: int) -> None:
-    #     self.chaining.min_depth = value
-    #     self.chaining.max_depth = value
-    #     # self.chaining.max_length = value
 
     @property
     def quest_breadth(self) -> int:
@@ -1047,7 +1035,6 @@ class GameOptions:
     def quest_breadth(self, value: int) -> None:
         self.chaining.min_breadth = value
         self.chaining.max_breadth = value
-        # self.chaining.max_length = value
 
     @property
     def seeds(self):

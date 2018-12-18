@@ -10,7 +10,7 @@ import tempfile
 import itertools
 import contextlib
 from collections import OrderedDict
-from typing import List, Any, Iterable
+from typing import List, Any, Iterable, Callable
 
 import numpy as np
 
@@ -202,12 +202,19 @@ def take(n: int, iterable: Iterable) -> Iterable:
     return list(itertools.islice(iterable, n))
 
 
-def chunk(iterable: Iterable, n: int) -> Iterable[Iterable]:
-    iterable = iter(iterable)
-    res = take(n, iterable)
-    while len(res) > 0:
-        yield res
-        res = take(n, iterable)
+def chunk(iterable: Iterable, n: int, fct: Callable = lambda e: e) -> Iterable[Iterable]:
+    it = iter(iterable)
+    while True:
+        try:
+            first = next(it)
+        except StopIteration:
+            return
+
+        rest = itertools.islice(it, n - 1)
+        yield fct(itertools.chain((first,), rest))
+        # Make sure rest is exhausted
+        for _ in rest:
+            pass
 
 
 def unique_product(*iterables):

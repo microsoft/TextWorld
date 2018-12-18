@@ -13,7 +13,7 @@ import numpy as np
 import textworld
 import textworld.challenges
 
-from textworld.generator import TextworldNoSuchQuestExistError
+from textworld.generator import NoSuchQuestExistError
 
 
 def _get_available_challenges():
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
         try:
             game_file, game = textworld.make(options)
-        except TextworldNoSuchQuestExistError:
+        except NoSuchQuestExistError:
             # TODO: Display current values of `options` to help understanding why no game could be generated.
             msg = ("No quest can be generated with the provided options."
                    " Try relaxing the quest generation constraints via"

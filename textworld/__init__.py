@@ -10,9 +10,9 @@ from textworld.core import Environment, GameState, Agent
 from textworld.generator import Game, GameMaker, GameOptions
 from textworld.envs.wrappers.filter import EnvInfos
 
-from textworld.generator import TextworldGenerationWarning
+from textworld.generator import GenerationWarning
 
 from textworld.helpers import make, play, start
 
 # By default disable warning related to game generation.
-warnings.simplefilter("ignore", TextworldGenerationWarning)
+warnings.simplefilter("ignore", GenerationWarning)
