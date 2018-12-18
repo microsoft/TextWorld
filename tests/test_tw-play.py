@@ -14,7 +14,7 @@ def test_playing_a_game():
         options.nb_rooms = 5
         options.nb_objects = 10
         options.quest_length = 5
-        options.quest_breadth = 4
+        options.quest_breadth = 2
         options.seeds = 1234
         game_file, _ = textworld.make(options)
 

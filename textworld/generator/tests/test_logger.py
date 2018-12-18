@@ -19,8 +19,8 @@ def test_logger():
         options = textworld.GameOptions()
         options.nb_rooms = 5
         options.nb_objects = 10
-        options.quest_length = 3
-        options.quest_breadth = 3
+        options.chaining.max_depth = 3
+        options.chaining.max_breadth = 3
         options.seeds = rng.randint(65635)
 
         game = textworld.generator.make_game(options)
