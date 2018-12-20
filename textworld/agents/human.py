@@ -8,16 +8,17 @@ from textworld import Agent
 
 prompt_toolkit_available = False
 try:
-    # For command line history.
+    # For command line history and autocompletion.
     from prompt_toolkit import prompt
-    from prompt_toolkit.contrib.completers import WordCompleter
+    from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.history import InMemoryHistory
     prompt_toolkit_available = sys.stdout.isatty()
 except ImportError:
     pass
 
 try:
-    import readline  # For command line history.
+    # For command line history when prompt_toolkit is not available.
+    import readline
 except ImportError:
     pass
 
@@ -39,7 +40,7 @@ class HumanAgent(Agent):
                 # Commands typed by the player are already displayed.
                 env.display_command_during_render = False
             except AttributeError:
-                msg = ("--hint and --mode=random-cmd are"
+                msg = ("Hints (command completion and walkthrough) are"
                        " only supported for generated games.")
                 raise NameError(msg)
 
