@@ -36,13 +36,14 @@ from textworld.challenges.utils import get_seeds_for_game_generation
 
 from textworld.utils import encode_seeds
 from textworld.generator.game import GameOptions
+from textworld.challenges import register
 
 
-def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> textworld.Game:
-    """ Make a Treasure Hunter game of the desired difficulty level.
+def make(settings: str, options: Optional[GameOptions] = None) -> textworld.Game:
+    """ Make a Treasure Hunter game of the desired difficulty settings.
 
     Arguments:
-        level: Difficulty level (see notes).
+        settings: Difficulty level (see notes). Expected pattern: level[1-30].
         options:
             For customizing the game generation (see
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
@@ -72,6 +73,10 @@ def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> t
           to find the object.
     """
     options = options or GameOptions()
+
+    level = int(settings.lstrip("level"))
+    if level < 1 or level > 30:
+        raise ValueError("Expected level to be within [1-30].")
 
     if level >= 21:
         mode = "hard"
@@ -207,3 +212,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
                        seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
     return game
+
+
+register(name="treasure_hunter",
+         make=make,
+         settings="level[1-30]")

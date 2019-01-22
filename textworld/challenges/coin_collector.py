@@ -25,14 +25,15 @@ from textworld.generator.graph_networks import reverse_direction
 
 from textworld.utils import encode_seeds
 from textworld.generator.game import GameOptions
+from textworld.challenges import register
 from textworld.challenges.utils import get_seeds_for_game_generation
 
 
-def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> textworld.Game:
-    """ Make a Coin Collector game of the desired difficulty level.
+def make(settings: str, options: Optional[GameOptions] = None) -> textworld.Game:
+    """ Make a Coin Collector game of the desired difficulty settings.
 
     Arguments:
-        level: Difficulty level (see notes).
+        settings: Difficulty level (see notes). Expected pattern: level[1-300].
         options:
             For customizing the game generation (see
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
@@ -51,6 +52,12 @@ def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> t
           distractors rooms *randomly* added along the chain.
         * ...
     """
+    options = options or GameOptions()
+
+    level = int(settings.lstrip("level"))
+    if level < 1 or level > 300:
+        raise ValueError("Expected level to be within [1-300].")
+
     n_distractors = (level // 100)
     options.quest_length = level % 100
     options.nb_rooms = (n_distractors + 1) * options.quest_length
@@ -151,3 +158,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
                        seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
     return game
+
+
+register(name="coin_collector",
+         make=make,
+         settings="level[1-300]")

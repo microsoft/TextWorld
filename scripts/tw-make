@@ -16,8 +16,8 @@ import textworld.challenges
 
 def _get_available_challenges():
     challenges = []
-    for challenge in textworld.challenges.CHALLENGES:
-        challenges.append("tw-{}-level{{N}}".format(challenge))
+    for challenge, (_, settings) in textworld.challenges.CHALLENGES.items():
+        challenges.append("tw-{}-{}".format(challenge, settings))
 
     return challenges
 
@@ -28,7 +28,6 @@ def exit_listing_challenges(challenge=None):
 
     msg += "Available challenges:\n  "
     msg += "\n  ".join(_get_available_challenges())
-    msg += "\nwhere {N} is an integer."
     print(msg)
     sys.exit(1)
 
@@ -83,11 +82,11 @@ def parse_args():
     challenge_parser.add_argument("challenge",
                                   help="Name of the builtin challenges, e.g. `tw-coin_collector-level210`")
 
-    return parser.parse_args()
+    return parser.parse_args(), parser
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    args, parser = parse_args()
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
@@ -115,17 +114,16 @@ if __name__ == "__main__":
 
     elif args.subcommand == "challenge":
         try:
-            # Expected pattern: "tw-challenge-levelN"
-            _, challenge, level = args.challenge.split("-")
+            # Expected pattern: "tw-{challenge}-{settings}"
+            _, challenge, settings = args.challenge.split("-", 3)
         except ValueError:
             exit_listing_challenges()
 
         if challenge not in textworld.challenges.CHALLENGES:
             exit_listing_challenges(args.challenge)
 
-        level = int(level.lstrip("level"))
-        make_game = textworld.challenges.CHALLENGES[challenge]
-        game = make_game(level, options)
+        make_game, _ = textworld.challenges.CHALLENGES[challenge]
+        game = make_game(settings, options)
         game_file = textworld.generator.compile_game(game, options)
 
     if not args.silent:
