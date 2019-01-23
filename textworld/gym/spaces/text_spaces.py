@@ -3,6 +3,7 @@ import string
 import numpy as np
 
 import gym
+import gym.spaces
 
 
 class VocabularyHasDuplicateTokens(ValueError):

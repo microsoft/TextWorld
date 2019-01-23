@@ -23,6 +23,9 @@ from textworld.textgen.parser import TextGrammarParser
 
 NB_EXPANSION_RETRIES = 20
 
+class MissingTagError(NameError):
+    pass
+
 
 def fix_determinant(var):
     var = var.replace("  ", " ")
@@ -219,7 +222,7 @@ class Grammar:
         rng = rng or self.rng
 
         if not self.has_tag(tag):
-            raise ValueError("Tag: {} does not exist!".format(tag))
+            raise MissingTagError("Tag: {} does not exist!".format(tag))
 
         for _ in range(NB_EXPANSION_RETRIES):
             expansion = rng.choice(self.grammar[tag])
@@ -327,7 +330,14 @@ class Grammar:
         # We don't want to generate a name that is in `exclude`.
         found_candidate = False
         for i in range(50):  # We default to fifty attempts
-            candidate = self.expand(symbol)
+            try:
+                candidate = self.expand(symbol)
+            except MissingTagError:
+                msg = ("Tag: {} does not exists!".format(symbol) +
+                       " Defaulting to '{}' instead.".format(obj_type))
+                warnings.warn(msg, textworld.TextworldGenerationWarning)
+                candidate = obj_type
+
             name, adj, noun = self.split_name_adj_noun(candidate, include_adj)
 
             if name not in exclude:

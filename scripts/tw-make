@@ -43,6 +43,8 @@ def parse_args():
                                help="Which format to use when compiling the game. Default: %(default)s")
     general_group.add_argument("--view", action="store_true",
                                help="Display the resulting game.")
+    general_group.add_argument("--third-party",
+                               help="Load third-party module. Useful to register new custom challenges.")
     general_group.add_argument("-f", "--force", action="store_true")
 
     verbosity_group = general_group.add_mutually_exclusive_group()
@@ -92,6 +94,10 @@ if __name__ == "__main__":
 
     if not args.silent:
         print("Global seed: {}".format(args.seed))
+
+    if args.third_party:
+        import importlib.machinery
+        importlib.machinery.SourceFileLoader("tw_custom_challenge", args.third_party).load_module()
 
     options = textworld.GameOptions()
     options.seeds = args.seed
