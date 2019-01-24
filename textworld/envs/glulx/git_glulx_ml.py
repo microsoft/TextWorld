@@ -438,20 +438,8 @@ class GlulxGameState(textworld.GameState):
         return self._admissible_commands
 
     @property
-    def command_templates(self):
-        return self._game.command_templates
-
-    @property
-    def verbs(self):
-        return self._game.verbs
-
-    @property
-    def entities(self):
-        return self._game.entity_names
-
-    @property
-    def extras(self):
-        return self._game.extras
+    def game(self):
+        return self._game
 
 
 
