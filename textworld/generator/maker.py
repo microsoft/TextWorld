@@ -93,7 +93,7 @@ class WorldEntity:
                   when examining it in the game.
         """
         self.var = var
-        self._facts = []
+        self._facts = set()
         self.infos = EntityInfo(var.name, var.type)
         self.infos.name = name
         self.infos.desc = desc
@@ -121,13 +121,13 @@ class WorldEntity:
         Properties of this object are things that refer to this object and this object alone.
         For instance, 'closed', 'open', and 'locked' are possible properties of 'containers'.
         """
-        return [fact for fact in self._facts if len(fact.arguments) == 1]
+        return [fact for fact in sorted(self._facts) if len(fact.arguments) == 1]
 
     @property
     def facts(self) -> List[Proposition]:
         """ All facts related to this entity (or its children content).
         """
-        facts = list(self._facts)
+        facts = sorted(self._facts)
         for entity in self.content:
             facts += entity.facts
 
@@ -141,7 +141,7 @@ class WorldEntity:
             *entities: A list of entities as arguments to the new fact.
         """
         args = [entity.var for entity in entities]
-        self._facts.append(Proposition(name, args))
+        self._facts.add(Proposition(name, args))
 
     def remove_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
         args = [entity.var for entity in entities]
@@ -514,7 +514,11 @@ class GameMaker:
         return None
 
     def find_by_name(self, name: str) -> Optional[WorldEntity]:
-        return self._named_entities.get(name)
+        for entity in self._entities.values():
+            if entity.name == name:
+                return entity
+
+        return None
 
     def set_player(self, room: WorldRoom) -> None:
         """ Place the player in room.
