@@ -95,6 +95,13 @@ class EnvInfos:
         #: List[str]: Names of extra information which are game specific.
         self.extras = kwargs.get("extras", [])
 
+        # Check `kwargs` keys are all valid.
+        unknown_keys = set(kwargs.keys()) - set(self.__slots__)
+        if len(unknown_keys) > 0:
+            msg = ("Unknown information requested: {}.".format(sorted(unknown_keys)) +
+                   " Available information are: {}".format(sorted(self.__slots__)))
+            raise ValueError(msg)
+
     @property
     def basics(self) -> Iterable[str]:
         """ Information requested excluding the extras. """
@@ -142,8 +149,12 @@ class Filter(Wrapper):
         self.options = options
 
     def _get_requested_infos(self, game_state: GameState):
-        infos = {attr: getattr(game_state, attr, None) for attr in self.options.basics}
-        infos = {attr: getattr(game_state.game, attr) for attr, value in infos.items() if value is None}
+        infos = {}
+        for attr in self.options.basics:
+            if hasattr(game_state, attr):
+                infos[attr] = getattr(game_state, attr)
+            else:
+                infos[attr] = getattr(game_state.game, attr)
 
         if self.options.extras:
             for attr in self.options.extras:
