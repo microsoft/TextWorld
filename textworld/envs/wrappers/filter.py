@@ -18,7 +18,7 @@ class EnvInfos:
     """
 
     __slots__ = ['description', 'inventory', 'location',
-                 'facts',
+                 'facts', 'last_action', 'last_command',
                  'has_won', 'has_lost',
                  'max_score', 'objective',
                  'location_names', 'location_nouns', 'location_adjs',
@@ -44,6 +44,12 @@ class EnvInfos:
         #: bool: All the facts that are currently true about the world.
         #:       This information changes from one step to another.
         self.facts = kwargs.get("facts", False)
+        #: bool: The last action performed where `None` means it was not a valid action.
+        #:       This information changes from one step to another.
+        self.last_action = kwargs.get("last_action", False)
+        #: bool: The last command performed where `None` means it was not a valid command.
+        #:       This information changes from one step to another.
+        self.last_command = kwargs.get("last_command", False)
         #: bool: Whether the player won the game.
         #:       This information changes from one step to another.
         self.has_won = kwargs.get("has_won", False)
