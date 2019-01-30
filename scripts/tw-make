@@ -46,8 +46,10 @@ def parse_args():
     general_group.add_argument('--seed', type=int)
     general_group.add_argument('--format', choices=["ulx", "z8"], default="ulx",
                                help="Which format to use when compiling the game. Default: %(default)s")
-    general_group.add_argument("--view", action="store_true",
-                               help="Display the resulting game.")
+    general_group.add_argument("--overview", action="store_true",
+                               help="Display an overview of the generated game.")
+    general_group.add_argument("--save-overview", action="store_true",
+                               help="Save the overview image of the generated game alongside the game as a PNG file.")
     general_group.add_argument("-f", "--force", action="store_true")
 
     verbosity_group = general_group.add_mutually_exclusive_group()
@@ -206,5 +208,13 @@ if __name__ == "__main__":
         print("Nb. locations: {}".format(nb_locations))
         print("Nb. objects: {}".format(nb_objects))
 
-    if args.view:
+    if args.overview:
         textworld.render.visualize(game, interactive=True)
+
+    if args.save_overview:
+        image = textworld.render.visualize(game)
+        overview_file = game_file.replace(".ulx", ".png")
+        image.save(overview_file)
+
+        if not args.silent:
+            print("Overview image: {}".format(overview_file))
