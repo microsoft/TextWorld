@@ -114,6 +114,13 @@ class GrammarOptions:
 
         return self.theme + "-" + hashids.encode(int(option))
 
+    def __str__(self) -> str:
+        infos = []
+        for slot in self.__slots__:
+            infos.append("{}: {}".format(slot, getattr(self, slot)))
+
+        return "\n".join(infos)
+
 
 class _Stringifier(NodeWalker):
     def walk_str(self, node):

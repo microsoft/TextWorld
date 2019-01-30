@@ -76,7 +76,7 @@ def parse_args():
     custom_parser.add_argument("--world-size", type=int, default=5, metavar="SIZE",
                                help="Nb. of rooms in the world.")
     custom_parser.add_argument("--nb-objects", type=int, default=10, metavar="NB",
-                               help="Nb. of objects in the world.")
+                               help="Minimum nb. of objects in the world.")
 
     quest_group = custom_parser.add_argument_group('Quest settings')
     quest_group.add_argument("--nb-parallel-quests", type=int, default=1,
@@ -92,30 +92,40 @@ def parse_args():
 
     quest_group_advanced = custom_parser.add_argument_group('Quest settings (advanced)')
     quest_group_advanced.add_argument("--quest-min-length", type=int, default=1, metavar="LENGTH",
-                               help="Minimum nb. of actions the quest requires to be completed. Default: %(default)s.")
+                               help="Minimum nb. of actions the quest requires to be completed. "
+                                    " This setting is ignored if --quest-length is provided."
+                                    " Default: %(default)s.")
     quest_group_advanced.add_argument("--quest-max-length", type=int, default=5, metavar="LENGTH",
-                               help="Maximum nb. of actions the quest requires to be completed. Default: %(default)s.")
+                               help="Maximum nb. of actions the quest requires to be completed. "
+                                    " This setting is ignored if --quest-length is provided."
+                                    " Default: %(default)s.")
 
     quest_group_advanced.add_argument("--quest-min-breadth", type=int, default=1, metavar="BREADTH",
-                               help="Minimum nb. of subquests the quests can have. Default: %(default)s.")
+                               help="Minimum nb. of subquests the quests can have. "
+                                    " This setting is ignored if --quest-breadth is provided."
+                                    " Default: %(default)s.")
     quest_group_advanced.add_argument("--quest-max-breadth", type=int, default=5, metavar="BREADTH",
-                               help="Maxmimum nb. of subquests the quests can have. Default: %(default)s.")
+                               help="Maxmimum nb. of subquests the quests can have. "
+                                    " This setting is ignored if --quest-breadth is provided."
+                                    " Default: %(default)s.")
 
     quest_group_advanced.add_argument("--quest-min-depth", type=int, default=1, metavar="DEPTH",
                                help="Minimum nb. of actions the subquests can have. Default: %(default)s.")
     quest_group_advanced.add_argument("--quest-max-depth", type=int, default=5, metavar="DEPTH",
-                               help="Maximum nb. of actions the subquests can have. Default: %(default)s.")
+                               help="Maximum nb. of actions the subquests can have. "
+                                    " This setting is ignored if --quest-length is provided."
+                                    " Default: %(default)s.")
 
     challenge_parser = subparsers.add_parser("challenge", parents=[general_parser],
                                              help='Generate a game for one of the challenges.')
     challenge_parser.add_argument("challenge",
                                   help="Name of the builtin challenges, e.g. `tw-coin_collector-level210`")
 
-    return parser.parse_args(), parser
+    return parser.parse_args(), (parser, custom_parser, challenge_parser)
 
 
 if __name__ == "__main__":
-    args, parser = parse_args()
+    args, (parser, custom_parser, challenge_parser) = parse_args()
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
@@ -158,11 +168,11 @@ if __name__ == "__main__":
         try:
             game_file, game = textworld.make(options)
         except NoSuchQuestExistError:
-            # TODO: Display current values of `options` to help understanding why no game could be generated.
-            msg = ("No quest can be generated with the provided options."
-                   " Try relaxing the quest generation constraints via"
-                   " the quest advanced settings.")
-            parser.error(msg)
+            msg = ("No quest can be generated with the provided options:\n"
+                   "\n{}\n".format(options) +
+                   "\nTry relaxing the quest generation constraints via"
+                   " the quest advanced settings (see 'tw-make custom --help').")
+            custom_parser.error(msg)
 
     elif args.subcommand == "challenge":
         try:
@@ -190,6 +200,11 @@ if __name__ == "__main__":
         print(game.objective)
         print("\nWalkthrough:")
         print(" > ".join(game.main_quest.commands))
+        nb_locations = sum(1 for e in game.infos.values() if e.type == "r")
+        nb_objects = sum(1 for e in game.infos.values() if e.type not in {"r", "d", "P", "I"})
+        print("\n-= Stats =-")
+        print("Nb. locations: {}".format(nb_locations))
+        print("Nb. objects: {}".format(nb_objects))
 
     if args.view:
         textworld.render.visualize(game, interactive=True)

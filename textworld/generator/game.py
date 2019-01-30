@@ -4,6 +4,7 @@
 
 import copy
 import json
+import textwrap
 
 from typing import List, Dict, Optional, Mapping, Any, Iterable, Union
 from collections import OrderedDict
@@ -1096,3 +1097,20 @@ class GameOptions:
                            grammar=self.grammar.uuid,
                            seeds=encode_seeds([self.seeds[k] for k in sorted(self._seeds)]))
         return uuid
+
+    def __str__(self) -> str:
+        infos = ["-= Game options =-"]
+        slots = ["nb_rooms", "nb_objects", "nb_parallel_quests", "path", "force_recompile", "file_ext", "seeds"]
+        for slot in slots:
+            infos.append("{}: {}".format(slot, getattr(self, slot)))
+
+        text = "\n  ".join(infos)
+        text += "\n  chaining options:\n"
+        text += textwrap.indent(str(self.chaining), "    ")
+
+        text += "\n  grammar options:\n"
+        text += textwrap.indent(str(self.grammar), "    ")
+
+        text += "\n  KB:\n"
+        text += textwrap.indent(str(self.kb), "    ")
+        return text

@@ -182,6 +182,13 @@ class ChainingOptions:
     def copy(self) -> "ChainingOptions":
         return copy.copy(self)
 
+    def __str__(self) -> str:
+        infos = []
+        slots = ["min_length", "max_length", "min_breadth", "max_breadth", "min_depth", "max_depth"]
+        for slot in slots:
+            infos.append("{}: {}".format(slot, getattr(self, slot)))
+
+        return "\n".join(infos)
 
 @total_ordering
 class _PartialAction:

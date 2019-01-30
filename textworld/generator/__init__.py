@@ -145,7 +145,7 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
 
     quests = []
     actions = []
-    for chain in chains[::-1]:
+    for chain in reversed(chains):
         for i in range(1, len(chain.nodes)):
             actions.append(chain.actions[i-1])
             if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
@@ -205,8 +205,11 @@ def make_game(options: GameOptions) -> Game:
     options.chaining.restricted_types = {"r", "d"}
     quests = make_quest(world, options)
 
-    # Add distractors objects (i.e. not related to the quest)
-    world.populate(options.nb_objects, rng=rngs['objects'])
+    # If needed, add distractors objects (i.e. not related to the quest) to reach options.nb_objects.
+    nb_objects = sum(1 for e in world.entities if e.type not in {'r', 'd', 'I', 'P'})
+    nb_distractors = options.nb_objects - nb_objects
+    if nb_distractors > 0:
+        world.populate(nb_distractors, rng=rngs['objects'])
 
     grammar = make_grammar(options.grammar, rng=rngs['grammar'])
     game = make_game_with(world, quests, grammar)

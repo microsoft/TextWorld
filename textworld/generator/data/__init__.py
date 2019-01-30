@@ -91,7 +91,7 @@ def _to_regex_dict(rules):
 
 class KnowledgeBase:
     def __init__(self, logic: GameLogic, text_grammars_path: str):
-
+        self._target_dir = "embedded in game"
         self.logic = logic
         self.text_grammars_path = text_grammars_path
 
@@ -123,7 +123,9 @@ class KnowledgeBase:
 
         # Load text generation related files.
         text_grammars_path = pjoin(target_dir, "text_grammars")
-        return cls(logic, text_grammars_path)
+        kb = cls(logic, text_grammars_path)
+        kb._target_dir = target_dir
+        return kb
 
     def get_reverse_action(self, action):
         r_action = action.inverse()
@@ -146,6 +148,13 @@ class KnowledgeBase:
             "text_grammars_path": self.text_grammars_path,
         }
         return data
+
+    def __str__(self) -> str:
+        infos = []
+        infos.append("path: {}".format(self._target_dir))
+        infos.append("nb_rules: {}".format(len(self.logic.rules)))
+        infos.append("nb_types: {}".format(len(self.logic.types)))
+        return "\n".join(infos)
 
 
 # On module load.
