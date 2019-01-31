@@ -15,10 +15,6 @@ case "${unameOut}" in
     *)          machine="UNKNOWN:${unameOut}"
 esac
 
-# Generate parsers
-tatsu textworld/logic/logic.ebnf -o textworld/logic/parser.py -G textworld/logic/model.py
-tatsu textworld/textgen/textgen.ebnf -o textworld/textgen/parser.py -G textworld/textgen/model.py
-
 cd textworld/thirdparty/
 
 # Install command line Inform 7
