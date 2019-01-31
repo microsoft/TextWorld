@@ -18,6 +18,10 @@ LOGIC_DATA_PATH = pjoin(BUILTIN_DATA_PATH, 'logic')
 TEXT_GRAMMARS_PATH = pjoin(BUILTIN_DATA_PATH, 'text_grammars')
 
 
+class KnowledgeBaseError(NameError):
+    pass
+
+
 def _maybe_copyfile(src, dest, force=False, verbose=False):
     if not os.path.isfile(dest) or force:
         copyfile(src=src, dst=dest)
@@ -117,12 +121,22 @@ class KnowledgeBase:
             else:
                 target_dir = BUILTIN_DATA_PATH
 
+        # Look for expected folders.
+        logic_path = pjoin(target_dir, "logic")
+        if not os.path.isdir(logic_path):
+            msg = "Can't find folder 'logic' in '{}'".format(target_dir)
+            raise KnowledgeBaseError(msg)
+
+        text_grammars_path = pjoin(target_dir, "text_grammars")
+        if not os.path.isdir(text_grammars_path):
+            msg = "Can't find folder 'text_grammars' in '{}'".format(target_dir)
+            raise KnowledgeBaseError(msg)
+
         # Load knowledge base related files.
-        paths = glob.glob(pjoin(target_dir, "logic", "*"))
+        paths = glob.glob(pjoin(logic_path, "*"))
         logic = GameLogic.load(paths)
 
         # Load text generation related files.
-        text_grammars_path = pjoin(target_dir, "text_grammars")
         return cls(logic, text_grammars_path)
 
     def get_reverse_action(self, action):
@@ -147,6 +161,9 @@ class KnowledgeBase:
         }
         return data
 
+def load_new_KB(path):
+    global KB
+    KB = KnowledgeBase.load(path)
 
 # On module load.
 KB = KnowledgeBase.load()

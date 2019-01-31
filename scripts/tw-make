@@ -13,6 +13,8 @@ import numpy as np
 import textworld
 import textworld.challenges
 
+from textworld.generator import data
+
 
 def _get_available_challenges():
     challenges = []
@@ -45,6 +47,9 @@ def parse_args():
                                help="Display an overview of the generated game.")
     general_group.add_argument("--save-overview", action="store_true",
                                help="Save the overview image of the generated game alongside the game as a PNG file.")
+    general_group.add_argument("--kb",
+                               help="Path from where to load the knowledge base (logic and grammar files)."
+                                    " Default: try ./textworld_data, otherwise fall back on the builtin one")
     general_group.add_argument("--third-party",
                                help="Load third-party module. Useful to register new custom challenges.")
     general_group.add_argument("-f", "--force", action="store_true")
@@ -91,6 +96,12 @@ def parse_args():
 
 if __name__ == "__main__":
     args, parser = parse_args()
+
+    try:
+        data.load_new_KB(args.kb)
+    except data.KnowledgeBaseError as e:
+        parser.error("Provided path '{}' does not contain all the required files for a valid knowledge base. {}".format(args.kb, str(e)))
+
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
