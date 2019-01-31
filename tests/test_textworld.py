@@ -87,7 +87,7 @@ def test_playing_generated_games():
         # Sample game specs.
         world_size = rng.randint(1, 10)
         nb_objects = rng.randint(0, 20)
-        quest_length = rng.randint(2, 5)
+        quest_depth = rng.randint(2, 5)
         quest_breadth = rng.randint(3, 7)
         game_seed = rng.randint(0, 65365)
 
@@ -96,8 +96,8 @@ def test_playing_generated_games():
             options.path = tmpdir
             options.nb_rooms = world_size
             options.nb_objects = nb_objects
-            options.quest_length = quest_length
-            options.quest_breadth = quest_breadth
+            options.chaining.max_depth = quest_depth
+            options.chaining.max_breadth = quest_breadth
             options.seeds = game_seed
             game_file, game = textworld.make(options)
 

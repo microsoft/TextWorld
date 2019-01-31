@@ -15,8 +15,8 @@ def test_making_game_with_names_to_exclude():
         options.path = tmpdir
         options.nb_rooms = 2
         options.nb_objects = 20
-        options.quest_length = 3
-        options.quest_breadth = 3
+        options.chaining.max_depth = 3
+        options.chaining.max_breadth = 2
         options.seeds = 123
         game_file1, game1 = textworld.make(options)
 
@@ -34,8 +34,8 @@ def test_making_game_is_reproducible_with_seed():
         options.path = tmpdir
         options.nb_rooms = 2
         options.nb_objects = 20
-        options.quest_length = 3
-        options.quest_breadth = 3
+        options.chaining.max_depth = 3
+        options.chaining.max_breadth = 2
         options.seeds = 123
 
         game_file1, game1 = textworld.make(options)

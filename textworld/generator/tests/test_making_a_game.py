@@ -58,8 +58,11 @@ def test_making_a_game(play_the_game=False):
     nb_objects = 10
     world.populate(nb_objects, rng=rng_objects)
 
-    rng_quest = np.random.RandomState(124)
-    quest = make_quest(world, quest_length=5, rng=rng_quest)
+    options = textworld.GameOptions()
+    options.chaining.max_depth = 5
+    options.chaining.max_breadth = 2
+    options.chaining.rng = np.random.RandomState(124)
+    quests = make_quest(world, options)
 
     # Define the grammar we'll use.
     rng_grammar = np.random.RandomState(1234)
@@ -75,7 +78,7 @@ def test_making_a_game(play_the_game=False):
     grammar = textworld.generator.make_grammar(grammar_flags, rng=rng_grammar)
 
     # Generate the world representation.
-    game = textworld.generator.make_game_with(world, [quest], grammar)
+    game = textworld.generator.make_game_with(world, quests, grammar)
 
     with make_temp_directory(prefix="test_render_wrapper") as tmpdir:
         options = textworld.GameOptions()

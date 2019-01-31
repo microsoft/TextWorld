@@ -7,9 +7,10 @@ import re
 import time
 import shutil
 import tempfile
+import itertools
 import contextlib
 from collections import OrderedDict
-from typing import List, Any
+from typing import List, Any, Iterable, Callable
 
 import numpy as np
 
@@ -190,6 +191,30 @@ def uniquify(seq):
     """
     seen = set()
     return [x for x in seq if x not in seen and not seen.add(x)]
+
+
+def take(n: int, iterable: Iterable) -> Iterable:
+    """ Return first n items of the iterable as a list.
+
+    References:
+        https://docs.python.org/3/library/itertools.html#itertools-recipes
+    """
+    return list(itertools.islice(iterable, n))
+
+
+def chunk(iterable: Iterable, n: int, fct: Callable = lambda e: e) -> Iterable[Iterable]:
+    it = iter(iterable)
+    while True:
+        try:
+            first = next(it)
+        except StopIteration:
+            return
+
+        rest = itertools.islice(it, n - 1)
+        yield fct(itertools.chain((first,), rest))
+        # Make sure rest is exhausted
+        for _ in rest:
+            pass
 
 
 def unique_product(*iterables):

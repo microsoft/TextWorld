@@ -16,7 +16,7 @@ def test_extract_vocab():
         options.nb_rooms = 5
         options.nb_objects = 10
         options.quest_length = 5
-        options.quest_breadth = 4
+        options.quest_breadth = 2
         options.seeds = 1234
         game_file1, _ = textworld.make(options)
         options.seeds = 12345
@@ -37,7 +37,7 @@ def test_extract_entities():
         options.nb_rooms = 5
         options.nb_objects = 10
         options.quest_length = 5
-        options.quest_breadth = 4
+        options.quest_breadth = 2
         options.seeds = 1234
         game_file, _ = textworld.make(options)
 

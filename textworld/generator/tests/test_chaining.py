@@ -63,6 +63,7 @@ def test_chaining():
 
     options = Options()
     options.max_depth = 5
+    options.max_length = 5
 
     # No possible action since the wooden door is locked and
     # the player doesn't have the key.
@@ -78,6 +79,7 @@ def test_chaining():
     # With more depth.
     state = build_state(locked_door=False)
     options.max_depth = 20
+    options.max_length = 20
     chains = list(get_chains(state, options))
     assert len(chains) == 9
 
@@ -114,6 +116,7 @@ def test_going_through_door():
     options = ChainingOptions()
     options.backward = True
     options.max_depth = 3
+    options.max_length = 3
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
@@ -157,6 +160,7 @@ def test_backward_chaining():
     options = ChainingOptions()
     options.backward = True
     options.max_depth = 2
+    options.max_length = 2
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
@@ -171,6 +175,7 @@ def test_backward_chaining():
     options = ChainingOptions()
     options.backward = True
     options.max_depth = 3
+    options.max_length = 3
     options.subquests = True
     options.create_variables = True
     options.rules_per_depth = [
@@ -214,6 +219,7 @@ def test_parallel_quests():
 
     options.max_depth = 3
     options.max_breadth = 1
+    options.max_length = 3
     chains = list(get_chains(state, options))
     assert len(chains) == 2
 
@@ -304,6 +310,7 @@ def test_parallel_quests_navigation():
     options.max_depth = 3
     options.min_breadth = 2
     options.max_breadth = 2
+    options.max_length = 6
     options.kb = kb
     options.rules_per_depth = [bake, non_bake, non_bake]
     options.restricted_types = {"P", "r"}

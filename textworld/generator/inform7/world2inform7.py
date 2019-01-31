@@ -14,7 +14,7 @@ from typing import Iterable, Optional, List
 
 from pkg_resources import Requirement, resource_filename
 
-from textworld.utils import make_temp_directory, str2bool
+from textworld.utils import make_temp_directory, str2bool, chunk
 
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.game import Game, Quest
@@ -30,6 +30,26 @@ class TextworldInform7Warning(UserWarning):
 
 class CouldNotCompileGameError(RuntimeError):
     pass
+
+
+def split_string(string, name, cutoff=200):
+    source = ""
+
+    parts = []
+    splits = re.split(r"\[line break\]", string)  # Avoid splitting [line break].
+    for i, split in enumerate(splits):
+        chunks = ["".join(c) for c in chunk(split, cutoff)]
+        for j, part in enumerate(chunks):
+            if i < len(splits) - 1 and j == len(chunks) - 1:
+                part += "[line break]"
+
+            part_name = "{} part {}".format(name, len(parts))
+            text = "The {name} is some text that varies. The {name} is \"{desc}\".\n"
+            source += text.format(name=part_name, desc=part)
+            parts.append(part_name)
+
+    new_string = "".join("[{}]".format(part) for part in parts)
+    return source, new_string
 
 
 class Inform7Game:
@@ -151,7 +171,7 @@ class Inform7Game:
                 source += "The printed name of {} is \"-= {} =-\".\n".format(room.id, str.title(room_name))
 
                 parts = []
-                splits = re.split("\[end if\]", room_desc)
+                splits = re.split(r"\[end if\]", room_desc)
                 for split in splits:
                     part_name = "{} part {}".format(room_name, len(parts))
                     text = "The {name} is some text that varies. The {name} is \"{desc}\".\n"
@@ -405,9 +425,9 @@ class Inform7Game:
             say "             | $$$    \$$$ \$$    $$| $$  | $$| $$     \| $$    $$[line break]";
             say "              \$$      \$$  \$$$$$$  \$$   \$$ \$$$$$$$$ \$$$$$$$ [line break]";
             say "[variable letter spacing][line break]";
-            say "{objective}[line break]".
+            say "[objective][line break]".
 
-        """.format(objective=objective))
+        """)
 
         # Simply display *** The End *** when game ends.
         source += textwrap.dedent("""\
@@ -565,9 +585,12 @@ class Inform7Game:
 
         """)
 
+        objective_parts, objective_text = split_string(objective, "objective")
+        objective_parts = textwrap.indent(objective_parts, "        ")
         source += textwrap.dedent("""\
+        {objective_parts}
         An objective is some text that varies. The objective is "{objective}".
-        """.format(objective=objective))
+        """.format(objective_parts=objective_parts.lstrip(), objective=objective_text))
 
         # Special command to print the objective of the game, if any.
         source += textwrap.dedent("""\

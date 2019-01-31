@@ -114,6 +114,13 @@ class GrammarOptions:
 
         return self.theme + "-" + hashids.encode(int(option))
 
+    def __str__(self) -> str:
+        infos = []
+        for slot in self.__slots__:
+            infos.append("{}: {}".format(slot, getattr(self, slot)))
+
+        return "\n".join(infos)
+
 
 class _Stringifier(NodeWalker):
     def walk_str(self, node):
@@ -343,7 +350,7 @@ class Grammar:
                        " To avoid this message you can add more variation in the '{}'"
                        " related grammar files located in '{}'.")
                 msg = msg.format(symbol, adj, self.theme, KnowledgeBase.default().text_grammars_path)
-                warnings.warn(msg, textworld.TextworldGenerationWarning)
+                warnings.warn(msg, textworld.GenerationWarning)
                 return name, adj, noun
 
             # Still not enough variation for the object we want to name.

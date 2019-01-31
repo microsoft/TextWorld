@@ -7,13 +7,15 @@ import json
 import uuid
 import numpy as np
 from os.path import join as pjoin
-from typing import Optional, Mapping, Dict
+from typing import Optional, Mapping, Dict, Union
 
 from numpy.random import RandomState
 
 from textworld import g_rng
 from textworld.utils import maybe_mkdir, str2bool
+from textworld.logic import State
 from textworld.generator.chaining import ChainingOptions, sample_quest
+from textworld.generator.world import World
 from textworld.generator.game import Game, Quest, Event, World, GameOptions
 from textworld.generator.graph_networks import create_map, create_small_map
 from textworld.generator.text_generation import generate_text_from_grammar
@@ -28,7 +30,11 @@ from textworld.generator.maker import GameMaker
 from textworld.generator.logger import GameLogger
 
 
-class TextworldGenerationWarning(UserWarning):
+class GenerationWarning(UserWarning):
+    pass
+
+
+class NoSuchQuestExistError(NameError):
     pass
 
 
@@ -113,22 +119,44 @@ def make_world_with(rooms, rng=None):
     return world
 
 
-def make_quest(world, quest_length, rng=None, rules_per_depth=(), backward=False):
-    state = world
-    if hasattr(world, "state"):
-        state = world.state
+def make_quest(world: Union[World, State], options: Optional[GameOptions] = None):
+    state = getattr(world, "state", world)
 
-    rng = g_rng.next() if rng is None else rng
+    if options is None:
+        options = GameOptions()
 
-    # Sample a quest according to quest_length.
-    options = ChainingOptions()
-    options.backward = backward
-    options.max_depth = quest_length
-    options.rng = rng
-    options.rules_per_depth = rules_per_depth
-    chain = sample_quest(state, options)
-    event = Event(chain.actions)
-    return Quest(win_events=[event])
+        # By default, exclude quests finishing with: go, examine, look and inventory.
+        exclude = ["go.*", "examine.*", "look.*", "inventory.*"]
+        options.chaining.rules_per_depth = [options.kb.rules.get_matching(".*", exclude=exclude)]
+        options.chaining.rng = options.rngs['quest']
+
+    chains = []
+    for _ in range(options.nb_parallel_quests):
+        chain = sample_quest(state, options.chaining)
+        if chain is None:
+            msg = "No quest can be generated with the provided options."
+            raise NoSuchQuestExistError(msg)
+
+        chains.append(chain)
+        state = chain.initial_state  # State might have changed, i.e. options.create_variable is True.
+
+    if options.chaining.backward and hasattr(world, "state"):
+        world.state = state
+
+    quests = []
+    actions = []
+    for chain in reversed(chains):
+        for i in range(1, len(chain.nodes)):
+            actions.append(chain.actions[i-1])
+            if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
+                event = Event(actions)
+                quests.append(Quest(win_events=[event]))
+
+        actions.append(chain.actions[-1])
+        event = Event(actions)
+        quests.append(Quest(win_events=[event]))
+
+    return quests
 
 
 def make_grammar(options: Mapping = {}, rng: Optional[RandomState] = None) -> Grammar:
@@ -167,34 +195,24 @@ def make_game(options: GameOptions) -> Game:
     # Generate only the map for now (i.e. without any objects)
     world = make_world(options.nb_rooms, nb_objects=0, rngs=rngs)
 
-    # Sample a quest.
-    chaining_options = options.chaining.copy()
-    # Go, examine, look and inventory shouldn't be used for chaining.
+    # Generate quest(s).
+    # By default, exclude quests finishing with: go, examine, look and inventory.
     exclude = ["go.*", "examine.*", "look.*", "inventory.*"]
-    chaining_options.rules_per_depth = [options.kb.rules.get_matching(".*", exclude=exclude)]
-    chaining_options.backward = True
-    chaining_options.create_variables = True
-    chaining_options.rng = rngs['quest']
-    chaining_options.restricted_types = {"r", "d"}
-    chain = sample_quest(world.state, chaining_options)
+    options.chaining.rules_per_depth = [options.kb.rules.get_matching(".*", exclude=exclude)]
+    options.chaining.backward = True
+    options.chaining.create_variables = True
+    options.chaining.rng = rngs['quest']
+    options.chaining.restricted_types = {"r", "d"}
+    quests = make_quest(world, options)
 
-    subquests = []
-    for i in range(1, len(chain.nodes)):
-        if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
-            event = Event(chain.actions[:i])
-            subquests.append(Quest(win_events=[event]))
-
-    event = Event(chain.actions)
-    subquests.append(Quest(win_events=[event]))
-
-    # Set the initial state required for the quest.
-    world.state = chain.initial_state
-
-    # Add distractors objects (i.e. not related to the quest)
-    world.populate(options.nb_objects, rng=rngs['objects'])
+    # If needed, add distractors objects (i.e. not related to the quest) to reach options.nb_objects.
+    nb_objects = sum(1 for e in world.entities if e.type not in {'r', 'd', 'I', 'P'})
+    nb_distractors = options.nb_objects - nb_objects
+    if nb_distractors > 0:
+        world.populate(nb_distractors, rng=rngs['objects'])
 
     grammar = make_grammar(options.grammar, rng=rngs['grammar'])
-    game = make_game_with(world, subquests, grammar)
+    game = make_game_with(world, quests, grammar)
     game.change_grammar(grammar)
     game.metadata["uuid"] = options.uuid
 
