@@ -15,6 +15,7 @@
 /* posix */
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -57,6 +58,12 @@ void cleanup_glulx(struct sock_names* names) {
             perror("glk_comm.c: Cannot unlink socket");
         }
 
+        const char *dir = dirname(names->sock_name);
+        status = rmdir(dir);
+        if (status == -1 && errno != ENOENT) {
+            perror("glk_comm.c: Cannot unlink socket directory");
+        }
+
         free(names->sock_name);
         names->sock_name = NULL;
     }
@@ -67,8 +74,18 @@ static int init_mq(struct sock_names* names) {
     names->sock_fd = -1;
     names->serv_sock_fd = -1;
 
-    errno = 0;
-    names->sock_name = tempnam(NULL, "mlglk");
+    char temp[25] = "/tmp/mlglk_XXXXXX";
+    if (mkdtemp(temp) == NULL) {
+        perror("glk_comm.c: mkdtemp()");
+        return -1;
+    }
+    strcat(temp, "/socket");
+
+    names->sock_name = strdup(temp);
+    if (!names->sock_name) {
+        perror("glk_comm.c: strdup()");
+        return -1;
+    }
 
     /* sockets */
     struct sockaddr_un sock_addr;
