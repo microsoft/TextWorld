@@ -560,7 +560,6 @@ class GitGlulxMLEnvironment(textworld.Environment):
         #       the output of the following command to check whether debug mode
         #       was used or not (i.e. invalid action not found).
         self._send('tw-trace-actions')  # Turn on debug print for Inform7 action events.
-        self._send('restrict commands')  # Restrict Inform7 commands.
         _extra_output = ""
         for info in self.extra_info:
             _extra_output = self._send('tw-extra-infos {}'.format(info))

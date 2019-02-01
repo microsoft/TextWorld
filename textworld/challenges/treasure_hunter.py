@@ -21,9 +21,10 @@ References
    arXiv:1702.08360, 2017.
 """
 
-import numpy as np
-
+import argparse
 from typing import Mapping, Union, Dict, Optional
+
+import numpy as np
 
 import textworld
 from textworld.utils import uniquify
@@ -36,13 +37,24 @@ from textworld.challenges.utils import get_seeds_for_game_generation
 
 from textworld.utils import encode_seeds
 from textworld.generator.game import GameOptions
+from textworld.challenges import register
 
 
-def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> textworld.Game:
-    """ Make a Treasure Hunter game of the desired difficulty level.
+def build_argparser(parser=None):
+    parser = parser or argparse.ArgumentParser()
+
+    group = parser.add_argument_group('Treasure Hunter game settings')
+    group.add_argument("--level", required=True, type=int,
+                       help="The difficulty level. Must be between 1 and 30 (included).")
+
+    return parser
+
+
+def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> textworld.Game:
+    """ Make a Treasure Hunter game of the desired difficulty settings.
 
     Arguments:
-        level: Difficulty level (see notes).
+        settings: Difficulty level (see notes). Expected pattern: level[1-30].
         options:
             For customizing the game generation (see
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
@@ -72,6 +84,10 @@ def make_game_from_level(level: int, options: Optional[GameOptions] = None) -> t
           to find the object.
     """
     options = options or GameOptions()
+
+    level = settings["level"]
+    if level < 1 or level > 30:
+        raise ValueError("Expected level to be within [1-30].")
 
     if level >= 21:
         mode = "hard"
@@ -207,3 +223,9 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
                        seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
     return game
+
+
+register(name="tw-treasure_hunter",
+         desc="Generate a Treasure Hunter game",
+         make=make,
+         add_arguments=build_argparser)

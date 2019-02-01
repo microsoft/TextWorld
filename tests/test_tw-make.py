@@ -63,12 +63,15 @@ def test_making_a_custom_game():
         textworld.play(output_folder + ".ulx", agent=agent, silent=True)
 
 def test_making_challenge_game():
+    settings = {
+        "tw-treasure_hunter": ["--level", "1"],
+        "tw-coin_collector": ["--level", "1"],
+    }
     with make_temp_directory(prefix="test_tw-challenge") as tmpdir:
         for challenge in textworld.challenges.CHALLENGES:
-            env_id = "tw-{}-level1".format(challenge)
             output_folder = pjoin(tmpdir, "gen_games")
-            game_file = pjoin(output_folder, env_id + ".ulx")
-            command = ["tw-make", "challenge", env_id, "--seed", "1234", "--output", game_file]
+            game_file = pjoin(output_folder, challenge + ".ulx")
+            command = ["tw-make", challenge, "--seed", "1234", "--output", game_file, "--silent"] + settings[challenge]
             assert check_call(command) == 0
 
             assert os.path.isdir(output_folder)

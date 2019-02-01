@@ -16,24 +16,24 @@ import textworld.challenges
 from textworld.generator import NoSuchQuestExistError
 
 
-def _get_available_challenges():
-    challenges = []
-    for challenge in textworld.challenges.CHALLENGES:
-        challenges.append("tw-{}-level{{N}}".format(challenge))
-
-    return challenges
-
-
 def exit_listing_challenges(challenge=None):
     msg = ""
     if challenge is not None:
         msg += "Unknown challenge: {}\n\n".format(args.challenge)
 
     msg += "Available challenges:\n  "
-    msg += "\n  ".join(_get_available_challenges())
-    msg += "\nwhere {N} is an integer."
+    msg += "\n  ".join(sorted(textworld.challenges.CHALLENGES))
     print(msg)
     sys.exit(1)
+
+
+def _maybe_load_third_party_module():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--third-party")
+    args, _ = parser.parse_known_args()
+    if args.third_party:
+        import importlib.machinery
+        importlib.machinery.SourceFileLoader("tw_custom_challenge", args.third_party).load_module()
 
 
 def parse_args():
@@ -46,9 +46,15 @@ def parse_args():
     general_group.add_argument('--seed', type=int)
     general_group.add_argument('--format', choices=["ulx", "z8"], default="ulx",
                                help="Which format to use when compiling the game. Default: %(default)s")
-    general_group.add_argument("--view", action="store_true",
-                               help="Display the resulting game.")
+    general_group.add_argument("--overview", action="store_true",
+                               help="Display an overview of the generated game.")
+    general_group.add_argument("--save-overview", action="store_true",
+                               help="Save the overview image of the generated game alongside the game as a PNG file.")
+    general_group.add_argument("--third-party",
+                               help="Load third-party module. Useful to register new custom challenges on-the-fly.")
     general_group.add_argument("-f", "--force", action="store_true")
+    general_group.add_argument("--list", action="store_true",
+                               help="List available challenges.")
 
     verbosity_group = general_group.add_mutually_exclusive_group()
     verbosity_group.add_argument("--silent", action="store_true")
@@ -116,16 +122,19 @@ def parse_args():
                                     " This setting is ignored if --quest-length is provided."
                                     " Default: %(default)s.")
 
-    challenge_parser = subparsers.add_parser("challenge", parents=[general_parser],
-                                             help='Generate a game for one of the challenges.')
-    challenge_parser.add_argument("challenge",
-                                  help="Name of the builtin challenges, e.g. `tw-coin_collector-level210`")
+    challenge_parsers = []
+    for challenge_name, (desc, _, add_challenge_arguments) in textworld.challenges.CHALLENGES.items():
+        challenge_parser = subparsers.add_parser(challenge_name, parents=[general_parser],
+                                                 help=desc)
+        add_challenge_arguments(challenge_parser)
+        challenge_parsers.append(challenge_parser)
 
-    return parser.parse_args(), (parser, custom_parser, challenge_parser)
+    return parser.parse_args(), (parser, custom_parser, challenge_parsers)
 
 
 if __name__ == "__main__":
-    args, (parser, custom_parser, challenge_parser) = parse_args()
+    args, (parser, custom_parser, challenge_parsers) = parse_args()
+    
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
@@ -144,6 +153,9 @@ if __name__ == "__main__":
     options.grammar.blend_instructions = args.blend_instructions
     options.grammar.blend_descriptions = args.blend_descriptions
     options.grammar.ambiguous_instructions = args.ambiguous_instructions
+
+    if args.list:
+        exit_listing_challenges()
 
     if args.subcommand == "custom":
         options.nb_rooms = args.world_size
@@ -174,23 +186,12 @@ if __name__ == "__main__":
                    " the quest advanced settings (see 'tw-make custom --help').")
             custom_parser.error(msg)
 
-    elif args.subcommand == "challenge":
-        try:
-            # Expected pattern: "tw-challenge-levelN"
-            _, challenge, level = args.challenge.split("-")
-        except ValueError:
-            exit_listing_challenges()
-
-        if challenge not in textworld.challenges.CHALLENGES:
-            exit_listing_challenges(args.challenge)
-
-        level = int(level.lstrip("level"))
-        make_game = textworld.challenges.CHALLENGES[challenge]
-        game = make_game(level, options)
+    elif args.subcommand in textworld.challenges.CHALLENGES:
+        _, make_game, _ = textworld.challenges.CHALLENGES[args.subcommand]
+        game = make_game(settings=args.__dict__, options=options)
         game_file = textworld.generator.compile_game(game, options)
-
     else:
-        parser.error("Subcommand is missing. Specify either 'custom' or 'challange'.")
+        exit_listing_challenges(args.subcommand)
 
     if not args.silent:
         print("Game generated: {}".format(game_file))
@@ -206,5 +207,13 @@ if __name__ == "__main__":
         print("Nb. locations: {}".format(nb_locations))
         print("Nb. objects: {}".format(nb_objects))
 
-    if args.view:
+    if args.overview:
         textworld.render.visualize(game, interactive=True)
+
+    if args.save_overview:
+        image = textworld.render.visualize(game)
+        overview_file = game_file.replace(".ulx", ".png")
+        image.save(overview_file)
+
+        if not args.silent:
+            print("Overview image: {}".format(overview_file))
