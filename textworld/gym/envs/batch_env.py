@@ -75,6 +75,7 @@ class _ChildEnv:
         self.call_sync("close")
         self._pipe.close()
         self._process.terminate()
+        self._process.join()
 
 
 class ParallelBatchEnv(gym.Env):
