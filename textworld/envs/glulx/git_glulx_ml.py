@@ -579,6 +579,7 @@ class GitGlulxMLEnvironment(textworld.Environment):
     def close(self) -> None:
         if self.game_running:
             self._process.kill()
+            self._process.wait()
             self._process = None
 
         try:
