@@ -403,7 +403,8 @@ class Game:
             for event in quest.win_events:
                 event.commands = _gen_commands(event.actions)
 
-            quest.commands = quest.win_events[0].commands
+            if quest.win_events:
+                quest.commands = quest.win_events[0].commands
 
         if self.main_quest:
             win_event = self.main_quest.win_events[0]
