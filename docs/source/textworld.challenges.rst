@@ -15,3 +15,8 @@ textworld.challenges
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: textworld.challenges.simple
+    :members:
+    :undoc-members:
+    :show-inheritance:
