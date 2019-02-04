@@ -62,11 +62,7 @@ def play(game_file: str, agent: Optional[Agent] = None, max_nb_steps: int = 1000
         Use script :command:`tw-play` for more options.
     """
     env = start(game_file)
-    if agent is None:
-        try:
-            agent = HumanAgent(autocompletion=True)
-        except AttributeError:
-            agent = HumanAgent()
+    agent = agent or HumanAgent()
 
     agent.reset(env)
     if wrapper is not None:
