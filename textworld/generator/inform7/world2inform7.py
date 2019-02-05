@@ -439,10 +439,7 @@ class Inform7Game:
             else:
                 center "*** You lost! ***";
             say paragraph break;
-            let X be the turn count;
-            if restrict commands option is true:
-                let X be the turn count minus one;
-            say "You scored [score] out of a possible [maximum score], in [X] turn(s).";
+            say "You scored [score] out of a possible [maximum score], in [turn count] turn(s).";
             [wait for any key;
             stop game abruptly;]
             rule succeeds.
@@ -660,10 +657,6 @@ class Inform7Game:
             try looking;
             say "[line break]-=STATE STOP=-";
 
-        When play begins:
-            if print state option is true:
-                try printing the entire state;
-
         Every turn:
             if extra description command option is true:
                 say "<description>";
@@ -768,7 +761,7 @@ class Inform7Game:
 
         Turning on the extra description command option is an action applying to nothing.
         Carry out turning on the extra description command option:
-            Decrease turn count by 1;
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             Now the extra description command option is true.
 
         Understand "tw-extra-infos description" as turning on the extra description command option.
@@ -782,7 +775,7 @@ class Inform7Game:
 
         Turning on the extra inventory command option is an action applying to nothing.
         Carry out turning on the extra inventory command option:
-            Decrease turn count by 1;
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             Now the extra inventory command option is true.
 
         Understand "tw-extra-infos inventory" as turning on the extra inventory command option.
@@ -796,7 +789,7 @@ class Inform7Game:
 
         Turning on the extra score command option is an action applying to nothing.
         Carry out turning on the extra score command option:
-            Decrease turn count by 1;
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             Now the extra score command option is true.
 
         Understand "tw-extra-infos score" as turning on the extra score command option.
@@ -810,6 +803,7 @@ class Inform7Game:
 
             Tracing the actions is an action applying to nothing.
             Carry out tracing the actions:
+                Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
                 trace the actions;
 
             Understand "tw-trace-actions" as tracing the actions.
@@ -823,7 +817,7 @@ class Inform7Game:
 
         Turning on the restrict commands option is an action applying to nothing.
         Carry out turning on the restrict commands option:
-            Decrease turn count by 1;
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             Now the restrict commands option is true.
 
         Understand "restrict commands" as turning on the restrict commands option.
