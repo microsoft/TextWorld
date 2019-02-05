@@ -7,13 +7,15 @@ import numpy as np
 import gym
 
 
-def _child(id, pipe):
+def _child(id, parent_pipe, pipe):
     """
     Event loop run by the child processes
     """
-    env = gym.make(id)
-
     try:
+        parent_pipe.close()
+
+        env = gym.make(id)
+
         while True:
             command = pipe.recv()
             # command is a tuple like ("call" | "get", "name.of.attr", extra args...)
@@ -43,9 +45,10 @@ class _ChildEnv:
     """
     def __init__(self, id):
         self._pipe, child_pipe = mp.Pipe()
-        self._process = mp.Process(target=_child, args=(id, child_pipe))
+        self._process = mp.Process(target=_child, args=(id, self._pipe, child_pipe))
         self._process.daemon = True
         self._process.start()
+        child_pipe.close()
 
     def call(self, method, *args):
         self._pipe.send(("call", method, args))
@@ -75,6 +78,7 @@ class _ChildEnv:
         self.call_sync("close")
         self._pipe.close()
         self._process.terminate()
+        self._process.join()
 
 
 class ParallelBatchEnv(gym.Env):
