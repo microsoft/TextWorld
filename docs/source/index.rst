@@ -20,6 +20,7 @@ TextWorld is a text-based learning environment for Reinforcement Learning agent.
    :caption: Package:
 
    textworld
+   textworld.gym
    textworld.envs
    textworld.agents
    textworld.generator
