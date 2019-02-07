@@ -66,6 +66,7 @@ def test_making_challenge_game():
     settings = {
         "tw-treasure_hunter": ["--level", "1"],
         "tw-coin_collector": ["--level", "1"],
+        "tw-simple": ["--rewards", "dense", "--goal", "brief"],
     }
     with make_temp_directory(prefix="test_tw-challenge") as tmpdir:
         for challenge in textworld.challenges.CHALLENGES:
