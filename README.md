@@ -1,5 +1,5 @@
 # TextWorld
-[![Build Status](https://travis-ci.org/Microsoft/TextWorld.svg?branch=master)](https://travis-ci.org/Microsoft/TextWorld) [![PyPI version](https://badge.fury.io/py/textworld.svg)](https://badge.fury.io/py/textworld)
+[![Build Status](https://travis-ci.org/Microsoft/TextWorld.svg?branch=master)](https://travis-ci.org/Microsoft/TextWorld) [![PyPI version](https://badge.fury.io/py/textworld.svg)](https://badge.fury.io/py/textworld) [![Documentation Status](https://readthedocs.org/projects/textworld/badge/?version=latest)](https://textworld.readthedocs.io/en/latest/?badge=latest)
 
 A text-based game generator and extensible sandbox learning environment for training and testing reinforcement learning (RL) agents. Also check out [aka.ms/textworld](aka.ms/textworld) for more info about TextWorld and its creators.
 
