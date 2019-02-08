@@ -23,3 +23,5 @@ Inform/
 I7_6M62_Linux_all.tar.gz
 tmp/*
 *.ipynb_checkpoints
+/dist
+/wheelhouse
