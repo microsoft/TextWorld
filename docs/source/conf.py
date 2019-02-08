@@ -19,7 +19,10 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import os
 import sphinx_rtd_theme
+import subprocess
+import textworld
 
 # -- Project information -----------------------------------------------------
 
@@ -28,9 +31,14 @@ copyright = '2018, Microsoft'
 author = 'Marc-Alexandre Côté, Tavian Barnes, Matthew Hausknecht, James Moore, Ákos Kádár, Ben Kybartas'
 
 # The short X.Y version
-version = ''
+version = textworld.__version__
+
 # The full version, including alpha/beta/rc tags
-release = '0.1-beta'
+if os.path.isdir(os.path.join(os.path.dirname(__file__), "../../.git")):
+    result = subprocess.run(["git", "describe", "--always"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    release = result.stdout.decode("utf-8").strip()
+else:
+    release = version
 
 
 # -- General configuration ---------------------------------------------------

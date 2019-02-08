@@ -4,6 +4,13 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 ## [Unreleased]
 
+## [1.1.1] - 2019-02-08
+
+### Fixed
+
+- Packaging issues that prevented installation from source on macOS (#121)
+- Version numbers in documentation
+
 ## [1.1.0] - 2019-02-07
 
 ### Breaking

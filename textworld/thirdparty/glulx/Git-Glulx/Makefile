@@ -46,7 +46,7 @@ MAJOR = 1
 MINOR = 3
 PATCH = 5
 
-include $(GLKINCLUDEDIR)/$(GLKMAKEFILE)
+-include $(GLKINCLUDEDIR)/$(GLKMAKEFILE)
 
 EXENAME := git-glulx-ml
 
@@ -69,16 +69,16 @@ OBJS = git.o memory.o compiler.o opcodes.o operands.o \
 TESTS = test/test.sh \
 	test/Alabaster.gblorb test/Alabaster.walk test/Alabaster.golden
 
-all: git
+all: $(EXENAME)
 
-git: $(OBJS)
-	$(CC) $(OPTIONS) -o $(EXENAME) $(OBJS) $(LIBS)
+$(EXENAME): $(OBJS)
+	$(CC) $(OPTIONS) -o $@ $(OBJS) $(LIBS)
 
 install: git
 	cp $(EXENAME) $(INSTALLDIR)/$(EXENAME)
 
 clean:
-	rm -f *~ *.o git test/*.tmp
+	rm -f *~ *.o $(EXENAME) test/*.tmp
 
 $(OBJS): $(HEADERS)
 
