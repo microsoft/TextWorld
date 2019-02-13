@@ -242,5 +242,6 @@ def compile_game(game: Game, options: Optional[GameOptions] = None):
     if not already_compiled or options.force_recompile:
         game.save(game_json)
         compile_inform7_game(source, game_file)
+        compile_inform7_game(source, game_file.replace(".ulx", ".z8"))
 
     return game_file
