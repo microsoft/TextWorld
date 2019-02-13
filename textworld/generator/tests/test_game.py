@@ -620,16 +620,13 @@ class TestGameProgression(unittest.TestCase):
         cls.questB = Quest(win_events=[cls.eventB], fail_events=[cls.losing_eventB])
         cls.questC = Quest(win_events=[], fail_events=[cls.losing_eventA, cls.losing_eventB])
 
-        commands = ["open wooden door", "go west", "take lettuce", "go east", "insert lettuce into chest"]
-        cls.questC = M.new_quest_using_commands(commands)
-
         commands = ["open wooden door", "go west", "take carrot", "eat carrot"]
         cls.eating_carrot = M.new_event_using_commands(commands)
         commands = ["open wooden door", "go west", "take lettuce", "eat lettuce"]
         cls.eating_lettuce = M.new_event_using_commands(commands)
         commands = ["open wooden door", "go west", "take lettuce", "go east", "insert lettuce into chest"]
 
-        M.quests = [cls.questA, cls.questB]
+        M.quests = [cls.questA, cls.questB, cls.questC]
         cls.game = M.build()
 
     def test_completed(self):

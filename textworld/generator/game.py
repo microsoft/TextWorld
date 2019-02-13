@@ -804,6 +804,11 @@ class QuestProgression:
         return min(winning_policies, key=lambda policy: len(policy))
 
     @property
+    def completable(self) -> bool:
+        """ Check if the quest has winning events. """
+        return len(self.win_events) > 0
+
+    @property
     def done(self) -> bool:
         """ Check if the quest is done (i.e. completed, failed or unfinishable). """
         return self.completed or self.failed or self.unfinishable
@@ -872,7 +877,7 @@ class GameProgression:
         if not self.tracking_quests:
             return False  # There is nothing to be "completed".
 
-        return all(qp.completed for qp in self.quest_progressions)
+        return all(qp.completed for qp in self.quest_progressions if qp.completable)
 
     @property
     def failed(self) -> bool:
@@ -917,7 +922,7 @@ class GameProgression:
             return None
 
         # Greedily build a new winning policy by merging all quest trees.
-        trees = [quest._tree for quest in self.quest_progressions if not quest.done]
+        trees = [quest._tree for quest in self.quest_progressions if quest.completable and not quest.done]
         if None in trees:
             # Some quests don't have triggering policy.
             return None
