@@ -1,5 +1,6 @@
 # TextWorld
 A learning environment sandbox for training and testing reinforcement learning (RL) agents on text-based games.
+Special version for Coin Collector games.
 
 ## Installation
 
