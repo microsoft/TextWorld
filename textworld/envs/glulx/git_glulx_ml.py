@@ -540,7 +540,9 @@ class GitGlulxMLEnvironment(textworld.Environment):
             return None
 
         result = ffi.gc(result, lib.free)
-        return ffi.string(result).decode('utf-8')
+        result = ffi.string(result).decode('utf-8')
+        result = result.replace("\\033[", "\033[")
+        return result
 
     def reset(self) -> GlulxGameState:
         if self.game_running:
@@ -558,6 +560,8 @@ class GitGlulxMLEnvironment(textworld.Environment):
         c_feedback = ffi.gc(c_feedback, lib.free)
 
         start_output = ffi.string(c_feedback).decode('utf-8')
+        start_output = start_output.replace("\\033[", "\033[")
+
 
         if not self._state_tracking:
             self.enable_extra_info("score")

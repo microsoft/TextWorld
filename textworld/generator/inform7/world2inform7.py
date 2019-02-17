@@ -897,6 +897,11 @@ class Inform7Game:
             if source == last:
                 break
 
+        # Replace text highlighting, if using AINSI.
+        if str2bool(os.environ.get("TEXTWORLD_ANSI")):
+            source.replace("[bold type][italic type]", "\\033[bracket]33;1m")
+            source.replace("[roman type]", "\\033[bracket]0m")
+
         return source
 
 
