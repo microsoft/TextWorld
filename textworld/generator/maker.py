@@ -530,7 +530,8 @@ class GameMaker:
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
             recorder = Recorder()
-            textworld.play(game_file, wrapper=recorder)
+            agent = textworld.agents.HumanAgent(autocompletion=True)
+            textworld.play(game_file, agent=agent, wrapper=recorder)
 
         # Skip "None" actions.
         actions = [action for action in recorder.actions if action is not None]
