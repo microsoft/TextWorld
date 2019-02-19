@@ -22,7 +22,7 @@ class CountOrderedDict(OrderedDict):
         return super().__getitem__(item)
 
 
-def assign_new_matching_names(obj1_infos, obj2_infos, grammar, exclude=[]):
+def assign_new_matching_names(obj1_infos, obj2_infos, grammar, exclude):
     tag = "#({}<->{})_match#".format(obj1_infos.type, obj2_infos.type)
     if not grammar.has_tag(tag):
         return False
