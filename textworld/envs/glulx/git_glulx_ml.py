@@ -499,9 +499,6 @@ class GitGlulxMLEnvironment(textworld.Environment):
     def compute_intermediate_reward(self) -> None:
         self._compute_intermediate_reward = True
 
-    def __del__(self) -> None:
-        self.close()
-
     @property
     def game_running(self) -> bool:
         """ Determines if the game is still running. """
