@@ -1,11 +1,12 @@
-import re
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+
 import os
 import sys
 import textwrap
-from glob import glob
 from io import StringIO
-from os.path import join as pjoin
-from typing import List, Optional, Iterable, Dict, Any, Tuple, Union
+from typing import List, Optional, Dict, Any, Tuple, Union
 
 import numpy as np
 import gym

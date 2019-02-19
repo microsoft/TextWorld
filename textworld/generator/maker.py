@@ -6,11 +6,6 @@ import os
 from os.path import join as pjoin
 
 from typing import List, Iterable, Union, Optional
-try:
-    from typing import Collection
-except ImportError:
-    # Collection is new in Python 3.6 -- fall back on Iterable for 3.5
-    from typing import Iterable as Collection
 
 import textworld
 

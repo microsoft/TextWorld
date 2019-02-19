@@ -16,9 +16,7 @@ other than the coin to collect.
 """
 
 import argparse
-from typing import Mapping, Union, Dict, Optional
-
-import numpy as np
+from typing import Mapping, Optional
 
 import textworld
 from textworld.generator.graph_networks import reverse_direction
@@ -26,7 +24,6 @@ from textworld.generator.graph_networks import reverse_direction
 from textworld.utils import encode_seeds
 from textworld.generator.game import GameOptions
 from textworld.challenges import register
-from textworld.challenges.utils import get_seeds_for_game_generation
 
 
 def build_argparser(parser=None):

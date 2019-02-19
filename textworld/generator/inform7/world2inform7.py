@@ -3,7 +3,6 @@
 
 
 import re
-import json
 import os
 import shutil
 import warnings
@@ -16,8 +15,7 @@ from pkg_resources import Requirement, resource_filename
 
 from textworld.utils import make_temp_directory, str2bool, chunk
 
-from textworld.generator.data import KnowledgeBase
-from textworld.generator.game import Game, Quest
+from textworld.generator.game import Game
 from textworld.generator.world import WorldRoom, WorldEntity
 from textworld.logic import Signature, Proposition, Action
 

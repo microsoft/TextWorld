@@ -16,8 +16,7 @@ from textworld.utils import encode_seeds
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.text_grammar import Grammar, GrammarOptions
 from textworld.generator.world import World
-from textworld.logic import Action, Proposition, Rule, State
-from textworld.generator.vtypes import VariableTypeTree
+from textworld.logic import Action, Proposition, State
 from textworld.generator.graph_networks import DIRECTIONS
 
 from textworld.generator.chaining import ChainingOptions

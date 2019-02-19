@@ -10,7 +10,7 @@ import urwid
 from itertools import compress
 
 from textworld.generator.game import EntityInfo
-from textworld.logic import Proposition, State, Action, Signature
+from textworld.logic import Proposition, Action, Signature
 from more_itertools import flatten
 
 

@@ -3,9 +3,7 @@
 
 
 import os
-from typing import Optional, Mapping, Tuple
-
-from textworld.utils import g_rng
+from typing import Optional, Tuple
 
 from textworld.core import Environment, Agent
 from textworld.generator.game import Game, GameOptions

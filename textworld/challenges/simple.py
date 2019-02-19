@@ -23,20 +23,15 @@ Here's the map of the house.
 
 """
 import argparse
-from typing import Mapping, Union, Dict, Optional
-
-import numpy as np
+from typing import Mapping, Optional
 
 import textworld
 from textworld.challenges import register
 
 from textworld import GameOptions
-from textworld.logic import Proposition
 from textworld.generator.game import Quest, Event
 
 from textworld.utils import encode_seeds
-
-from textworld.challenges.utils import get_seeds_for_game_generation
 
 
 def build_argparser(parser=None):

@@ -8,7 +8,6 @@ import sys
 import pprint
 import argparse
 
-import textworld
 from textworld.text_utils import extract_vocab
 from textworld.generator import Game
 

@@ -9,7 +9,6 @@ import numpy as np
 
 import textworld
 from textworld import g_rng
-from textworld.generator import World
 
 from textworld.generator.game import GameOptions
 
