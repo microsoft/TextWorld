@@ -97,7 +97,7 @@ def main():
             os.remove(filename_world)
             os.remove(filename_tree)
             os.remove(filename_graph)
-        except:
+        except OSError:
             pass
 
 
