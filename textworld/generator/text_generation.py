@@ -551,8 +551,8 @@ def expand_clean_replace(symbol, grammar, obj, game_infos):
     phrase = grammar.expand(symbol)
     phrase = phrase.replace("(obj)", obj_infos.id)
     phrase = phrase.replace("(name)", highlight(obj_infos.name))
-    phrase = phrase.replace("(name-n)", highlight(obj_infos.noun if obj_infos.adj is not None else obj_infos.name))
-    phrase = phrase.replace("(name-adj)", obj_infos.adj if obj_infos.adj is not None else grammar.expand("#ordinary_adj#"))
+    phrase = phrase.replace("(name-n)", highlight(obj_infos.noun if obj_infos.noun else obj_infos.name))
+    phrase = phrase.replace("(name-adj)", obj_infos.adj if obj_infos.adj else grammar.expand("#ordinary_adj#"))
     if obj.type != "":
         phrase = phrase.replace("(name-t)", KnowledgeBase.default().types.get_description(obj.type))
     else:
