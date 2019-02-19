@@ -281,7 +281,7 @@ function renderRooms(room_data, g) {
     var room_table = room_wrapper.append('table')
         .attr('class', (d) => {
             let className = 'table room-table table-hover';
-            for (item of d.data.items) {
+            for (const item of d.data.items) {
                 if (item.type == 'P') {
                     className += ' current-room';
                 }
@@ -295,7 +295,7 @@ function renderRooms(room_data, g) {
     var room_head = room_table.append('thead')
         .attr('class', (d) => {
             let className = 'thead-room';
-            for (item of d.data.items) {
+            for (const item of d.data.items) {
                 if (item.type == 'P') {
                     className += ' current-room-head';
                 }
@@ -345,7 +345,7 @@ function getDir(connection) {
     const source = state.rooms.filter((r) => r.name == connection.src)[0];
     const dest = state.rooms.filter((r) => r.name == connection.dest)[0];
     let dir = '';
-    for (a of dest.base_room.attributes) {
+    for (const a of dest.base_room.attributes) {
         if (a.arguments[0].name == source.base_room.name) {
             dir = a.name;
         }
@@ -557,7 +557,7 @@ const Graph = (function(window, d3, rerendered) {
         // if it is we translate to center on the player.
         if (!rerendered) {
             const base = room_g.filter((d) => {
-                for (item of d.data.items) {
+                for (const item of d.data.items) {
                     if (item.type == "P") {
                         return true;
                     }
