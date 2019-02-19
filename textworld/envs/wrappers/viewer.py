@@ -3,7 +3,6 @@
 
 
 import threading
-import sys
 from typing import Tuple
 
 from textworld.core import Environment, GameState, Wrapper

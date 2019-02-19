@@ -5,11 +5,10 @@
 import copy
 from collections import Counter
 from functools import total_ordering
-from numpy.random import RandomState
-from typing import Iterable, Mapping, Optional, Sequence
+from typing import Iterable, Optional, Sequence
 
 from textworld.generator.data import KnowledgeBase
-from textworld.logic import Action, GameLogic, Placeholder, Proposition, Rule, State, Variable
+from textworld.logic import Action, GameLogic, Proposition, Rule, State, Variable
 
 
 class ChainNode:

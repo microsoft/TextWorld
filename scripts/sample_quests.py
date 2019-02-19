@@ -11,8 +11,6 @@ from os.path import join as pjoin
 import numpy as np
 import networkx as nx
 
-import textworld
-
 from textworld.render import visualize
 from textworld.generator import Game
 from textworld.generator.inform7 import Inform7Game
@@ -99,7 +97,7 @@ def main():
             os.remove(filename_world)
             os.remove(filename_tree)
             os.remove(filename_graph)
-        except:
+        except OSError:
             pass
 
 

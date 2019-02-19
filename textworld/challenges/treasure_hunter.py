@@ -22,7 +22,7 @@ References
 """
 
 import argparse
-from typing import Mapping, Union, Dict, Optional
+from typing import Mapping, Optional
 
 import numpy as np
 
@@ -33,7 +33,6 @@ from textworld.generator import World
 from textworld.generator.game import Quest, Event
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
-from textworld.challenges.utils import get_seeds_for_game_generation
 
 from textworld.utils import encode_seeds
 from textworld.generator.game import GameOptions

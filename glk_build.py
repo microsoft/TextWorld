@@ -3,7 +3,6 @@
 
 
 from cffi import FFI
-import platform
 
 
 ffibuilder = FFI()

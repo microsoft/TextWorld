@@ -3,7 +3,6 @@
 
 
 import glob
-import os
 import re
 import warnings
 from os.path import join as pjoin
@@ -17,7 +16,7 @@ import textworld
 from textworld import g_rng
 from textworld.utils import uniquify
 from textworld.generator.data import KnowledgeBase
-from textworld.textgen.model import AdjectiveNoun, Match, TextGrammarModelBuilderSemantics
+from textworld.textgen.model import TextGrammarModelBuilderSemantics
 from textworld.textgen.parser import TextGrammarParser
 
 

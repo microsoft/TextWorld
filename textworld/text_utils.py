@@ -3,15 +3,10 @@
 
 
 import re
-import os
-from os.path import join as pjoin
-from typing import Optional, List, Iterable
-
-import numpy as np
+from typing import List, Iterable
 
 from textworld.generator.game import Game
-from textworld.generator.data import KnowledgeBase
-from textworld.generator.text_grammar import Grammar, GrammarOptions
+from textworld.generator.text_grammar import Grammar
 
 
 def remove_extra_spaces(output):

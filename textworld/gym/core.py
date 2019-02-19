@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any, Optional
+from typing import Mapping, Any
 
 from textworld import EnvInfos
 

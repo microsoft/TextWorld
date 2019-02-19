@@ -11,8 +11,7 @@ from typing import Union, Dict, Optional
 import numpy as np
 import networkx as nx
 
-import textworld
-from textworld.logic import Variable, Proposition, Action
+from textworld.logic import Proposition, Action
 from textworld.envs.glulx.git_glulx_ml import GlulxGameState
 from textworld.logic import State
 from textworld.generator import World, Game
