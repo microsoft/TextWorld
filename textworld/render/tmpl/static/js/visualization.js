@@ -210,7 +210,7 @@ function appendItemLabel(parent, p, n) {
         });
 
     const colContainerRight = colContainer.filter((q) => hasItems(q))
-        .append('div', 'col-container-right')
+        .append('div', 'col-container-right');
 
     const colContainerChevron = colContainerRight.append('img')
         .attr('class', (d) => {
@@ -466,7 +466,7 @@ function renderEdges(edge_data, room_data, room_g, g) {
         return 'translate(' + x + ',' + y + ')';
     });
 
-    return linkWrapper
+    return linkWrapper;
 }
 
 
@@ -663,7 +663,7 @@ var parseStyles = function(svg) {
 
   // iterate through all document's stylesheets
   for (i = 0; i < styleSheets.length; i++) {
-    var currentStyle = styleSheets[i]
+    var currentStyle = styleSheets[i];
 
     var rules;
     try {
