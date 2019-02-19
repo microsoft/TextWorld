@@ -64,7 +64,7 @@ def main():
     reward = 0
     done = False
 
-    for t in range(args.max_steps) if args.max_steps > 0 else itertools.count():
+    for _ in range(args.max_steps) if args.max_steps > 0 else itertools.count():
         command = agent.act(game_state, reward, done)
         game_state, reward, done = env.step(command)
 
