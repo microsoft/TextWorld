@@ -193,7 +193,7 @@ class GlulxGameState(textworld.GameState):
         self._compute_intermediate_reward = compute_intermediate_reward and len(game.quests) > 0
         self._objective = game.objective
         self._score = 0
-        self._max_score = self._game_progression.max_score
+        self._max_score = self._game.max_score
 
     def view(self) -> "GlulxGameState":
         """

@@ -481,6 +481,11 @@ class Game:
         return hash(state)
 
     @property
+    def max_score(self) -> int:
+        """ Sum of the reward of all quests. """
+        return sum(quest.reward for quest in self.quests)
+
+    @property
     def command_templates(self) -> List[str]:
         """ All command templates understood in this game. """
         return sorted(set(cmd for cmd in self.kb.inform7_commands.values()))
@@ -890,11 +895,6 @@ class GameProgression:
     def score(self) -> int:
         """ Sum of the reward of all completed quests. """
         return sum(qp.quest.reward for qp in self.quest_progressions if qp.completed)
-
-    @property
-    def max_score(self) -> int:
-        """ Sum of the reward of all quests. """
-        return sum(quest.reward for quest in self.game.quests)
 
     @property
     def tracking_quests(self) -> bool:
