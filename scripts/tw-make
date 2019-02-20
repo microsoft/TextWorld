@@ -30,8 +30,11 @@ def exit_listing_challenges(challenge=None):
 def _maybe_load_third_party_module():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--third-party")
+    parser.add_argument("--silent", action="store_true")
     args, _ = parser.parse_known_args()
     if args.third_party:
+        if not args.silent:
+            print("Importing challenges from {}.".format(args.third_party))
         import importlib.machinery
         importlib.machinery.SourceFileLoader("tw_custom_challenge", args.third_party).load_module()
 
@@ -50,7 +53,7 @@ def parse_args():
                                help="Display an overview of the generated game.")
     general_group.add_argument("--save-overview", action="store_true",
                                help="Save the overview image of the generated game alongside the game as a PNG file.")
-    general_group.add_argument("--third-party",
+    general_group.add_argument("--third-party", metavar="PATH",
                                help="Load third-party module. Useful to register new custom challenges on-the-fly.")
     general_group.add_argument("-f", "--force", action="store_true")
     general_group.add_argument("--list", action="store_true",
@@ -93,8 +96,6 @@ def parse_args():
     quest_group.add_argument("--quest-breadth", type=int, metavar="BREADTH",
                                help="Nb. of subquests the quests will have. It is a shorthand"
                                     " for '--quest-min-breadth N --quest-max-breadth N'.")
-    # quest_group.add_argument("--quest-depth", type=int, metavar="DEPTH",
-    #                            help="Nb. of actions the subquests will have.")
 
     quest_group_advanced = custom_parser.add_argument_group('Quest settings (advanced)')
     quest_group_advanced.add_argument("--quest-min-length", type=int, default=1, metavar="LENGTH",
@@ -133,8 +134,9 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    _maybe_load_third_party_module()
     args, (parser, custom_parser, challenge_parsers) = parse_args()
-    
+
     if args.seed is None:
         args.seed = np.random.randint(65635)
 
