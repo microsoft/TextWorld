@@ -4,18 +4,21 @@
 
 import os
 from os.path import join as pjoin
+from collections import OrderedDict
 
 from typing import List, Iterable, Union, Optional
 
+import networkx as nx
 import textworld
 
 from textworld.utils import make_temp_directory
 
+from textworld.generator.graph_networks import reverse_direction, direction
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
-from textworld.generator.game import Game, World, Quest, Event
+from textworld.generator.game import Game, World, Quest, Event, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
@@ -85,9 +88,11 @@ class WorldEntity:
         """
         self.var = var
         self._facts = []
-        self.name = name
-        self.desc = desc
+        self.infos = EntityInfo(var.name, var.type)
+        self.infos.name = name
+        self.infos.desc = desc
         self.content = []
+        self.parent = None
 
     @property
     def id(self) -> str:
@@ -98,6 +103,11 @@ class WorldEntity:
     def type(self) -> str:
         """ Type of this entity. """
         return self.var.type
+
+    @property
+    def name(self) -> str:
+        """ Name of this entity. """
+        return self.infos.name
 
     @property
     def properties(self) -> List[Proposition]:
@@ -127,6 +137,10 @@ class WorldEntity:
         args = [entity.var for entity in entities]
         self._facts.append(Proposition(name, args))
 
+    def remove_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+        args = [entity.var for entity in entities]
+        self._facts.remove(Proposition(name, args))
+
     def add_property(self, name: str) -> None:
         """ Adds a property to this entity.
 
@@ -138,6 +152,9 @@ class WorldEntity:
 
         """
         self.add_fact(name, self)
+
+    def remove_property(self, name: str) -> None:
+        self.remove_fact(name, self)
 
     def add(self, *entities: List["WorldEntity"]) -> None:
         """ Add children to this entity. """
@@ -153,6 +170,22 @@ class WorldEntity:
         for entity in entities:
             self.add_fact(name, entity, self)
             self.content.append(entity)
+            entity.parent = self
+
+    def remove(self, *entities):
+        if KnowledgeBase.default().types.is_descendant_of(self.type, "r"):
+            name = "at"
+        elif KnowledgeBase.default().types.is_descendant_of(self.type, ["c", "I"]):
+            name = "in"
+        elif KnowledgeBase.default().types.is_descendant_of(self.type, "s"):
+            name = "on"
+        else:
+            raise ValueError("Unexpected type {}".format(self.type))
+
+        for entity in entities:
+            self.remove_fact(name, entity, self)
+            self.content.remove(entity)
+            entity.parent = None
 
     def has_property(self, name: str) -> bool:
         """ Determines if this object has a property with the given name.
@@ -196,6 +229,8 @@ class WorldEntity:
 
 class WorldRoom(WorldEntity):
     """ Represents a room in the world. """
+
+    __slots__ = list(DIRECTIONS)
 
     def __init__(self, *args, **kwargs):
         """
@@ -306,8 +341,11 @@ class GameMaker:
 
     Attributes:
         player (WorldEntity): Entity representing the player.
-        inventory (WorldEntity): Player's envi entity.
+        inventory (WorldEntity): Entity representing the player's inventory.
+        nowhere (List[WorldEntity]): List of out-of-world entities (e.g. objects
+                                     that would only appear later in a game).
         rooms (List[WorldRoom]): The rooms present in this world.
+        paths (List[WorldPath]): The connections between the rooms.
     """
 
     def __init__(self) -> None:
@@ -315,12 +353,14 @@ class GameMaker:
         Creates an empty world, with a player and an empty inventory.
         """
         self._entities = {}
+        self._named_entities = {}
         self.quests = []
         self.rooms = []
         self.paths = []
         self._types_counts = KnowledgeBase.default().types.count(State())
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
+        self.nowhere = []
         self.grammar = textworld.generator.make_grammar()
         self._game = None
         self._distractors_facts = []
@@ -334,6 +374,9 @@ class GameMaker:
 
         for path in self.paths:
             facts += path.facts
+
+        for entity in self.nowhere:
+            facts += entity.facts
 
         facts += self.inventory.facts
         facts += self._distractors_facts
@@ -409,7 +452,21 @@ class GameMaker:
             entity = WorldEntity(var, name, desc)
 
         self._entities[var_id] = entity
+        if entity.name:
+            self._named_entities[entity.name] = entity
+
         return entity
+
+    def move(self, entity: WorldEntity, new_location: WorldEntity) -> None:
+        """
+        Move an entity to a new location.
+
+        Arguments:
+            entity: Entity to move.
+            new_location: Where to move the entity.
+        """
+        entity.parent.remove(entity)
+        new_location.add(entity)
 
     def findall(self, type: str) -> List[WorldEntity]:
         """ Gets all entities of the given type.
@@ -426,6 +483,27 @@ class GameMaker:
                 entities.append(entity)
 
         return entities
+
+    def find_path(self, room1: WorldRoom, room2: WorldRoom) -> Optional[WorldEntity]:
+        """ Get the path between two rooms, if it exists.
+
+        Args:
+            room1: One of the two rooms.
+            room2: The other room.
+
+        Returns:
+            The matching path path, if it exists.
+        """
+        for path in self.paths:
+            if ((path.src == room1 and path.dest == room2) or
+                (path.src == room2 and path.dest == room1)):
+                return path
+
+        return None
+
+    def find_by_name(self, name: str) -> Optional[WorldEntity]:
+        """ Find an entity using its name. """
+        return self._named_entities.get(name)
 
     def set_player(self, room: WorldRoom) -> None:
         """ Place the player in room.
@@ -618,8 +696,8 @@ class GameMaker:
                 pass  # Quest is done.
 
         # Skip "None" actions.
-        actions = [action for action in recorder.actions if action is not None]
-        event = Event(actions=actions)
+        actions, commands = zip(*[(action, command) for action, command in zip(recorder.actions, commands) if action is not None])
+        event = Event(actions=actions, commands=commands)
         return event
 
     def new_quest_using_commands(self, commands: List[str]) -> Quest:
@@ -634,7 +712,7 @@ class GameMaker:
             The resulting quest.
         """
         event = self.new_event_using_commands(commands)
-        return Quest(win_events=[event])
+        return Quest(win_events=[event], commands=event.commands)
 
     def validate(self) -> bool:
         """ Check if the world is valid and can be compiled.
@@ -674,12 +752,11 @@ class GameMaker:
         # Keep names and descriptions that were manually provided.
         for k, var_infos in game.infos.items():
             if k in self._entities:
-                var_infos.name = self._entities[k].name
-                var_infos.desc = self._entities[k].desc
+                game.infos[k] = self._entities[k].infos
 
             # If we can, reuse information generated during last build.
             if self._game is not None and k in self._game.infos:
-                # var_infos.desc = self._game.infos[k].desc
+                var_infos = game.infos[k]
                 var_infos.name = self._game.infos[k].name
                 var_infos.adj = self._game.infos[k].adj
                 var_infos.noun = self._game.infos[k].noun
@@ -743,3 +820,23 @@ class GameMaker:
         game = self.build(validate=False)
         game.change_grammar(self.grammar)  # Generate missing object names.
         return visualize(game, interactive=interactive)
+
+    def import_graph(self, G: nx.Graph) -> List[WorldRoom]:
+        """ Convert Graph object to a list of `Proposition`.
+
+        Args:
+            G: Graph defining the structure of the world.
+        """
+
+        rooms = OrderedDict((n, self.new_room(d.get("name", None))) for n, d in G.nodes.items())
+
+        for src, dest, data in G.edges(data=True):
+            src_exit = rooms[src].exits[direction(dest, src)]
+            dest_exit = rooms[dest].exits[direction(src, dest)]
+            path = self.connect(src_exit, dest_exit)
+
+            if data.get("has_door"):
+                door = self.new_door(path, data['door_name'])
+                door.add_property(data["door_state"])
+
+        return list(rooms.values())

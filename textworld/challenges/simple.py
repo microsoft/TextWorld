@@ -186,7 +186,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 
     for food, name in zip(foods, food_names):
         food.orig_name = food.name
-        food.name = name
+        food.infos.name = name
 
     # The player starts in the bedroom.
     M.set_player(bedroom)
