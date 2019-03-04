@@ -99,12 +99,21 @@ class TextGrammarParser(Parser):
             []
         )
 
+    @tatsumasu()
+    def _entity_(self):  # noqa
+        with self._choice():
+            with self._option():
+                self._adjectiveNoun_()
+            with self._option():
+                self._literal_()
+            self._error('no available options')
+
     @tatsumasu('Match')
     def _match_(self):  # noqa
-        self._adjectiveNoun_()
+        self._entity_()
         self.name_last_node('lhs')
         self._token('<->')
-        self._adjectiveNoun_()
+        self._entity_()
         self.name_last_node('rhs')
         self.ast._define(
             ['lhs', 'rhs'],
@@ -117,9 +126,7 @@ class TextGrammarParser(Parser):
             with self._option():
                 self._match_()
             with self._option():
-                self._adjectiveNoun_()
-            with self._option():
-                self._literal_()
+                self._entity_()
             self._error('no available options')
 
     @tatsumasu()
@@ -177,6 +184,9 @@ class TextGrammarSemantics(object):
         return ast
 
     def adjectiveNoun(self, ast):  # noqa
+        return ast
+
+    def entity(self, ast):  # noqa
         return ast
 
     def match(self, ast):  # noqa

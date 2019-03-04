@@ -81,3 +81,15 @@ def test_making_challenge_game():
             # Solve the game using WalkthroughAgent.
             agent = textworld.agents.WalkthroughAgent()
             textworld.play(game_file, agent=agent, silent=True)
+
+
+def test_making_a_game_using_basic_theme():
+    with make_temp_directory(prefix="test_tw-make") as tmpdir:
+        output_folder = pjoin(tmpdir, "gen_games")
+        game_file = pjoin(output_folder, "game_1234.ulx")
+        command = ["tw-make", "custom", "--theme", "basic", "--seed", "1234", "--output", game_file]
+        assert check_call(command) == 0
+
+        # Solve the game using WalkthroughAgent.
+        agent = textworld.agents.WalkthroughAgent()
+        textworld.play(game_file, agent=agent, silent=True)

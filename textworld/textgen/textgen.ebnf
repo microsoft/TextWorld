@@ -11,9 +11,11 @@ literal = ?"(([^;|<>\n\[\]()]|\[[^\[\]]*\]|\([^()]*\))+(?<!\s))?" ;
 
 adjectiveNoun::AdjectiveNoun = adjective:literal "|" noun:literal ;
 
-match::Match = lhs:adjectiveNoun "<->" rhs:adjectiveNoun ;
+entity = adjectiveNoun | literal ;
 
-alternative = match | adjectiveNoun | literal;
+match::Match = lhs:entity "<->" rhs:entity ;
+
+alternative = match | entity;
 
 alternatives = ";".{alternative}+ ;
 
