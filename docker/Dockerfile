@@ -1,22 +1,13 @@
-FROM debian:buster
+FROM python:3-slim
 
-MAINTAINER TextWorld Team <textworld@microsoft.com>
+ENV WORLDSIZE=5
+ENV NBOBJECTS=10
+ENV QUESTLENGTH=5
+ENV SEED=1234
 
-# Get everything up-to-date
-RUN apt-get update
-RUN apt-get upgrade -qy
+RUN apt update && \
+  apt install -y build-essential libffi-dev python3-dev curl git && \
+  pip install textworld
 
-RUN apt-get install -qy \
-    build-essential \
-    chromium \
-    chromium-driver \
-    curl \
-    git \
-    libffi-dev \
-    python3-dev \
-    python3-pip \
-    wget \
-    graphviz
-
-# set display name for x-server for selenium tests
-ENV DISPLAY=:99
+ADD startup.sh /
+CMD ["/bin/sh", "startup.sh"]
