@@ -336,6 +336,8 @@ class Game:
     Additionally, a grammar can be provided to control the text generation.
     """
 
+    _SERIAL_VERSION = 1
+
     def __init__(self, world: World, grammar: Optional[Grammar] = None,
                  quests: Iterable[Quest] = (),
                  kb: Optional[KnowledgeBase] = None) -> None:
@@ -428,6 +430,11 @@ class Game:
             data: Serialized data with the needed information to build a
                   `Game` object.
         """
+
+        version = data.get("version", cls._SERIAL_VERSION)
+        if version != cls._SERIAL_VERSION:
+            raise ValueError("Cannot deserialize a TextWorld version {} game, expected version {}".format(version, cls._SERIAL_VERSION))
+
         world = World.deserialize(data["world"])
         game = cls(world)
         game.grammar = Grammar(data["grammar"])
@@ -449,6 +456,7 @@ class Game:
             Game's data serialized to be JSON compatible
         """
         data = {}
+        data["version"] = self._SERIAL_VERSION
         data["world"] = self.world.serialize()
         data["grammar"] = self.grammar.options.serialize() if self.grammar else {}
         data["quests"] = [quest.serialize() for quest in self.quests]
