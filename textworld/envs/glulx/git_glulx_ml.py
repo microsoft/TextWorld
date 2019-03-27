@@ -553,6 +553,10 @@ class GitGlulxMLEnvironment(textworld.Environment):
         if not self._state_tracking:
             self.enable_extra_info("score")
 
+        version = self._send('tw-print version').splitlines()[0]
+        if version != "I didn't understand that sentence." and version != str(Inform7Game.VERSION):
+            raise ValueError("Cannot play a TextWorld version {} game, expected version {}".format(version, Inform7Game.VERSION))
+
         # TODO: check if the game was compiled in debug mode. You could parse
         #       the output of the following command to check whether debug mode
         #       was used or not (i.e. invalid action not found).
