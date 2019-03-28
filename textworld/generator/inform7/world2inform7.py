@@ -51,6 +51,8 @@ def split_string(string, name, cutoff=200):
 
 
 class Inform7Game:
+    VERSION = 1
+
     def __init__(self, game: Game) -> None:
         self.game = game
         self.entity_infos = self.game.infos
@@ -857,6 +859,19 @@ class Inform7Game:
 
         """)
 
+        # Special command to print the version number
+        source += textwrap.dedent("""\
+        The version number is always {}.
+
+        Reporting the version number is an action applying to nothing.
+        Carry out reporting the version number:
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
+            say "[version number]".
+
+        Understand "tw-print version" as reporting the version number.
+
+        """).format(self.VERSION)
+
         # Special command to print the maximum score of a game.
         source += textwrap.dedent("""\
         Reporting max score is an action applying to nothing.
@@ -867,7 +882,7 @@ class Inform7Game:
 
         """)
 
-        # Special command to print the maximum score of a game.
+        # Special command to print the id of an object.
         source += textwrap.dedent("""\
         To print id of (something - thing):
             (- print {something}, "^"; -).
