@@ -23,4 +23,4 @@ pydot>=1.2.4
 prompt_toolkit<2.1.0,>=2.0.0
 
 # For gym support
-gym==0.10.4
+gym>=0.10.11
