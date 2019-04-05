@@ -222,7 +222,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 
     if settings["test"]:
         TEST_FOODS = ["garlic", "kiwi", "carrot"]
-        food.name = rng_quest.choice(TEST_FOODS)
+        food.infos.name = rng_quest.choice(TEST_FOODS)
 
     # Retrieve the food item and get back in the kitchen.
     # HACK: handcrafting the walkthrough.
