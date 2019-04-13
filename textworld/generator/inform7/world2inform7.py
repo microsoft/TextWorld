@@ -271,14 +271,32 @@ class Inform7Game:
         carry out cutting:
             say "You just cut the [noun].";
             now the noun is beencut;
-            now the noun is not cuttable.
-	
+        
         check cutting:
-            if the noun is not a food:
-            say "You cannot cut this." instead;
+            if the noun is beencut:
+                say "You already cut the [noun]." instead;
         """)
+        '''actions += textwrap.dedent("""\
+	The block cutting rule is not listed in the check cutting rulebook.
+	carry out cutting:
+		say "You just cut the [noun].";
+		now the noun is beencut;
+		now the noun is not cuttable.
+
+	check cutting:
+            if the noun is not a food:
+			say "You cannot cut this." instead;
+        """)'''
 
         return actions
+
+    def gen_source(self, seed: int = 1234) -> str:
+        source = ""
+        source += "When play begins, seed the random-number generator with {}.\n\n".format(seed)
+        source += self.define_inform7_kinds()
+        # Mention that rooms have a special text attribute called 'internal name'.
+        source += "A room has a text called internal name.\n\n"
+
 
     def gen_source(self, seed: int = 1234) -> str:
         source = ""
@@ -1030,11 +1048,3 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
         except subprocess.CalledProcessError as exc:
             msg = ""
             msg += "\n-= i6 =-\nFAIL: {}\n{}========\n".format(exc.returncode, exc.output.decode())
-            msg += "*** Usually this means a compilation error.\n"
-            if ext == ".z8":
-                msg += "*** Maybe the game is too big for a .z8 file. Try using .ulx instead.\n"
-            msg += "*** See {} for more information.\n".format(story_filename)
-            raise CouldNotCompileGameError(msg)
-        else:
-            if verbose:
-                print("-= i6 =-\n{}========\n".format(stdout.decode()))
