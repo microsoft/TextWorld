@@ -272,6 +272,10 @@ class Inform7Game:
 		say "You just cut the [noun].";
 		now the noun is beencut;
 		now the noun is not cuttable.
+	
+	check cutting:
+        	if the noun is not a food:
+			say "You cannot cut this." instead;
         """)
 
         return actions
@@ -316,6 +320,9 @@ class Inform7Game:
         source += "\n"
         source += self.gen_source_for_objects(self.game.world.objects)
         source += "\n\n"
+        
+        # Declare cog sci actions
+        source += self.gen_cog_sci_actions() + "\n" 
 
         # Place the player.
         source += "The player is in {}.\n\n".format(self.entity_infos[self.game.world.player_room.id].id)
