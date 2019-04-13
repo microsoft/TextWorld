@@ -3,6 +3,7 @@ type f : o {
     predicates {
         edible(f);
         eaten(f);
+
     }
 
     rules {
@@ -25,10 +26,12 @@ type f : o {
         predicates {
             edible(f) :: "The {f} is edible";
             eaten(f) :: "The {f} is nowhere";
+
         }
 
         commands {
             eat :: "eat {f}" :: "eating the {f}";
+	    cut :: "cut {f}" :: "cutting the {f}";
         }
     }
 }

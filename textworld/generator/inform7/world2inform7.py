@@ -262,6 +262,20 @@ class Inform7Game:
 
         return properties
 
+    def gen_cog_sci_actions(self) -> str:
+        actions = ""
+
+        # CUT
+        actions += textwrap.dedent("""\
+	The block cutting rule is not listed in the check cutting rulebook.
+	carry out cutting:
+		say "You just cut the [noun].";
+		now the noun is beencut;
+		now the noun is not cuttable.
+        """)
+
+        return actions
+
     def gen_source(self, seed: int = 1234) -> str:
         source = ""
         source += "When play begins, seed the random-number generator with {}.\n\n".format(seed)
@@ -272,7 +286,7 @@ class Inform7Game:
 
         # TODO: add function for defining new properties
         # might just be able to use the inform7_addons_code?
-        source += self.get_cog_sci_properties() + "\n"
+        source += self.gen_cog_sci_properties() + "\n"
 
         # Define custom addons.
         source += self.kb.inform7_addons_code + "\n"
