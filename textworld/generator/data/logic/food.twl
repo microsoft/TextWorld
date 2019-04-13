@@ -3,8 +3,6 @@ type f : o {
     predicates {
         edible(f);
         eaten(f);
-        cuttable(f);
-        uncut(f);
     }
 
     rules {
@@ -25,18 +23,16 @@ type f : o {
     inform7 {
         type {
             kind :: "food";
-            definition :: "food is edible. food is cuttable.";
+            definition :: "food is edible.";
         }
 
         predicates {
             edible(f) :: "The {f} is edible";
             eaten(f) :: "The {f} is nowhere";
-            beencut(f) :: "The {f} is beencut";
         }
 
         commands {
             eat :: "eat {f}" :: "eating the {f}";
-	    cut :: "cut {f}" :: "cutting the {f}";
         }
     }
 }
