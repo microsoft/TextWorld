@@ -248,12 +248,31 @@ class Inform7Game:
 
         return type_defs + type_desc
 
+    def gen_cog_sci_properties(self) -> str:
+        # TODO: define new properties
+        properties = ""
+        # properties += "object-like is either beencut or uncut\n"
+        # properties += "object-like is usually uncut.\n"
+        # properties += "object-like is either cuttable or not cuttable.\n"
+        properties += textwrap.dedent("""\
+        object-like is either beencut or uncut.
+        object-like is usually uncut.
+        object-like is either cuttable or not cuttable.
+        """)
+
+        return properties
+
     def gen_source(self, seed: int = 1234) -> str:
         source = ""
         source += "When play begins, seed the random-number generator with {}.\n\n".format(seed)
         source += self.define_inform7_kinds()
         # Mention that rooms have a special text attribute called 'internal name'.
         source += "A room has a text called internal name.\n\n"
+
+
+        # TODO: add function for defining new properties
+        # might just be able to use the inform7_addons_code?
+        source += self.get_cog_sci_properties() + "\n"
 
         # Define custom addons.
         source += self.kb.inform7_addons_code + "\n"
