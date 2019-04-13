@@ -267,15 +267,15 @@ class Inform7Game:
 
         # CUT
         actions += textwrap.dedent("""\
-	The block cutting rule is not listed in the check cutting rulebook.
-	carry out cutting:
-		say "You just cut the [noun].";
-		now the noun is beencut;
-		now the noun is not cuttable.
+        The block cutting rule is not listed in the check cutting rulebook.
+        carry out cutting:
+            say "You just cut the [noun].";
+            now the noun is beencut;
+            now the noun is not cuttable.
 	
-	check cutting:
-        	if the noun is not a food:
-			say "You cannot cut this." instead;
+        check cutting:
+            if the noun is not a food:
+            say "You cannot cut this." instead;
         """)
 
         return actions
