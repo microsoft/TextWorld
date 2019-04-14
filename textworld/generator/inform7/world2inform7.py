@@ -1029,3 +1029,10 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
             msg = ""
             msg += "\n-= i6 =-\nFAIL: {}\n{}========\n".format(exc.returncode, exc.output.decode())
             msg += "*** Usually this means a compilation error.\n"
+            if ext == ".z8":
+                msg += "*** Maybe the game is too big for a .z8 file. Try using .ulx instead.\n"
+            msg += "*** See {} for more information.\n".format(story_filename)
+            raise CouldNotCompileGameError(msg)
+        else:
+            if verbose:
+                print("-= i6 =-\n{}========\n".format(stdout.decode()))
