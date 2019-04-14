@@ -3,14 +3,12 @@ type f : o {
     predicates {
         edible(f);
         eaten(f);
+        beencut(f);
     }
 
     rules {
         eat :: in(f, I) -> eaten(f);
-    }
-
-    reverse_rules {
-        uncut :: beencut;
+        cut :: if(f, I) -> beencut(f);
     }
 
     constraints {
@@ -29,10 +27,12 @@ type f : o {
         predicates {
             edible(f) :: "The {f} is edible";
             eaten(f) :: "The {f} is nowhere";
+            beencut(f) :: "The {f} is beencut";
         }
 
         commands {
             eat :: "eat {f}" :: "eating the {f}";
+            cut :: "cut {f}" :: "cutting the {f}";
         }
     }
 }
