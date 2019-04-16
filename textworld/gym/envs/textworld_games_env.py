@@ -2,6 +2,7 @@
 # Licensed under the MIT license.
 
 
+import re
 import os
 import sys
 import textwrap
@@ -11,6 +12,7 @@ from typing import List, Optional, Dict, Any, Tuple, Union
 import numpy as np
 import gym
 from gym.utils import colorize
+import jericho
 
 import textworld
 import textworld.text_utils
@@ -28,7 +30,7 @@ class TextworldGamesEnv(gym.Env):
                  request_infos: Optional[EnvInfos] = None,
                  action_space: Optional[gym.Space] = None,
                  observation_space: Optional[gym.Space] = None) -> None:
-        """ Environment for playing TextWorld games.
+        """ Environment for playing text-based games.
 
         Each time `TextworldGamesEnv.reset()` is called, a new game from the
         pool starts. Each game of the pool is guaranteed to be played exactly
@@ -36,12 +38,14 @@ class TextworldGamesEnv(gym.Env):
 
         Arguments:
             game_files:
-                Paths of every TextWorld game composing the pool (.ulx + .json).
+                Paths of every game composing the pool (`*.ulx` + `*.json`, `*.z[1-8]`).
             request_infos:
                 For customizing the information returned by this environment
                 (see
                 :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
                 for the list of available information).
+
+                .. warning:: This is only supported for `*.ulx` games generated with TextWorld.
             action_space:
                 The action space of this TextWorld environment. By default, a
                 :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`
@@ -63,8 +67,16 @@ class TextworldGamesEnv(gym.Env):
 
         if action_space is None or observation_space is None:
             # Extract vocabulary from games.
-            games_iter = (textworld.Game.load(os.path.splitext(gamefile)[0] + ".json") for gamefile in self.gamefiles)
-            vocab = textworld.text_utils.extract_vocab(games_iter)
+            json_files = [os.path.splitext(gamefile)[0] + ".json" for gamefile in self.gamefiles]
+            games_iter = (textworld.Game.load(gamefile) for gamefile in json_files if os.path.isfile(gamefile))
+            vocab = set(textworld.text_utils.extract_vocab(games_iter))
+
+            zmachine_games = [gamefile for gamefile in self.gamefiles if re.search(r"\.z[1-8]$", gamefile)]
+            for gamefile in zmachine_games:
+                env = jericho.FrotzEnv(gamefile)
+                vocab |= set(entry.word for entry in env.get_dictionary())
+
+            vocab = sorted(vocab)
 
         self.action_space = action_space or text_spaces.Word(max_length=8, vocab=vocab)
         self.observation_space = observation_space or text_spaces.Word(max_length=200, vocab=vocab)
