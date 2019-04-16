@@ -13,12 +13,14 @@ def register_games(game_files: List[str],
 
     Arguments:
         game_files:
-            Paths for the TextWorld games (.ulx).
+            Paths for the TextWorld games (`*.ulx` + `*.json`, `*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
             (see
             :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
             for the list of available information).
+
+            .. warning:: This is only supported for `*.ulx` games generated with TextWorld.
         max_episode_steps:
             Terminate a game after that many steps.
         name:
@@ -76,12 +78,14 @@ def register_game(game_file: str,
 
     Arguments:
         game_file:
-            Path for the TextWorld game (.ulx).
+            Path for the TextWorld game (`*.ulx` + `*.json`, `*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
             (see
             :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
             for the list of available information).
+
+            .. warning:: This is only supported for `*.ulx` games generated with TextWorld.
         max_episode_steps:
             Terminate a game after that many steps.
         name:

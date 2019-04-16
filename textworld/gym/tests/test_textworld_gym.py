@@ -1,3 +1,5 @@
+import os
+
 import gym
 
 import textworld
@@ -16,6 +18,28 @@ def test_register_game():
                                admissible_commands=True)
 
         env_id = textworld.gym.register_game(gamefile, env_options, name="test-single")
+        env = gym.make(env_id)
+        obs, infos = env.reset()
+        assert len(infos) == len(env_options)
+
+        for cmd in game.main_quest.commands:
+            obs, score, done, infos = env.step(cmd)
+
+        assert done
+        assert score == 1
+
+
+def test_register_zmachine_game():
+    with make_temp_directory() as tmpdir:
+        options = textworld.GameOptions()
+        options.path = tmpdir
+        options.seeds = 1234
+        options.file_ext = ".z8"
+        gamefile, game = textworld.make(options)
+        os.remove(gamefile.replace(".z8", ".json"))  # Simulate an existing Z-Machine game.
+        env_options = EnvInfos()
+
+        env_id = textworld.gym.register_game(gamefile, env_options, name="test-zmachine")
         env = gym.make(env_id)
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
