@@ -140,12 +140,12 @@ class Word(gym.spaces.MultiDiscrete):
         """
         text = text.lower()  # Work only with lowercase letters.
         # Find beginning and end of sentences.
-        text = re.sub(".", " </S> <S> ", text)
+        text = text.replace(".", " </S> <S> ")
         text = "<S> " + text + " </S>"
 
         # Strip out all non-alphabetic characters.
-        text = re.sub("'", "", text)
-        text = re.sub("[^a-z0-9 ]", " ", text)
+        text = text.replace("'", "")
+        text = re.sub("[^a-z0-9 <S>/]", " ", text)
         # TODO: convert numbers to text?
 
         # Get words ids and replace unknown words with <UNK>.
