@@ -266,7 +266,7 @@ candy:chocolate bar;gummy bear;candy bar;licorice strip;cookie
 #---------------------------
 (P)_desc:It's you.
 (c)_desc:The (name) looks strong, and impossible to #force_open#.
-force_open:force open;open;break open;bash open;crack open
+force_open:break;crack;destroy
 (s)_desc:The (name) is #supp_stable#.
 supp_stable:stable;wobbly;unstable;balanced;durable;reliable;solid;undependable;solidly built;an unstable piece of #garbage#;shaky
 garbage:garbage;trash;junk
