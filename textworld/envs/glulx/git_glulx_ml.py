@@ -20,7 +20,7 @@ from io import StringIO
 import textworld
 from textworld.generator.game import Game, GameProgression
 from textworld.generator.inform7 import Inform7Game
-from textworld.logic import Action, State
+from textworld.logic import Action, State, Proposition
 from textworld.core import GameNotRunningError
 
 GLULX_PATH = resource_filename(Requirement.parse('textworld'), 'textworld/thirdparty/glulx/Git-Glulx')
@@ -318,6 +318,14 @@ class GlulxGameState(textworld.GameState):
         return self._command_feedback
 
     @property
+    def location(self):
+        if not hasattr(self, "_location"):
+            fact = [fact for fact in self.state.facts if fact.name == "at" and fact.arguments[0].type == "P"][0]
+            self._location = self.game_infos[fact.arguments[-1].name].name
+
+        return self._location
+
+    @property
     def objective(self):
         """ Objective of the game. """
         return self._objective
@@ -411,6 +419,11 @@ class GlulxGameState(textworld.GameState):
         return self._state
 
     @property
+    def facts(self) -> List[Proposition]:
+        """ Current list of facts. """
+        return list(map(self._inform7.get_human_readable_fact, self.state.facts))
+
+    @property
     def action(self) -> Action:
         """ Last action that was detected. """
         if not hasattr(self, "_action"):
@@ -447,7 +460,6 @@ class GlulxGameState(textworld.GameState):
     @property
     def extras(self):
         return self._game.extras
-
 
 
 class GitGlulxMLEnvironment(textworld.Environment):

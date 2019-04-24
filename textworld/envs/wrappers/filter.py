@@ -4,7 +4,7 @@
 
 from typing import Tuple, Mapping, Any, List, Iterable
 
-from textworld.core import GameState, Wrapper
+from textworld.core import Environment, GameState, Wrapper
 
 
 class EnvInfos:
@@ -101,16 +101,18 @@ class Filter(Wrapper):
         >>> from textworld.envs.wrappers import Filter
         >>> request_infos = EnvInfos(description=True, inventory=True, extras=["more"])
         ...
-        >>> env = Filter(env)
+        >>> env = Filter(env, request_infos)
         >>> ob, infos = env.reset()
         >>> print(infos["description"])
         >>> print(infos["inventory"])
         >>> print(infos["extra.more"])
     """
 
-    def __init__(self, options: EnvInfos) -> None:
+    def __init__(self, env: Environment, options: EnvInfos) -> None:
         """
         Arguments:
+            env:
+                The TextWorld environment to wrap.
             options:
                 For customizing the information returned by this environment
                 (see
@@ -118,6 +120,7 @@ class Filter(Wrapper):
                 for the list of available information).
 
         """
+        super().__init__(env)
         self.options = options
 
     def _get_requested_infos(self, game_state: GameState):
@@ -136,7 +139,7 @@ class Filter(Wrapper):
         return ob, score, done, infos
 
     def reset(self) -> Tuple[str, Mapping[str, Any]]:
-        if self.options.admissible_commands:
+        if self.options.admissible_commands or self.options.location:
             self.activate_state_tracking()
 
         if self.options.intermediate_reward:

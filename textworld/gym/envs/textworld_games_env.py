@@ -118,7 +118,7 @@ class TextworldGamesEnv(gym.Env):
 
         self.current_gamefile = next(self._gamefiles_iterator)
         env = textworld.start(self.current_gamefile)
-        self.textworld_env = Filter(self.request_infos)(env)
+        self.textworld_env = Filter(env, self.request_infos)
 
         self.ob, infos = self.textworld_env.reset()
         return self.ob, infos
