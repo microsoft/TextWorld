@@ -432,6 +432,19 @@ class GlulxGameState(textworld.GameState):
         return self._action
 
     @property
+    def last_action(self) -> Action:
+        """ Last action that was detected. """
+        if self.action is None:
+            return None
+
+        return self._inform7.get_human_readable_action(self.action)
+
+    @property
+    def last_command(self) -> Action:
+        """ Last command that was detected. """
+        return self._inform7.gen_commands_from_actions([self.action])[0]
+
+    @property
     def admissible_commands(self):
         """ Return the list of admissible commands given the current state. """
         if not hasattr(self, "_admissible_commands"):
