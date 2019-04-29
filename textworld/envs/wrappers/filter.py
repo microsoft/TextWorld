@@ -4,7 +4,7 @@
 
 from typing import Tuple, Mapping, Any, List, Iterable
 
-from textworld.core import GameState, Wrapper
+from textworld.core import Environment, GameState, Wrapper
 
 
 class EnvInfos:
@@ -18,7 +18,7 @@ class EnvInfos:
     """
 
     __slots__ = ['description', 'inventory', 'location',
-                 'facts',
+                 'facts', 'last_action', 'last_command',
                  'has_won', 'has_lost',
                  'max_score', 'objective',
                  'entities', 'verbs', 'command_templates',
@@ -41,6 +41,12 @@ class EnvInfos:
         #: bool: All the facts that are currently true about the world.
         #:       This information changes from one step to another.
         self.facts = kwargs.get("facts", False)
+        #: bool: The last action performed where `None` means it was not a valid action.
+        #:       This information changes from one step to another.
+        self.last_action = kwargs.get("last_action", False)
+        #: bool: The last command performed where `None` means it was not a valid command.
+        #:       This information changes from one step to another.
+        self.last_command = kwargs.get("last_command", False)
         #: bool: Whether the player won the game.
         #:       This information changes from one step to another.
         self.has_won = kwargs.get("has_won", False)
@@ -74,6 +80,13 @@ class EnvInfos:
         #: List[str]: Names of extra information which are game specific.
         self.extras = kwargs.get("extras", [])
 
+        # Check `kwargs` keys are all valid.
+        unknown_keys = set(kwargs.keys()) - set(self.__slots__)
+        if len(unknown_keys) > 0:
+            msg = ("Unknown information requested: {}.".format(sorted(unknown_keys)) +
+                   " Available information are: {}".format(sorted(self.__slots__)))
+            raise ValueError(msg)
+
     @property
     def basics(self) -> Iterable[str]:
         """ Information requested excluding the extras. """
@@ -101,16 +114,18 @@ class Filter(Wrapper):
         >>> from textworld.envs.wrappers import Filter
         >>> request_infos = EnvInfos(description=True, inventory=True, extras=["more"])
         ...
-        >>> env = Filter(env)
+        >>> env = Filter(env, request_infos)
         >>> ob, infos = env.reset()
         >>> print(infos["description"])
         >>> print(infos["inventory"])
         >>> print(infos["extra.more"])
     """
 
-    def __init__(self, options: EnvInfos) -> None:
+    def __init__(self, env: Environment, options: EnvInfos) -> None:
         """
         Arguments:
+            env:
+                The TextWorld environment to wrap.
             options:
                 For customizing the information returned by this environment
                 (see
@@ -118,6 +133,7 @@ class Filter(Wrapper):
                 for the list of available information).
 
         """
+        super().__init__(env)
         self.options = options
 
     def _get_requested_infos(self, game_state: GameState):
@@ -136,7 +152,7 @@ class Filter(Wrapper):
         return ob, score, done, infos
 
     def reset(self) -> Tuple[str, Mapping[str, Any]]:
-        if self.options.admissible_commands:
+        if self.options.admissible_commands or self.options.location:
             self.activate_state_tracking()
 
         if self.options.intermediate_reward:

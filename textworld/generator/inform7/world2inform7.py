@@ -17,7 +17,7 @@ from textworld.utils import make_temp_directory, str2bool, chunk
 
 from textworld.generator.game import Game
 from textworld.generator.world import WorldRoom, WorldEntity
-from textworld.logic import Signature, Proposition, Action
+from textworld.logic import Signature, Proposition, Action, Variable
 
 
 I7_DEFAULT_PATH = resource_filename(Requirement.parse('textworld'), 'textworld/thirdparty/inform7-6M62')
@@ -204,6 +204,16 @@ class Inform7Game:
             commands.append(command)
 
         return commands
+
+    def get_human_readable_fact(self, fact: Proposition) -> Proposition:
+        arguments = [Variable(self.entity_infos[var.name].name, var.type) for var in fact.arguments]
+        return Proposition(fact.name, arguments)
+
+    def get_human_readable_action(self, action: Action) -> Action:
+        precondition = list(map(self.get_human_readable_fact, action.preconditions))
+        postconditions = list(map(self.get_human_readable_fact, action.postconditions))
+        name = self.kb.inform7_commands[action.name].split("{")[0].strip()
+        return Action(name, precondition, postconditions)
 
     def detect_action(self, i7_event: str, actions: Iterable[Action]) -> Optional[Action]:
         """ Detect which action corresponds to a Inform7 event.

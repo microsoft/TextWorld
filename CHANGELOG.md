@@ -4,6 +4,14 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 ## [Unreleased]
 
+### Breaking
+
+- `textworld.envs.wrappers.Filter` expects the environment to wrap as its first argument.
+
+### Added
+
+- Support requesting list of facts and current location as additional infos.
+
 ## [1.1.1] - 2019-02-08
 
 ### Fixed
