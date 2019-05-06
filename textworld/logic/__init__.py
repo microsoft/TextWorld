@@ -327,7 +327,7 @@ class TypeHierarchy:
         for parent in type.parents:
             self._children[parent].append(type.name)
 
-    def get(self, name: str):
+    def get(self, name: str) -> Type:
         return self._types[name]
 
     def __iter__(self):
@@ -585,21 +585,6 @@ class Proposition:
         self.name = name
         self.arguments = tuple(arguments)
         self.signature = Signature(name, [var.type for var in self.arguments])
-        self._finish_init()
-
-    @classmethod
-    def _instantiate(cls, predicate: "Predicate", arguments: Iterable[Variable]) -> "Proposition":
-        """
-        Factory method used by Predicate.instantiate() to share the Signature instance.
-        """
-        self = cls.__new__(cls)
-        self.name = predicate.name
-        self.arguments = tuple(arguments)
-        self.signature = predicate.signature
-        self._finish_init()
-        return self
-
-    def _finish_init(self):
         self._hash = hash((self.name, self.arguments))
 
     @property
@@ -846,7 +831,7 @@ class Predicate:
         """
 
         args = [mapping[param] for param in self.parameters]
-        return Proposition._instantiate(self, args)
+        return Proposition(self.name, args)
 
     def match(self, proposition: Proposition) -> Optional[Mapping[Placeholder, Variable]]:
         """
@@ -863,7 +848,7 @@ class Predicate:
         such mapping exists.
         """
 
-        if self.signature != proposition.signature:
+        if self.name != proposition.name:
             return None
         else:
             return {ph: var for ph, var in zip(self.parameters, proposition.arguments)}
@@ -1152,9 +1137,7 @@ class Rule:
         if self.name != action.name:
             return None
 
-        candidates = []
-        for ph in self.placeholders:
-            candidates.append([var for var in action.variables if var.type == ph.type])
+        candidates = [action.variables] * len(self.placeholders)
 
         # A same variable can't be assigned to different placeholders.
         # Using `unique_product` avoids generating those in the first place.
@@ -1345,9 +1328,6 @@ class GameLogic:
         self.rules = {name: self.normalize_rule(rule) for name, rule in self.rules.items()}
         self.constraints = {name: self.normalize_rule(rule) for name, rule in self.constraints.items()}
 
-        self._expand_rules(self.rules)
-        self._expand_rules(self.constraints)
-
         self.inform7._initialize(self)
 
     def _expand_alias(self, alias):
@@ -1388,19 +1368,6 @@ class GameLogic:
                 result.append(pred)
         return result
 
-    def _expand_rules(self, rules):
-        # Expand rules with variations for descendant types
-        for rule in list(rules.values()):
-            placeholders = rule.placeholders
-            types = [self.types.get(ph.type) for ph in placeholders]
-            descendants = self.types.multi_descendants(types)
-            for descendant in descendants:
-                names = [type.name for type in descendant]
-                new_name = rule.name + "-" + "-".join(names)
-                mapping = {ph: Placeholder(ph.name, type.name) for ph, type in zip(placeholders, descendant)}
-                new_rule = rule.substitute(mapping, new_name)
-                rules[new_name] = new_rule
-
     @classmethod
     @lru_cache(maxsize=128, typed=False)
     def parse(cls, document: str) -> "GameLogic":
@@ -1424,6 +1391,248 @@ class GameLogic:
 
     def serialize(self) -> str:
         return self._document
+
+
+@total_ordering
+class _UntypedPlaceholder:
+    def __init__(self, name: str):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "_UntypedPlaceholder({!r})".format(self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, _UntypedPlaceholder):
+            return self.name == other.name
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __lt__(self, other):
+        if isinstance(other, _UntypedPlaceholder):
+            return self.name < other.name
+        else:
+            return NotImplemented
+
+
+@total_ordering
+class _UntypedVariable:
+    def __init__(self, name: str):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "_UntypedVariable({!r})".format(self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, _UntypedVariable):
+            return self.name == other.name
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __lt__(self, other):
+        if isinstance(other, _UntypedVariable):
+            return self.name < other.name
+        else:
+            return NotImplemented
+
+
+@total_ordering
+class _UntypedPredicate:
+    def __init__(self, name: str, parameters: Iterable[_UntypedPlaceholder]):
+        self.name = name
+        self.parameters = tuple(parameters)
+
+    def __str__(self):
+        return "{}({})".format(self.name, ", ".join(map(str, self.parameters)))
+
+    def __repr__(self):
+        return "_UntypedPredicate({!r}, {!r})".format(self.name, self.parameters)
+
+    def __eq__(self, other):
+        if isinstance(other, _UntypedPredicate):
+            return (self.name, self.parameters) == (other.name, other.parameters)
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash((self.name, self.parameters))
+
+    def __lt__(self, other):
+        if isinstance(other, _UntypedPredicate):
+            return (self.name, self.parameters) < (other.name, other.parameters)
+        else:
+            return NotImplemented
+
+
+@total_ordering
+class _UntypedProposition:
+    def __init__(self, name: str, arguments: Iterable[_UntypedVariable]):
+        self.name = name
+        self.arguments = tuple(arguments)
+
+        self._hash = hash((self.name, self.arguments))
+
+    def __str__(self):
+        return "{}({})".format(self.name, ", ".join(map(str, self.arguments)))
+
+    def __repr__(self):
+        return "_UntypedProposition({!r}, {!r})".format(self.name, self.arguments)
+
+    def __eq__(self, other):
+        if isinstance(other, _UntypedProposition):
+            return self.name == other.name and self.arguments == other.arguments
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return self._hash
+
+    def __lt__(self, other):
+        if isinstance(other, _UntypedProposition):
+            return (self.name, self.arguments) < (other.name, other.arguments)
+        else:
+            return NotImplemented
+
+
+class _UntypedRule:
+    def __init__(self, name: str, preconditions: Iterable[_UntypedPredicate], postconditions: Iterable[_UntypedPredicate]):
+        self.name = name
+        self.preconditions = tuple(preconditions)
+        self.postconditions = tuple(postconditions)
+
+        self._pre_set = frozenset(self.preconditions)
+        self._post_set = frozenset(self.postconditions)
+
+        self.placeholders = tuple(uniquify(ph for pred in self.all_predicates for ph in pred.parameters))
+
+    @property
+    def all_predicates(self) -> Iterable[_UntypedPredicate]:
+        """
+        All the pre- and post-conditions.
+        """
+        return self.preconditions + self.postconditions
+
+    def __str__(self):
+        # Infer carry-over preconditions for pretty-printing
+        pre = []
+        for pred in self.preconditions:
+            if pred in self._post_set:
+                pre.append("$" + str(pred))
+            else:
+                pre.append(str(pred))
+
+        post = [str(pred) for pred in self.postconditions if pred not in self._pre_set]
+
+        return "{} :: {} -> {}".format(self.name, " & ".join(pre), " & ".join(post))
+
+    def __repr__(self):
+        return "_UntypedRule({!r}, {!r}, {!r})".format(self.name, self.preconditions, self.postconditions)
+
+    def __eq__(self, other):
+        if isinstance(other, _UntypedRule):
+            return (self.name, self._pre_set, self._post_set) == (other.name, other._pre_set, other._post_set)
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash((self.name, self._pre_set, self._post_set))
+
+
+class _UntypedAction:
+    def __init__(self, name: str, preconditions: Iterable[_UntypedProposition], postconditions: Iterable[_UntypedProposition]):
+        self.name = name
+        self.preconditions = tuple(preconditions)
+        self.postconditions = tuple(postconditions)
+
+        self._pre_set = frozenset(self.preconditions)
+        self._post_set = frozenset(self.postconditions)
+
+        self.variables = tuple(uniquify(var for prop in self.all_propositions for var in prop.arguments))
+
+    @property
+    def all_propositions(self) -> Iterable[_UntypedProposition]:
+        """
+        All the pre- and post-conditions.
+        """
+        return self.preconditions + self.postconditions
+
+    def __str__(self):
+        # Infer carry-over preconditions for pretty-printing
+        pre = []
+        for prop in self.preconditions:
+            if prop in self._post_set:
+                pre.append("$" + str(prop))
+            else:
+                pre.append(str(prop))
+
+        post = [str(prop) for prop in self.postconditions if prop not in self._pre_set]
+
+        return "{} :: {} -> {}".format(self.name, " & ".join(pre), " & ".join(post))
+
+    def __repr__(self):
+        return "_UntypedAction({!r}, {!r}, {!r})".format(self.name, self.preconditions, self.postconditions)
+
+    def __eq__(self, other):
+        if isinstance(other, _UntypedAction):
+            return (self.name, self._pre_set, self._post_set) == (other.name, other._pre_set, other._post_set)
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash((self.name, self._pre_set, self._post_set))
+
+
+def _untype_placeholder(ph: Placeholder) -> _UntypedPlaceholder:
+    return _UntypedPlaceholder(ph.name)
+
+
+def _untype_variable(var: Variable) -> _UntypedVariable:
+    return _UntypedVariable(var.name)
+
+
+def _untype_predicate(pred: Predicate) -> _UntypedPredicate:
+    params = [_untype_placeholder(ph) for ph in pred.parameters]
+    return _UntypedPredicate(pred.name, params)
+
+
+def _untype_proposition(prop: Proposition) -> _UntypedProposition:
+    args = [_untype_variable(var) for var in prop.arguments]
+    return _UntypedProposition(prop.name, args)
+
+
+def _placeholder_witness(ph: Placeholder) -> _UntypedPredicate:
+    return _UntypedPredicate("is_" + ph.type, [_untype_placeholder(ph)])
+
+
+def _untype_rule(rule: Rule) -> _UntypedRule:
+    types = [_placeholder_witness(ph) for ph in rule.placeholders]
+    pre = [_untype_predicate(pred) for pred in rule.preconditions] + types
+    post = [_untype_predicate(pred) for pred in rule.postconditions] + types
+
+    return _UntypedRule(rule.name, pre, post)
+
+
+def _variable_witness(var: Variable) -> _UntypedProposition:
+    return _UntypedProposition("is_" + var.type, [_untype_variable(var)])
+
+
+def _untype_action(action: Action) -> _UntypedAction:
+    types = [_variable_witness(ph) for ph in action.variables]
+    pre = [_untype_proposition(prop) for prop in action.preconditions] + types
+    post = [_untype_proposition(prop) for prop in action.postconditions] + types
+
+    return _UntypedAction(action.name, pre, post)
 
 
 class State:
@@ -1452,6 +1661,9 @@ class State:
         self._vars_by_type = defaultdict(set)
         self._var_counts = Counter()
 
+        self._untyped_facts = defaultdict(set)
+        self._untyped_vars = set()
+
         if facts:
             self.add_facts(facts)
 
@@ -1479,6 +1691,9 @@ class State:
         for var in prop.arguments:
             self._add_variable(var)
 
+        untyped = _untype_proposition(prop)
+        self._untyped_facts[untyped.name].add(untyped)
+
     def add_facts(self, props: Iterable[Proposition]):
         """
         Add some facts to the state.
@@ -1496,6 +1711,9 @@ class State:
 
         for var in prop.arguments:
             self._remove_variable(var)
+
+        untyped = _untype_proposition(prop)
+        self._untyped_facts[untyped.name].discard(untyped)
 
     def remove_facts(self, props: Iterable[Proposition]):
         """
@@ -1547,6 +1765,11 @@ class State:
         """
         return self._vars_by_type.get(type, frozenset())
 
+    def _all_witnesses(self, var: Variable) -> Iterable[_UntypedProposition]:
+        untyped = _untype_variable(var)
+        for type in self._logic.types.get(var.type).supertypes:
+            yield _UntypedProposition("is_" + type.name, [untyped])
+
     def _add_variable(self, var: Variable):
         name = var.name
         existing = self._vars_by_name.setdefault(name, var)
@@ -1555,6 +1778,12 @@ class State:
         self._vars_by_type[var.type].add(var)
         self._var_counts[name] += 1
 
+        if self._var_counts[name] == 1:
+            untyped = _untype_variable(var)
+            self._untyped_vars.add(untyped)
+            for prop in self._all_witnesses(var):
+                self._untyped_facts[prop.name].add(prop)
+
     def _remove_variable(self, var: Variable):
         name = var.name
         self._var_counts[name] -= 1
@@ -1562,6 +1791,11 @@ class State:
             del self._var_counts[name]
             del self._vars_by_name[name]
             self._vars_by_type[var.type].remove(var)
+
+            untyped = _untype_variable(var)
+            self._untyped_vars.discard(untyped)
+            for prop in self._all_witnesses(var):
+                self._untyped_facts[prop.name].discard(prop)
 
     def is_applicable(self, action: Action) -> bool:
         """
@@ -1697,56 +1931,88 @@ class State:
         place of existing Variables.
         """
 
-        if mapping is None:
-            mapping = {}
-        else:
-            # Copy the input mapping so we can mutate it
-            mapping = dict(mapping)
+        # TODO: For partial assignments, we still use the typed representation
+        if partial:
+            mapping = dict(mapping) if mapping else {}
+            new_phs = [ph for ph in rule.placeholders if ph not in mapping]
+            used_vars = set(mapping.values())
+            yield from self._all_assignments(new_phs, mapping, used_vars, allow_partial)
+            return
 
+        urule = _untype_rule(rule)
+
+        uph_to_ph = {_untype_placeholder(ph): ph for ph in rule.placeholders}
+
+        uvar_to_var = {}
+        umapping = {}
+        if mapping:
+            for ph, var in mapping.items():
+                uph = _untype_placeholder(ph)
+                uph_to_ph[uph] = ph
+                if var:
+                    uvar = _untype_variable(var)
+                    umapping[uph] = uvar
+                    uvar_to_var[uvar] = var
+                else:
+                    umapping[uph] = None
+
+        for uassn in self._untyped_assignments(urule, umapping):
+            assn = {}
+            for uph, uvar in uassn.items():
+                ph = uph_to_ph[uph]
+                if uvar is None:
+                    var = None
+                elif uvar in uvar_to_var:
+                    var = uvar_to_var[uvar]
+                else:
+                    var = self.variable_named(uvar.name)
+                assn[ph] = var
+            yield assn
+
+    def _untyped_assignments(self,
+        rule: _UntypedRule,
+        mapping: Dict[_UntypedPlaceholder, Optional[_UntypedVariable]],
+    ) -> Iterable[Mapping[_UntypedPlaceholder, Optional[_UntypedVariable]]]:
         used_vars = set(mapping.values())
 
-        if partial:
-            new_phs = [ph for ph in rule.placeholders if ph not in mapping]
-            return self._all_assignments(new_phs, mapping, used_vars, True, allow_partial)
-        else:
-            # Precompute the new placeholders at every depth to avoid wasted work
-            seen_phs = set(mapping.keys())
-            new_phs_by_depth = []
-            for pred in rule.preconditions:
-                new_phs = []
-                for ph in pred.parameters:
-                    if ph not in seen_phs:
-                        new_phs.append(ph)
-                        seen_phs.add(ph)
-                new_phs_by_depth.append(new_phs)
+        # Precompute the new placeholders at every depth to avoid wasted work
+        seen_phs = set(mapping.keys())
+        new_phs_by_depth = []
+        for pred in rule.preconditions:
+            new_phs = []
+            for ph in pred.parameters:
+                if ph not in seen_phs:
+                    new_phs.append(ph)
+                    seen_phs.add(ph)
+            new_phs_by_depth.append(new_phs)
 
-            free_vars = [ph for ph in rule.placeholders if ph not in seen_phs]
-            new_phs_by_depth.append(free_vars)
-
-            return self._all_applicable_assignments(rule, mapping, used_vars, new_phs_by_depth, 0)
+        return self._all_applicable_assignments(rule, mapping, used_vars, new_phs_by_depth, 0)
 
     def _all_applicable_assignments(self,
-        rule: Rule,
-        mapping: Dict[Placeholder, Optional[Variable]],
-        used_vars: Set[Variable],
-        new_phs_by_depth: List[List[Placeholder]],
+        rule: _UntypedRule,
+        mapping: Dict[_UntypedPlaceholder, Optional[_UntypedVariable]],
+        used_vars: Set[_UntypedVariable],
+        new_phs_by_depth: List[List[_UntypedPlaceholder]],
         depth: int,
-    ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
+    ) -> Iterable[Mapping[_UntypedPlaceholder, Optional[_UntypedVariable]]]:
         """
         Find all assignments that would be applicable in this state.  We recurse through the rule's preconditions, at
         each level determining possible variable assignments from the current facts.
         """
 
-        new_phs = new_phs_by_depth[depth]
-
         if depth >= len(rule.preconditions):
-            # There are no applicability constraints on the free variables, so solve them unconstrained
-            yield from self._all_assignments(new_phs, mapping, used_vars, False)
+            # There are no free variables in untyped rules, because each var has
+            # at least a type assertion in the preconditions
+            yield mapping
             return
 
+        new_phs = new_phs_by_depth[depth]
         pred = rule.preconditions[depth]
 
-        for prop in self.facts_with_signature(pred.signature):
+        for prop in self._untyped_facts[pred.name]:
+            if len(pred.parameters) != len(prop.arguments):
+                continue
+
             for ph, var in zip(pred.parameters, prop.arguments):
                 existing = mapping.get(ph)
                 if existing is None:
@@ -1768,7 +2034,6 @@ class State:
         placeholders: List[Placeholder],
         mapping: Dict[Placeholder, Variable],
         used_vars: Set[Variable],
-        partial: bool,
         allow_partial: Callable[[Placeholder], bool] = None,
     ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
         """
@@ -1780,11 +2045,14 @@ class State:
 
         candidates = []
         for ph in placeholders:
-            matched_vars = list(self.variables_of_type(ph.type) - used_vars)
-            if partial and allow_partial(ph):
-                # Allow new variables to be created
-                matched_vars.append(ph)
-            candidates.append(matched_vars)
+            matched_vars = set()
+            for type in self._logic.types.get(ph.type).subtypes:
+                matched_vars |= self.variables_of_type(type.name)
+            matched_vars -= used_vars
+            # Allow new variables to be created
+            matched_vars.add(ph)
+
+            candidates.append(list(matched_vars))
 
         for assignment in unique_product(*candidates):
             for ph, var in zip(placeholders, assignment):
@@ -1819,6 +2087,10 @@ class State:
         for k, v in self._vars_by_type.items():
             copy._vars_by_type[k] = v.copy()
         copy._var_counts = self._var_counts.copy()
+
+        for k, v in self._untyped_facts.items():
+            copy._untyped_facts[k] = v.copy()
+        copy._untyped_vars = self._untyped_vars.copy()
 
         return copy
 
