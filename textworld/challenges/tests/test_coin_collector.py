@@ -1,42 +1,24 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-import os
-import glob
-from subprocess import check_call
-from os.path import join as pjoin
-
-from numpy.testing import assert_raises
-
 import textworld
-import textworld.agents
-import textworld.challenges
 from textworld.challenges.coin_collector import make
-from textworld.utils import make_temp_directory
 
 
 def test_making_coin_collector():
-    for level in [1, 100, 101]:
+    expected = {
+        1:   {"quest_length": 1, "nb_rooms": 1},
+        100: {"quest_length": 100, "nb_rooms": 100},
+        101: {"quest_length": 1, "nb_rooms": 2},
+        200: {"quest_length": 100, "nb_rooms": 200},
+        201: {"quest_length": 1, "nb_rooms": 3},
+        300: {"quest_length": 100, "nb_rooms": 300},
+    }
+    for level in [1, 100, 101, 200, 201, 300]:
         options = textworld.GameOptions()
         options.seeds = 1234
 
-        settings = {"level": level}
+        settings = {"level": level, "force_entity_numbering": True}
         game = make(settings, options)
-        assert len(game.quests[0].commands) == (level - 1) % 100 + 1
-
-    # Not enough variation for 200 rooms.
-    options = textworld.GameOptions()
-    options.seeds = 1234
-    settings = {"level": 200}
-    assert_raises(ValueError, make, settings, options)
-
-    for level in [200, 201, 300]:
-        print(level)
-        options = textworld.GameOptions()
-        options.seeds = 1234
-        options.grammar.allowed_variables_numbering = True
-
-        settings = {"level": level}
-        game = make(settings, options)
-        assert len(game.quests[0].commands) == (level - 1) % 100 + 1
-
+        assert len(game.quests[0].commands) == expected[level]["quest_length"]
+        assert len(game.world.rooms) == expected[level]["nb_rooms"]

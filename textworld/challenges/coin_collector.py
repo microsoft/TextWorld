@@ -33,6 +33,9 @@ def build_argparser(parser=None):
     group.add_argument("--level", required=True, type=int,
                        help="The difficulty level. Must be between 1 and 300 (included).")
 
+    group.add_argument("--force-entity-numbering", required=True, action="store_true",
+                       help="This will set `--entity-numbering` to be True which is required for this challenge.")
+
     return parser
 
 
@@ -45,6 +48,8 @@ def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> 
             For customizing the game generation (see
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
             for the list of available options).
+
+            .. warning:: This challenge requires `options.grammar.allowed_variables_numbering` to be `True`.
 
     Returns:
         Generated game.
@@ -62,6 +67,10 @@ def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> 
         and where the quest length is set according to ((level - 1) % 100 + 1).
     """
     options = options or GameOptions()
+
+    # Needed for games with a lot of rooms.
+    options.grammar.allowed_variables_numbering = settings["force_entity_numbering"]
+    assert options.grammar.allowed_variables_numbering
 
     level = settings["level"]
     if level < 1 or level > 300:
@@ -91,9 +100,14 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
             for the list of available options).
 
+            .. warning:: This challenge requires `options.grammar.allowed_variables_numbering` to be `True`.
+
     Returns:
         Generated game.
     """
+    # Needed for games with a lot of rooms.
+    assert options.grammar.allowed_variables_numbering
+
     if mode == "simple" and float(options.nb_rooms) / options.quest_length > 4:
         msg = ("Total number of rooms must be less than 4 * `quest_length` "
                "when distractor mode is 'simple'.")
