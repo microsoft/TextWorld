@@ -8,9 +8,14 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 - `textworld.envs.wrappers.Filter` expects the environment to wrap as its first argument.
 
+### Fixed
+
+- `tw-make tw-coin_collector` was failing with option `--level {100, 200, or 300}`.
+
 ### Added
 
 - Support requesting list of facts and current location as additional infos.
+- Added `--entity-numbering` option to `tw-make`.
 
 ## [1.1.1] - 2019-02-08
 
