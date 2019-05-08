@@ -260,6 +260,7 @@ class Inform7Game:
 
     def gen_source(self, seed: int = 1234) -> str:
         source = ""
+        source += "Use MAX_STATIC_DATA of 500000.\n"  # To generate game with 300+ locations.
         source += "When play begins, seed the random-number generator with {}.\n\n".format(seed)
         source += self.define_inform7_kinds()
         # Mention that rooms have a special text attribute called 'internal name'.
