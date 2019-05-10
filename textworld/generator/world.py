@@ -142,7 +142,7 @@ class WorldRoom(WorldEntity):
 
 class World:
     def __init__(self) -> None:
-        self._state = State()
+        self._state = State(KnowledgeBase.default().logic)
         self._entities = OrderedDict()
         self._rooms = []
         self._objects = []
@@ -196,7 +196,7 @@ class World:
 
     @state.setter
     def state(self, state: State) -> None:
-        self._state = State()
+        self._state = State(KnowledgeBase.default().logic)
         self.add_facts(state.facts)
 
     @property

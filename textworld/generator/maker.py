@@ -357,7 +357,8 @@ class GameMaker:
         self.quests = []
         self.rooms = []
         self.paths = []
-        self._types_counts = KnowledgeBase.default().types.count(State())
+        self._kb = KnowledgeBase.default()
+        self._types_counts = self._kb.types.count(State(self._kb.logic))
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.nowhere = []
@@ -381,7 +382,7 @@ class GameMaker:
         facts += self.inventory.facts
         facts += self._distractors_facts
 
-        return State(facts)
+        return State(self._kb.logic, facts)
 
     @property
     def facts(self) -> Iterable[Proposition]:

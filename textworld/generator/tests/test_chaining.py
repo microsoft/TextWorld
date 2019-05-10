@@ -22,7 +22,7 @@ def build_state(locked_door=False):
     cabinet = Variable("cabinet", "c")
     robe = Variable("robe", "o")
 
-    state = State([
+    state = State(KnowledgeBase.default().logic, [
         Proposition("at", [P, bedroom]),
         Proposition("south_of", [kitchen, bedroom]),
         Proposition("north_of", [bedroom, kitchen]),
@@ -104,7 +104,7 @@ def test_going_through_door():
     P = Variable("P", "P")
     room = Variable("room", "r")
     kitchen = Variable("kitchen", "r")
-    state = State()
+    state = State(KnowledgeBase.default().logic)
     state.add_facts([
         Proposition("at", [P, room]),
         Proposition("north_of", [kitchen, room]),
@@ -151,7 +151,7 @@ def test_backward_chaining():
     P = Variable("P", "P")
     room = Variable("room", "r")
     kitchen = Variable("kitchen", "r")
-    state = State([
+    state = State(KnowledgeBase.default().logic, [
         Proposition("at", [P, room]),
         Proposition("north_of", [kitchen, room]),
         Proposition("south_of", [room, kitchen]),
@@ -207,7 +207,7 @@ def test_parallel_quests():
     """)
     kb = KnowledgeBase(logic, "")
 
-    state = State([
+    state = State(kb.logic, [
         Proposition.parse("a(foo)"),
         Proposition.parse("b(foo)"),
         Proposition.parse("c(foo)"),
@@ -243,7 +243,8 @@ def test_parallel_quests():
 
     options.min_breadth = 1
     options.create_variables = True
-    chains = list(get_chains(State(), options))
+    state = State(kb.logic)
+    chains = list(get_chains(state, options))
     assert len(chains) == 5
 
 
@@ -294,7 +295,7 @@ def test_parallel_quests_navigation():
     """)
     kb = KnowledgeBase(logic, "")
 
-    state = State([
+    state = State(kb.logic, [
         Proposition.parse("at(P, r3: r)"),
         Proposition.parse("free(r2: r, r3: r)"),
         Proposition.parse("free(r1: r, r2: r)"),

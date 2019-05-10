@@ -7,6 +7,7 @@ from nose.tools import assert_raises
 from tatsu.exceptions import ParseError
 
 from textworld.logic import Action, Rule, Placeholder, Predicate, Proposition, Signature, State, Variable
+from textworld.generator import KnowledgeBase
 
 
 def test_logic_parsing():
@@ -56,7 +57,7 @@ def test_logic_parsing_eos():
 
 
 def test_state():
-    state = State()
+    state = State(KnowledgeBase.default().logic)
 
     P = Variable.parse("P")
     kitchen = Variable.parse("kitchen: r")
@@ -113,7 +114,7 @@ def test_state():
 
 
 def test_all_instantiations():
-    state = State([
+    state = State(KnowledgeBase.default().logic, [
         Proposition.parse("at(P, kitchen: r)"),
         Proposition.parse("in(key: o, kitchen: r)"),
         Proposition.parse("in(egg: o, kitchen: r)"),
@@ -145,7 +146,7 @@ def test_all_instantiations():
 
 
 def test_is_sequence_applicable():
-    state = State([
+    state = State(KnowledgeBase.default().logic, [
         Proposition.parse("at(P, r_1: r)"),
         Proposition.parse("empty(r_2: r)"),
         Proposition.parse("empty(r_3: r)"),
