@@ -39,7 +39,7 @@ def maybe_instantiate_variables(rule, mapping, state, max_types_counts=None):
 
 def build_state(door_state="open"):
     # Set up a world with two rooms and a few objecs.
-    state = State([
+    state = State(KnowledgeBase.default().logic, [
         Proposition("at", [P, bedroom]),
         Proposition("south_of", [kitchen, bedroom]),
         Proposition("north_of", [bedroom, kitchen]),
@@ -86,7 +86,8 @@ def test_rules():
 def test_get_reverse_action():
     kb = KnowledgeBase.default()
     for rule in kb.rules.values():
-        action = maybe_instantiate_variables(rule, kb.types.constants_mapping.copy(), State([]))
+        empty_state = State(KnowledgeBase.default().logic)
+        action = maybe_instantiate_variables(rule, kb.types.constants_mapping.copy(), empty_state)
         r_action = kb.get_reverse_action(action)
 
         if rule.name.startswith("eat"):
@@ -96,7 +97,7 @@ def test_get_reverse_action():
 
             # Check if that when applying the reverse rule we can re-obtain
             # the previous state.
-            state = State(action.preconditions)
+            state = State(KnowledgeBase.default().logic, action.preconditions)
 
             new_state = state.copy()
             assert new_state.apply(action)

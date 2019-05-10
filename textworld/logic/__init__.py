@@ -1431,15 +1431,21 @@ class State:
     The current state of a world.
     """
 
-    def __init__(self, facts: Iterable[Proposition] = None):
+    def __init__(self, logic: GameLogic, facts: Iterable[Proposition] = None):
         """
         Create a State.
 
         Parameters
         ----------
+        logic :
+            The logic for this state's game.
         facts : optional
             The facts that will be true in this state.
         """
+
+        if not isinstance(logic, GameLogic):
+            raise ValueError("Expected a GameLogic, found {}".format(type(logic)))
+        self._logic = logic
 
         self._facts = defaultdict(set)
         self._vars_by_name = {}
@@ -1804,7 +1810,7 @@ class State:
         Create a copy of this state.
         """
 
-        copy = State()
+        copy = State(self._logic)
 
         for k, v in self._facts.items():
             copy._facts[k] = v.copy()
