@@ -327,7 +327,7 @@ class TypeHierarchy:
         for parent in type.parents:
             self._children[parent].append(type.name)
 
-    def get(self, name: str):
+    def get(self, name: str) -> Type:
         return self._types[name]
 
     def __iter__(self):
@@ -417,6 +417,14 @@ class TypeHierarchy:
         """
         return self.multi_closure(types, lambda t: t.parent_types)
 
+    def multi_supertypes(self, types: Collection[Type]) -> Iterable[Collection[Type]]:
+        """
+        Computes the ancestral closure of a sequence of types, including the
+        initial types.
+        """
+        yield tuple(types)
+        yield from self.multi_ancestors(types)
+
     def multi_descendants(self, types: Collection[Type]) -> Iterable[Collection[Type]]:
         """
         Compute the descendant closure of a sequence of types.  If these are the
@@ -424,6 +432,14 @@ class TypeHierarchy:
         types that could also be passed to this function.
         """
         return self.multi_closure(types, lambda t: t.child_types)
+
+    def multi_subtypes(self, types: Collection[Type]) -> Iterable[Collection[Type]]:
+        """
+        Computes the descendant closure of a sequence of types, including the
+        initial types.
+        """
+        yield tuple(types)
+        yield from self.multi_descendants(types)
 
 
 @total_ordering
@@ -585,21 +601,6 @@ class Proposition:
         self.name = name
         self.arguments = tuple(arguments)
         self.signature = Signature(name, [var.type for var in self.arguments])
-        self._finish_init()
-
-    @classmethod
-    def _instantiate(cls, predicate: "Predicate", arguments: Iterable[Variable]) -> "Proposition":
-        """
-        Factory method used by Predicate.instantiate() to share the Signature instance.
-        """
-        self = cls.__new__(cls)
-        self.name = predicate.name
-        self.arguments = tuple(arguments)
-        self.signature = predicate.signature
-        self._finish_init()
-        return self
-
-    def _finish_init(self):
         self._hash = hash((self.name, self.arguments))
 
     @property
@@ -846,7 +847,7 @@ class Predicate:
         """
 
         args = [mapping[param] for param in self.parameters]
-        return Proposition._instantiate(self, args)
+        return Proposition(self.name, args)
 
     def match(self, proposition: Proposition) -> Optional[Mapping[Placeholder, Variable]]:
         """
@@ -863,7 +864,7 @@ class Predicate:
         such mapping exists.
         """
 
-        if self.signature != proposition.signature:
+        if self.name != proposition.name:
             return None
         else:
             return {ph: var for ph, var in zip(self.parameters, proposition.arguments)}
@@ -1152,9 +1153,7 @@ class Rule:
         if self.name != action.name:
             return None
 
-        candidates = []
-        for ph in self.placeholders:
-            candidates.append([var for var in action.variables if var.type == ph.type])
+        candidates = [action.variables] * len(self.placeholders)
 
         # A same variable can't be assigned to different placeholders.
         # Using `unique_product` avoids generating those in the first place.
@@ -1345,9 +1344,6 @@ class GameLogic:
         self.rules = {name: self.normalize_rule(rule) for name, rule in self.rules.items()}
         self.constraints = {name: self.normalize_rule(rule) for name, rule in self.constraints.items()}
 
-        self._expand_rules(self.rules)
-        self._expand_rules(self.constraints)
-
         self.inform7._initialize(self)
 
     def _expand_alias(self, alias):
@@ -1387,19 +1383,6 @@ class GameLogic:
             else:
                 result.append(pred)
         return result
-
-    def _expand_rules(self, rules):
-        # Expand rules with variations for descendant types
-        for rule in list(rules.values()):
-            placeholders = rule.placeholders
-            types = [self.types.get(ph.type) for ph in placeholders]
-            descendants = self.types.multi_descendants(types)
-            for descendant in descendants:
-                names = [type.name for type in descendant]
-                new_name = rule.name + "-" + "-".join(names)
-                mapping = {ph: Placeholder(ph.name, type.name) for ph, type in zip(placeholders, descendant)}
-                new_rule = rule.substitute(mapping, new_name)
-                rules[new_name] = new_rule
 
     @classmethod
     @lru_cache(maxsize=128, typed=False)
@@ -1746,23 +1729,26 @@ class State:
 
         pred = rule.preconditions[depth]
 
-        for prop in self.facts_with_signature(pred.signature):
-            for ph, var in zip(pred.parameters, prop.arguments):
-                existing = mapping.get(ph)
-                if existing is None:
-                    if var in used_vars:
+        types = [self._logic.types.get(t) for t in pred.signature.types]
+        for subtypes in self._logic.types.multi_subtypes(types):
+            signature = Signature(pred.signature.name, [t.name for t in subtypes])
+            for prop in self.facts_with_signature(signature):
+                for ph, var in zip(pred.parameters, prop.arguments):
+                    existing = mapping.get(ph)
+                    if existing is None:
+                        if var in used_vars:
+                            break
+                        mapping[ph] = var
+                        used_vars.add(var)
+                    elif existing != var:
                         break
-                    mapping[ph] = var
-                    used_vars.add(var)
-                elif existing != var:
-                    break
-            else:
-                yield from self._all_applicable_assignments(rule, mapping, used_vars, new_phs_by_depth, depth + 1)
+                else:
+                    yield from self._all_applicable_assignments(rule, mapping, used_vars, new_phs_by_depth, depth + 1)
 
-            # Reset the mapping to what it was before the recursive call
-            for ph in new_phs:
-                var = mapping.pop(ph, None)
-                used_vars.discard(var)
+                # Reset the mapping to what it was before the recursive call
+                for ph in new_phs:
+                    var = mapping.pop(ph, None)
+                    used_vars.discard(var)
 
     def _all_assignments(self,
         placeholders: List[Placeholder],
@@ -1780,11 +1766,14 @@ class State:
 
         candidates = []
         for ph in placeholders:
-            matched_vars = list(self.variables_of_type(ph.type) - used_vars)
+            matched_vars = set()
+            for type in self._logic.types.get(ph.type).subtypes:
+                matched_vars |= self.variables_of_type(type.name)
+            matched_vars -= used_vars
             if partial and allow_partial(ph):
                 # Allow new variables to be created
-                matched_vars.append(ph)
-            candidates.append(matched_vars)
+                matched_vars.add(ph)
+            candidates.append(list(matched_vars))
 
         for assignment in unique_product(*candidates):
             for ph, var in zip(placeholders, assignment):
