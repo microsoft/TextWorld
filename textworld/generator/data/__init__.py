@@ -128,13 +128,11 @@ class KnowledgeBase:
         return kb
 
     def get_reverse_action(self, action):
-        r_action = action.inverse()
-        for rule in self.rules.values():
-            r_action.name = rule.name
-            if rule.match(r_action):
-                return r_action
-
-        return None
+        r_name = self.logic.reverse_rules.get(action.name)
+        if r_name:
+            return action.inverse(name=r_name)
+        else:
+            return None
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "KnowledgeBase":

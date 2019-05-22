@@ -22,9 +22,15 @@ type I {
     }
 
     reverse_rules {
+        inventory :: inventory;
+
         take :: drop;
         take/c :: insert;
         take/s :: put;
+
+        examine/I :: examine/I;
+        examine/s :: examine/s;
+        examine/c :: examine/c;
     }
 
     inform7 {
