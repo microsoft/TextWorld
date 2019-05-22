@@ -16,7 +16,7 @@ other than the coin to collect.
 """
 
 import argparse
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Any
 
 import textworld
 from textworld.generator.graph_networks import reverse_direction
@@ -33,18 +33,23 @@ def build_argparser(parser=None):
     group.add_argument("--level", required=True, type=int,
                        help="The difficulty level. Must be between 1 and 300 (included).")
 
+    group.add_argument("--force-entity-numbering", required=True, action="store_true",
+                       help="This will set `--entity-numbering` to be True which is required for this challenge.")
+
     return parser
 
 
-def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> textworld.Game:
+def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> textworld.Game:
     """ Make a Coin Collector game of the desired difficulty settings.
 
     Arguments:
-        settings: Difficulty level (see notes). Expected pattern: level[1-300].
+        settings: Difficulty settings (see notes).
         options:
             For customizing the game generation (see
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
             for the list of available options).
+
+            .. warning:: This challenge requires `options.grammar.allowed_variables_numbering` to be `True`.
 
     Returns:
         Generated game.
@@ -52,21 +57,27 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
     Notes:
         Difficulty levels are defined as follows:
 
-        * Level   1 to 100: Nb. rooms = level, quest length = level
-        * Level 101 to 200: Nb. rooms = 2 * (level % 100), quest length = level % 100,
+        * Level   1 to 100: Nb. rooms = 1 * quest length.
+        * Level 101 to 200: Nb. rooms = 2 * quest length with
           distractors rooms added along the chain.
-        * Level 201 to 300: Nb. rooms = 3 * (level % 100), quest length = level % 100,
+        * Level 201 to 300: Nb. rooms = 3 * quest length with
           distractors rooms *randomly* added along the chain.
         * ...
+
+        and where the quest length is set according to ((level - 1) % 100 + 1).
     """
     options = options or GameOptions()
+
+    # Needed for games with a lot of rooms.
+    options.grammar.allowed_variables_numbering = settings["force_entity_numbering"]
+    assert options.grammar.allowed_variables_numbering
 
     level = settings["level"]
     if level < 1 or level > 300:
         raise ValueError("Expected level to be within [1-300].")
 
-    n_distractors = (level // 100)
-    options.quest_length = level % 100
+    n_distractors = (level - 1) // 100
+    options.quest_length = (level - 1) % 100 + 1
     options.nb_rooms = (n_distractors + 1) * options.quest_length
     distractor_mode = "random" if n_distractors > 2 else "simple"
     return make_game(distractor_mode, options)
@@ -89,9 +100,14 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
             for the list of available options).
 
+            .. warning:: This challenge requires `options.grammar.allowed_variables_numbering` to be `True`.
+
     Returns:
         Generated game.
     """
+    # Needed for games with a lot of rooms.
+    assert options.grammar.allowed_variables_numbering
+
     if mode == "simple" and float(options.nb_rooms) / options.quest_length > 4:
         msg = ("Total number of rooms must be less than 4 * `quest_length` "
                "when distractor mode is 'simple'.")

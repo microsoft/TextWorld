@@ -76,6 +76,9 @@ def parse_args():
                            help="Intruction only describes the last action of quest.")
     cfg_group.add_argument("--blend-instructions", action="store_true",
                            help="Blend instructions across consecutive actions.")
+    cfg_group.add_argument("--entity-numbering", action="store_true",
+                           help="Append a number after an entity name if there is not enough"
+                                " variation for it (e.g. 'red apple 2').")
 
     parser = argparse.ArgumentParser(parents=[general_parser])
     subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
@@ -155,6 +158,7 @@ if __name__ == "__main__":
     options.grammar.blend_instructions = args.blend_instructions
     options.grammar.blend_descriptions = args.blend_descriptions
     options.grammar.ambiguous_instructions = args.ambiguous_instructions
+    options.grammar.allowed_variables_numbering = args.entity_numbering
 
     if args.list:
         exit_listing_challenges()
