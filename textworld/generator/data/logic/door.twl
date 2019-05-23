@@ -21,6 +21,8 @@ type d : t {
     reverse_rules {
         lock/d :: unlock/d;
         open/d :: close/d;
+
+        examine/d :: examine/d;
     }
 
     constraints {

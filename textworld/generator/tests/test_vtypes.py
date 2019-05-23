@@ -13,7 +13,7 @@ from textworld.logic import State, Proposition, Variable
 from textworld.generator.vtypes import VariableTypeTree, VariableType
 from textworld.generator.vtypes import parse_variable_types, get_new
 
-from textworld.generator import testing
+from textworld.generator import testing, KnowledgeBase
 
 
 class TestIntegration(unittest.TestCase):
@@ -56,7 +56,7 @@ class TestIntegration(unittest.TestCase):
         rng = np.random.RandomState(1234)
         types_counts = {t: rng.randint(2, 10) for t in self.types.variables}
 
-        state = State()
+        state = State(KnowledgeBase.default().logic)
         for t in self.types.variables:
             v = Variable(get_new(t, types_counts), t)
             state.add_fact(Proposition("dummy", [v]))

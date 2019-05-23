@@ -7,6 +7,7 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 ### Breaking
 
 - `textworld.envs.wrappers.Filter` expects the environment to wrap as its first argument.
+- `textworld.logic.State` now requires the `GameLogic` to be provided, so that it can know about the type hierarchy of each variable.
 
 ### Fixed
 
