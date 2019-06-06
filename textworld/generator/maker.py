@@ -24,11 +24,12 @@ from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
 
 
-def get_failing_constraints(state):
+def get_failing_constraints(state, kb: Optional[KnowledgeBase] = None):
+    kb = kb or KnowledgeBase.default()
     fail = Proposition("fail", [])
 
     failed_constraints = []
-    constraints = state.all_applicable_actions(KnowledgeBase.default().constraints.values())
+    constraints = state.all_applicable_actions(kb.constraints.values())
     for constraint in constraints:
         if state.is_applicable(constraint):
             # Optimistically delay copying the state
@@ -50,6 +51,10 @@ class ExitAlreadyUsedError(ValueError):
 
 
 class PlayerAlreadySetError(ValueError):
+    pass
+
+
+class QuestError(ValueError):
     pass
 
 
@@ -76,7 +81,8 @@ class WorldEntity:
     """
 
     def __init__(self, var: Variable, name: Optional[str] = None,
-                 desc: Optional[str] = None) -> None:
+                 desc: Optional[str] = None,
+                 kb: Optional[KnowledgeBase] = None) -> None:
         """
         Args:
             var: The underlying variable for the entity which is used
@@ -93,6 +99,7 @@ class WorldEntity:
         self.infos.desc = desc
         self.content = []
         self.parent = None
+        self._kb = kb or KnowledgeBase.default()
 
     @property
     def id(self) -> str:
@@ -158,11 +165,11 @@ class WorldEntity:
 
     def add(self, *entities: List["WorldEntity"]) -> None:
         """ Add children to this entity. """
-        if KnowledgeBase.default().types.is_descendant_of(self.type, "r"):
+        if self._kb.types.is_descendant_of(self.type, "r"):
             name = "at"
-        elif KnowledgeBase.default().types.is_descendant_of(self.type, ["c", "I"]):
+        elif self._kb.types.is_descendant_of(self.type, ["c", "I"]):
             name = "in"
-        elif KnowledgeBase.default().types.is_descendant_of(self.type, "s"):
+        elif self._kb.types.is_descendant_of(self.type, "s"):
             name = "on"
         else:
             raise ValueError("Unexpected type {}".format(self.type))
@@ -173,11 +180,11 @@ class WorldEntity:
             entity.parent = self
 
     def remove(self, *entities):
-        if KnowledgeBase.default().types.is_descendant_of(self.type, "r"):
+        if self._kb.types.is_descendant_of(self.type, "r"):
             name = "at"
-        elif KnowledgeBase.default().types.is_descendant_of(self.type, ["c", "I"]):
+        elif self._kb.types.is_descendant_of(self.type, ["c", "I"]):
             name = "in"
-        elif KnowledgeBase.default().types.is_descendant_of(self.type, "s"):
+        elif self._kb.types.is_descendant_of(self.type, "s"):
             name = "on"
         else:
             raise ValueError("Unexpected type {}".format(self.type))
@@ -283,7 +290,8 @@ class WorldPath:
 
     def __init__(self, src: WorldRoom, src_exit: WorldRoomExit,
                  dest: WorldRoom, dest_exit: WorldRoomExit,
-                 door: Optional[WorldEntity] = None) -> None:
+                 door: Optional[WorldEntity] = None,
+                 kb: Optional[KnowledgeBase] = None) -> None:
         """
         Args:
             src: The source room.
@@ -297,6 +305,7 @@ class WorldPath:
         self.dest = dest
         self.dest_exit = dest_exit
         self.door = door
+        self._kb = kb or KnowledgeBase.default()
         self.src.exits[self.src_exit].dest = self.dest.exits[self.dest_exit]
         self.dest.exits[self.dest_exit].dest = self.src.exits[self.src_exit]
 
@@ -307,7 +316,7 @@ class WorldPath:
 
     @door.setter
     def door(self, door: WorldEntity) -> None:
-        if door is not None and not KnowledgeBase.default().types.is_descendant_of(door.type, "d"):
+        if door is not None and not self._kb.types.is_descendant_of(door.type, "d"):
             msg = "Expecting a WorldEntity of 'door' type."
             raise TypeError(msg)
 
@@ -348,7 +357,7 @@ class GameMaker:
         paths (List[WorldPath]): The connections between the rooms.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, kb: Optional[KnowledgeBase] = None) -> None:
         """
         Creates an empty world, with a player and an empty inventory.
         """
@@ -357,7 +366,7 @@ class GameMaker:
         self.quests = []
         self.rooms = []
         self.paths = []
-        self._kb = KnowledgeBase.default()
+        self._kb = kb or KnowledgeBase.default()
         self._types_counts = self._kb.types.count(State(self._kb.logic))
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
@@ -442,7 +451,7 @@ class GameMaker:
             * Otherwise, a `WorldEntity` is returned.
         """
         var_id = type
-        if not KnowledgeBase.default().types.is_constant(type):
+        if not self._kb.types.is_constant(type):
             var_id = get_new(type, self._types_counts)
 
         var = Variable(var_id, type)
@@ -450,7 +459,7 @@ class GameMaker:
             entity = WorldRoom(var, name, desc)
             self.rooms.append(entity)
         else:
-            entity = WorldEntity(var, name, desc)
+            entity = WorldEntity(var, name, desc, kb=self._kb)
 
         self._entities[var_id] = entity
         if entity.name:
@@ -546,7 +555,7 @@ class GameMaker:
                              exit2.dest.src, exit2.dest.direction)
             raise ExitAlreadyUsedError(msg)
 
-        path = WorldPath(exit1.src, exit1.direction, exit2.src, exit2.direction)
+        path = WorldPath(exit1.src, exit1.direction, exit2.src, exit2.direction, kb=self._kb)
         self.paths.append(path)
         return path
 
@@ -658,6 +667,9 @@ class GameMaker:
             winning_facts = [user_query.query_for_important_facts(actions=recorder.actions,
                                                                   facts=recorder.last_game_state.state.facts,
                                                                   varinfos=self._working_game.infos)]
+        if len(commands) != len(actions):
+            unrecognized_commands = [c for c, a in zip(commands, recorder.actions) if a is None]
+            raise QuestError("Some of the actions were unrecognized: {}".format(unrecognized_commands))
 
         event = Event(actions=actions, conditions=winning_facts)
         self.quests = [Quest(win_events=[event])]
@@ -726,7 +738,7 @@ class GameMaker:
             msg = "Player position has not been specified. Use 'M.set_player(room)'."
             raise MissingPlayerError(msg)
 
-        failed_constraints = get_failing_constraints(self.state)
+        failed_constraints = get_failing_constraints(self.state, self._kb)
         if len(failed_constraints) > 0:
             raise FailedConstraintsError(failed_constraints)
 
@@ -747,7 +759,7 @@ class GameMaker:
         if validate:
             self.validate()  # Validate the state of the world.
 
-        world = World.from_facts(self.facts)
+        world = World.from_facts(self.facts, kb=self._kb)
         game = Game(world, quests=self.quests)
 
         # Keep names and descriptions that were manually provided.
