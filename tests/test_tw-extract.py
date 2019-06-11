@@ -73,3 +73,17 @@ class TestTwExtract(unittest.TestCase):
         assert walkthrough1 == walkthroughs[0].strip()
         assert walkthrough2 == walkthroughs[1].strip()
         assert "Found {}".format(2) in stdout
+
+    def test_extract_commands(self):
+        outfile = pjoin(self.tmpdir, "commands.txt")
+        command = ["tw-extract", "commands", self.game_file1, self.game_file2, "--output", outfile]
+        stdout = check_output(command).decode()
+        assert os.path.isfile(outfile)
+        assert "Found" in stdout
+
+        content = open(outfile).read()
+        for name in self.game1.entity_names + self.game2.entity_names:
+            assert name in content
+
+        for verb in self.game1.verbs + self.game2.verbs:
+            assert verb in content
