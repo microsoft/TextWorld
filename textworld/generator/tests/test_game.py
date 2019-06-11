@@ -27,7 +27,7 @@ from textworld.generator.game import UnderspecifiedEventError, UnderspecifiedQue
 from textworld.generator.game import ActionDependencyTree, ActionDependencyTreeElement
 from textworld.generator.inform7 import Inform7Game
 
-from textworld.logic import Proposition
+from textworld.logic import Proposition, GameLogic
 
 
 def _find_action(command: str, actions: Iterable[Action], inform7: Inform7Game) -> None:
@@ -63,6 +63,36 @@ def test_game_comparison():
     options.seeds = {"map": 4, "objects": 3, "quest": 2, "grammar": 1}
     game3 = textworld.generator.make_game(options)
     assert game1 != game3
+
+
+def test_reloading_game_with_custom_kb():
+    twl = KnowledgeBase.default().logic._document
+    twl += """
+        type customobj : o {
+            inform7 {
+                type {
+                    kind :: "custom-obj-like";
+                }
+            }
+        }
+    """
+
+    logic = GameLogic.parse(twl)
+    kb = KnowledgeBase(logic, "")
+
+    M = GameMaker(kb=kb)
+
+    room = M.new_room("room")
+    M.set_player(room)
+
+    custom_obj = M.new(type='customobj', name='customized object')
+    M.inventory.add(custom_obj)
+
+    commands = ["drop customized object"]
+    quest = M.set_quest_from_commands(commands)
+    assert quest.commands == commands
+    game = M.build()
+    assert game == Game.deserialize(game.serialize())
 
 
 def test_variable_infos(verbose=False):

@@ -142,10 +142,8 @@ def make_batch(env_id: str, batch_size: int, parallel: bool = False) -> str:
         id=batch_env_id,
         entry_point=entry_point,
         max_episode_steps=env_spec.max_episode_steps,
-        max_episode_seconds=env_spec.max_episode_seconds,
         nondeterministic=env_spec.nondeterministic,
         reward_threshold=env_spec.reward_threshold,
-        trials=env_spec.trials,
         # Setting the 'vnc' tag avoid wrapping the env with a TimeLimit wrapper. See
         # https://github.com/openai/gym/blob/4c460ba6c8959dd8e0a03b13a1ca817da6d4074f/gym/envs/registration.py#L122
         tags={"vnc": "foo"},

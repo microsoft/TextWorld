@@ -339,8 +339,7 @@ class Game:
     _SERIAL_VERSION = 1
 
     def __init__(self, world: World, grammar: Optional[Grammar] = None,
-                 quests: Iterable[Quest] = (),
-                 kb: Optional[KnowledgeBase] = None) -> None:
+                 quests: Iterable[Quest] = ()) -> None:
         """
         Args:
             world: The world to use for the game.
@@ -352,7 +351,7 @@ class Game:
         self.metadata = {}
         self._objective = None
         self._infos = self._build_infos()
-        self.kb = kb or KnowledgeBase.default()
+        self.kb = world.kb
         self.extras = {}
 
         # Check if we can derive a global winning policy from the quests.
@@ -379,7 +378,7 @@ class Game:
 
     def copy(self) -> "Game":
         """ Make a shallow copy of this game. """
-        game = Game(self.world, self.grammar, self.quests, self.kb)
+        game = Game(self.world, self.grammar, self.quests)
         game._infos = dict(self.infos)
         game._objective = self._objective
         game.metadata = dict(self.metadata)
@@ -435,12 +434,12 @@ class Game:
         if version != cls._SERIAL_VERSION:
             raise ValueError("Cannot deserialize a TextWorld version {} game, expected version {}".format(version, cls._SERIAL_VERSION))
 
-        world = World.deserialize(data["world"])
+        kb = KnowledgeBase.deserialize(data["KB"])
+        world = World.deserialize(data["world"], kb=kb)
         game = cls(world)
         game.grammar = Grammar(data["grammar"])
         game.quests = tuple([Quest.deserialize(d) for d in data["quests"]])
         game._infos = {k: EntityInfo.deserialize(v) for k, v in data["infos"]}
-        game.kb = KnowledgeBase.deserialize(data["KB"])
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
         game.extras = data.get("extras", {})
