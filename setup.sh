@@ -20,10 +20,10 @@ cd textworld/thirdparty/
 # Install command line Inform 7
 if [ ! -e I7_6M62_Linux_all.tar.gz ]; then
     echo "Downloading Inform7 CLI"
-    curl -LO http://inform7.com/download/content/6M62/I7_6M62_Linux_all.tar.gz
+    curl -LO http://inform7.com/apps/6M62/I7_6M62_Linux_all.tar.gz
     if [ "${machine}" == 'Mac' ] && [ ! -e I7-6M62-OSX.dmg ]; then
         echo "Downloading Inform7 for Mac"
-        curl -LO http://inform7.com/download/content/6M62/I7-6M62-OSX.dmg
+        curl -LO http://inform7.com/apps/6M62/I7-6M62-OSX.dmg
     fi
 fi
 if [ ! -d inform7-6M62 ]; then
