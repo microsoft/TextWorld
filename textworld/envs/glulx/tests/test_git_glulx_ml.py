@@ -385,6 +385,13 @@ class TestGitGlulxMLEnvironment(unittest.TestCase):
         env.reset()
         env.step("")
 
+    def test_quit_no(self):
+        env = textworld.start(self.game_file)
+        env.reset()
+        env.step("quit")
+        env.step("no")
+        env.step("look")
+
 
 def test_missing_game_infos_file():
     with make_temp_directory() as tmpdir:
