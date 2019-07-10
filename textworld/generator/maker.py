@@ -15,6 +15,7 @@ from textworld.utils import make_temp_directory
 
 from textworld.generator.graph_networks import reverse_direction, direction
 from textworld.generator.data import KnowledgeBase
+from textworld.generator.text_grammar import Grammar
 from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
@@ -357,7 +358,9 @@ class GameMaker:
         paths (List[WorldPath]): The connections between the rooms.
     """
 
-    def __init__(self, kb: Optional[KnowledgeBase] = None) -> None:
+    def __init__(self,
+                 kb: Optional[KnowledgeBase] = None,
+                 grammar: Optional[Grammar] = None) -> None:
         """
         Creates an empty world, with a player and an empty inventory.
         """
@@ -366,12 +369,12 @@ class GameMaker:
         self.quests = []
         self.rooms = []
         self.paths = []
-        self._kb = kb or KnowledgeBase.default()
-        self._types_counts = self._kb.types.count(State(self._kb.logic))
+        self.kb = kb or KnowledgeBase.default()
+        self._types_counts = self.kb.types.count(State(self.kb.logic))
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.nowhere = []
-        self.grammar = textworld.generator.make_grammar()
+        self.grammar = grammar or Grammar()
         self._game = None
         self._distractors_facts = []
 
@@ -391,7 +394,7 @@ class GameMaker:
         facts += self.inventory.facts
         facts += self._distractors_facts
 
-        return State(self._kb.logic, facts)
+        return State(self.kb.logic, facts)
 
     @property
     def facts(self) -> Iterable[Proposition]:
@@ -451,7 +454,7 @@ class GameMaker:
             * Otherwise, a `WorldEntity` is returned.
         """
         var_id = type
-        if not self._kb.types.is_constant(type):
+        if not self.kb.types.is_constant(type):
             var_id = get_new(type, self._types_counts)
 
         var = Variable(var_id, type)
@@ -459,7 +462,7 @@ class GameMaker:
             entity = WorldRoom(var, name, desc)
             self.rooms.append(entity)
         else:
-            entity = WorldEntity(var, name, desc, kb=self._kb)
+            entity = WorldEntity(var, name, desc, kb=self.kb)
 
         self._entities[var_id] = entity
         if entity.name:
@@ -512,8 +515,11 @@ class GameMaker:
         return None
 
     def find_by_name(self, name: str) -> Optional[WorldEntity]:
-        """ Find an entity using its name. """
-        return self._named_entities.get(name)
+        for entity in self._entities.values():
+            if entity.name == name:
+                return entity
+
+        return None
 
     def set_player(self, room: WorldRoom) -> None:
         """ Place the player in room.
@@ -555,7 +561,7 @@ class GameMaker:
                              exit2.dest.src, exit2.dest.direction)
             raise ExitAlreadyUsedError(msg)
 
-        path = WorldPath(exit1.src, exit1.direction, exit2.src, exit2.direction, kb=self._kb)
+        path = WorldPath(exit1.src, exit1.direction, exit2.src, exit2.direction, kb=self.kb)
         self.paths.append(path)
         return path
 
@@ -738,7 +744,7 @@ class GameMaker:
             msg = "Player position has not been specified. Use 'M.set_player(room)'."
             raise MissingPlayerError(msg)
 
-        failed_constraints = get_failing_constraints(self.state, self._kb)
+        failed_constraints = get_failing_constraints(self.state, self.kb)
         if len(failed_constraints) > 0:
             raise FailedConstraintsError(failed_constraints)
 
@@ -759,7 +765,7 @@ class GameMaker:
         if validate:
             self.validate()  # Validate the state of the world.
 
-        world = World.from_facts(self.facts, kb=self._kb)
+        world = World.from_facts(self.facts, kb=self.kb)
         game = Game(world, quests=self.quests)
 
         # Keep names and descriptions that were manually provided.

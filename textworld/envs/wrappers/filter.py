@@ -21,7 +21,10 @@ class EnvInfos:
                  'facts', 'last_action', 'last_command',
                  'has_won', 'has_lost',
                  'max_score', 'objective',
-                 'entities', 'verbs', 'command_templates',
+                 'location_names', 'location_nouns', 'location_adjs',
+                 'object_names', 'object_nouns', 'object_adjs',
+                 'directions',
+                 'verbs', 'command_templates',
                  'admissible_commands', 'intermediate_reward',
                  'policy_commands',
                  'extras']
@@ -68,9 +71,27 @@ class EnvInfos:
         #: bool: Objective of the game described in text.
         #:       This information *doesn't* change from one step to another.
         self.objective = kwargs.get("objective", False)
-        #: bool: Names of all entities in the game.
+        #: bool: Name of the possible directions a player can take in the game.
         #:       This information *doesn't* change from one step to another.
-        self.entities = kwargs.get("entities", False)
+        self.directions = kwargs.get("directions", False)
+        #: bool: Names of all locations in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.location_names = kwargs.get("location_names", False)
+        #: bool: Noun part of all location names in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.location_nouns = kwargs.get("location_nouns", False)
+        #: bool: Adjective part of all location names in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.location_adjs = kwargs.get("location_adjs", False)
+        #: bool: Names of all locations in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.object_names = kwargs.get("object_names", False)
+        #: bool: Noun part of all object names in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.object_nouns = kwargs.get("object_nouns", False)
+        #: bool: Adjective part of all object names in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.object_adjs = kwargs.get("object_adjs", False)
         #: bool: Verbs understood by the the game.
         #:       This information *doesn't* change from one step to another.
         self.verbs = kwargs.get("verbs", False)
@@ -137,11 +158,16 @@ class Filter(Wrapper):
         self.options = options
 
     def _get_requested_infos(self, game_state: GameState):
-        infos = {attr: getattr(game_state, attr) for attr in self.options.basics}
+        infos = {}
+        for attr in self.options.basics:
+            if hasattr(game_state, attr):
+                infos[attr] = getattr(game_state, attr)
+            else:
+                infos[attr] = getattr(game_state.game, attr)
 
         if self.options.extras:
             for attr in self.options.extras:
-                infos["extra.{}".format(attr)] = game_state.extras.get(attr)
+                infos["extra.{}".format(attr)] = game_state.game.extras.get(attr)
 
         return infos
 

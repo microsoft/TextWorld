@@ -739,6 +739,10 @@ class Inform7Game:
             say "  insert ... into ...: place an object into a container[line break]";
             say "  lock ... with ...:   lock a door or a container with a key[line break]";
             say "  unlock ... with ...: unlock a door or a container with a key[line break]";
+            say "  cook ... with ...:   cook cookable food with something providing heat[line break]";
+            say "  slice ... with ...:  slice cuttable food with something sharp[line break]";
+            say "  chop ... with ...:   chop cuttable food with something sharp[line break]";
+            say "  dice ... with ...:   dice cuttable food with something sharp[line break]";
 
         Understand "help" as displaying help message.
 

@@ -146,4 +146,8 @@ def extract_vocab(games: Iterable[Game]) -> List[str]:
     text = re.sub(r"[^a-z0-9\-_ ']", " ", text.lower())
     words = text.split()
     vocab = sorted(set(word.strip("-'_") for word in words))
+    # Remove empty string.
+    if "" in vocab:
+        vocab.remove("")
+
     return vocab

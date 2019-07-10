@@ -36,7 +36,7 @@ def _child(id, parent_pipe, pipe):
             pipe.send(result)
     finally:
         pipe.close()
-        print(id, "closed")
+        # print(id, "closed")
 
 
 class _ChildEnv:

@@ -498,26 +498,63 @@ class Game:
         return sorted(set(cmd for cmd in self.kb.inform7_commands.values()))
 
     @property
-    def directions_names(self) -> List[str]:
+    def directions(self) -> List[str]:
         return DIRECTIONS
+
+    @property
+    def locations(self) -> List[EntityInfo]:
+        """ The entity information of all locations in this game. """
+        def _keep_named_room_entities(e):
+            return e.name and e.type == "r"
+
+        return list(filter(_keep_named_room_entities, self.infos.values()))
+
+    @property
+    def location_names(self) -> List[str]:
+        """ The names of all locations in this game. """
+        return [entity.name for entity in self.locations]
+
+    @property
+    def location_nouns(self) -> List[str]:
+        """ The noun parts of all locations in this game. """
+        return [entity.noun for entity in self.locations]
+
+    @property
+    def location_adjs(self) -> List[str]:
+        """ The adjective parts of all locations in this game. """
+        return [entity.adj if entity.adj is not None else '' for entity in self.locations]
+
+    @property
+    def objects(self) -> List[EntityInfo]:
+        """ The entity information of all relevant objects in this game. """
+        def _filter_unnamed_and_room_entities(e):
+            return e.name and e.type != "r"
+
+        return filter(_filter_unnamed_and_room_entities, self.infos.values())
+
+    @property
+    def object_names(self) -> List[str]:
+        """ The names of all objects in this game. """
+        return [entity.name for entity in self.objects]
+
+    @property
+    def object_nouns(self) -> List[str]:
+        """ The noun parts of all objects in this game. """
+        return [entity.noun for entity in self.objects]
+
+    @property
+    def object_adjs(self) -> List[str]:
+        """ The adjective parts of all objects in this game. """
+        return [entity.adj if entity.adj is not None else '' for entity in self.objects]
+
+    # @property
+    # def entity_names(self) -> List[str]:
+    #     return self.object_names + self.location_names + self.direction_names
 
     @property
     def objects_types(self) -> List[str]:
         """ All types of objects in this game. """
         return sorted(self.kb.types.types)
-
-    @property
-    def objects_names(self) -> List[str]:
-        """ The names of all relevant objects in this game. """
-        def _filter_unnamed_and_room_entities(e):
-            return e.name and e.type != "r"
-
-        entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
-        return [info.name for info in entities_infos]
-
-    @property
-    def entity_names(self) -> List[str]:
-        return self.objects_names + self.directions_names
 
     @property
     def objects_names_and_types(self) -> List[str]:

@@ -151,3 +151,48 @@ def make_batch(env_id: str, batch_size: int, parallel: bool = False) -> str:
     )
 
     return batch_env_id
+
+
+def make_batch2(env_ids: List[str], parallel: bool = False, name: str = "") -> str:
+    """ Make an environment that runs multiple games independently.
+
+    Arguments:
+        env_ids:
+            List of environment ID that will compose a batch.
+        parallel:
+            If True, the environment will be executed in different processes.
+        name:
+            Name for the new environment, i.e. "tw-{name}-v0". By default,
+            the returned env_id is "tw-batch-v0".
+
+    Returns:
+        The corresponding gym-compatible env_id to use.
+    """
+
+    batch_size = len(env_ids)
+    env_id = "tw-{}-v0".format(name) if name else "tw-batch-v0"
+
+    # If env already registered, bump the version number.
+    if env_id in registry.env_specs:
+        base, _ = env_id.rsplit("-v", 1)
+        versions = [int(env_id.rsplit("-v", 1)[-1]) for env_id in registry.env_specs if env_id.startswith(base)]
+        env_id = "{}-v{}".format(base, max(versions) + 1)
+
+    env_spec = spec(env_ids[0])
+    entry_point = 'textworld.gym.envs:BatchEnv'
+    if parallel and batch_size > 1:
+        entry_point = 'textworld.gym.envs:ParallelBatchEnv'
+
+    register(
+        id=env_id,
+        entry_point=entry_point,
+        max_episode_steps=env_spec.max_episode_steps,
+        nondeterministic=env_spec.nondeterministic,
+        reward_threshold=env_spec.reward_threshold,
+        # Setting the 'vnc' tag avoid wrapping the env with a TimeLimit wrapper. See
+        # https://github.com/openai/gym/blob/4c460ba6c8959dd8e0a03b13a1ca817da6d4074f/gym/envs/registration.py#L122
+        tags={"vnc": "foo"},
+        kwargs={'env_id': env_ids, 'batch_size': batch_size}
+    )
+
+    return env_id
