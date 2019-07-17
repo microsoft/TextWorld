@@ -144,10 +144,11 @@ if __name__ == "__main__":
     _maybe_load_third_party_module()
     args, (parser, custom_parser, challenge_parsers) = parse_args()
 
-    try:
-        data.load_new_KB(args.kb)
-    except data.KnowledgeBaseError as e:
-        parser.error("Provided path '{}' does not contain all the required files for a valid knowledge base. {}".format(args.kb, str(e)))
+    if args.kb:
+        try:
+            data.load_new_KB(args.kb)
+        except data.KnowledgeBaseError as e:
+            parser.error("Provided path '{}' does not contain all the required files for a valid knowledge base. {}".format(args.kb, str(e)))
 
     if args.seed is None:
         args.seed = np.random.randint(65635)

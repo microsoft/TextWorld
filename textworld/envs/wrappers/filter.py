@@ -24,9 +24,10 @@ class EnvInfos:
                  'location_names', 'location_nouns', 'location_adjs',
                  'object_names', 'object_nouns', 'object_adjs',
                  'directions',
-                 'verbs', 'command_templates',
+                 'entities', 'verbs', 'command_templates',
                  'admissible_commands', 'intermediate_reward',
                  'policy_commands',
+                 'game',
                  'extras']
 
     def __init__(self, **kwargs):
@@ -74,6 +75,9 @@ class EnvInfos:
         #: bool: Name of the possible directions a player can take in the game.
         #:       This information *doesn't* change from one step to another.
         self.directions = kwargs.get("directions", False)
+        #: bool: Names of all entities in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.entities = kwargs.get("entities", False)
         #: bool: Names of all locations in the game.
         #:       This information *doesn't* change from one step to another.
         self.location_names = kwargs.get("location_names", False)
@@ -98,6 +102,8 @@ class EnvInfos:
         #: bool: Templates for commands understood by the the game.
         #:       This information *doesn't* change from one step to another.
         self.command_templates = kwargs.get("command_templates", False)
+        #: bool: Current game in its serialized form. Use with `textworld.Game.deserialize`.
+        self.game = kwargs.get("game", False)
         #: List[str]: Names of extra information which are game specific.
         self.extras = kwargs.get("extras", [])
 
@@ -163,11 +169,11 @@ class Filter(Wrapper):
             if hasattr(game_state, attr):
                 infos[attr] = getattr(game_state, attr)
             else:
-                infos[attr] = getattr(game_state.game, attr)
+                infos[attr] = getattr(game_state._game, attr)
 
         if self.options.extras:
             for attr in self.options.extras:
-                infos["extra.{}".format(attr)] = game_state.game.extras.get(attr)
+                infos["extra.{}".format(attr)] = game_state.extras.get(attr)
 
         return infos
 

@@ -206,7 +206,10 @@ class Inform7Game:
         return commands
 
     def get_human_readable_fact(self, fact: Proposition) -> Proposition:
-        arguments = [Variable(self.entity_infos[var.name].name, var.type) for var in fact.arguments]
+        def _get_name(info):
+            return info.name if info.name else info.id
+
+        arguments = [Variable(_get_name(self.entity_infos[var.name]), var.type) for var in fact.arguments]
         return Proposition(fact.name, arguments)
 
     def get_human_readable_action(self, action: Action) -> Action:
