@@ -7,7 +7,6 @@ import re
 import warnings
 from os.path import join as pjoin
 from collections import OrderedDict, defaultdict
-from tatsu.model import NodeWalker
 from typing import Any, Optional, Mapping, List, Tuple, Container, Union
 
 from numpy.random import RandomState
@@ -16,8 +15,7 @@ import textworld
 from textworld import g_rng
 from textworld.utils import uniquify
 from textworld.generator.data import KnowledgeBase
-from textworld.textgen.model import TextGrammarModelBuilderSemantics
-from textworld.textgen.parser import TextGrammarParser
+from textworld.textgen import TextGrammar
 
 
 NB_EXPANSION_RETRIES = 20
@@ -121,17 +119,6 @@ class GrammarOptions:
         return "\n".join(infos)
 
 
-class _Stringifier(NodeWalker):
-    def walk_str(self, node):
-        return node.replace("\\n", "\n")
-
-    def walk_AdjectiveNoun(self, node):
-        return self.walk(node.adjective) + " | " + self.walk(node.noun)
-
-    def walk_Match(self, node):
-        return self.walk(node.lhs) + " <-> " + self.walk(node.rhs)
-
-
 class Grammar:
     """
     Context-Free Grammar for text generation.
@@ -168,9 +155,6 @@ class Grammar:
         for filename in files:
             self._parse(filename)
 
-        for k, v in self.grammar.items():
-            self.grammar[k] = tuple(v)
-
     def __eq__(self, other):
         return (isinstance(other, Grammar) and
                 self.overflow_dict == other.overflow_dict and
@@ -183,21 +167,11 @@ class Grammar:
         Parse lines and add them to the grammar.
         """
         if path not in self._cache:
-            parser = TextGrammarParser(semantics=TextGrammarModelBuilderSemantics(), parseinfo=True)
-            stringifier = _Stringifier()
             with open(path) as f:
-                parsed = parser.parse(f.read(), filename=path)
-                grammar = {}
-                for rule in parsed.rules:
-                    symbol = "#" + rule.symbol + "#"
-                    alts = grammar.setdefault(symbol, [])
-                    for alt in rule.alternatives:
-                        string = stringifier.walk(alt)
-                        if string != "":
-                            alts.append(string)
-                self._cache[path] = grammar
+                self._cache[path] = TextGrammar.parse(f.read(), filename=path)
 
-        self.grammar.update(self._cache[path])
+        for name, rule in self._cache[path].rules.items():
+            self.grammar["#" + name + "#"] = rule
 
     def has_tag(self, tag: str) -> bool:
         """
@@ -228,7 +202,8 @@ class Grammar:
             raise ValueError("Tag: {} does not exist!".format(tag))
 
         for _ in range(NB_EXPANSION_RETRIES):
-            expansion = rng.choice(self.grammar[tag])
+            expansion = rng.choice(self.grammar[tag].alternatives)
+            expansion = expansion.full_form()
             if not self.unique_expansion or expansion not in self.all_expansions[tag]:
                 break
 
@@ -397,8 +372,8 @@ class Grammar:
             for word in words:
                 if pattern.search(word):
                     for to_replace in pattern.findall(word):
-                        for replacement in self.grammar[to_replace]:
-                            to_expand.append(word.replace(to_replace, replacement))
+                        for alternative in self.grammar[to_replace].alternatives:
+                            to_expand.append(word.replace(to_replace, alternative.full_form()))
 
                 else:
                     all_words.add(word)
@@ -432,8 +407,8 @@ class Grammar:
                 depth += 1
                 to_replace = re.findall(r'[#][^#]*[#]', tag)
                 for replace in to_replace:
-                    for rhs in self.grammar[replace]:
-                        _iterate(tag.replace(replace, rhs), depth)
+                    for rhs in self.grammar[replace].alternatives:
+                        _iterate(tag.replace(replace, rhs.full_form()), depth)
             else:
                 variants.append(tag)
 
@@ -455,8 +430,8 @@ class Grammar:
             All possible names.
         """
         expansions = self.get_all_expansions_for_tag("#({})#".format(type))
-        for room_type in self.grammar["#room_type#"]:
-            expansions += self.get_all_expansions_for_tag("#{}_({})#".format(room_type, type))
+        for room_type in self.grammar["#room_type#"].alternatives:
+            expansions += self.get_all_expansions_for_tag("#{}_({})#".format(room_type.full_form(), type))
 
         return uniquify(expansions)
 
@@ -525,10 +500,11 @@ class Grammar:
         """
         errors_found = False
         for symbol in self.grammar:
-            if len(self.grammar[symbol]) == 0:
+            if len(self.grammar[symbol].alternatives) == 0:
                 print("[Warning] Symbol {} has empty tags".format(symbol))
 
-            for tag in self.grammar[symbol]:
+            for tag in self.grammar[symbol].alternatives:
+                tag = tag.full_form()
                 if tag == "":
                     print("[Warning] Symbol {} has empty tags".format(symbol))
 

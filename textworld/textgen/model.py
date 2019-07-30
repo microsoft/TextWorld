@@ -29,6 +29,10 @@ class TextGrammarModelBuilderSemantics(ModelBuilderSemantics):
         super(TextGrammarModelBuilderSemantics, self).__init__(context=context, types=types)
 
 
+class Literal(ModelBase):
+    value = None
+
+
 class AdjectiveNoun(ModelBase):
     adjective = None
     noun = None
