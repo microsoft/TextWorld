@@ -151,7 +151,7 @@ class Grammar:
         self.theme = self.options.theme
 
         # Load the object names file
-        files = glob.glob(pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "_*.twg"))
+        files = glob.glob(pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "*.twg"))
         for filename in files:
             self._parse(filename)
 
