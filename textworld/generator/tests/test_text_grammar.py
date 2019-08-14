@@ -20,6 +20,7 @@ class TestGrammarOptions(unittest.TestCase):
         options2 = GrammarOptions.deserialize(data)
         assert options == options2
 
+
 class GrammarTest(unittest.TestCase):
     def test_grammar_eq(self):
         grammar = Grammar()
@@ -27,8 +28,8 @@ class GrammarTest(unittest.TestCase):
         self.assertEqual(grammar, grammar2, "Testing two grammar files are equivalent")
 
     def test_grammar_eq2(self):
-        grammar = Grammar()
-        grammar2 = Grammar(options={'theme': 'something'})
+        grammar = Grammar(options={'theme': 'house'})
+        grammar2 = Grammar(options={'theme': 'basic'})
         self.assertNotEqual(grammar, grammar2, "Testing two different grammar files are not equal")
 
     def test_grammar_get_random_expansion_fail(self):

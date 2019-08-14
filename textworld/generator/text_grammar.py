@@ -20,7 +20,6 @@ from textworld.textgen import TextGrammar
 
 NB_EXPANSION_RETRIES = 20
 
-
 def fix_determinant(var):
     var = var.replace("  ", " ")
     var = var.replace(" a a", " an a")
@@ -34,6 +33,12 @@ def fix_determinant(var):
     var = var.replace(" A o", " An o")
     var = var.replace(" A u", " An u")
     return var
+
+
+class MissingTextGrammar(NameError):
+    def __init__(self, path):
+        msg = "Cannot find any theme files: {path}."
+        super().__init__(msg.format(path=path))
 
 
 class GrammarOptions:
@@ -151,7 +156,11 @@ class Grammar:
         self.theme = self.options.theme
 
         # Load the object names file
-        files = glob.glob(pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "_*.twg"))
+        path = pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "*.twg")
+        files = glob.glob(path)
+        if len(files) == 0:
+            raise MissingTextGrammar(path)
+
         for filename in files:
             self._parse(filename)
 
