@@ -119,6 +119,7 @@ class KnowledgeBase:
 
         # Load knowledge base related files.
         paths = glob.glob(pjoin(target_dir, "logic", "*"))
+        paths = sorted(paths)  # Cannot rely on glob ordering.
         logic = GameLogic.load(paths)
 
         # Load text generation related files.

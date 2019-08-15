@@ -157,7 +157,7 @@ class Grammar:
 
         # Load the object names file
         path = pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "*.twg")
-        files = glob.glob(path)
+        files = sorted(glob.glob(path))  # Cannot rely on glob ordering.
         if len(files) == 0:
             raise MissingTextGrammar(path)
 
