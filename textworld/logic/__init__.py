@@ -325,7 +325,9 @@ class TypeHierarchy:
         self._types[type.name] = type
 
         for parent in type.parents:
-            self._children[parent].append(type.name)
+            children = self._children[parent]
+            children.append(type.name)
+            children.sort()
 
     def get(self, name: str) -> Type:
         return self._types[name]
