@@ -1,0 +1,123 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "TextWorld Grammar",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#rule"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.number-sign.twg",
+					"match": "^\\s*#.*"
+				}
+			]
+		},
+		"rule-name": {
+			"patterns": [
+				{
+					"match": "[\\w()/!<>-]+(?=:)",
+					"name": "support.type.twg"
+				}
+			]
+		},
+		"symbol": {
+			"begin": "#",
+			"end": "#",
+			"beginCaptures": {
+				"0": {
+					"name": "entity.name.function.twg"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "entity.name.function.twg"
+				}
+			},
+			"patterns": [
+				{
+					"match": "[\\w()/!<>-]+",
+					"name": "entity.name.type.class.twg"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"match": ":",
+					"name": "keyword.operator.twg"
+				},
+				{
+					"match": ";",
+					"name": "keyword.operator.twg"
+				},
+				{
+					"match": "\\|",
+					"name": "keyword.operator.twg"
+				},
+				{
+					"match": "\\<-\\>",
+					"name": "keyword.operator.twg"
+				}
+			]
+		},
+		"keyword": {
+			"patterns": [
+				{
+					"match": "\\((obj|name|name-n|name-adj|\\^|val|dir)\\)",
+					"name": "variable.parameter.function-call.twg"
+				},
+				{
+					"begin": "\\(",
+					"end": "\\)",
+					"name": "string.quoted.double.twg",
+					"patterns": [
+						{
+							"include": "#operators"
+						}
+					]
+				}
+			]
+		},
+		"inform7": {
+			"begin": "\\[",
+			"end": "\\]",
+			"name": "constant.character.format.placeholder.other.twg",
+			"patterns": [
+				{
+					"include": "#keyword"
+				}
+			]
+		},
+		"rule": {
+			"begin": "(?=.*:)",
+			"end": "\n",
+			"patterns": [
+				{
+					"include": "#inform7"
+				},
+				{
+					"include": "#operators"
+				},
+				{
+					"include": "#symbol"
+				},
+				{
+					"include": "#rule-name"
+				},
+				{
+					"include": "#keyword"
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		}
+	},
+	"scopeName": "source.twg"
+}

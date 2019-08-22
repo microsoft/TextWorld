@@ -90,6 +90,11 @@ print("moves: {}; score: {}".format(moves, score))
 
 For more information about TextWorld, check the [documentation](https://aka.ms/textworld-docs).
 
+## Visual Studio Code
+
+You can install the [textworld-vscode extension ](https://marketplace.visualstudio.com/items?itemName=textworld.textworld-vscode) that enables syntax highlighting for editing `.twl` and `.twg` TextWorld files.
+
+
 ## Notebooks
 
 Check the [notebooks](notebooks) provided with the framework to see what you can do with it. You will need the [Jupyter Notebook](https://jupyter.org/install) to run them. You can install it with
