@@ -1,0 +1,594 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "TextWorld Logic",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#type-declaration"
+		}
+	],
+	"repository": {
+		"strings": {
+			"name": "string.quoted.double.twl",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.format.placeholder.other.twl",
+					"match": "\\{[^\\}]+\\}"
+				},
+				{
+					"name": "constant.character.escape.twl",
+					"match": "\\\\."
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.number-sign.twl",
+					"match": "^\\s*#.*"
+				},
+				{
+					"name": "comment.line.number-sign.twl",
+					"match": "#.*"
+				}
+			]
+		},
+		"rule-name": {
+			"patterns": [
+				{
+					"match": "\\b([_[:alpha:]][_[:alnum:]/]*)\\b",
+					"name": "entity.name.function.twl"
+				}
+			]
+		},
+		"predicates": {
+			"patterns": [{
+				"match": "\\b([_[:alpha:]][_[:alnum:]/]*)\\b\\s*(\\([^\\)]+\\))",
+				"captures": {
+					"1": {
+						"name": "support.type.twl"
+					}
+				}
+			}]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"match": "\\$",
+					"name": "entity.name.function.decorator.twl"
+				},
+				{
+					"match": "&",
+					"name": "keyword.operator.twl"
+				},
+				{
+					"match": "->",
+					"name": "keyword.operator.twl"
+				}
+			]
+		},
+		"type-declaration": {
+			"begin": "(?=\\btype\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(type)\\b\\s+([_[:alpha:]][_[:alnum:]]*)\\s*:?\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						},
+						"2": {
+							"name": "entity.name.type.class.twl"
+						}
+					},
+					"end": "(?=\\{)",
+					"patterns": [
+						{
+							"include": "#type-reference"
+						}
+					]
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#type-members"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"type-reference": {
+			"patterns": [
+				{
+					"name": "entity.name.type.class.twl",
+					"match": "\\b[_[:alpha:]][_[:alnum:]]*\\b"
+				}
+			]
+		},
+		"predicates-declaration": {
+			"begin": "(?=\\bpredicates\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(predicates)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#predicates"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"rules-declaration": {
+			"begin": "(?=\\brules\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(rules)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#rules"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"reverse_rules-declaration": {
+			"begin": "(?=\\breverse_rules\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(reverse_rules)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#reverse_rules"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"constraints-declaration": {
+			"begin": "(?=\\bconstraints\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(constraints)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#rules"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"inform7-declaration": {
+			"begin": "(?=\\binform7\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(inform7)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#inform7-members"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"inform7-type-declaration": {
+			"begin": "(?=\\btype\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(type)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#inform7-type-kind"
+						},
+						{
+							"include": "#inform7-type-definition"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"inform7-predicates-declaration": {
+			"begin": "(?=\\bpredicates\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(predicates)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#predicates"
+						},
+						{
+							"include": "#strings"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"inform7-commands-declaration": {
+			"begin": "(?=\\bcommands\\b)",
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"begin": "\\b(commands)\\b\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=\\{)"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.open.twl"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.curlybrace.close.twl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#rule-name"
+						},
+						{
+							"include": "#strings"
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"inform7-code-declaration": {
+			"begin": "(?=\\bcode\\b)",
+			"end": "(?<=;)",
+			"patterns": [
+				{
+					"begin": "\\b(code)\\b",
+					"beginCaptures": {
+						"1": {
+							"name": "keyword.other.type.twl"
+						}
+					},
+					"end": "(?=::)"
+				},
+				{
+					"name": "string.quoted.double.twl",
+					"begin": "\"\"\"",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.twl"
+						}
+					},
+					"end": "\"\"\"",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end.twl"
+						}
+					},
+					"patterns": [
+						{
+							"name": "constant.character.escape.twl",
+							"match": "\\\\."
+						}
+					]
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"type-members": {
+			"patterns": [
+				{
+					"include": "#comments"
+				},
+				{
+					"include": "#predicates-declaration"
+				},
+				{
+					"include": "#rules-declaration"
+				},
+				{
+					"include": "#reverse_rules-declaration"
+				},
+				{
+					"include": "#constraints-declaration"
+				},
+				{
+					"include": "#inform7-declaration"
+				}
+			]
+		},
+		"inform7-members": {
+			"patterns": [
+				{
+					"include": "#comments"
+				},
+				{
+					"include": "#inform7-type-declaration"
+				},
+				{
+					"include": "#inform7-predicates-declaration"
+				},
+				{
+					"include": "#inform7-commands-declaration"
+				},
+				{
+					"include": "#inform7-code-declaration"
+				}
+			]
+		},
+		"rules": {
+			"begin": "(?=.*::)",
+			"end": ";",
+			"patterns": [
+				{
+					"include": "#predicates"
+				},
+				{
+					"include": "#rule-name"
+				},
+				{
+					"include": "#operators"
+				},
+				{
+					"include": "#comments"
+				}
+			]
+		},
+		"reverse_rules": {
+			"patterns": [{
+				"match": "\\b([a-zA-Z][a-zA-Z0-9-/]*)\\b\\s*::\\s*([a-zA-Z][a-zA-Z0-9-/]*)\\s*;",
+				"captures": {
+					"1": {
+						"name": "entity.name.function.twl"
+					},
+					"2": {
+						"name": "entity.name.function.twl"
+					}
+				}
+			}]
+		},
+		"inform7-type-kind": {
+			"begin": "\\b(kind)\\b\\s+::",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.other.type.twl"
+				}
+			},
+			"end": ";",
+			"patterns": [
+				{
+					"include": "#strings"
+				}
+			]
+		},
+		"inform7-type-definition": {
+			"begin": "\\b(definition)\\b\\s+::",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.other.type.twl"
+				}
+			},
+			"end": ";",
+			"patterns": [
+				{
+					"include": "#strings"
+				}
+			]
+		}
+	},
+	"scopeName": "source.twl"
+}
