@@ -1,0 +1,964 @@
+#----------------------------------------------------------------------------------------------------------------------------------
+#                                                     GAME DESCRIPTOR GRAMMAR                                                     #
+#----------------------------------------------------------------------------------------------------------------------------------
+# The organization of this file is as follows:
+# 1. Expandables  	      : All required combinations, structures, etc of words, letters, and numbers which are used in the 
+#                              whole text of the grammars. Collect them here will avoid from redundant repeats.
+# 2. Verbs       	      : All verbs which are used as action or simply as verb in the text are collected.
+# 3. Types & Variables       : Type of objects and variables of the game are defined and coded.
+# 4. Objects Garmmar	      : The grammar of each object of the game is defined in this section.
+# 5. Room Description Grammar: All the texts which are used to describe the game inside different rooms are defined and expanded.
+# 6. Instructions Grammar    : The grammar of instructions for compound commands, etc are described.
+
+
+
+################################################ Expandables #######################################################################
+
+##  Any type of expandables, such as adjectives, the name of different types of food, brans, materials, etc. are named here.
+##  During the design of the game, this expandables are like a general dictionary of various types of words which can be used 
+##  in different sections of the grammar design. This list does not include verb type of words.
+###
+# --- General Expandables -------------------------------------------------------
+ordinary_adj:ordinary;normal;typical;standard;usual
+adj_stripped:#simpleadj#
+simpleadj:good;bad;small;big;heavy;light;great;terrible;expensive;cheap
+hot-adj:super;unreasonably;absurdly;alarmingly;upsettingly
+supp_stable:stable;wobbly;unstable;balanced;durable;reliable;solid;undependable;solidly built;an unstable piece of #garbage#;shaky
+obj_what:unremarkable;clean;dirty;modern;well-used;brand new;expensive looking;cheap looking
+out_in_place:out of place;to fit in;well matched to everything else
+food_what:appetizing;delicious;tasty;appealing;delectable;heavenly;inviting;savory;tantalizing;tempting
+door_what_is:imposing;sturdy;well-built;durable;robust;rugged;hefty;commanding;manageable;solid
+shape:rectangular;cuboid;spherical;formless;non-euclidean
+colour:red;blue;chartreuse;purple;violet;orange;yellow;green;brown;teal;cyan
+smell:vanilla;lavender;cake;fudge;fresh laundry;soap
+
+number:0;1;2;3;4;5;6;7;8;9
+bignumber:Thirty;Forty;Fifty;Sixty;Seventy;Eighty;Ninety;A hundred;Two hundred;Three hundred
+letter:A;B;C;D;E;F;G;H;I;J;K;L;M;N;O;P;Q;R;S;T;U;V;W;X;Y;Z
+
+material_type:#metal#;#plastic#;#others#
+metal:steel;cementite;iron;aluminum;copper;brass
+plastic:plastic
+others:card
+
+fruit:watermelon;melon;honeydew;apple;pear;grape;kiwi;cantaloupe;banana;pear;durian;#berry#berry;berry
+can:sardine;mixed beans;chicken;soup;tuna
+candy:chocolate bar;gummy bear;candy bar;licorice strip;cookie;power bar
+berry:straw;blue;rasp;black;elder;boysen;lingon;huckle;logan;cran;goji;goose
+
+garbage:garbage;trash;junk
+
+weight:complicated;heavy;light;weighty;surprisingly heavy;heavier than it looks
+
+brand:#brandname# style;#brandname# limited edition;#brandname#
+brandname:Microsoft;American;Canadian;Henderson's;TextWorld
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Fix Expandables -----------------------------------------------------------
+here_alt:here;in the room;in the shuttle room;on the dock;nearby;close by;in the corner;right there by you
+here_alt_u:Here;In the room;Nearby;Close by;In the corner;Right there by you
+how_see:you #you_what#;you can #you_what#
+how_see_u:You #you_what#;You can #you_what#
+there_what:is;seems to be
+you_what:see;make out
+smelltype:an #ansmell#;a #asmell#
+ansmell:interesting;awful;intriguing
+asmell:hideous;pungent;sickening;terrible;wretched;lovely;great;fine;
+upsetwith:upset with;angry about;infuriated by;depressed by;done caring about;upset by;furious with
+bignumber:Thirty;Forty;Fifty;Sixty;Seventy;Eighty;Ninety;A hundred;Two hundred;Three hundred
+Iknow:I know a;I got this;I have a;You know, I know a;You know, I got a;You know what, I've got a
+youknow:You know;Do you know;Did you ever meet;You ever meet
+
+afriend:person, they work out of #friendplace#,;person;friend;person who works for #friendcompany#
+myfriend:they work for #friendcompany#
+friendplace:the lab;the space shuttle
+friendcompany:the #affiliation# team;the International Space Station;
+affiliation: Russian;European;Japanese;USA
+friendtype:buddy;pal;friend;good friend;mate;
+
+cooljob:the astronaut;#friendcompany#;the space craft engineer
+expensiveplace:some kind of expensive place;some kind of expensive project
+intheblank:in the dump;in a fire;into a pit;into the garbage
+
+key_metal:#plastic#;#others#;brushed;polished;satin;rusty
+
+
+
+begood:good;great;fantastic;a great idea
+in_the_(r):in the (r);within the (r);inside the (r)
+by_the_syn:with the
+init_syn:in it;inside;placed inside
+into_syn:into;inside
+on_it_syn:on it;upon it
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Expandables for Container Symbols -----------------------------------------
+it:It;Something about it
+reminds_you:reminds you of;looks like;floods your mind with memories of;is reminiscent of;is just like 
+ofyouryouth:of your youth;that you knew in your youth;that you knew so long ago;that you knew so long ago, in your youth
+it_is:It is;You can see that it is;Upon examination, you see that it is
+name_var:(name);(name-n), which looks (name-adj),;(name-adj) looking (name-n)
+listwithis: [is-are a list of things in the (obj)]
+lookthere:Look over there;Wow! look at that
+ContentsC-:Contents-;Contained within-;Inside are the following-;Inventory is as follows-;Here's what's inside
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Expandables for Supporter Symbols -----------------------------------------
+on_it:on it;lying on it;resting on it;upon it
+ContentsS-:Contents-;Upon it are displayed the following-;Upon it you may see the following-;Upon it lie the following-;Upon the (name-n) are displayed the following-;Upon the (name-n) you may see the following-;Upon the (name-n) lie the following-
+trash:trash;garbage;junk
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Expandables for Group Symbols ---------------------------------------------
+this_the:this;the
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Expandables for Room Symbols ----------------------------------------------
+dec_find-yourself:You #dec_what#
+dec_guess-what:#dec_well-guess#, you are in #dec_a_the# place we're calling #dec_a_the#
+dec_well-guess:Guess what;Well how about that;Well I'll be
+dec_what:are;find yourself;arrive
+dec_a_the:a;the
+announce_mood:sorry;pleased;excited;stoked;so happy;honoured;required;obligated
+signquality:decrepit;laminated;crooked;framed
+sign:sign;placard;signboard;board
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Expandables for Exit Symbols ----------------------------------------------
+yourthing:thing;bag;style;cup of tea
+door_what:leading;facing;heading
+unblocked:unblocked;unguarded
+# << ------------------------------------------------------------------------- >>
+
+
+
+
+################################################### Verbs ##########################################################################
+
+# --- Actions & Verbs -----------------------------------------------------------
+##  Actions are actually those verbs which are used in the game by the player. Actions should start with a verb (ie:ensure, make 
+##  sure, etc (these could probably just be a tag)).
+### The structure for a verb is as follows, (not necessarily contains all the parts): 
+###     a) (verb): action's instructions; 
+###     b) (verb)_syn_v: synonyms of the verb; they are all in lowercase format, 
+###     c) (verb)_syn_u: Uppercase format (Sentence format) of the synonyms, 
+###     d) (verb)_syn_p: past form of the synonyms
+###     e) (verb)_syn_pp: past participle form of the synonyms
+###     f) (verb)ing: the ing-form of the verb
+
+
+# --- Action Verbs --------------------------------------------------------------
+look:look around in (r).
+
+examine:examine (o|k|f|d|c|s|t).
+
+inventory:examine your inventory.
+
+take:#take_syn_v# the #obj_types# from the (r).;#take_syn_v# the #obj_types# that's in the (r).
+take_syn_v:take;retrieve;grab
+take_syn_pp:taken;got;picked
+taking:taking;getting;picking
+take/s:#take_syn_v# the #obj_types# from the #on_var#.
+take/c:#take_syn_v# the #obj_types# from the #on_var#.
+
+insert:#insert_syn_v# the #obj_types# #into_syn# the #(c)_var#.;you can #insert_syn_v# the #obj_types# #into_syn# the #(c)_var#.
+insert_syn_v:insert;put;place;deposit;attach
+insert_syn_u:Insert;Put;Place;Deposit;Attach
+insert_syn_p:inserted;put;placed;deposited;attached
+insert_syn_pp:inserted;put in;placed;deposited;attached
+inserting:inserting;putting in;placeing;depositting;attaching
+
+eat:#eat_syn_v# the #eat_var#.
+eat_syn_u:Eat;
+eat_syn_v:eat;
+eat_syn_pp:eaten;consumed
+eat_syn_p:ate
+eating:eating
+
+open:open the #lock_type_var#.;ensure that the #lock_type_var# is open.;make sure that the #lock_type_var# is #open_var#.
+open_syn_v:open;
+open_syn_pp:opened;pulled open
+opening:opening;pulling open
+
+close:close the #lock_type_var#.;ensure that the #lock_type_var# is #close_syn_pp#.
+close_syn_pp:closed;shut
+closing:closing;shutting
+
+go:#go_syn_v# easily into the space;#go_syn_v# towards the #obj_types#;#go_syn_v# smoothly twards the #obj_types#;#go_syn_v# into the (r)
+go_syn_v: go;move;dive;fly;float;propel;wobble;head;go to the;
+go_syn_p: went;moved;dived;flew;floated;propelled;wobbled;headed;went to the;
+go_syn_u: Go;Move;Dive;Fly;Float;Propel;Wobble;Head;Go to the;
+go_syn_pp:gone;moved;dived;flown;floated;propelled;wobbled;headed;gone to the;got
+going:going;moving;diving;flying;floating;propelling;wobbling;heading;going to the;getting
+go/north:#go_syn_v# north.;#tryto# #go_syn_v# north.
+go/south:#go_syn_v# south.;#tryto# #go_syn_v# south.
+go/east:#go_syn_v# east.;#tryto# #go_syn_v# east.
+go/west:#go_syn_v# west.;#tryto# #go_syn_v# west.
+go/north/d:#go_syn_v# through the north (d).;#tryto# #go_syn_v# through the north (d).
+go/south/d:#go_syn_v# through the south (d).;#tryto# #go_syn_v# through the south (d).
+go/east/d:#go_syn_v# through the east (d).;#tryto# #go_syn_v# through the east (d).
+go/west/d:#go_syn_v# through the west (d).;#tryto# #go_syn_v# through the west (d).
+
+tryto:try to;make an effort to;make an attempt to;attempt to
+
+unlock:#unlock_key#;#unlock_no_key#
+unlock_key:unlock the #lock_type_var# #by_the_syn# (k).;check that the #lock_type_var# is unlocked #by_the_syn# (k).;ensure that the #lock_type_var# is unlocked #by_the_syn# (k).;insert the (k) into the #lock_type_var#'s lock to unlock it.
+unlock_no_key:unlock the #lock_type_var#.;ensure that the #lock_type_var# is unlocked.
+unlock_syn_pp:unlocked
+unlocking:unlocking
+
+lock:#lock_key#;#lock_no_key#
+lock_key:lock the #lock_type_var# #by_the_syn# (k).;make sure that the #lock_type_var# is locked #by_the_syn# (k).;#insert_syn_u# the (k) into the #lock_type_var# to lock it.
+lock_no_key:lock the #lock_type_var#.;make sure the #lock_type_var# is locked.;ensure that the #lock_type_var# is locked.
+lock_syn_pp:locked
+locking:locking
+
+cook:#cook_syn_v# the #eat_var#;#cook_syn_v# your #eat_var#; 
+cook_syn_v:cook;hydrate;heat up;prepare
+cook_syn_p:cooked;hydrated;heated up;prepared
+cook_syn_u:Cook;Hydrate;Heat up;Prepare
+
+release:#release_syn_v# the #obj_types# from #(s)_var#.;#release_syn_v# the #obj_types# from its hook;
+release_syn_v:release;let;disentangle;loose;unfasten;unfix;let loose;unhook;leave;unleash
+release_syn_u:Let;Disentangle;Release;Loose;Unfasten;Unfix;Let loose;Unhook;Leave;Unleash
+release_syn_p:let;disentangled;released;loosed;unfastened;unfixed;let loose;unhooked;left;unleashed
+release_syn_pp:let;disentangled;released;loosed;unfastened;unfixed;let loose;unhooked;left;unleashed
+releasing:letting;disentangling;releasing;loosing;unfastening;unfixing;unhooking;unleashing
+
+communicate: #communicate_syn_v# your message with (r)
+communicate_syn_v:communicate;talk;call;transmit
+communicate_syn_p:communicated;talked;called;transmitted
+communicate_syn_u:Communicate;Talk;Call;Transmit
+# << ------------------------------------------------------------------------- >>
+
+
+# --- General Verbs -------------------------------------------------------------
+wait:Wait
+
+do_syn_v:manage;do;accomplish;get around to doing;finish;succeed at;get through with
+
+exciting:exciting;fast paced;life changing;profound
+
+force_open_syn_v:break;crack;destroy
+
+looks_seems_syn_v:looks;seems;appears;appears to be;would seem to be;seems to be;looks;seems;appears
+
+can_should:can;should;should be able to;may
+
+enter_syn_p:entered;walked into;fallen into;moved into;stumbled into;come into;fly into;fly over
+
+walk_into_syn_v:walk into;show up in;saunter into;come round;space-walk;space-walk into
+walk_into_syn_p:walked into;shown up in;sauntered into;space-walked;space-walked into
+
+launched_into_syn_v:launched;blasted off
+
+contain_syn_v:contains;has;is filled with;reveals inside it;holds;shelters;offers you;reveals to you
+contain_syn_p:contained;#hold_syn_p#;had;had in it;revealed;concealed;sheltered;offered you;revealed to you;guarded;protected
+
+findin_syn_p:in;found in
+
+hold_syn_p:held;carried;had;presented;held up;was used to support
+# << ------------------------------------------------------------------------- >>
+
+
+
+############################################## Types & Variables #####################################################################
+
+# --- Types, Word Synonyms & Variables --------------------
+##   * Types 
+obj_types:(o|k|f)
+obj_types_no_key:(o|f)
+on_types:(c|s)
+lock_types:(c|d)
+eat_types:(f)
+close_open_types:(d|c)
+
+##   * Variables 
+lock_type_var:#lock_types#;#lock_types# #in_the_(r)#
+(s)_var:(s);(s) #in_the_(r)#
+(c)_var:(c);(c) #in_the_(r)#
+on_var:#on_types#;#on_types# #in_the_(r)#
+eat_var:#eat_types#;#eat_types#
+open_var:opened;open;wide open;ajar
+# << ------------------------------------------------------------------------- >>
+
+
+############################################## Objects Garmmar #####################################################################
+
+# --- Player --------------------------------------------------------------------
+## These values are typically empty
+###
+(P):#(P)_adj# | #(P)_noun#
+(P)_noun:None
+(P)_adj:None
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Rooms ---------------------------------------------------------------------
+##     List each type of room with a ';' between each
+##   Each roomType must have specific rooms
+###  Creating a room: first, take the name of the roomtype as listed under #room_type# (which we'll call X for now). create three symbols with this: X_(r), X_(r)_noun, and X_(r)_adj. X_(r) will always be composed of X_(r)_adj | X_(r)_noun. If you want to subdivide a roomtype into two or more variants, you can add _type1, _type2, etc at the end of the noun and adj symbols. make sure that these changes are also accounted for in the X_(r) token, see below for examples
+
+room_type:clean;cook;rest;work;storage
+
+(r):#(r)_adj# | #(r)_noun#
+(r)_noun:sleep station;crew cabin;washroom;closet;kitchenette;module;lab;lounge
+(r)_adj:nondescript;plain
+
+### >  Clean Room
+clean_(r):#clean_(r)_adj_type_1# | #clean_(r)_noun_type_1#
+### >> Cleaning Self
+clean_(r)_noun_type_1:washroom;bathroom;restroom;toilett
+clean_(r)_adj_type_1:spotless;clean;cramped;small
+
+### >  Storage Room
+storage_(r):#storage_(r)_adj# | #storage_(r)_noun#
+storage_(r)_noun:closet;spare room
+storage_(r)_adj:spacious;roomy;cramped;stuffed;messy;forgotten;ugly;gloomy
+
+### >  Cook Room
+cook_(r):#cook_(r)_adj# | #cook_(r)_noun#
+cook_(r)_noun:kitchen;kitchenette
+cook_(r)_adj:#hot-adj# hot;steamy;hot;sweaty
+
+### >  Rest Room
+### >> Sleep Room
+rest_(r):#rest_(r)_adj_type_1# | #rest_(r)_noun_type_1#;#rest_(r)_adj_type_2# | #rest_(r)_noun_type_2#
+rest_(r)_noun_type_1:sleep station;sleep station;sleep station;sleeping bag;crew cabin
+rest_(r)_adj_type_1:cozy;relaxing;pleasant;sleepy
+### >> fun with friends
+rest_(r)_noun_type_2:lounge;playroom;recreation zone;crew cabin;crew cabin;crew cabin
+rest_(r)_adj_type_2:fun;entertaining;exciting;well lit;silent
+
+### >  Work Room
+### >> At spaceshuttle
+work_(r):#work_(r)_adj_type_1# | #work_(r)_noun_type_1#;#work_(r)_adj_type_2# | #work_(r)_noun_type_2#
+work_(r)_noun_type_1:module;module;lab;lab;lab;control module;service module;maintenance;radars
+work_(r)_adj_type_1:silent;austere;serious;still;cramped;stuffed
+### >> At Earth
+work_(r)_noun_type_2:office;mission control
+work_(r)_adj_type_2:silent;huge;serious;still;stressful;noisy
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Containers ----------------------------------------------------------------
+##   Each roomType must has specific containers
+##   container descriptions work like room descriptions, except the (r) is replaced by a (c)
+(c):#(c)_adj_noun#
+(c)_adj_noun:#(c)_adj# | #(c)_noun#
+(c)_noun:chest;box;safe;locker
+(c)_adj:sturdy;nice;ugly;
+
+### >  Clean Container
+clean_(c):#clean_(c)_adj_type_1# | #clean_(c)_noun_type_1#;#clean_(c)_adj_type_2# | #clean_(c)_noun_type_2#
+### >> Clean Container Type 1
+clean_(c)_noun_type_1:cabinet;cabinet;cabinet;basket;box;box;box;safe;case
+clean_(c)_adj_type_1:stained;spotless;plain;zipped;sturdy
+### >> Clean Container Type 2
+clean_(c)_noun_type_2:drawer;cabinet
+clean_(c)_adj_type_2:#material_type# case
+
+### >  Storage Container
+storage_(c):#storage_(c)_adj# | #storage_(c)_noun#
+storage_(c)_noun:toolbox;chest;safe;locker;coffer;cabinet;crate;case;suitcase
+storage_(c)_adj:rusty;neglected;brand new,sturdy
+
+### >  Cook Container
+cook_(c):#cook_(c)_adj# | #cook_(c)_noun#
+cook_(c)_noun:fridge;refrigerator;freezer;cabinet
+cook_(c)_adj:fancy;big;small;stuffed
+
+### >  Rest Container
+rest_(c):#rest_(c)_adj# | #rest_(c)_noun#
+rest_(c)_noun:chest;box;locker;coffer;suitcase
+rest_(c)_adj:new;dusty;clean;amazing
+
+### >  Work Container
+work_(c):#work_(c)_adj# | #work_(c)_noun#
+work_(c)_noun:box;safe;locker;coffer;case;toolbox;display
+work_(c)_adj:iron;rusty;high-tech
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Doors ---------------------------------------------------------------------
+##   The (r) is now has a (d), and you shouldn't create room-specific door types
+(d):#(d)_adj# | #(d)_noun#
+(d)_adj:#material_type#;material
+(d)_noun:door;portal;gate;passageway;gateway;hatch
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Supporters ----------------------------------------------------------------
+##   Each roomType must has specific supporters
+##   Like containers, but with a (s)
+(s):#(s)_adj# | #(s)_noun#
+(s)_noun:shelf;table;pedestal;slab
+(s)_adj:#(o)_adj#
+
+### >  Clean Supporter
+clean_(s):#clean_(s)_adj# | #clean_(s)_noun#
+clean_(s)_noun:board;shelf;rack;
+clean_(s)_adj:dusty;cramped;messy;shiny
+
+### >  Storage Supporter
+storage_(s):#storage_(s)_adj# | #storage_(s)_noun#
+storage_(s)_noun:shelf;rack;stand
+storage_(s)_adj:rusty;shoddy;splintery;rough
+
+### >  Cook Supporter
+cook_(s):#cook_(s)_adj# | #cook_(s)_noun#
+cook_(s)_noun:counter;board;shelf;rack;plate;bowl;platter;saucepan
+cook_(s)_adj:greasy;soaped down;filthy;messy
+
+### >  Rest Supporter
+rest_(s):#rest_(s)_adj# | #rest_(s)_noun#
+rest_(s)_noun:sleep bag;sleep bag;sleeping bag;sleeping bag;shelf;laptop hanger;laptop stand
+rest_(s)_adj:comfy;warm;worn-out
+
+### >  Work Supporter
+work_(s):#work_(s)_adj# | #work_(s)_noun#
+work_(s)_noun:stand;table;chair;desk;stand;dashboard;control panel
+work_(s)_adj:stern;solid;worn;gross
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Objects ------------------------------------------------------------------
+##   Each roomType must have specific objects
+##   (s) --> (o) Very useful to create multiple subtypes to avoid inappropriate or awkward adjective pairing
+(o):#(o)_adj# | #(o)_noun#
+(o)_noun:pencil;pen
+(o)_adj:new;old;used;dusty;clean;large;small;fancy;plain;ornate;contemporary;modern;dirty;simple;hefty;modest;austere
+
+### >  Clean objects
+clean_(o):#clean_(o)_adj_type_1# | #clean_(o)_noun_type_1#;#clean_(o)_adj_type_2# | #clean_(o)_noun_type_2#;#clean_(o)_adj_type_3# | #clean_(o)_noun_type_3#
+clean_(o)_noun:#clean_(o)_noun_type_1#;#clean_(o)_noun_type_2#;#clean_(o)_noun_type_3#
+clean_(o)_adj:#clean_(o)_adj_type_1#;#clean_(o)_adj_type_2#;#clean_(o)_adj_type_3#
+### >> appliances
+clean_(o)_noun_type_1:vacuum;wet napkins;paper toillet
+clean_(o)_adj_type_1:new;old;clean;large;small;plain;ornate;contemporary;dirty;elegant;immaculate;simple;hefty
+### >> paperproducts
+clean_(o)_noun_type_2:paper towel;paper toillet;sponge
+clean_(o)_adj_type_2:new;old;used;dusty;torn;ripped;dirty;clean;large;small;fancy;plain;ornate;elegant;immaculate;simple;hefty;modest;decorated;austere;embroidered
+### >> non-disposable
+clean_(o)_noun_type_3:napkin;towel;shirt;sock;sponge
+clean_(o)_adj_type_3:new;old;used;dusty;clean;large;small;fancy;plain;dirty;elegant;tacky
+
+### >  Storage objects
+storage_(o):#storage_(o)_adj_type_1# | #storage_(o)_noun_type_1#;#storage_(o)_adj_type_2# | #storage_(o)_noun_type_2#
+storage_(o)_noun:#storage_(o)_noun_type_1#;#storage_(o)_noun_type_2#
+storage_(o)_adj:#storage_(o)_adj_type_1#;#storage_(o)_adj_type_2# 
+### >> clothing
+storage_(o)_noun_type_1:shirt;sock;shoe;glove;hat;scarf;cloak;top hat;pair of pants
+storage_(o)_adj_type_1:new;old;used;dusty;clean;large;small;fancy;plain;contemporary;modern;dirty;elegant;immaculate;simple;modest;gaudy;fashionable;tacky
+### >> appliances
+storage_(o)_noun_type_2:lightbulb;pair of headphones;lampshade;frisbee
+storage_(o)_adj_type_2:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;modern;dirty;elegant;immaculate;simple;hefty;modest;off brand;useless;broken
+
+### >  Cook objects
+cook_(o):#cook_(o)_adj_type_1# | #cook_(o)_noun_type_1#;#cook_(o)_adj_type_2# | #cook_(o)_noun_type_2#;#cook_(o)_adj_type_3# | #cook_(o)_noun_type_3#
+cook_(o)_noun:#cook_(o)_noun_type_1#;#cook_(o)_noun_type_2#;#cook_(o)_noun_type_3#
+cook_(o)_adj:#cook_(o)_adj_type_1#;#cook_(o)_adj_type_2#;#cook_(o)_adj_type_3#
+### >> utensil
+cook_(o)_noun_type_1:fork;knife;spoon;spork;teaspoon
+cook_(o)_adj_type_1:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;austere;plastic
+### >> cooking appliance
+cook_(o)_noun_type_2:napkin;whisk;ladle;blender;kettle;teapot;MW
+cook_(o)_adj_type_2:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;austere;fancy;broken
+### >> vessel/plate
+cook_(o)_noun_type_3:mug;bowl;teacup;glass;coffee cup
+cook_(o)_adj_type_3:new;old;used;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;chipped
+
+### >  Rest objects
+rest_(o):#rest_(o)_adj_type_1# | #rest_(o)_noun_type_1#;#rest_(o)_adj_type_2# | #rest_(o)_noun_type_2#;#rest_(o)_adj_type_3# | #rest_(o)_noun_type_3#
+rest_(o)_noun:#rest_(o)_noun_type_1#;#rest_(o)_noun_type_2#;#rest_(o)_noun_type_3#
+rest_(o)_adj:#rest_(o)_adj_type_1#;#rest_(o)_adj_type_2#;#rest_(o)_adj_type_3#
+### >> screen
+rest_(o)_noun_type_1:laptop;tablet;monitor
+rest_(o)_adj_type_1:shiny;widescreen;shut off;flat-screen
+### >> electronic
+rest_(o)_noun_type_2:controller;dvd;cd;lamp;laptop
+rest_(o)_adj_type_2:new;old;used;dusty;clean;large;small;fancy;plain;fancy
+### >> comfortable things
+rest_(o)_noun_type_3:pillow;sleep bag
+rest_(o)_adj_type_3:cozy;comfy;comfortable;plush;frilly;nice;small;big;heavy;cute
+
+### >  Work objects
+work_(o):#work_(o)_adj_type_1# | #work_(o)_noun_type_1#;#work_(o)_adj_type_2# | #work_(o)_noun_type_2#
+work_(o)_noun:#work_(o)_noun_type_1#;#work_(o)_noun_type_2#
+work_(o)_adj:#work_(o)_adj_type_1#;#work_(o)_adj_type_2#
+### >> utensil
+work_(o)_noun_type_1:pen;pencil;staple;notebook;cd;book;backup calendar
+work_(o)_adj_type_1:new;old;used;dusty;clean;large;small;fancy;plain;ornate;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;austere
+### >> electronic
+work_(o)_noun_type_2:printer;laptop;telephone
+work_(o)_adj_type_2:fancy;broken;operational;working
+
+##   * Object Descriptor Functions
+(P)_desc:It's you.
+(c)_desc:The (name) looks strong, and impossible to #force_open_syn_v#.
+(s)_desc:The (name) is #supp_stable#.
+(o)_desc:The (name) is #obj_what#.;The (name) #looks_seems_syn_v# #out_in_place# here
+(f)_desc:The (name) looks #food_what#.;that's a (name-adj) (name-n)!;You couldn't pay me to eat that (name-adj) thing.;You are starving (name), the food is #food_what# yeah?! But you can't eat that, sorry!! 
+(k)_desc:The (name) is cold to the touch;The (name) is #weight#.;The metal of the (name) is #key_metal#.;The (name) looks useful
+(d)_desc:The (name) looks #door_what_is#.;it's a #door_what_is# (name-n);it is what it is, a (name)
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Foods ---------------------------------------------------------------------
+##   Each roomType must have specific food
+##   The below should work as an expandable food pyramid. This can be made room specific.
+
+### >  Base food
+(f):#(f)_adj# | #(f)_noun#
+(f)_adj:#(f)_adj_good#;#(f)_adj_bad#;#(f)_adj_neutral#
+(f)_adj_good:fresh;soft;chilled;organic
+(f)_adj_bad:aging;half-eaten;rotting
+(f)_adj_neutral:dehydrated;dehydrated;frozen;large;small;tiny;hefty;sizable;dried;dry;pureed
+(f)_noun:#(f)_noun_fresh#;#(f)_noun_preserved#;#(f)_noun_dehydrated#;(f)_noun_snack
+(f)_noun_fresh:#(f)_noun_fruit#;#(f)_noun_vegetable#;#(f)_noun_grain#;#(f)_noun_protein#;#(f)_noun_dairy#;#(f)_noun_nuts#
+(f)_noun_preserved:#(f)_noun_fruit#;#(f)_noun_vegetable#;#(f)_noun_grain#;#(f)_noun_protein#;#(f)_noun_dairy#;#candy#;#can#;
+(f)_noun_dehydrated:#(f)_noun_fruit#;#(f)_noun_vegetable#;#(f)_noun_grain#;#(f)_noun_protein#
+(f)_noun_snack:cheetoz;corn sticks;nacho cheese tortilla;donut;fruit chew;cheese puff;#candy#
+(f)_noun_fruit:#fruit#
+(f)_noun_vegetable:broccoli;carrot;cucumber;onion;garlic clove;potato;cabbage;cauliflower;pizza;salad
+(f)_noun_grain:loaf of bread;sandwich
+(f)_noun_protein:;legume;cashew;peanut;burger
+(f)_noun_dairy:stick of butter;fondue
+(f)_noun_nuts:pistachio;walnut;almond;raisin
+
+### >  Clean food
+clean_(f):#(f)#
+
+### >  Storage food
+storage_(f):#(f)#
+
+### >  Cook food
+cook_(f):#(f)#
+
+### >  Rest food
+rest_(f):#(f)#
+
+### >  Work food
+work_(f):#(f)#
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Keys ----------------------------------------------------------------------
+##   Each roomType must have specific keys
+(k):#(k)_adj# | #(k)_noun#
+(k)_adj:digital;magnetic;digital;magnetic;iron;brass;metal;rusty;steel;aluminum;copper
+(k)_noun:key;keycard;latchkey;passkey
+
+##   * Unique-use Key Match Adjective
+##   These adjectives CANNOT be used elsewhere!
+clearancelevel:type #number#;type #letter#;#brand#;#brand#;#brand#;#shape#;#shape#;#shape#;#smell# scented;
+(k<->d)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(d)_adj# | #clearancelevel# #(d)_noun#; #colour# | #(k)_noun# <-> #colour# | #(d)_noun#
+(k<->c)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(c)_adj# | #clearancelevel# #(c)_noun#; #colour# | #(k)_noun# <-> #colour# | #(c)_noun#
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Keys ----------------------------------------------------------------------
+###
+openable_desc:[if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if];[if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]
+on_desc:On the (name), is [a list of things on the (obj)].;You can see [list of things on the (obj)] on the (name);this (name) has the following upon it, [list of things on the (obj)];you gaze in terror at the [list of things on the (obj)] that lie upon this very (name)!; "now why" you think, "am I looking at [list of things on the (obj)] on this (name)?"
+# << ------------------------------------------------------------------------- >>
+
+
+
+########################################## Room Descriptor Grammar #################################################################
+
+# --- Greetings -----------------------------------------------------------------
+##  Text for starting the game. ex: "Greetings, you are now in the messy sleep station"
+###
+dec:#GREETING# #dec_type##suffix_(r)#;#dec_type##suffix_(r)#
+GREETING:GREETING!;GREETINGS TREKKIE!;HELLO ASTRONAUT!;ALRIGHT THEN!; HEY  TREKKIE
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Room Intro ----------------------------------------------------------------
+##  Text for introducing the room. 
+###
+##   * Room Intro Blocks 
+dec_type:#reg-0#;#normal-0#;#difficult-0#;#moredifficult-0#;#playful-0#
+reg-0:#01#;#02#;#03#
+normal-0:#04#
+difficult-0:#05#
+moredifficult-0:#06#
+playful-0:#07#;#08#;#09#;#010#;#011#;#012#;#013#;#014#;#015#;#016#;#017#;#018#;#019#;#020#;#021#;#022#
+
+##   * Room Intro Templates
+01:#dec_find-yourself# in a (name);#dec_guess-what# (name)
+02:Well, here we are in #dec_a_the# (name)
+03:You're now in #dec_a_the# (name)
+04:You've entered a (name);You've just #walk_into_syn_p# a (name)
+05:#dec_find-yourself# in a (name-n). A (name-adj) one
+06:#dec_find-yourself# in a (name-n). A (name-adj) kind of space at the craft
+07:I am sorry to announce that you are now in the (name)
+08:Ah, the (name-n). This is some kind of (name-n), really great (name-adj) vibes in this place, a wonderful (name-adj) atmosphere. And now, well, you're in it
+09:This might come as a shock to you, but you've just #enter_syn_p# a (name)
+010:I am #announce_mood# to announce that you are now in the (name)
+011:You've #enter_syn_p# a (name-adj) room of the spaceship. Your mind races to think of what kind of room would be (name-adj). And then it hits you. Of course. You're in the (name)
+012:Of every (name-n) you could have #walk_into_syn_p#, you had to #walk_into_syn_v# a (name-adj) one
+013:You have #enter_syn_p# a (name-n) in the capsule. Not the (name-n) you'd expect. No, this is a (name)
+014:You are in a (name-n). It seems to be pretty (name-adj) here
+015:You #dec_what# in a (name-adj) kind of place at this spaceship. That is to say, you're in a (name-n)
+016:If you're wondering why everything seems so (name-adj) all of a sudden, it's because you've just #walk_into_syn_p# the (name)
+017:You make a grand eccentric entrance into a (name);You make another one of your grand eccentric entrances into a (name)
+018:Look at you, bigshot, walking into a (name) like it isn't some huge deal
+019:Look around you. Take it all in. It's not every day someone gets to be in a (name)
+020:A #signquality# #sign# tells you that you are now in the (name);Look at that #sign#! What does it say? It says (name) Module? Well that's cool
+021:This just in- You, in the (name);Welcome to the (name) of Discovery space shuttle;Wow! You're on the pad of Discovery, basically in the (name);Here we are in the (name);You've entered a (name);This (name-n) you have just entered is definitely (name-adj)
+022:If you're wondering why everything seems so weird all of a sudden, it's because you've just #launched_into_syn_v#, the space with no gravity anymore
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Inform7 Snippets ----------------------------------------------------------
+##  Shouldn't need to be messed with. These are shortcuts for when you need to use i7 code. Probably a bad idea to include symbols or tokens inside these
+###
+i7_closed/open:[if (obj) is open]an open[otherwise]a closed[end if]
+i7_list_in:[a list of things in the (obj)]
+i7_list_on:[a list of things on the (obj)]
+i7_empty:[if (obj) contains nothing]an empty[otherwise]a[end if]
+inform7:[if (obj) is locked]a locked[else if (obj) is open]an opened[otherwise]a closed[end if]
+inform7A:[if (obj) is locked]A locked[else if (obj) is open]An opened[otherwise]A closed[end if]
+inform7noa:[if (obj) is locked]a locked[else if (obj) is open]an opened[otherwise]a closed[end if]
+inform7noun:[if (obj) is locked]locked[else if (obj) is open]opened[otherwise]closed[end if]
+inform7nounnoa:[if (obj) is locked]locked[else if (obj) is open]opened[otherwise]closed[end if]
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Prefixes ------------------------------------------------------------------
+## To be affixed before object descriptions. Keep away from doors. Prefixes start with a uppercase letter and end with "a"
+###
+prefix:You see a gleam over in a corner, where you can see a;What's that over there? It looks like it's a;You scan the room, seeing a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;You smell #smelltype# smell, and follow it to a;Were you looking for a (name-n)? Because look over there, it's a;You scan the room for a (name-n), and you find a;You hear a noise behind you and spin around, but you can't see anything other than a;Look out! It's a- oh, never mind, it's just a;Look over there! a;Oh, great. Here's a;Hey, want to see a (name-n)? Look over there, a;If you haven't noticed it already, there seems to be something there by the wall, it's a;When you freely float, you notice a;Oh wow! Is that what I think it is? It is! It's a;You are pushed against the wall, inadvertently pressing a secret button. The wall opens up to reveal a;You see a;As if things weren't amazing enough already, you can even see a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Suffixes ------------------------------------------------------------------
+## To be affixed after object descriptions. Keep away from doors. Keep in mind a suffix is usually (but not always) followed by a prefix. Suffixes start with punctuation and 
+## end with a period (or exclamation/question mark).
+###
+suffix_meta:. There's something about an object in a module that's just so... TextWorld.;. You can't really describe the (name-n) besides that it's (name-adj).;. Does this look like anything mentioned in the instructions?;. What a great pairing of adjectives and nouns!;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.
+suffix_fulfillment:. A (name-n)... Is that really what you were looking for?;. Is this it? Is this what you came to TextWorld to see? a (name-n)?;. Hmm. You always thought you'd be more excited to see a (name-n) in a spaceship module.;. Is this what you came to TextWorld for? This... (name-n)?;. You look around you, at all the containers and supporters, doors and objects, and you think to yourself. Why? Why Textworld?
+suffix_(r):. Okay, just remember what is your mission here to do, and everything will go great.;. You try to gain information on your surroundings by using a technique you call 'looking.';. You can barely contain your excitement.;. The room seems oddly familiar, as though it were only superficially different from the other rooms in the spacecraft.;. You decide to just list off a complete list of everything you see in the module, because hey, why not?;. I guess you better just go and list everything you see here.;. You start to take note of what's in the module.;. You decide to start listing off everything you see in the module, as if you were in a text adventure.;. The module is well lit.;. You begin to take stock of what's here.;. Let’s list all the required tools here for the mission.;#emptymainperiod#;#emptymainperiod#;#emptymainperiod#
+
+##   * Cut for length 
+suffix:.;. You shudder, but continue examining the module.;. You wonder idly who left that here.;. Now why would someone leave that there?;. There's something strange about this being here, but you can't put your finger on it.;. There's something strange about this thing being here, but you don't have time to worry about that now.;. Huh, weird.;, so there's that.;!;. Hmmm... what else, what else?;. Wow, isn't TextWorld just the best?;. I mean, just wow! Isn't TextWorld just the best?;. You can't wait to tell the folks at mission control hall about this!;. Something scurries by right in the corner of your eye. Probably nothing.;. You idly wonder how they came up with the name TextWorld for this place. It's pretty fitting.;. Suddenly, you bump your head on the ceiling, but it's not such a bad bump that it's going to prevent you from looking at objects and even things.;. Now that's what I call TextWorld!;. Classic TextWorld.;. The light flickers for a second, but nothing else happens.;.;.;.;#emptymainperiod#;#emptymainperiod#;#emptymainperiod#;#suffix_fulfillment#;#suffix_meta#
+
+##   * Multi suffixes need to be more flexible than normal ones
+suffix-multi:.;. You shudder, but continue examining the room.;. You wonder idly who put this stuff here.;. There's something strange about this stuff being here, but you can't put your finger on it.;. There's something strange about this stuff being here, but you don't have time to worry about that now.;. Huh, weird.;, so there's that.;, so why not take a picture, it'll last longer!;. It doesn't get any more TextWorld than this!;#emptymainperiod#;#emptymainperiod#;#emptymainperiod#
+suffix_(s)_mid:.;. You shudder, but continue examining the (name-n).;. You wonder idly who left that here.;. Now why would someone leave that there?;#suffix_meta#;. Why don't you take a picture of it, it'll last longer!;!;. Wow, isn't TextWorld just the best?;. I guess it's true what they say, if you're looking for a (name-n), go to TextWorld.;. What a coincidence, weren't you just thinking about a (name-n)?;#emptymainperiod#;#emptymainperiod#;#emptymainperiod#
+suffix_(s)_end:.;. Check and see you cannot remove them.;. You shudder, but continue examining the room.;. There's something strange about this being here, but you can't put your finger on it.;. There's something strange about this thing being here, but you don't have time to worry about that now. You have more important mission!;. Huh, weird.;, so there's that.;. Hmmm... what else, what else?;. I mean, just wow! Isn't TextWorld just the best?;. You can't wait to tell the folks at home about this!;. Something scurries by right in the corner of your eye. Probably nothing.;. You idly wonder how they came up with the name TextWorld Spaceship for this place. It's pretty fitting.;. Suddenly, you bump your head on the ceiling, nogravity ha?! but it's not such a bad bump that it's going to prevent you from looking at objects and even things.;. Wow! Just like in the StartWar movies!;. It doesn't get more TextWorld than this!;. Now that's what I call TextWorld!;. Classic TextWorld.;#suffix#;#emptymainperiod#;#emptymainperiod#;#emptymainperiod#
+suffix_(s)_end_angry:. You move on, clearly #upsetwith# TextWorld.;. You move on, clearly #upsetwith# your TextWorld experience.;. Sometimes, just sometimes, TextWorld can just be the worst.;. What's the point of an empty (name-n)?;. Hopefully this doesn't make you too upset.;. You make a mental note to not get your hopes up the next time you see a (name-n) in a room.;. ;. Hopefully, this discovery doesn't ruin your TextWorld experience!;. Silly (name-n), silly, empty, good for nothing (name-n).;. You think about smashing the (name-n) to bits, throwing the bits #intheblank#, etc, until you get bored.;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n)! oh well.;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, and here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;#emptymainperiod#;#emptymainperiod#;#emptymainperiod#
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Separators Description ----------------------------------------------------
+## Used to separate the description of different object types
+
+##   * Container Descriptions
+###    Rules for Container Descriptions
+###    Good idea to subdivide these into difficulty levels
+###       room_desc_(c): generates all container descriptions
+###       containerdescription: contains all physical exterior descriptions of containers
+###       room_desc_(c)_1_name: describes the container as an adj+noun
+###       room_dec_(c)_1_noun: describes the container as a noun
+###       room_desc_(c)_content: decides if we append a description of the container's contents depending on if the container is open or closed
+###       opencontainer:what is appended if the container is open
+###       room_desc_(c)_2_adj: adds an adjective and a list of contents (creates doubled adjectives?)
+###       room_desc_(c)_2: list of contents without an adjective
+###
+room_desc_(c):#containerdescription##room_desc_(c)_content#
+
+containerdescription:#room_desc_(c)_1_name#;#room_desc_(c)_1_noun#
+
+room_desc_(c)_1_name:#reg-a#;#normal-a#;#difficult-a#;#moredifficult-a#;#playful-a#
+reg-a:#a1#;#a2#
+normal-a:#a3#;#a4#;#a5#
+difficult-a:#a6#
+moredifficult-a:#reg-a#
+playful-a:#reg-a#
+
+room_desc_(c)_1_noun:#reg-b#;#normal-b#;#difficult-b#;#moredifficult-b#;#playful-b#
+reg-b:#b1#;#b2#
+normal-b:#b3#;#b4#;#b5#
+difficult-b:#reg-b#
+moredifficult-b:#reg-b#
+playful-b:#reg-b#
+
+room_desc_(c)_content:[if (obj) is open and there is something in the (obj)] #opencontainer##suffix#[end if][if (obj) is open and the (obj) contains nothing] #emptyreaction#[end if]
+emptyreaction:The (name-n) is empty, what a horrible day!;The (name-n) is empty! What a waste of a day!;The (name-n) is empty! This is the worst thing that could possibly happen, ever!;Empty! What kind of nightmare TextWorld is this?;What a letdown! The (name-n) is empty!
+
+opencontainer:The (name) contains #i7_list_in#
+
+room_desc_(c)_2_adj:#c1#;#c2#;#c3#;#c4#;#c5#;#c6#;#c7#;#c8#;#c9#
+
+room_desc_(c)_2:#d0#;#d1#;#d2#;#d3#;#d4#
+
+room_desc_(c)_multi_noun:#e1#
+room_desc_(c)_multi_open_noun:#f1#;#f2#;#f3#;#f4#;#f5#;#f6#
+
+room_desc_(c)_multi_adj:#g1#
+room_desc_(c)_multi_open_adj:#h1#;#h2#;#h3#;#h4#
+
+##   * Container Description Templates
+###
+###      # A #
+a1:#how_see# #inform7# (name).;#a6#
+a2:#how_see# #inform7# #name_var# #here_alt#.;#a6#
+a3:#inform7A# #name_var# is #here_alt#.;#a6#
+a4:#a1#;#a6#
+a5:#a2#;#a6#
+a6:#prefix# (name)#suffix#
+
+###      # B #
+b1:#how_see# #inform7# (name-n).;#b5#
+b2:#how_see# #inform7# (name-n) #here_alt#.;#b5#
+b3:#inform7A# (name-n) is #here_alt#.;#b5#
+b4:#b1#;#b5#
+b5:#prefix# (name-n)#suffix#
+
+###      # C #
+c1:#it_is# (name-adj), and #contain_syn_v# #i7_list_in#.
+c2:#it_is# (name-adj). Also, there #listwithis# in it.
+c3:#c1#
+c4:#ContentsC-# [list of things in the (obj)].
+c5:there [is|are] [a list of things in the (obj)] in this silly (name-adj) thing.
+c6:#c9#
+c7:#c9#
+c8:Let's see what's inside - #i7_list_in#.
+c9:#it# #reminds_you# the containers #ofyouryouth#. Oh, how they also #contain_syn_p# #i7_list_in#.
+
+###      # D #
+d0:the (name) contains #i7_list_in#.
+d1:It #contain_syn_v# #i7_list_in#.;There is #i7_list_in# in it.
+d2:There #listwithis# #findin_syn_p# it.
+d3:You can see #i7_list_in# in the (name-n).
+d4:In it, you can see #i7_list_in#.
+
+###      # E #
+e1:[if (obj) is open]#room_desc_(c)_multi_open_noun#.[else if (obj) is locked]The (name-n) is locked.[otherwise]The (name-n) is closed.[end if]
+
+###      # F #
+f1:The (name-n) #contain_syn_v# #i7_list_in#
+f2:There #listwithis# #findin_syn_p# the (name-n)
+f3:You can see #i7_list_in# in the (name-n)
+f4:#f5#;#f6#
+f5:#f6#
+f6:The (name-n) #reminds_you# the containers #ofyouryouth#. Oh, how they also #contain_syn_p# #i7_list_in#
+
+###      # G #
+g1:[if (obj) is open]#room_desc_(c)_multi_open_adj#.[else if (obj) is locked]The (name-adj) one is locked.[otherwise]The (name-adj) one is closed.[end if]
+
+###      # H #
+h1:The (name-adj) one #contain_syn_v# #i7_list_in#
+h2:There #i7_list_in# #findin_syn_p# the (name-adj) one
+h3:You can see #i7_list_in# in the (name)
+h4:In the (name-adj) one, you can see #i7_list_in#
+
+##   * Supporter Descriptions
+###      Similar to Container descriptions, but without open/close or lock/unlock
+###         room_desc_(s): hub
+###         room_desc_(s)_1_noun : description of supporter without adjective. Paired with--> room_desc_(s)_2_adj
+###         room_desc_(s)_1_name : same as above, but with an adjective
+###         room_desc_(s)_2_adj : adjective for supporter plus a list of things on it
+###         room_desc_(s)_2:
+###
+room_desc_(s):#room_desc_(s)_1_noun# #room_desc_(s)_2_adj#;#room_desc_(s)_1_name# #room_desc_(s)_2#
+
+room_desc_(s)_1_noun:#prefix# floating (name-n)#suffix_(s)_mid#
+
+room_desc_(s)_1_name:#prefix# freefloating (name)#suffix_(s)_mid#
+
+room_desc_(s)_2_adj:The (name-n) is (name-adj).[if there is something on the (obj)] On the (name) #how_see_u# #i7_list_on# tightly fixed#suffix_(s)_end#[end if][if there is nothing on the (obj)] #emptysupporter##suffix_(s)_end_angry#[end if];The (name-n) is (name-adj) [if name has something on it] on the (name) #i7_list_on# which are screwed to the (name-n)[else if the (name) is empty]#emptysupporter#[end if]
+
+room_desc_(s)_2:[if there is something on the (obj)]On the (name) #how_see_u# #i7_list_on# tightened to the surface#suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter##suffix_(s)_end_angry#[end if];[if there is something on the (obj)]You see #i7_list_on# on the (name-n), see how it is fixed to the surface#suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter##suffix_(s)_end_angry#[end if]
+
+room_desc_(s)_multi_noun:[if there is something on the (obj)]On the (name-n), you see #i7_list_on#, which you cannot remove them#suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter_multi##suffix_(s)_end_angry#[end if]
+
+room_desc_(s)_multi_adj:[if there is something on the (obj)]On the (name-adj) one, you see #i7_list_on##suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter_multi##suffix_(s)_end_angry#[end if]
+
+emptysupporter:But there isn't a thing on it, weightless is amazing!;Unfortunately, there isn't a thing on it;But the thing is empty;But the thing is empty, unfortunately;But the thing hasn't got anything on it;But oh no! there's nothing on this piece of #trash#;The (name-n) appears to be empty;Looks like someone's already been here and taken everything off it, though;However, the (name-n), like an empty (name-n), has nothing on it;
+
+emptysupporter_multi:There isn't a thing on the (name-n);The (name-n) is empty;Look at the (name-n). There's nothing on this piece of #trash#;But the (name-n) hasn't got anything on it;What a letdown, there's nothing here;
+
+##   * Group Descriptions
+###
+room_desc_group:You can see (^) (val), (name), here#suffix-multi#;Your attention is drawn to (^) (val), (name)#suffix-multi#
+
+##   * Exit Descriptions
+###      room_desc_(d): describes a single door in the room
+###      room_desc_(dir): describes a single unblocked exit in the room
+###      room_exit_desc: describes multiple unlocked exits in the room
+###      room_desc_exits: possible unnecessary
+###      room_desc_doors_closed: describes a group of closed doors in the room
+###      room_desc_doors_open: describes a group of open doors in the room
+###
+room_desc_(d):There is #i7_closed/open# (name) leading (dir).
+
+room_desc_(dir):There is an #unblocked# exit to the (dir).;There is an exit to the (dir). Don't worry, it is #unblocked#.;You need an #unblocked# exit? You should try going (dir).;You don't like doors? Why not try going (dir), that entranceway is #unblocked#.
+
+room_exit_desc:#easy1#.;#medium1#.;#hard1#.
+easy1:There [is an|are] #unblocked# [exit|exits] to the (dir);There [is an|are] [exit|exits] to the (dir). And hey, don't worry, [they are|it's] #unblocked#
+medium1:[An exit|Exits] #unblocked# [lies|lie] to the (dir);You can go (dir) from here without having to deal with any doors
+hard1:it looks like you can exit to the (dir), if doors aren't really your #yourthing#;if you want to leave, and doors really aren't your #yourthing# you could try going (dir);If you're not really a door person, you could leave by the (dir);If you're not really a doors fan, you could leave by the (dir);not a fan of the doors? Why not go (dir);Hot tip- if you go (dir), you won't have to deal with any doors
+
+room_desc_exits:There [is an|are] #unblocked# [exit|exits] to the (dir).
+
+room_desc_doors_closed:#easy0a#.
+easy0a:There are (^) closed doors, (name-indefinite), here;Let's see how many closed doors there are. Looks like (^), (name-indefinite);There are (^) closed doors here, (name-indefinite);
+
+room_desc_doors_open:#easy0b#.
+easy0b:There are (^) open doors, (name-indefinite), here;Let's see how many open doors there are. Looks like (^), (name-indefinite)
+# << ------------------------------------------------------------------------- >>
+
+
+
+############################################ Instructions Grammar ##################################################################
+
+# --- Compound Command Description Functions ------------------------------------
+##
+###
+ig_unlock_open:open the locked #lock_types# using the (k).;unlock and open the #lock_types#.;unlock and open the #lock_types# using the (k).;open the #lock_types# using the (k).
+ig_unlock_open_take:open the locked #lock_types# using the (k) and take the #obj_types_no_key#.;unlock the #lock_types# and take the #obj_types_no_key#.;unlock the #lock_types# using the (k), and take the #obj_types_no_key#.;take the #obj_types_no_key# from within the locked #lock_types#.
+ig_unlock_open_release:open the locked #lock_types# using the (k) and unhook the #obj_types_no_key#.;unlock the #lock_types# and release the #obj_types_no_key#.;unlock the #lock_types# using the (k), and unhook the #obj_types_no_key#.;release the #obj_types_no_key# from within the locked #lock_types#.
+ig_open_take:take the #obj_types# from the (c).;open the (c) and take the #obj_types#.;from in the closed (c), take the #obj_types#.
+ig_take/c_unlock:take the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
+ig_take/s_unlock:take the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
+ig_take_unlock:#take_syn_v# the (k) and use it to unlock the #lock_types#.;unlock the #lock_types# with the (k).;
+ig_open_insert:open the (c) and place the #obj_types# in it.;put the #obj_types# in the closed (c).;
+ig_insert_close:place the #obj_types# in the (c) and close it.;close (c) after placing the #obj_types# in it.;attach the #obj_types# to the hook in the (c) and close it.
+ig_close_lock:close the #lock_types# and lock it.;close the #lock_types# and lock it with the (k).
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Flavour Text ---------------------------------------------------------------
+##
+###
+quest:#prologue# (list_of_actions) #epilogue#
+quest_one_action:#prologue_one_action# (action)
+prologue:#welcome#! Here is your task for today. #newsentence#;#welcome#! Here is how to play! #newsentence#;#welcome#! #newsentence#;Hey, thanks for coming over to the TextWorld today, there is something I need you to do for me. #newsentence#
+prologue_one_action:#welcome#! Your task for today is to;#welcome#!;Your objective is to;Hey, thanks for coming over to TextWorld! Please
+newsentence:First off,;First of all,;First stop,;First step,;Your first objective is to;First thing I need you to do is to;First off, if it's not too much trouble, I need you to;First of all, you could, like,;First, it would be #begood# if you could
+action_separator: Then, ; Next, ; Following that, ; If you can #do_syn_v# that, ; Once you #do_syn_v# that, ; That done, ; With that over with, ; With that accomplished, ; With that done, ; Okay, and then, ; And then, ;#emptyinstruction#
+epilogue:Once that's all handled, you can stop!;And once you've done that, you win!;And if you do that, you're the winner!;That's it!;Got that? Good!;Alright, thanks!
+welcome:Welcome to TextWorld;You are now playing a #exciting# #game# of TextWorld Spaceship;Welcome to another #exciting# #game# of TextWorld;It's time to explore the amazing world of TextWorld Galaxy;Get ready to pick stuff up and put it in places, because you've just entered TextWorld shuttle;I hope you're ready to go into rooms and interact with objects, because you've just entered TextWorld shuttle;Who's got a virtual machine and is about to play through an #exciting# round of TextWorld? You do;
+game:game;round;session;episode
+# << ------------------------------------------------------------------------- >>
+
+
+# --- Separators -----------------------------------------------------------------
+##  *--- Action separators
+###      Need at least 5 for each action type
+###
+action_separator_take:#afterhave# #take_syn_pp# the #obj_types#, ;#after# #taking# the #obj_types#, ;With the #obj_types#, ;If you can get your hands on the #obj_types#, ;#emptyinstruction#;
+action_separator_take/s:#afterhave# #take_syn_pp# the #obj_types# from (s), ;#after# #taking# the #obj_types# from (s), ;With the #obj_types#, ;If you can get your hands on the #obj_types#, ;#emptyinstruction#
+action_separator_eat:#afterhave# #eat_syn_pp# the #eat_types#, ;#after# #eating# the #obj_types#, ;#emptyinstruction#;
+action_separator_insert:#afterhave# #insert_syn_pp# the #obj_types# into the (c), ;#after# #inserting# the #obj_types# into the (c), ;#emptyinstruction#
+action_separator_open: #afterhave# #open_syn_pp# the #close_open_types#, ;#after# #opening# the #close_open_types#, ;#emptyinstruction#
+action_separator_unlock: #afterhave# #unlock_syn_pp# the #lock_types#, ;#after# #unlocking# the #lock_types#, ;#emptyinstruction#;
+action_separator_lock: #afterhave# #lock_syn_pp# the #lock_types#, ;#after# #locking# the #lock_types#, ;#emptyinstruction#;
+action_seperator_go: #afterhave# #go_syn_pp# (dir), ;#after# #going# (dir), ;once you're (dir), ;once you're in the (dir), ;If you can manage to go (dir), ;#afterhave# #go_syn_pp# through the (r), ;#after# #going# through the (r), ;#emptyinstruction#
+action_seperator_go/south: #afterhave# #go_syn_pp# south, ;#emptyinstruction#
+action_seperator_go/north: #afterhave# #go_syn_pp# north, ;#emptyinstruction#
+action_seperator_go/east: #afterhave# #go_syn_pp# east, ;#emptyinstruction#
+action_seperator_go/west: #afterhave# #go_syn_pp# west, ;#emptyinstruction#
+action_separator_close: #afterhave# #close_syn_pp# the #close_open_types#, ; #after# #closing# the #close_open_types#, ;#emptyinstruction#
+action_separator_release: #afterhave# #release_syn_pp# the #obj_types# from the #(s)_var#, ; #after# #releasing# the #obj_types# into the (r);#emptyinstruction#
+
+
+##  *--- Separator Symbols
+###
+afterhave:After you have;Having;Once you have;If you have
+after:After;
+# << ------------------------------------------------------------------------- >>
+
+
+
+
+# --- Empty Icon ----------------------------------------------------------------
+###
+emptymainperiod:#emptymain#
+emptymain:#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty36#;#empty37#;#empty38#;#empty39#;#empty40#;#empty41#;#empty42#;#empty43#;#empty44#;#empty45#;#empty46#;#empty47#;#empty48#;#empty49#;#empty50#;#empty51#;#empty52#;#empty53#;#empty54#;#empty55#;#empty56#;#empty57#;#empty58#;#empty59#;#empty60#;#empty61#;#empty62#;#empty63#
+empty1:.;
+empty2:.;
+empty3:.;
+empty4:.;
+empty5:.;
+empty6:.;
+empty7:.;
+empty8:.;
+empty9:.;
+empty10:.;
+empty11:.;
+empty12:.;
+empty13:.;
+empty14:.;
+empty15:.;
+empty16:.;
+empty17:.;
+empty18:.;
+empty19:.;
+empty20:.;
+empty21:.;
+empty22:.;
+empty23:.;
+empty24:.;
+empty25:.;
+empty26:.;
+empty27:.;
+empty28:.;
+empty29:.;
+empty30:.;
+empty31:.;
+empty32:.;
+empty33:.;
+empty34:.;
+empty35:.;
+empty36:.;
+empty37:.;
+empty38:.;
+empty39:.;
+empty40:.;
+empty41:.;
+empty42:.;
+empty43:.;
+empty44:.;
+empty45:.;
+empty46:.;
+empty47:.;
+empty48:.;
+empty49:.;
+empty50:.;
+empty51:.;
+empty52:.;
+empty53:.;
+empty54:.;
+empty55:.;
+empty56:.;
+empty57:.;
+empty58:.;
+empty59:.;
+empty60:.;
+empty61:.;
+empty62:.;
+empty63:.;
+
+
+emptyinstruction:#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#,#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+emptyinstruction1: And then, ;
+emptyinstruction2: Then, ;
+emptyinstruction3: After that, ;
+emptyinstruction4: And then, ;
+emptyinstruction5: After that, ;
+emptyinstruction6: Then, ;
+emptyinstruction7: And then, ;
+emptyinstruction8: After that, ;
+emptyinstruction9: And then, ;
+emptyinstruction10: Then, ;
