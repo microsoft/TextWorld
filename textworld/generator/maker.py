@@ -357,7 +357,7 @@ class GameMaker:
         paths (List[WorldPath]): The connections between the rooms.
     """
 
-    def __init__(self, kb: Optional[KnowledgeBase] = None) -> None:
+    def __init__(self, kb: Optional[KnowledgeBase] = None, **kwargs) -> None:
         """
         Creates an empty world, with a player and an empty inventory.
         """
@@ -371,7 +371,7 @@ class GameMaker:
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.nowhere = []
-        self.grammar = textworld.generator.make_grammar()
+        self.grammar = textworld.generator.make_grammar(options=kwargs)
         self._game = None
         self._distractors_facts = []
 
