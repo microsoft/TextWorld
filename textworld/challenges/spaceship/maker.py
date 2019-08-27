@@ -1,15 +1,22 @@
-from textworld.challenges.spaceship import GameMaker
+from textworld import GameMaker
+from textworld.generator.data import KnowledgeBase
+from textworld import g_rng
+
+
+g_rng.set_seed(20190826)
+
+PATH = r"/home/v-hapurm/Documents/Haki's Git/TextWorld/textworld/challenges/spaceship/textworld_data"
 
 
 def spaceship_maker():
     # GameMaker object for handcrafting text-based games.
-    gm = GameMaker(theme='Spaceship')
-    # gm = GameMaker()
+    kb = KnowledgeBase.load(target_dir=PATH)
+    gm = GameMaker(kb=kb, theme='Spaceship')
 
     # ===== Sleep Station Design =======================================================================================
     sleep_station = gm.new_room("Sleep Station")
 
-    sleep_bag = gm.new(type='c', name="Sleeping Bag")       # Provide the type and the name of the object.
+    sleep_bag = gm.new(type='c', name="sleeping bag")       # Provide the type and the name of the object.
     sleep_bag.desc = "cool! You can sleep in a comfy bag."  # Text to display when issuing command "examine note".
     sleep_station.add(sleep_bag)  # Sleeping bag is fixed in place in the Sleep Station.
     gm.add_fact("open", sleep_bag)
@@ -21,7 +28,7 @@ def spaceship_maker():
 
     # ===== US LAB Design ==============================================================================================
     us_lab = gm.new_room("US LAB")
-    key = gm.new(type='k', name="Electronic key")
+    key = gm.new(type='k', name="electronic key")
     key.desc = "This key opens the door into the modules area. " \
                "In this space craft, the gravity is not a challenge. Thus, you can find things on the floor."
     us_lab.add(key)  # When added directly to a room, portable objects are put on the floor.
@@ -29,13 +36,12 @@ def spaceship_maker():
     corridor1 = gm.connect(sleep_station.south, us_lab.north)
     doorA = gm.new_door(corridor1, name="door A")
     gm.add_fact("closed", doorA)  # Add a fact about the door, e.g. here it is closed.
-    # gm.render()
 
     # ===== Russian Module Design ======================================================================================
     russian_module = gm.new_room("Russian Module")
     supporter = gm.new(type='s')  # When not provided, names are automatically generated.
     russian_module.add(supporter)  # Supporters are fixed in place.
-    key_code = gm.new(type='k', name="Electronic key")
+    key_code = gm.new(type='k', name="digital key")
     key_code.desc = "This key is in fact a digital code which opens the secured box in the control modules area. " \
                     "The code, in fact, is written on the supporter."
     supporter.add(key_code)
@@ -44,7 +50,6 @@ def spaceship_maker():
     doorB = gm.new_door(corridor2, name="door B")
     gm.add_fact("locked", doorB)
     gm.add_fact("match", key, doorB)  # Tell the game 'Electronic key' is matching the 'door B''s lock
-    # gm.render()
 
     # ===== Control Module Design ======================================================================================
     control_module = gm.new_room("Control Module")
@@ -61,16 +66,22 @@ def spaceship_maker():
     corridor3 = gm.connect(russian_module.west, control_module.east)
     doorC = gm.new_door(corridor3, name='door C')
     gm.add_fact("open", doorC)
-    # gm.render()
 
     # ===== Player and Inventory Design ================================================================================
     gm.set_player(sleep_station)
 
     pencil = gm.new(type='o', name='pencil')  # New portable object with a randomly generated name.
     gm.inventory.add(pencil)  # Add the object to the player's inventory.
-    # gm.render()
+    gm.render(interactive=True)
 
-    quest = gm.record_quest()
+    quest = gm.new_quest_using_commands(['open door A', 'go south', 'take electronic key',
+                                         'unlock door B with electronic key', 'open door B', 'go south',
+                                         'take digital key from board', 'go west',
+                                         'unlock Secured box with digital key', 'open Secured box',
+                                         'take Secret Codes Handbook from Secured box'])
+    print(" > ".join(quest.commands))
+
+    gm.quests.append(quest)
 
 
 if __name__ == "__main__":
