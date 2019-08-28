@@ -1,0 +1,34 @@
+# food
+type f : o {
+    predicates {
+        edible(f);
+        eaten(f);
+    }
+
+    rules {
+        eat :: in(f, I) -> eaten(f);
+    }
+
+    constraints {
+        eaten1 :: eaten(f) & in(f, I) -> fail();
+        eaten2 :: eaten(f) & in(f, c) -> fail();
+        eaten3 :: eaten(f) & on(f, s) -> fail();
+        eaten4 :: eaten(f) & at(f, r) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "food";
+            definition :: "food is edible.";
+        }
+
+        predicates {
+            edible(f) :: "The {f} is edible";
+            eaten(f) :: "The {f} is nowhere";
+        }
+
+        commands {
+            eat :: "eat {f}" :: "eating the {f}";
+        }
+    }
+}

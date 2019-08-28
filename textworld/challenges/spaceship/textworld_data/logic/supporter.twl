@@ -1,0 +1,17 @@
+# supporter
+type s : t {
+    predicates {
+        on(o, s);
+    }
+
+    inform7 {
+        type {
+            kind :: "supporter";
+            definition :: "supporters are fixed in place.";
+        }
+
+        predicates {
+            on(o, s) :: "The {o} is on the {s}";
+        }
+    }
+}
