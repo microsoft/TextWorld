@@ -1,0 +1,12 @@
+# Player
+type P {
+    rules {
+        look :: at(P, r) -> at(P, r);  # Nothing changes.
+    }
+
+    inform7 {
+        commands {
+            look :: "look" :: "looking";
+        }
+    }
+}
