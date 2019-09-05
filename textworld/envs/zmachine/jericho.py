@@ -5,6 +5,8 @@
 import os
 import warnings
 
+import jericho
+
 import textworld
 from textworld.core import GameState
 from textworld.core import GameNotRunningError
@@ -64,11 +66,6 @@ class JerichoEnv(textworld.Environment):
         self.state["location"] = self._jericho.get_player_location()
 
     def reset(self):
-        # Since Jericho is not thread-safe, we load it locally so
-        # its global memory is not shared accross multiple processes
-        # when forking.
-        import jericho
-
         self.close()  # In case, it is running.
 
         # Start the game using Jericho.

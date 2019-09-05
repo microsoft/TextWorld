@@ -6,12 +6,12 @@ Envs
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: textworld.gym.envs.textworld_games_env
+.. automodule:: textworld.gym.envs.textworld
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: textworld.gym.envs.batch_env
+.. automodule:: textworld.gym.envs.textworld_batch
     :members:
     :undoc-members:
     :show-inheritance:

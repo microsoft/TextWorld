@@ -7,6 +7,8 @@ from os.path import join as pjoin
 
 import numpy as np
 
+import gym
+
 import textworld
 from textworld import g_rng
 
@@ -36,11 +38,11 @@ def generate_never_ending_game(args):
     options = textworld.GameOptions()
     options.path = path
     options.force_recompile = True
-    game_file = textworld.generator.compile_game(game, options)
-    return game_file
+    gamefile = textworld.generator.compile_game(game, options)
+    return gamefile
 
 
-def benchmark(game_file, args):
+def benchmark(gamefile, args):
     infos = textworld.EnvInfos()
     if args.activate_state_tracking or args.mode == "random-cmd":
         infos.admissible_commands = True
@@ -48,7 +50,7 @@ def benchmark(game_file, args):
     if args.compute_intermediate_reward:
         infos.intermediate_reward = True
 
-    env = textworld.start(game_file, infos)
+    env = textworld.start(gamefile, infos)
     print("Using {}".format(env))
 
     if args.mode == "random":
@@ -87,10 +89,42 @@ def benchmark(game_file, args):
     return speed
 
 
+def benchmark_gym(gamefile, args):
+    infos = textworld.EnvInfos(admissible_commands=True)
+    env_id = textworld.gym.register_games([gamefile] * args.batch_size, infos, args.batch_size)
+    env = gym.make(env_id)
+    print("Using {}".format(env.__class__.__name__))
+
+    rng = np.random.RandomState(args.seed)
+
+    obs, infos = env.reset()
+
+    if args.verbose:
+        print(obs[0])
+
+    start_time = time.time()
+    for _ in range(args.max_steps):
+        command = rng.choice(infos["admissible_commands"][0])
+        obs, _, dones, infos = env.step([command] * args.batch_size)
+
+        if all(dones):
+            env.reset()
+
+        if args.verbose:
+            print(obs[0])
+
+    duration = time.time() - start_time
+    speed = args.max_steps / duration
+    print("Done {:,} steps in {:.2f} secs ({:,.1f} steps/sec)".format(args.max_steps, duration, speed))
+    return speed
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game",
                         help="Path to an existing game.")
+    parser.add_argument("--gym", action="store_true",
+                        help="Use Gym to run the game.")
     parser.add_argument("--nb-rooms", type=int, default=20,
                         help="Nb. of rooms in the world. Default: %(default)s")
     parser.add_argument("--nb-objects", type=int, default=50,
@@ -116,13 +150,16 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    game_file = args.game
+    gamefile = args.game
     if args.game is None:
-        game_file = generate_never_ending_game(args)
+        gamefile = generate_never_ending_game(args)
 
     speeds = []
     for _ in range(3):
-        speed = benchmark(game_file, args)
+        if args.gym:
+            speed = benchmark_gym(gamefile, args)
+        else:
+            speed = benchmark(gamefile, args)
         speeds.append(speed)
         args.agent_seed = args.agent_seed + 1
 
