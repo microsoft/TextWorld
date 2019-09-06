@@ -9,11 +9,36 @@ type d : t {
     }
 
     rules {
-        lock/d   :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & $in(k, I) & $match(k, d) & closed(d) -> locked(d);
-        unlock/d :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & $in(k, I) & $match(k, d) & locked(d) -> closed(d);
+        lock/d    :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & $in(k, I) & $match(k, d) & closed(d) -> locked(d);
+        unlock/d  :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & $in(k, I) & $match(k, d) & locked(d) -> closed(d);
 
-        open/d   :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & closed(d) -> open(d) & free(r, r') & free(r', r);
-        close/d  :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & open(d) & free(r, r') & free(r', r) -> closed(d);
+        open/d    :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & closed(d) -> open(d) & free(r, r') & free(r', r);
+        close/d   :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & open(d) & free(r, r') & free(r', r) -> closed(d);
+        
+        #lock/close/d/b  :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $pair(b, d) & pushed(b) & open(d) -> unpushed(b) & locked(d);
+        #unlock/open/d/b :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $pair(b, d) & unpushed(b) & locked(d) -> pushed(b) & open(d);
+
+
+
+
+        lock/close/d/b  :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $pair(b, d) & $link(r, d, r') & $link(r', d, r) & pushed(b) & closed(d) -> unpushed(b) & locked(d);
+        unlock/open/d/b :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $pair(b, d) & $link(r, d, r') & $link(r', d, r) & unpushed(b) & locked(d) -> pushed(b) & closed(d);
+
+
+
+
+
+        #lock/close/d/b  :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $link(r', d, r'') & $link(r'', d, r') & $pair(b, d) & pushed(b) & open(d) & free(r', r'') & free(r'', r') -> unpushed(b) & locked(d);
+        #unlock/open/d/b :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $link(r', d, r'') & $link(r'', d, r') & $pair(b, d) & unpushed(b) & locked(d) -> pushed(b) & open(d) & free(r', r'') & free(r'', r');
+
+        #lock/close/d/b  :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $link(r, d, r') & $link(r', d, r) & $pair(b, d) & pushed(b) & open(d) & free(r, r') & free(r', r) -> unpushed(b) & locked(d);
+        #unlock/open/d/b :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $link(r, d, r') & $link(r', d, r) & $pair(b, d) & unpushed(b) & locked(d) -> pushed(b) & open(d) & free(r, r') & free(r', r);
+
+        #lock/close/d/b  :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $link(r, d, r') & $link(r', d, r) & $pair(b, d) & pushed(b) & closed(d) -> unpushed(b) & locked(d);
+        #unlock/open/d/b :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & $link(r, d, r') & $link(r', d, r) & $pair(b, d) & unpushed(b) & locked(d) -> pushed(b) & closed(d);
+
+        #open/dr    :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & closed(d) -> open(d) & free(r, r') & free(r', r);  
+        #close/dr   :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & open(d) & free(r, r') & free(r', r) -> closed(d);
 
         examine/d :: at(P, r) & $link(r, d, r') -> at(P, r);  # Nothing changes.
     }
@@ -21,6 +46,9 @@ type d : t {
     reverse_rules {
         lock/d :: unlock/d;
         open/d :: close/d;
+        lock/close/d/b :: unlock/open/d/b;
+        #open/dr :: close/dr;
+
     }
 
     constraints {
@@ -55,20 +83,27 @@ type d : t {
         }
 
         predicates {
-            open(d) :: "The {d} is open";
+            open(d)   :: "The {d} is open";
             closed(d) :: "The {d} is closed";
             locked(d) :: "The {d} is locked";
+            
             link(r, d, r') :: "";  # No equivalent in Inform7.
         }
 
         commands {
-            open/d :: "open {d}" :: "opening {d}";
-            close/d :: "close {d}" :: "closing {d}";
+            open/d    :: "open {d}" :: "opening {d}";
+            close/d   :: "close {d}" :: "closing {d}";
 
-            unlock/d :: "unlock {d} with {k}" :: "unlocking {d} with the {k}";
-            lock/d :: "lock {d} with {k}" :: "locking {d} with the {k}";
+            unlock/d  :: "unlock {d} with {k}" :: "unlocking {d} with the {k}";
+            lock/d    :: "lock {d} with {k}" :: "locking {d} with the {k}";
 
-            examine/d :: "examine {d}" :: "examining {d}";
+            lock/close/d/b  :: "unpush {b}" :: "unpushing the {b}";
+            unlock/open/d/b :: "push {b}" :: "pushing the {b}";
+
+            #open/dr    :: "open {d}" :: "opening {d}";
+            #close/dr   :: "close {d}" :: "closing {d}";
+
+            examine/d :: "examine {d}" :: "examining the {d}";
         }
     }
 }

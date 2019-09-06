@@ -2,6 +2,7 @@
 type s : t {
     predicates {
         on(o, s);
+        on(c, s);
     }
 
     inform7 {
@@ -12,6 +13,7 @@ type s : t {
 
         predicates {
             on(o, s) :: "The {o} is on the {s}";
+            on(c, s) :: "The {c} is on the {s}"; 
         }
     }
 }

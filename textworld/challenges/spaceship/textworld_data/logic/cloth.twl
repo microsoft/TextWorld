@@ -1,0 +1,55 @@
+# cloth
+type l : o {
+    predicates {            
+        worn(l);
+	    takenoff(l);
+        clean(l);
+	    dirty(l);
+    	}
+
+    rules {
+        wear/l    :: in(l, I) -> worn(l);
+        takeoff/l :: worn(l) -> in(l, I);
+
+        wash/l    :: $at(l,r) & dirty(l) -> clean(l);
+        dirty/l   :: $worn(l,P) & clean(l) -> dirty(l);
+    	}
+
+    reverse_rules {
+        wear/l :: takeoff/l;
+        wash/l :: dirty/l;
+    	}
+
+    constraints {
+        l1 :: clean(l) & dirty(l) -> fail();
+        l2 :: worn(l) & takenoff(l) -> fail();
+    	}
+
+    inform7 {
+        type {
+            kind :: "cloth-like";
+            definition :: "cloth-like are wearable. cloth-like can be either clean or dirty. cloth-like are usually clean.";
+        }
+
+        predicates {            
+	        worn(l)    :: "The {P} wears the {l}.";
+	        takenoff(l) :: "The {P} does not wear the {l}.";
+            clean(l)    :: "The {l} is clean.";
+	        dirty(l)    :: "The {l} is dirty.";            
+        }
+
+        commands {
+            wear/l :: "wear {l}" :: "wearing the {l}";
+            takeoff/l :: "take off {l}" :: "taking off the {l}";
+
+            clean/l :: "clean {l}" :: "cleaning the {l}";
+	        dirty/l :: "dirty {l}" :: "dirtying the {l}";
+        }
+
+        code :: """
+            Understand the command "wear" as something new. 
+            Understand "wear [something]" as wearing a thing. 
+            wearing a thing is an action applying to one thing.  
+        """;
+    }
+}

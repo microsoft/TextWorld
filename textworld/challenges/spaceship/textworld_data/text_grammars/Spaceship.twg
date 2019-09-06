@@ -156,7 +156,7 @@ unblocked:unblocked;unguarded
 # --- Action Verbs --------------------------------------------------------------
 look:look around in (r).
 
-examine:examine (o|k|f|d|c|s|t).
+examine:examine (o|k|f|d|c|s|t|b).
 
 inventory:examine your inventory.
 
@@ -235,6 +235,11 @@ communicate: #communicate_syn_v# your message with (r)
 communicate_syn_v:communicate;talk;call;transmit
 communicate_syn_p:communicated;talked;called;transmitted
 communicate_syn_u:Communicate;Talk;Call;Transmit
+
+push: push (b)
+push_syn_v:push;press
+push_syn_u:Push;Press
+push_syn_p:pushed;pressed
 # << ------------------------------------------------------------------------- >>
 
 

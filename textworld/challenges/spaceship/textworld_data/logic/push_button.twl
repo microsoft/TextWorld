@@ -1,0 +1,67 @@
+# push button
+type b : t {
+    predicates {
+        pushed(b);
+        unpushed(b);
+
+        pair(b, d);
+
+        in(b, c);
+    }
+
+    rules {   
+	    #push/b   :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & unpushed(b) -> pushed(b);
+	    #unpush/b :: $at(P, r) & $at(s, r) & $on(c, s) & $open(c) & $in(b, c) & pushed(b)   -> unpushed(b);
+    }
+
+    reverse_rules {
+        push/b :: unpush/b;
+    }
+
+    inform7 {
+        type {
+            kind :: "button_like";
+            definition :: "A button_like can be either pushed or unpushed. A button_like is usually unpushed. A button_like is fixed in place.";
+        }
+
+        predicates {
+            pushed(b)   :: "The {b} is pushed";
+            unpushed(b) :: "The {b} is unpushed";
+
+            pair(b, d)  :: "The {b} pairs to {d}";
+
+            in(b, c)    :: "The {b} is in the {c}";
+        }
+
+        commands {
+            #push/b   :: "push {b}" :: "pushing the {b}";
+            #unpush/b :: "push {b}" :: "pushing the {b}";
+        }
+
+        code :: """
+            connectivity relates a button_like to a door. The verb to pair to means the connectivity relation. 
+
+            Understand the command "push" as something new. 
+            Understand "push [something]" as pushing a button_like. 
+            pushing a button_like is an action applying to a thing.  
+
+            Carry out pushing a button_like (called pb): 
+                if a button_like pairs to door (called dr): 
+                    if dr is locked:
+                        Now the pb is pushed;                 
+                        Now dr is unlocked; 
+                        [Now dr is open;] 
+                    otherwise:
+                        Now the pb is unpushed;                 
+                        Now dr is locked.
+
+            Report pushing a button_like (called pb): 
+                if a button_like pairs to door (called dr): 
+                    if dr is unlocked:
+                        say "You push the [pb], and [dr] is now open.";
+                    otherwise:
+                        say "You push the [pb] again, and [dr] is now locked."
+                    
+        """;
+    }
+}
