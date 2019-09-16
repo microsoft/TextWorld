@@ -8,7 +8,7 @@ type I {
         inventory  :: at(P, r) -> at(P, r);  # Nothing changes.
 
         take       :: $at(P, r) & at(o, r) -> in(o, I);
-
+        
         take/c     :: $at(P, r) & $at(c, r) & $open(c) & in(o, c) -> in(o, I);
         insert/c   :: $at(P, r) & $at(c, r) & $open(c) & in(o, I) -> in(o, c);
 
@@ -17,9 +17,6 @@ type I {
 
         take/s     :: $at(P, r) & $at(s, r) & on(o, s) -> in(o, I);
         hook       :: $at(P, r) & $at(s, r) & in(o, I) -> on(o, s);
-
-        #wear/I     :: in(l, I) -> worn(l);
-        #takeoff/I  :: worn(l) -> takenoff(l);
 
         examine/I  :: in(o, I) -> in(o, I);  # Nothing changes.
         examine/s  :: at(P, r) & $at(s, r) & $on(o, s) -> at(P, r);  # Nothing changes.
@@ -35,8 +32,6 @@ type I {
         take/c     :: insert/c;
         take/s     :: hook;
         take/cs    :: insert/cs;
-
-        #wear/I     :: takeoff/I;
 
         examine/I  :: examine/I;
         examine/s  :: examine/s;
@@ -55,7 +50,7 @@ type I {
 
             inventory  :: "inventory" :: "taking inventory";
 
-            take       :: "take {o}" :: "taking the {o}";            
+            take       :: "take {o}" :: "taking the {o}";                
 
             take/c     :: "take {o} from {c}" :: "removing the {o} from the {c}";
             insert/c   :: "insert {o} into {c}" :: "inserting the {o} into the {c}";
@@ -65,9 +60,6 @@ type I {
 
             take/s     :: "take {o} from {s}" :: "removing the {o} from the {s}";
             hook       :: "hook {o} on {s}" :: "hooking the {o} on the {s}";
-
-            #wear/I     :: "wear the {l}" :: "wearing the {l}";
-            #takeoff/I  :: "take off the {l}" :: "taking off the {l}";
 
             examine/I  :: "examine {o}" :: "examining the {o}";
             examine/s  :: "examine {o}" :: "examining the {o}";

@@ -116,7 +116,8 @@ def spaceship_maker_level_medium():
                         "attached or hooked to it, why? Come on! we are in space, there is no gravity here."
     sleep_station.add(surf_1)   # The card box contains nothing at this game
 
-    laptop = gm.new(type='o', name="laptop")
+    # laptop = gm.new(type='o', name="laptop")
+    laptop = gm.new(type='cpu', name='laptop')
     laptop.infos.desc = "This is your personal laptop which is attached to the surface of the table. You can do " \
                         "regular things with this, like check your emails, watch YouTube, Skype with family,etc." \
                         "Since you are here, we recommend you to check your emails. New missions are posted through " \
@@ -373,50 +374,50 @@ def spaceship_maker_level_medium():
     #                                      'go south'])
 
     arr = ['examine laptop',
-           'open door A',
-           'go south',
-           'go east',
-           'open box B',
-           'take code key 1 from box B',
-           'go west',
-           'unlock box A with code key 1',
-           'open box A',
-           'take electronic key 1 from box A',
-           'unlock door B with electronic key 1',
-           'open door B',
-           'go south',
-           'examine box C',
-           'unlock box C with hearty key',
-           'open box C',
-           'take digital key 1 from box C',
-           'go east',
-           'open box E',
-           'take electronic key 2 from box E',
-           'go west',
-           'unlock door C with electronic key 2',
-           'open door C',
-           'go west',
-           'unlock secured box with digital key 1',
-           'open secured box',
-           'take Secret Codes Handbook from secured box',
-           'examine Secret Codes Handbook',
-           'take code key 2 from secured box',
-           'take digital key 2 from secured box',
-           'go east',
-           'go east',
-           'unlock door D with code key 2',
-           'open door D',
-           'go south',
-           'take outfit',
-           'wear the outfit',
-           'go north',
-           'go west',
-           'unlock exit box with digital key 2',
-           'open exit box',
-           'push exit push button',
-           'go east',
-           'go south',
-           # 'examine door E'
+           # 'check email',
+           # 'open door A',
+           # 'go south',
+           # 'go east',
+           # 'open box B',
+           # 'take code key 1 from box B',
+           # 'go west',
+           # 'unlock box A with code key 1',
+           # 'open box A',
+           # 'take electronic key 1 from box A',
+           # 'unlock door B with electronic key 1',
+           # 'open door B',
+           # 'go south',
+           # 'examine box C',
+           # 'unlock box C with hearty key',
+           # 'open box C',
+           # 'take digital key 1 from box C',
+           # 'go east',
+           # 'open box E',
+           # 'take electronic key 2 from box E',
+           # 'go west',
+           # 'unlock door C with electronic key 2',
+           # 'open door C',
+           # 'go west',
+           # 'unlock secured box with digital key 1',
+           # 'open secured box',
+           # 'take Secret Codes Handbook from secured box',
+           # 'examine Secret Codes Handbook',
+           # 'take code key 2 from secured box',
+           # 'take digital key 2 from secured box',
+           # 'go east',
+           # 'go east',
+           # 'unlock door D with code key 2',
+           # 'open door D',
+           # 'go south',
+           # 'take outfit',
+           # 'wear the outfit',
+           # 'go north',
+           # 'go west',
+           # 'unlock exit box with digital key 2',
+           # 'open exit box',
+           # 'push exit push button',
+           # 'go east',
+           # 'go south',
            # 'go south'
            ]
     test_commands(gm, arr)
@@ -443,42 +444,21 @@ def test():
                         "instruments are basically control various modules and doors in the shuttle."
     sleep_station.add(surf_1)
 
-    box_d = gm.new(type='c', name="exit box")
-    box_d.infos.desc = "The most important box here, which is in fact locked! sounds it carries important item... " \
-                       "So, let's find its key to open it."
-    surf_1.add(box_d)
-    gm.add_fact("closed", box_d)
-
-    push_button = gm.new(type='b', name="exit push button")
-    push_button.infos.desc = "This push button is a key-like object which opens door A."
-    gm.add_fact("unpushed", push_button)
-    box_d.add(push_button)
-
-    # ===== Hatch Design ===============================================================================================
-    hatch = gm.new_room("Hatch")
-    hatch.infos.desc = "This area is like the entrance to the spaceship, so like home entrance with outer and " \
-                       "inner doors and a place that outfits are hooked. There are only two important differences: " \
-                       "first, if the outer door is open and you don't have outfit on you, you are dead!! No joke " \
-                       "here! So make sure that you open the door after wearing those cloths. Second, the door nob " \
-                       "to open the door is not neither on the door nor in this room. You should open the external " \
-                       "door from Russian Module! woooh so much of safety concerns, yeah?!"
-
-    corridor = gm.connect(sleep_station.south, hatch.north)
-    door_a = gm.new_door(corridor, name="door A")
-    gm.add_fact("locked", door_a)
-    gm.add_fact("pair", push_button, door_a)
-
-    gm.render(interactive=True)
+    laptop = gm.new(type='cpu', name='laptop')
+    laptop.infos.desc = "This is your personal laptop which is attached to the surface of the table. You can do " \
+                        "regular things with this, like check your emails, watch YouTube, Skype with family,etc." \
+                        "Since you are here, we recommend you to check your emails. New missions are posted through " \
+                        "emails. "
+    surf_1.add(laptop)
+    gm.add_fact("turned_off", laptop)
 
     # ===== Player and Inventory Design ================================================================================
     gm.set_player(sleep_station)
 
-    # key = gm.new(type='k', name="hearty key")
-    # key.infos.desc = "This key is shaped like a heart, not a normal key for a spaceship, ha ha ha..."
-    # gm.add_fact("match", key, door_a)
-    # gm.inventory.add(key)  # Add the object to the player's inventory.
+    gm.render(interactive=True)
 
-    # arr = ['open exit box',
+    # arr = ['examine laptop',
+    #        'take laptop from wall-mounted surface',
     #        'push exit push button']
     # test_commands(gm, arr)
     gm.record_quest()
