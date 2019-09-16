@@ -113,12 +113,13 @@ class TextworldGamesEnv(gym.Env):
             * observation: text observed in the initial state;
             * infos: additional information as requested.
         """
-        if self.textworld_env is not None:
-            self.textworld_env.close()
-
         self.current_gamefile = next(self._gamefiles_iterator)
-        env = textworld.start(self.current_gamefile)
-        self.textworld_env = Filter(env, self.request_infos)
+
+        if self.textworld_env is None:
+            env = textworld.start(self.current_gamefile, self.request_infos)
+            self.textworld_env = Filter(env)
+        else:
+            self.textworld_env.load(self.current_gamefile)
 
         self.ob, infos = self.textworld_env.reset()
         return self.ob, infos

@@ -35,13 +35,12 @@ class RandomCommandAgent(Agent):
         self.rng = np.random.RandomState(self.seed)
 
     def reset(self, env):
-        try:
-            env.activate_state_tracking()  # Needed to get admissible commands.
-            env.display_command_during_render = True
-        except AttributeError:
-            msg = ("--hint and --mode=random-cmd are"
-                   " only supported for generated games.")
-            raise NameError(msg)
+        env.infos.admissible_commands = True
+        env.display_command_during_render = True
 
     def act(self, game_state, reward, done):
+        if game_state.admissible_commands is None:
+            msg = "'--mode random-cmd' is only supported for generated games."
+            raise NameError(msg)
+
         return self.rng.choice(game_state.admissible_commands)

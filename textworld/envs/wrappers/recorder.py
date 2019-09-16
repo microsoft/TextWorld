@@ -5,6 +5,7 @@
 from typing import Tuple
 
 from textworld.core import GameState, Wrapper
+from textworld.core import EnvInfoMissingError
 
 
 class Recorder(Wrapper):
@@ -12,14 +13,19 @@ class Recorder(Wrapper):
         self.actions = []
         self.last_game_state = None
 
+    def _wrap(self, env):
+        super()._wrap(env)
+        # Recording requires some additional information.
+        self.infos.last_action = True
+
     def step(self, command: str) -> Tuple[GameState, float, bool]:
-        game_state, score, done = super().step(command)
-        self.actions.append(game_state.action)
+        res = super().step(command)
+        game_state = res[0]
+        self.actions.append(game_state._last_action)
         self.last_game_state = game_state
-        return game_state, score, done
+        return res
 
     def reset(self) -> GameState:
         self.actions = []
         self.last_game_state = None
-        self.activate_state_tracking()
         return super().reset()

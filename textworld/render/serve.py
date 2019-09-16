@@ -22,7 +22,7 @@ import logging
 from flask import Flask, request
 import pybars
 
-from textworld.envs.glulx.git_glulx_ml import GlulxGameState
+from textworld.core import GameState
 from textworld.render import load_state_from_game_state
 
 WEB_SERVER_RESOURCES = pjoin(os.path.abspath(os.path.dirname(__file__)), "tmpl")
@@ -113,7 +113,7 @@ class VisualizationService(object):
     the server. The server instantiates new gevent Queues for every connection.
     """
 
-    def __init__(self, game_state: GlulxGameState, open_automatically: bool):
+    def __init__(self, game_state: GameState, open_automatically: bool):
         self.prev_state = None
         self.command = None
         self._process = None
@@ -160,7 +160,7 @@ class VisualizationService(object):
             with SupressStdStreams():
                 webbrowser.open("http://localhost:{}/".format(self.port))
 
-    def update_state(self, game_state: GlulxGameState, command: str):
+    def update_state(self, game_state: GameState, command: str):
         """
         Propogate state update to server.
         We use a multiprocessing.Pipe to pass state into flask process.

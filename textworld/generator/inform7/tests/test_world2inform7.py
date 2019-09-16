@@ -9,6 +9,7 @@ import textworld
 from textworld import g_rng
 from textworld.utils import make_temp_directory
 
+from textworld.core import EnvInfos
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import World, Quest, Event
 from textworld.generator import compile_game
@@ -46,11 +47,11 @@ def test_quest_winning_condition_go():
         env.reset()
         game_state, _, done = env.step("go east")
         assert not done
-        assert not game_state.has_won
+        assert not game_state.won
 
         game_state, _, done = env.step("go east")
         assert done
-        assert game_state.has_won
+        assert game_state.won
 
 
 def test_quest_winning_condition():
@@ -103,11 +104,11 @@ def test_quest_winning_condition():
             env.reset()
             game_state, _, done = env.step("look")
             assert not done
-            assert not game_state.has_won
+            assert not game_state.won
 
             game_state, _, done = env.step(event.commands[0])
             assert done
-            assert game_state.has_won
+            assert game_state.won
 
 
 def test_quest_with_multiple_winning_and_losing_conditions():
@@ -148,16 +149,13 @@ def test_quest_with_multiple_winning_and_losing_conditions():
         game_file = _compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
-        # Make sure we do not rely on the quest progression to
-        # determine if the game was lost.
-        assert not env._compute_intermediate_reward
 
         # Failing - 1
         env.reset()
         game_state, _, done = env.step("eat carrot")
         assert done
-        assert game_state.has_lost
-        assert not game_state.has_won
+        assert game_state.lost
+        assert not game_state.won
 
         # Failing - 2
         env.reset()
@@ -167,15 +165,15 @@ def test_quest_with_multiple_winning_and_losing_conditions():
         assert not done
         game_state, _, done = env.step("close chest")
         assert done
-        assert game_state.has_lost
-        assert not game_state.has_won
+        assert game_state.lost
+        assert not game_state.won
 
         # Failing - 1
         env.reset()
         game_state, _, done = env.step("eat lettuce")
         assert done
-        assert not game_state.has_lost
-        assert game_state.has_won
+        assert not game_state.lost
+        assert game_state.won
 
         # Winning - 2
         env.reset()
@@ -185,8 +183,8 @@ def test_quest_with_multiple_winning_and_losing_conditions():
         assert not done
         game_state, _, done = env.step("close chest")
         assert done
-        assert not game_state.has_lost
-        assert game_state.has_won
+        assert not game_state.lost
+        assert game_state.won
 
 
 def test_cannot_win_or_lose_a_quest_twice():
@@ -237,9 +235,6 @@ def test_cannot_win_or_lose_a_quest_twice():
         game_file = _compile_game(game, path=tmpdir)
 
         env = textworld.start(game_file)
-        # Make sure we do not rely on the quest progression to
-        # determine if the game was lost.
-        assert not env._compute_intermediate_reward
 
         # Complete quest1 then fail it.
         env.reset()
@@ -266,8 +261,8 @@ def test_cannot_win_or_lose_a_quest_twice():
         # Then fail quest2.
         game_state, score, done = env.step("drop lettuce")
         assert done
-        assert game_state.has_lost
-        assert not game_state.has_won
+        assert game_state.lost
+        assert not game_state.won
 
         env.reset()
         game_state, score, done = env.step("go east")
@@ -276,8 +271,8 @@ def test_cannot_win_or_lose_a_quest_twice():
         game_state, score, done = env.step("close chest")
         assert score == 2
         assert done
-        assert not game_state.has_lost
-        assert game_state.has_won
+        assert not game_state.lost
+        assert game_state.won
 
 
 def test_disambiguation_questions():
@@ -293,9 +288,7 @@ def test_disambiguation_questions():
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
-        env = textworld.start(game_file)
-        env.enable_extra_info("description")
-        env.enable_extra_info("inventory")
+        env = textworld.start(game_file, EnvInfos(description=True, inventory=True))
 
         game_state = env.reset()
         previous_inventory = game_state.inventory
@@ -334,9 +327,7 @@ def test_names_disambiguation():
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
-        env = textworld.start(game_file)
-        env.enable_extra_info("description")
-        env.enable_extra_info("inventory")
+        env = textworld.start(game_file, EnvInfos(description=True, inventory=True))
         env.reset()
         game_state, _, done = env.step("take tasty apple")
         assert "tasty apple" in game_state.inventory
@@ -381,9 +372,7 @@ def test_names_disambiguation():
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
-        env = textworld.start(game_file)
-        env.enable_extra_info("description")
-        env.enable_extra_info("inventory")
+        env = textworld.start(game_file, EnvInfos(description=True, inventory=True))
         env.reset()
         game_state, _, done = env.step("take keycard")
         assert "keycard" in game_state.inventory
@@ -393,7 +382,7 @@ def test_names_disambiguation():
         assert "rectangular keycard" in game_state.inventory
 
         game_state, _, done = env.step("unlock gateway with rectangular keycard")
-        assert "That doesn't seem to fit the lock." in game_state.command_feedback
+        assert "That doesn't seem to fit the lock." in game_state.feedback
         game_state, _, done = env.step("unlock gateway with keycard")
         game_state, _, done = env.step("open gateway")
         game_state, _, done = env.step("go east")
@@ -401,7 +390,7 @@ def test_names_disambiguation():
 
         game_state, _, done = env.step("go west")
         game_state, _, done = env.step("unlock rectangular gateway with keycard")
-        assert "That doesn't seem to fit the lock." in game_state.command_feedback
+        assert "That doesn't seem to fit the lock." in game_state.feedback
         game_state, _, done = env.step("unlock rectangular gateway with rectangular keycard")
         game_state, _, done = env.step("open rectangular gateway")
         game_state, _, done = env.step("go west")
@@ -426,8 +415,7 @@ def test_names_disambiguation():
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
-        env = textworld.start(game_file)
-        env.enable_extra_info("inventory")
+        env = textworld.start(game_file, EnvInfos(inventory=True))
         game_state = env.reset()
         game_state, _, done = env.step("take key from safe")
         assert "key" in game_state.inventory
@@ -450,8 +438,7 @@ def test_names_disambiguation():
     game_name = "test_names_disambiguation"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
-        env = textworld.start(game_file)
-        env.enable_extra_info("inventory")
+        env = textworld.start(game_file, EnvInfos(inventory=True))
         game_state = env.reset()
         game_state, _, done = env.step("take key from safe")
         assert "key" in game_state.inventory
@@ -486,8 +473,7 @@ def test_take_all_and_variants():
     game_name = "test_take_all_and_variants2"
     with make_temp_directory(prefix=game_name) as tmpdir:
         game_file = _compile_game(game, path=tmpdir)
-        env = textworld.start(game_file)
-        env.enable_extra_info("inventory")
+        env = textworld.start(game_file, EnvInfos(inventory=True))
         env.reset()
 
         game_state, _, done = env.step("take all ball")

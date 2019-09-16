@@ -1,131 +1,117 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
+from typing import Optional, Mapping, Any, List, Tuple, Iterable
 
-from typing import Optional, Mapping, Any, List, Tuple
+import sys
+import textwrap
+from io import StringIO
 
 
-class GameState:
-    """ Representation of the state of a text-based game.
+class EnvInfos:
+    """
+    Customizing what information will be returned by an environment.
 
-    This object can be used to get additional information about the current
-    state of the game.
+    Information can be requested by setting one or more attributes to True.
+    The attribute `extras` should be a list of strings corresponding to
+    information specific to certain games.
+
     """
 
-    def __init__(self, env: Optional["Environment"] = None) -> None:
-        """ Create a game state.
+    __slots__ = ['description', 'inventory', 'location',
+                 'facts', 'last_action', 'last_command',
+                 'game',
+                 'won', 'lost',
+                 'score', 'moves', 'max_score', 'objective',
+                 'entities', 'verbs', 'command_templates',
+                 'admissible_commands', 'intermediate_reward',
+                 'policy_commands',
+                 'extras']
 
-        Args:
-            env: Environment that can be used to fetch additional information.
-        """
-        self._env = env
-        self._command = None
-        self._raw = None
-        self.previous_state = None
+    def __init__(self, **kwargs):
+        #: bool: Text description of the current room, i.e. output of the
+        #:       `look` command.
+        #:       This information changes from one step to another.
+        self.description = kwargs.get("description", False)
+        #: bool: Text listing of the player's inventory, i.e. output of the
+        #:       `inventory` command.
+        #:       This information changes from one step to another.
+        self.inventory = kwargs.get("inventory", False)
+        #: bool: Name of the player's current location.
+        #:       This information changes from one step to another.
+        self.location = kwargs.get("location", False)
+        #: bool: All the facts that are currently true about the world.
+        #:       This information changes from one step to another.
+        self.facts = kwargs.get("facts", False)
+        #: bool: The last action performed where `None` means it was not a valid action.
+        #:       This information changes from one step to another.
+        self.last_action = kwargs.get("last_action", False)
+        #: bool: The last command performed where `None` means it was not a valid command.
+        #:       This information changes from one step to another.
+        self.last_command = kwargs.get("last_command", False)
+        #: bool: Current game in its serialized form. Use with `textworld.Game.deserialize`.
+        self.game = kwargs.get("game", False)
+        #: bool: Whether the player won the game.
+        #:       This information changes from one step to another.
+        self.won = kwargs.get("won", False)
+        #: bool: Whether the player lost the game.
+        #:       This information changes from one step to another.
+        self.lost = kwargs.get("lost", False)
+        #: bool: All commands relevant to the current state.
+        #:       This information changes from one step to another.
+        self.admissible_commands = kwargs.get("admissible_commands", False)
+        #: bool: Sequence of commands leading to a winning state.
+        #:       This information changes from one step to another.
+        self.policy_commands = kwargs.get("policy_commands", False)
+        #: bool: Reward (proxy) indicating if the player is making progress.
+        #:       This information changes from one step to another.
+        self.intermediate_reward = kwargs.get("intermediate_reward", False)
+        #: bool: Number of moves done so far in the game.
+        #:       This information changes from one step to another.
+        self.moves = kwargs.get("moves", False)
+        #: bool: Current score of the game.
+        #:       This information changes from one step to another.
+        self.score = kwargs.get("score", False)
+        #: bool: Maximum reachable score of the game.
+        #:       This information *doesn't* change from one step to another.
+        self.max_score = kwargs.get("max_score", False)
+        #: bool: Objective of the game described in text.
+        #:       This information *doesn't* change from one step to another.
+        self.objective = kwargs.get("objective", False)
+        #: bool: Names of all entities in the game.
+        #:       This information *doesn't* change from one step to another.
+        self.entities = kwargs.get("entities", False)
+        #: bool: Verbs understood by the the game.
+        #:       This information *doesn't* change from one step to another.
+        self.verbs = kwargs.get("verbs", False)
+        #: bool: Templates for commands understood by the the game.
+        #:       This information *doesn't* change from one step to another.
+        self.command_templates = kwargs.get("command_templates", False)
+        #: List[str]: Names of extra information which are game specific.
+        self.extras = kwargs.get("extras", [])
 
-    def init(self, output: str) -> None:
-        """ Initializes the game state from intro text.
-
-        Args:
-            output: Text displayed when the game starts.
-        """
-        self._raw = output
-
-    def update(self, command: str, output: str) -> "GameState":
-        """ Creates a new game state with the new information.
-
-        Args:
-            command: Command sent to the game's interpreter.
-            output: Response from the game's interpreter.
-
-        Returns
-            The new state of the game.
-        """
-        game_state = self.__class__(env=self._env)
-        game_state.previous_state = self
-        game_state._command = command
-        game_state._raw = output
-        return game_state
-
-    @property
-    def command(self) -> str:
-        """ Last command sent to the interpreter. """
-        return self._command
-
-    @property
-    def feedback(self) -> str:
-        """ Interpreter's response after issuing last command. """
-        if not hasattr(self, "_feedback"):
-            self._feedback = self._raw
-
-        return self._feedback
-
-    @property
-    def nb_moves(self) -> int:
-        """ Number of actions perfomed up until now. """
-        if not hasattr(self, "_nb_moves"):
-            node = self
-            self._nb_moves = 0
-            while node.previous_state is not None:
-                node = node.previous_state
-                self._nb_moves += 1
-
-        return self._nb_moves
-
-    @property
-    def description(self) -> str:
-        """ Description at the current location.
-
-        It's usually the output of the "look" command.
-        """
-        raise NotImplementedError
-
-    @property
-    def inventory(self) -> str:
-        """ Player's inventory.
-
-        It's usually the output of the "inventory" command.
-        """
-        raise NotImplementedError
-
-    @property
-    def score(self) -> float:
-        """ Current score.
-
-        It's usually the output of the "score" command.
-        """
-        raise NotImplementedError
+        # Check `kwargs` keys are all valid.
+        unknown_keys = set(kwargs.keys()) - set(self.__slots__)
+        if len(unknown_keys) > 0:
+            msg = ("Unknown information requested: {}.".format(sorted(unknown_keys)) +
+                   " Available information are: {}".format(sorted(self.__slots__)))
+            raise ValueError(msg)
 
     @property
-    def max_score(self) -> float:
-        """ Max score for this game.
+    def basics(self) -> Iterable[str]:
+        """ Information requested excluding the extras. """
+        return [slot for slot in self.__slots__ if slot != "extras" and getattr(self, slot)]
 
-        It's usually the output of the "score" command.
-        """
-        raise NotImplementedError
+    def __len__(self) -> int:
+        return len(self.basics) + len(self.extras)
 
-    @property
-    def location(self) -> str:
-        """ Name of the current location. """
-        raise NotImplementedError
 
-    @property
-    def game_ended(self) -> bool:
-        """ Whether the game is finished or not. """
-        return self.has_won | self.has_lost
+class GameState(dict):
+    def __getattr__(self, attr):
+        return self.get(attr, None)
 
-    @property
-    def has_won(self) -> bool:
-        """ Whether the player has won the game or not. """
-        raise NotImplementedError
-
-    @property
-    def has_lost(self) -> bool:
-        """ Whether the player has lost the game or not. """
-        raise NotImplementedError
-
-    def __str__(self) -> str:
-        return self.feedback
+    def __setattr__(self, attr, value):
+        return self.__setitem__(attr, value)
 
 
 class Environment:
@@ -171,14 +157,22 @@ class Environment:
     You pick up the TextWorld style key from the ground.
     """
 
-    @property
-    def metadata(self) -> Mapping:
-        """ Environment's metadata.
-
-        For instance, it can contain the supported rendering modes
-        `'render.modes': {'human', 'text', 'ansi'}`.
+    def __init__(self, infos: Optional[EnvInfos] = None) -> None:
         """
-        return {}
+        Arguments:
+            infos: Information to be included in the game state. By
+                       default, only the game's narrative is included.
+        """
+        self.state = GameState()
+        self.infos = infos or EnvInfos()
+
+    def load(self, path: str) -> None:
+        """ Loads a new text-based game.
+
+        Arguments:
+            path: Path to the game file to load.
+        """
+        raise NotImplementedError()
 
     def step(self, command: str) -> Tuple[GameState, float, bool]:
         """ Performs a given command.
@@ -211,26 +205,30 @@ class Environment:
         Args:
             mode: The mode to use for rendering.
         """
-        if mode not in self.metadata["render.modes"]:
-            raise ValueError("Unknown mode: {}".format(mode))
+        outfile = StringIO() if mode in ['ansi', "text"] else sys.stdout
 
-        raise NotImplementedError()
+        msg = self.state.feedback.rstrip() + "\n"
+        if self.display_command_during_render and self.state.last_command is not None:
+            msg = '> ' + self.state.last_command + "\n" + msg
+
+        # Wrap each paragraph.
+        if mode == "human":
+            paragraphs = msg.split("\n")
+            paragraphs = ["\n".join(textwrap.wrap(paragraph, width=80)) for paragraph in paragraphs]
+            msg = "\n".join(paragraphs)
+
+        outfile.write(msg + "\n")
+
+        if mode == "text":
+            outfile.seek(0)
+            return outfile.read()
+
+        if mode == 'ansi':
+            return outfile
 
     def close(self) -> None:
         """ Ends the game. """
         pass
-
-    def activate_state_tracking(self) -> None:
-        """ Enables state tracking. """
-        msg = "State tracking is not supported for environment: {}"
-        msg = msg.format(self.__class__.__name__)
-        raise NotImplementedError(msg)
-
-    def compute_intermediate_reward(self) -> None:
-        """ Enables intermediate reward computation. """
-        msg = "State tracking is not supported for environment: {}"
-        msg = msg.format(self.__class__.__name__)
-        raise NotImplementedError(msg)
 
     @property
     def display_command_during_render(self) -> bool:
@@ -247,8 +245,11 @@ class Environment:
     def __del__(self) -> None:
         self.close()
 
+    def __str__(self) -> str:
+        return self.__class__.__name__
 
-class Wrapper(Environment):
+
+class Wrapper:
     """ Special environment that wraps others to provide new functionalities.
 
     Special environment that wraps other :py:class:`Environment`
@@ -256,12 +257,12 @@ class Wrapper(Environment):
     etc).
     """
 
-    def __init__(self, env: Environment) -> None:
+    def __init__(self, env: Optional[Environment] = None) -> None:
         """
         Args:
             env: environment to wrap.
         """
-        self._wrapped_env = env
+        self._wrap(env)
 
     def __call__(self, env: Environment) -> Environment:
         """
@@ -271,12 +272,28 @@ class Wrapper(Environment):
         Returns:
             The wrapped environment.
         """
-        self._wrapped_env = env
+        self._wrap(env)
         return self
 
+    def _wrap(self, env) -> None:
+        """ Centralize method for wrappings an environment.
+        Args:
+            env: environment to wrap.
+        """
+        self._wrapped_env = env
+
+    def __getattr__(self, attr: str):
+        return getattr(self._wrapped_env, attr)
+
     @property
-    def metadata(self) -> Mapping:
-        return {}
+    def unwrapped(self):
+        if hasattr(self._wrapped_env, "unwrapped"):
+            return self._wrapped_env.unwrapped
+
+        return self._wrapped_env
+
+    def load(self, path: str) -> None:
+        return self._wrapped_env.load(path)
 
     def step(self, command: str) -> Tuple[GameState, float, bool]:
         return self._wrapped_env.step(command)
@@ -291,13 +308,8 @@ class Wrapper(Environment):
         return self._wrapped_env.render(mode)
 
     def close(self) -> None:
-        return self._wrapped_env.close()
-
-    def activate_state_tracking(self) -> None:
-        return self._wrapped_env.activate_state_tracking()
-
-    def compute_intermediate_reward(self) -> None:
-        return self._wrapped_env.compute_intermediate_reward()
+        if self._wrapped_env:
+            self._wrapped_env.close()
 
     @property
     def display_command_during_render(self) -> bool:
@@ -306,6 +318,10 @@ class Wrapper(Environment):
     @display_command_during_render.setter
     def display_command_during_render(self, value: bool) -> None:
         self._wrapped_env.display_command_during_render = value
+
+    def __str__(self) -> str:
+        return "{}.{}".format(self.__class__.__name__,
+                              self._wrapped_env)
 
 
 class Agent:
@@ -343,6 +359,10 @@ class Agent:
         """
         pass
 
+    @property
+    def wrappers(self):
+        return []
+
 
 class GameNotRunningError(RuntimeError):
     """ Error when game is not running (either has terminiated or crashed). """
@@ -351,3 +371,14 @@ class GameNotRunningError(RuntimeError):
         msg = ("Game is not running at the moment. Reset the environment to"
                " start a new game using `env.reset()`.")
         super().__init__(msg)
+
+
+class EnvInfoMissingError(NameError):
+    """
+    Thrown whenever some environment information EnvInfos.
+    """
+
+    def __init__(self, requester, info):
+        msg = ("The info '{info}' requested by `{requester}` is missing."
+               " Make sure it is enabled like so `Environment(infos=EnvInfos(`{info}`=True))`.")
+        super().__init__(msg.format(info=info, requester=requester))

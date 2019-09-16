@@ -1262,7 +1262,6 @@ class Inform7Logic:
 
     def _initialize(self, logic):
         self._expand_predicates(logic)
-        self._expand_commands(logic)
 
     def _expand_predicates(self, logic):
         for sig, pred in list(self.predicates.items()):
@@ -1272,19 +1271,6 @@ class Inform7Logic:
                 mapping = {ph: Placeholder(ph.name, type.name) for ph, type in zip(params, descendant)}
                 expanded = pred.predicate.substitute(mapping)
                 self._add_predicate(Inform7Predicate(expanded, pred.source))
-
-    def _expand_commands(self, logic):
-        for name, command in list(self.commands.items()):
-            rule = logic.rules.get(name)
-            if not rule:
-                continue
-
-            types = [logic.types.get(ph.type) for ph in rule.placeholders]
-            descendants = logic.types.multi_descendants(types)
-            for descendant in descendants:
-                type_names = [type.name for type in descendant]
-                expanded_name = name + "-" + "-".join(type_names)
-                self._add_command(Inform7Command(expanded_name, command.command, command.event))
 
 
 class GameLogic:

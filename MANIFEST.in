@@ -15,9 +15,6 @@ include textworld/generator/data/text_grammars/*.twg
 
 recursive-include textworld/render/tmpl *
 
-recursive-include textworld/thirdparty/frotz *
-prune textworld/thirdparty/frotz/.git
-
 recursive-include textworld/thirdparty/glulx *
 
 recursive-include textworld/thirdparty/inform7 *

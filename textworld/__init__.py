@@ -6,9 +6,9 @@ import warnings
 from textworld.version import __version__
 from textworld.utils import g_rng
 
+from textworld.core import EnvInfos, EnvInfoMissingError
 from textworld.core import Environment, GameState, Agent
 from textworld.generator import Game, GameMaker, GameOptions
-from textworld.envs.wrappers.filter import EnvInfos
 
 from textworld.generator import GenerationWarning
 

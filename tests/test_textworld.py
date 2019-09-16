@@ -64,7 +64,6 @@ class TestIntegration(unittest.TestCase):
     def test_game_walkthrough_agent(self):
         agent = textworld.agents.WalkthroughAgent()
         env = textworld.start(self.game_file)
-        env.activate_state_tracking()
         commands = self.game.main_quest.commands
         agent.reset(env)
         game_state = env.reset()
@@ -108,10 +107,11 @@ def test_playing_generated_games():
             # Play the game using RandomAgent and make sure we can always finish the
             # game by following the winning policy.
             env = textworld.start(game_file)
+            env.infos.policy_commands = True
+            env.infos.game = True
 
             agent = textworld.agents.RandomCommandAgent()
             agent.reset(env)
-            env.compute_intermediate_reward()
 
             env.seed(4321)
             game_state = env.reset()
@@ -124,19 +124,10 @@ def test_playing_generated_games():
                 game_state, reward, done = env.step(command)
 
                 if done:
-                    msg = "Finished before playing `max_steps` steps because of command '{}'.".format(command)
-                    if game_state.has_won:
-                        msg += " (winning)"
-                        assert game_state._game_progression.winning_policy is None
-
-                    if game_state.has_lost:
-                        msg += " (losing)"
-                        assert game_state._game_progression.winning_policy is None
-
-                    print(msg)
-                    break
+                    assert game_state._winning_policy is None
+                    game_state, reward, done = env.reset(), 0, False
 
                 # Make sure the game can still be solved.
-                winning_policy = game_state._game_progression.winning_policy
+                winning_policy = game_state._winning_policy
                 assert len(winning_policy) > 0
-                assert game_state.state.is_sequence_applicable(winning_policy)
+                assert game_state._game_progression.state.is_sequence_applicable(winning_policy)

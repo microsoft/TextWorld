@@ -6,7 +6,7 @@ Glulx
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: textworld.envs.glulx.git_glulx_ml
+.. automodule:: textworld.envs.glulx.git_glulx
     :members:
     :undoc-members:
     :show-inheritance:
