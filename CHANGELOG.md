@@ -12,6 +12,7 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 ### Fixed
 
 - `tw-make tw-coin_collector` was failing with option `--level {100, 200, or 300}`.
+- Quest tracking was failing when an irreversible, but unneeded, action was performed.
 
 ### Added
 

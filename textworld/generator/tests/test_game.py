@@ -541,7 +541,6 @@ class TestQuestProgression(unittest.TestCase):
         cls.eating_carrot = M.new_event_using_commands(commands)
         commands = ["take lettuce", "eat lettuce"]
         cls.eating_lettuce = M.new_event_using_commands(commands)
-        commands = ["take lettuce", "insert lettuce into chest"]
 
         M.quests = [cls.quest]
         cls.game = M.build()
@@ -631,6 +630,11 @@ class TestGameProgression(unittest.TestCase):
         R1.add(carrot)
         R1.add(lettuce)
 
+        tomato = M.new(type='f', name='tomato')
+        pepper = M.new(type='f', name='pepper')
+        M.inventory.add(tomato)
+        M.inventory.add(pepper)
+
         # Add a closed chest in R2.
         chest = M.new(type='c', name='chest')
         chest.add_property("open")
@@ -643,25 +647,32 @@ class TestGameProgression(unittest.TestCase):
         commands = ["open wooden door", "go west", "take lettuce", "go east", "insert lettuce into chest"]
         cls.eventB = M.new_event_using_commands(commands)
 
+        commands = ["drop pepper"]
+        cls.eventC = M.new_event_using_commands(commands)
+
         cls.losing_eventA = Event(conditions={M.new_fact("eaten", carrot)})
         cls.losing_eventB = Event(conditions={M.new_fact("eaten", lettuce)})
 
         cls.questA = Quest(win_events=[cls.eventA], fail_events=[cls.losing_eventA])
         cls.questB = Quest(win_events=[cls.eventB], fail_events=[cls.losing_eventB])
-        cls.questC = Quest(win_events=[], fail_events=[cls.losing_eventA, cls.losing_eventB])
+        cls.questC = Quest(win_events=[cls.eventC], fail_events=[])
+        cls.questD = Quest(win_events=[], fail_events=[cls.losing_eventA, cls.losing_eventB])
 
         commands = ["open wooden door", "go west", "take carrot", "eat carrot"]
         cls.eating_carrot = M.new_event_using_commands(commands)
         commands = ["open wooden door", "go west", "take lettuce", "eat lettuce"]
         cls.eating_lettuce = M.new_event_using_commands(commands)
-        commands = ["open wooden door", "go west", "take lettuce", "go east", "insert lettuce into chest"]
+        commands = ["eat tomato"]
+        cls.eating_tomato = M.new_event_using_commands(commands)
+        commands = ["eat pepper"]
+        cls.eating_pepper = M.new_event_using_commands(commands)
 
         M.quests = [cls.questA, cls.questB, cls.questC]
         cls.game = M.build()
 
     def test_completed(self):
         game = GameProgression(self.game)
-        for action in self.eventA.actions:
+        for action in self.eventA.actions + self.eventC.actions:
             assert not game.done
             game.update(action)
 
@@ -679,6 +690,22 @@ class TestGameProgression(unittest.TestCase):
         assert game.winning_policy is None
 
     def test_failed(self):
+        game = GameProgression(self.game)
+        action = self.eating_tomato.actions[0]
+        game.update(action)
+        assert not game.done
+        assert not game.completed
+        assert not game.failed
+        assert game.winning_policy is not None
+
+        game = GameProgression(self.game)
+        action = self.eating_pepper.actions[0]
+        game.update(action)
+        assert not game.completed
+        assert game.failed
+        assert game.done
+        assert game.winning_policy is None
+
         game = GameProgression(self.game)
         for action in self.eating_carrot.actions:
             assert not game.done
