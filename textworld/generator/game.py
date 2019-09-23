@@ -6,7 +6,7 @@ import copy
 import json
 import textwrap
 
-from typing import List, Dict, Optional, Mapping, Any, Iterable, Union
+from typing import List, Dict, Optional, Mapping, Any, Iterable, Union, Tuple
 from collections import OrderedDict
 
 from numpy.random import RandomState
@@ -629,15 +629,22 @@ class ActionDependencyTree(DependencyTree):
         super().__init__(*args, **kwargs)
         self._kb = kb or KnowledgeBase.default()
 
-    def remove(self, action: Action) -> Optional[Action]:
-        super().remove(action)
+    def remove(self, action: Action) -> Tuple[bool, Optional[Action]]:
+        changed = super().remove(action)
+
+        if self.empty:
+            return changed, None
 
         # The last action might have impacted one of the subquests.
         reverse_action = self._kb.get_reverse_action(action)
         if reverse_action is not None:
-            self.push(reverse_action)
+            changed = self.push(reverse_action)
+        elif self.push(action.inverse()):
+            # The last action did impact one of the subquests
+            # but there's no reverse action to recover from it.
+            changed = True
 
-        return reverse_action
+        return changed, reverse_action
 
     def flatten(self) -> Iterable[Action]:
         """
@@ -655,7 +662,7 @@ class ActionDependencyTree(DependencyTree):
                     break  # Choose an action that avoids cycles.
 
             yield leaf.action
-            last_reverse_action = tree.remove(leaf.action)
+            _, last_reverse_action = tree.remove(leaf.action)
 
     def copy(self) -> "ActionDependencyTree":
         tree = super().copy()
@@ -737,11 +744,13 @@ class EventProgression:
 
         if action is not None and not self._tree.empty:
             # Determine if we moved away from the goal or closer to it.
-            reverse_action = self._tree.remove(action)
-            if reverse_action is None:  # Irreversible action.
+            changed, reverse_action = self._tree.remove(action)
+            if changed and reverse_action is None:  # Irreversible action.
                 self._untriggerable = True  # Can't track quest anymore.
 
-            self._policy = tuple(self._tree.flatten())  # Rebuild policy.
+            if changed and reverse_action is not None:
+                # Rebuild policy.
+                self._policy = tuple(self._tree.flatten())
 
     def compress_policy(self, state: State) -> bool:
         """ Compress the policy given a game state.
