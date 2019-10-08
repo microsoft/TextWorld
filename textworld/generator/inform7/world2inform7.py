@@ -198,8 +198,15 @@ class Inform7Game:
         for action in actions:
             command = "None"
             if action is not None:
-                command = self.kb.inform7_commands[action.name]
-                command = command.format(**self._get_name_mapping(action))
+                if hasattr(action, "template") and action.template is not None:
+                    mapping = {var.name: self.entity_infos[var.name].name for var in action.variables}
+                    command = action.template.format(**mapping)
+                else:
+                    msg = ("Using slower text commands from action generation."
+                           " Regenerate your games, to get a faster version.")
+                    warnings.warn(msg, TextworldInform7Warning)
+                    command = self.kb.inform7_commands[action.name]
+                    command = command.format(**self._get_name_mapping(action))
 
             commands.append(command)
 
