@@ -2,13 +2,13 @@
 type P {
     rules {
         look :: at(P, r) -> at(P, r);  # Nothing changes.
-	    wear/cloth :: $at(P,r) & at(l,r) -> on(l,P);
+	    #wear/cloth :: $at(P,r) & at(l,r) -> on(l,P);
     }
 
     inform7 {
         commands {
             look :: "look" :: "looking";
-	        wear/cloth :: "wear cloth" :: "wearing the cloth";
+	        #wear/cloth :: "wear cloth" :: "wearing the cloth";
         }
     }
 }
