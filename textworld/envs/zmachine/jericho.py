@@ -22,6 +22,7 @@ class JerichoEnv(textworld.Environment):
         super().__init__(*args, **kwargs)
         self._seed = -1
         self._jericho = None
+        self.gamefile = None
 
     def load(self, z_file: str) -> None:
         self.close()
@@ -100,6 +101,22 @@ class JerichoEnv(textworld.Environment):
         if self.game_running:
             self._jericho.close()
             self._jericho = None
+
+    def copy(self) -> "JerichoEnv":
+        """ Return a copy of this environment at the same state. """
+        env = JerichoEnv(self.infos)
+        env._seed = self._seed
+
+        if self.gamefile:
+            env.load(self.gamefile)
+
+        if self._jericho:
+            env._jericho = self._jericho.copy()
+
+        # Copy core Environment's attributes.
+        env.state = self.state.copy()
+        env.infos = self.infos.copy()
+        return env
 
 
 # By default disable the warning about unsupported games.

@@ -743,6 +743,15 @@ class EventProgression:
 
             self._policy = event.actions + (event.condition,)
 
+    def copy(self) -> "EventProgression":
+        """ Return a soft copy. """
+        ep = EventProgression(self.event, self._kb)
+        ep._triggered = self._triggered
+        ep._untriggerable = self._untriggerable
+        ep._policy = self._policy
+        ep._tree = self._tree.copy()
+        return ep
+
     @property
     def triggering_policy(self) -> List[Action]:
         """ Actions to be performed in order to trigger the event. """
@@ -842,8 +851,16 @@ class QuestProgression:
             quest: The quest to keep track of its completion.
         """
         self.quest = quest
+        self.kb = kb
         self.win_events = [EventProgression(event, kb) for event in quest.win_events]
         self.fail_events = [EventProgression(event, kb) for event in quest.fail_events]
+
+    def copy(self) -> "QuestProgression":
+        """ Return a soft copy. """
+        qp = QuestProgression(self.quest, self.kb)
+        qp.win_events = [event_progression.copy() for event_progression in self.win_events]
+        qp.fail_events = [event_progression.copy() for event_progression in self.fail_events]
+        return qp
 
     @property
     def _tree(self) -> Optional[List[ActionDependencyTree]]:
@@ -928,6 +945,16 @@ class GameProgression:
             self.quest_progressions = [QuestProgression(quest, game.kb) for quest in game.quests]
             for quest_progression in self.quest_progressions:
                 quest_progression.update(action=None, state=self.state)
+
+    def copy(self) -> "GameProgression":
+        """ Return a soft copy. """
+        gp = GameProgression(self.game, track_quests=False)
+        gp.state = self.state.copy()
+        gp._valid_actions = self._valid_actions
+        if self.tracking_quests:
+            gp.quest_progressions = [quest_progression.copy() for quest_progression in self.quest_progressions]
+
+        return gp
 
     @property
     def done(self) -> bool:
