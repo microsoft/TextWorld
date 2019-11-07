@@ -48,7 +48,7 @@ class JerichoEnv(textworld.Environment):
     def _gather_infos(self):
         """ Adds additional information to the internal state. """
         self.state.feedback = self.state.raw
-        if not self._fully_supported:
+        if not self._jericho.is_fully_supported:
             return  # No more information can be gathered.
 
         for attr in self.infos.basics:
@@ -60,6 +60,7 @@ class JerichoEnv(textworld.Environment):
         # Deal with information that has different method name in Jericho.
         self.state["won"] = self._jericho.victory()
         self.state["lost"] = self._jericho.game_over()
+        self.state["score"] = self._jericho.get_score()
         self.state["location"] = self._jericho.get_player_location()
 
     def reset(self):
@@ -72,10 +73,9 @@ class JerichoEnv(textworld.Environment):
 
         # Start the game using Jericho.
         self._jericho = jericho.FrotzEnv(self.gamefile, self._seed)
-        self._fully_supported = jericho.FrotzEnv.is_fully_supported(self.gamefile)
 
         self.state = GameState()
-        self.state.raw = self._jericho.reset()
+        self.state.raw, _ = self._jericho.reset()
         self._gather_infos()
         return self.state
 
@@ -94,7 +94,8 @@ class JerichoEnv(textworld.Environment):
         self.state = GameState()
         self.state.last_command = command.strip()
         res = self._jericho.step(self.state.last_command)
-        self.state.raw, self.state.score, self.state.done, _  = res
+        # As of Jericho >= 2.1.0, the reward is returned instead of the score.
+        self.state.raw, _, self.state.done, _  = res
         self._gather_infos()
         return self.state, self.state.score, self.state.done
 

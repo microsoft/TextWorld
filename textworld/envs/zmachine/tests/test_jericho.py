@@ -154,10 +154,10 @@ class TestJerichoEnv(unittest.TestCase):
 
         for command in self.game.main_quest.commands:
             game_state, score, done = env.step(command)
-            # Score is always 0 and done is always False for unsupported games.
-            assert score == 0
-            assert game_state.score == 0
-            assert not done
+            # Score is None and `done` is always False for unsupported games.
+            assert score is None
+            assert game_state.score is None
+            assert done is False
 
         assert "The End" in game_state.feedback
         assert game_state.won is None
