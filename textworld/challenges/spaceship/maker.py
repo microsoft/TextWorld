@@ -1,6 +1,6 @@
 import os
 from os.path import join as pjoin
-import numpy as np
+from typing import Optional
 
 from textworld import GameMaker
 from textworld.generator.data import KnowledgeBase
@@ -8,7 +8,8 @@ from textworld import g_rng
 from textworld.helpers import start
 from textworld.utils import make_temp_directory
 import textworld
-from textworld.generator.game import Event, Quest
+from textworld.generator.game import Event, Quest, GameOptions
+from textworld.generator import World
 
 
 g_rng.set_seed(20190826)
@@ -326,7 +327,7 @@ def spaceship_maker_level_medium():
     gm.add_fact("match", key_7, box_c)
     gm.inventory.add(key_7)  # Add the object to the player's inventory.
 
-    gm.render(interactive=True)
+    # gm.render(interactive=True)
 
     # quest = gm.new_quest_using_commands(['examine laptop',
     #                                      'open door A',
@@ -706,7 +707,6 @@ def spaceship_maker_level_medium_v1():
     gm.add_fact("takenoff", cloth)
     gm.add_fact("clean", cloth)
 
-
     corridor6 = gm.connect(hatch.north, lounge.south)
     door_d = gm.new_door(corridor6, name="door D")
     gm.add_fact("locked", door_d)
@@ -731,7 +731,10 @@ def spaceship_maker_level_medium_v1():
     gm.add_fact("match", key_7, box_c)
     gm.inventory.add(key_7)  # Add the object to the player's inventory.
 
-    gm.render(interactive=True)
+    # gm.render(interactive=True)
+
+    # gm.grammar = textworld.generator.make_grammar()
+
 
     # array_of_all_required_actions_to_win = ['examine laptop',
     #                                         'check email',
@@ -820,7 +823,7 @@ def spaceship_maker_level_medium_v1():
     #                                         'check email',
     #                                         'open door A']
 
-    quest_design(gm)
+    return quest_design(gm)
 
 
 def quest_design(game):
@@ -865,7 +868,10 @@ def quest_design(game):
 
     game.quests = quests
 
-    game.test()
+    # game.test()
+    _game = game.build()
+
+    return _game
 
 
 def testFW_easyGame():
@@ -929,10 +935,36 @@ def testFW_easyGame():
     gm.test()
 
 
+def create_world(options: Optional[GameOptions]):
+    kb = KnowledgeBase.load(target_dir=PATH)
+    options = options or GameOptions()
+    options.grammar.theme = 'Spaceship'
+    options.kb = kb
+    options.seeds = g_rng.seed
+
+    rngs = options.rngs
+    rng_map = rngs['map']
+    rng_objects = rngs['objects']
+    rng_grammar = rngs['grammar']
+    rng_quest = rngs['quest']
+
+    door_states = ["open", "closed", "locked"]
+
+    # Generate map.
+    map_ = textworld.generator.make_map(n_rooms=options.nb_rooms, rng=rng_map, possible_door_states=door_states)
+    world = World.from_map(map_)
+
+    # Randomly place the player.
+    starting_room = None
+    if len(world.rooms) > 1:
+        starting_room = rng_map.choice(world.rooms)
+
+    world.set_player_room(starting_room)
+
+
 if __name__ == "__main__":
     # spaceship_maker_level_easy()
     # spaceship_maker_level_medium()
     # test()
     # testFW_easyGame()
     spaceship_maker_level_medium_v1()
-

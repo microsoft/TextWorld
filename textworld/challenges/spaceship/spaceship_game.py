@@ -5,24 +5,28 @@ from os.path import join as pjoin
 from typing import Mapping, Optional
 
 import textworld
+
 from textworld import g_rng
 from textworld import GameMaker
 from textworld.challenges import register
 from textworld.generator.data import KnowledgeBase
-from textworld.generator.game import GameOptions, Event, Quest
+from textworld.generator.game import GameOptions, Event, Quest, GameProgression
+from textworld.logic import Action
 
 
 g_rng.set_seed(20190826)
-PATH = pjoin(os.path.dirname(__file__), 'textworld_data')
+PATH = os.path.dirname(__file__)
 
 
 def build_argparser(parser=None):
     parser = parser or argparse.ArgumentParser()
 
     group = parser.add_argument_group('Spaceship game settings')
-    group.add_argument("--level", required=True, choices=["easy", "balanced", "sparse"],
+    group.add_argument("--level", required=True, choices=["easy", "medium", "difficult"],
                        help="The difficulty level. Must be between: easy, medium, or difficult.")
-
+    general_group = argparse.ArgumentParser(add_help=False)
+    general_group.add_argument("--third-party", metavar="PATH",
+                               help="Load third-party module. Useful to register new custom challenges on-the-fly.")
     return parser
 
 
@@ -46,9 +50,9 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         * Level difficult.
 
     """
-    kb = KnowledgeBase.load(target_dir=PATH)
+    kb = KnowledgeBase.load(target_dir=pjoin(os.path.dirname(__file__), 'textworld_data'))
     options = options or GameOptions()
-    options.grammar.theme = 'Spaceship'
+    options.grammar.theme = 'spaceship'
     options.kb = kb
     options.seeds = g_rng.seed
 
@@ -58,15 +62,15 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     rng_grammar = rngs['grammar']
     rng_quest = rngs['quest']
 
-    if settings["level"] is 'easy':
+    if settings["level"] == 'easy':
         mode = "easy"
         options.nb_rooms = 4
 
-    elif settings["level"] is 'medium':
+    elif settings["level"] == 'medium':
         mode = "medium"
         options.nb_rooms = 8
 
-    elif settings["level"] is 'difficult':
+    elif settings["level"] == 'difficult':
         mode = "difficult"
         options.nb_rooms = 8
 
@@ -78,7 +82,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #                                    Create the Game Environment
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    gm = GameMaker(kb=kb, theme='Spaceship')
+    gm = GameMaker(kb=kb, theme='spaceship')
 
     # ===== Sleep Station Design =======================================================================================
     sleep_station = gm.new_room("Sleep Station")
@@ -214,7 +218,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     corridor3 = gm.connect(us_lab.south, russian_module.north)
     door_b = gm.new_door(corridor3, name="door B")
     gm.add_fact("match", key_1, door_b)  # Tell the game 'Electronic key' is matching the 'door B''s lock
-    if settings["level"] is 'difficult':
+    if settings["level"] == 'difficult':
         gm.add_fact("closed", door_b)
     else:
         gm.add_fact("locked", door_b)
@@ -270,6 +274,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     key_5 = gm.new(type='k', name="digital key 2")
     box_f.add(key_5)
     gm.add_fact("match", key_5, box_d)
+
     key_6 = gm.new(type='k', name="code key 2")
     box_f.add(key_6)
 
@@ -295,7 +300,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     corridor6 = gm.connect(hatch.north, lounge.south)
     door_d = gm.new_door(corridor6, name="door D")
     gm.add_fact("match", key_6, door_d)
-    if settings["level"] is 'difficult':
+    if settings["level"] == 'difficult':
         gm.add_fact("closed", door_d)
     else:
         gm.add_fact("locked", door_d)
@@ -312,7 +317,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     gm.add_fact("pair", push_button, door_e)
 
     # ===== Player and Inventory Design ================================================================================
-    if settings["level"] is 'difficult':
+    if settings["level"] == 'difficult':
         # Randomly place the player in a subset of rooms.
         # The player can be randomly start from any room but two of them: Control Module and Outside
         available_rooms = []
@@ -327,27 +332,35 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         gm.set_player(starting_room)
 
     else:
-        gm.set_player(sleep_station)
+        gm.set_player(us_lab)
+        # gm.set_player(sleep_station)
 
     key_7 = gm.new(type='k', name="hearty key")
     key_7.infos.desc = "This key is shaped like a heart, not a normal key for a spaceship, ha ha ha..."
     gm.add_fact("match", key_7, box_c)
     gm.inventory.add(key_7)  # Add the object to the player's inventory.
 
-    gm.render(interactive=True)
-
-    if settings["level"] is 'easy':
+    if settings["level"] == 'easy':
         game = quest_design_easy(gm)
 
-    elif settings["level"] is 'medium':
+    elif settings["level"] == 'medium':
         game = quest_design_medium(gm)
 
-    elif settings["level"] is 'difficult':
+    elif settings["level"] == 'difficult':
         game = quest_design_difficult(gm)
 
     game.metadata = metadata
     uuid = "tw-spaceship-{level}".format(level=str.title(settings["level"]))
     game.metadata["uuid"] = uuid
+
+    from maker import test_commands
+    test_commands(gm, [
+        # 'look',
+        'open door A',
+        'go north',
+        # 'check laptop for email',
+        'go south'
+    ])
 
     return game
 
@@ -359,42 +372,18 @@ def quest_design_easy(game):
 def quest_design_medium(game):
     quests = []
 
-    # 1. Player is in the Sleeping Station
-    win_quest = Event(conditions={game.new_fact("read/e", game._named_entities['laptop'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    fail_quest = Event(conditions={game.new_fact("unread/e", game._named_entities['laptop']),
-                                   game.new_fact("open", game._named_entities['door A'])})
+    # 1. Is the Player in the Sleeping Station
+    win_quest = Event(conditions={
+        game.new_fact("at", game._entities['P'], game._entities['r_0'])
+    })
+    quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
+
+    fail_quest = Event(conditions={
+        game.new_fact("event", game._entities['P'], game._entities['r_0']),
+        game.new_fact("at", game._entities['P'], game._entities['r_1']),
+        game.new_fact("open", game._entities['d_0']),
+    })
     quests.append(Quest(win_events=[], fail_events=[fail_quest]))
-
-    # 2. Player is in US LAB to find Electronic Key 1
-    win_quest = Event(conditions={game.new_fact("in", game._named_entities['electronic key 1'], game._entities['I'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 3. Player is in Russian Module and take digital Key 1 and/or push the button
-    win_quest = Event(conditions={game.new_fact("in", game._named_entities['digital key 1'], game._entities['I'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    win_quest = Event(conditions={game.new_fact("pushed", game._named_entities['exit push button']),
-                                  game.new_fact("worn", game._named_entities['outfit'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    fail_quest = Event(conditions={game.new_fact("pushed", game._named_entities['exit push button']),
-                                   game.new_fact("takenoff", game._named_entities['outfit'])})
-    quests.append(Quest(win_events=[], fail_events=[fail_quest]))
-
-    # 4. Player is the Control Module and take Electronic Key 2
-    win_quest = Event(conditions={game.new_fact("in", game._named_entities['digital key 2'], game._entities['I'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 5. Player reads the Secret Code book at Control Module
-    win_quest = Event(conditions={game.new_fact("read/t", game._named_entities['Secret Codes Handbook'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 6. Player is in Hatch room and wears the cloth
-    win_quest = Event(conditions={game.new_fact("worn", game._named_entities['outfit'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 7. Player goes outside
-    win_quest = Event(conditions={game.new_fact("at", game._entities['P'], game._named_entities['Outside'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
     game.quests = quests
 
@@ -405,7 +394,10 @@ def quest_design_difficult(game):
     return None
 
 
-register(name="tw-spaceship",
-         desc="Generate a Spaceship challenge game",
-         make=make_game,
-         add_arguments=build_argparser)
+g = make_game({'level': 'medium'})
+
+
+# register(name="tw-spaceship",
+#          desc="Generate a Spaceship challenge game",
+#          make=make_game,
+#          add_arguments=build_argparser)

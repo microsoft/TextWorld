@@ -1,5 +1,9 @@
 # thing
 type t {
+    predicates {
+        event(P, r);
+    }
+
     rules {
         examine/t :: at(P, r) & $at(t, r) -> at(P, r);
     }
@@ -8,13 +12,23 @@ type t {
         examine/t :: examine/t;
     }
 
-    inform7 {
+    inform7 { 
         type {
             kind :: "thing";
         }
 
+        predicates {
+        event(P, r) :: "the player was in {r}";
+        }
         commands {
             examine/t :: "examine {t}" :: "examining the {t}";
         }
+
+        code :: """
+            Understand "tw-set seed [a number]" as updating the new seed. 
+            Updating the new seed is an action applying to a number.
+            Carry out updating the new seed:
+                seed the random-number generator with the number understood.
+        """;
     }
 }
