@@ -90,6 +90,7 @@ class HtmlViewer(Wrapper):
             self._server.start(threading.current_thread(), port=self._port)
         except ModuleNotFoundError as e:
             print("Importing HtmlViewer without installed dependencies. Try re-installing textworld.")
+            raise e
 
         return game_state
 

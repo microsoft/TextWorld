@@ -13,7 +13,7 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 ### Removed
 
-- `textworld.envs.FroztEnv` (use `textworld.envs.JerichoEnv` instead)
+- `textworld.envs.FrotzEnv` (use `textworld.envs.JerichoEnv` instead)
 - `textworld.envs.GitGlulxML` (use `textworld.envs.TWInform7` instead)
 
 ### Added

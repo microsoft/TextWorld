@@ -283,7 +283,10 @@ class Wrapper:
         self._wrapped_env = env
 
     def __getattr__(self, attr: str):
-        return getattr(self._wrapped_env, attr)
+        if self._wrapped_env:
+            return getattr(self._wrapped_env, attr)
+
+        return super().__getattribute__(attr)
 
     @property
     def unwrapped(self):
