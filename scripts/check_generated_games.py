@@ -24,7 +24,7 @@ def main():
     for i, game in enumerate(args.games, start=1):
         print("{}. Testing {} ...".format(i, game))
         env = textworld.start(game)
-        env.activate_state_tracking()
+        env.infos.admissible_commands = True
         agent.reset(env)
         game_state = env.reset()
 

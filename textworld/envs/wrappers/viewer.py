@@ -24,14 +24,23 @@ class HtmlViewer(Wrapper):
             Port to use for the web viewer.
         """
         super().__init__(env)
-        self.port = port
+        self._port = port
         self._server = None
         self.game_state = None
         self.open_automatically = open_automatically
 
-        # Rendering requires state tracking.
-        self.activate_state_tracking()
-        self._wrapped_env.enable_extra_info("inventory")
+        # Rendering requires some additional information.
+        self.infos.game = True
+        self.infos.facts = True
+        self.infos.inventory = True
+        self.infos.objective = True
+
+    @property
+    def port(self):
+        if self._server:
+            return self._server.port
+
+        return self._port
 
     def _stop_server(self) -> None:
         """
@@ -78,9 +87,10 @@ class HtmlViewer(Wrapper):
         try:
             from textworld.render.serve import VisualizationService
             self._server = VisualizationService(game_state, self.open_automatically)
-            self._server.start(threading.current_thread(), port=self.port)
-        except ModuleNotFoundError:
+            self._server.start(threading.current_thread(), port=self._port)
+        except ModuleNotFoundError as e:
             print("Importing HtmlViewer without installed dependencies. Try re-installing textworld.")
+            raise e
 
         return game_state
 

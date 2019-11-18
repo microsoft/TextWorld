@@ -21,12 +21,14 @@ class WalkthroughAgent(Agent):
             self._commands = iter(self.commands)
             return  # Commands already specified.
 
-        if not hasattr(env, "game"):
+        env.infos.game = True
+        game_state = env.reset()
+        if game_state.game is None:
             msg = "WalkthroughAgent is only supported for generated games."
             raise NameError(msg)
 
         # Load command from the generated game.
-        self._commands = iter(env.game.main_quest.commands)
+        self._commands = iter(game_state.game.main_quest.commands)
 
     def act(self, game_state, reward, done):
         try:

@@ -206,7 +206,10 @@ class Inform7Game:
         return commands
 
     def get_human_readable_fact(self, fact: Proposition) -> Proposition:
-        arguments = [Variable(self.entity_infos[var.name].name, var.type) for var in fact.arguments]
+        def _get_name(info):
+            return info.name if info.name else info.id
+
+        arguments = [Variable(_get_name(self.entity_infos[var.name]), var.type) for var in fact.arguments]
         return Proposition(fact.name, arguments)
 
     def get_human_readable_action(self, action: Action) -> Action:
@@ -356,7 +359,7 @@ class Inform7Game:
             game_winning_test = "score is maximum score"
 
         # Remove square bracket when printing score increases. Square brackets are conflicting with
-        # Inform7's events parser in git_glulx_ml.py.
+        # Inform7's events parser in tw_inform7.py.
         # And add winning conditions for the game.
         source += textwrap.dedent("""\
         This is the simpler notify score changes rule:
@@ -679,6 +682,8 @@ class Inform7Game:
                 say "</inventory>";
             if extra score command option is true:
                 say "<score>[line break][score][line break]</score>";
+            if extra score command option is true:
+                say "<moves>[line break][turn count][line break]</moves>";
             if print state option is true:
                 try printing the entire state;
 
@@ -807,6 +812,20 @@ class Inform7Game:
 
         """)
 
+        # Special command to get number of "moves" at every step.
+        source += textwrap.dedent("""\
+        The extra moves command option is a truth state that varies.
+        The extra moves command option is usually false.
+
+        Turning on the extra moves command option is an action applying to nothing.
+        Carry out turning on the extra moves command option:
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
+            Now the extra moves command option is true.
+
+        Understand "tw-extra-infos moves" as turning on the extra moves command option.
+
+        """)
+
         # Tracing actions.
         source += textwrap.dedent("""\
             To trace the actions:
@@ -887,6 +906,7 @@ class Inform7Game:
         source += textwrap.dedent("""\
         Reporting max score is an action applying to nothing.
         Carry out reporting max score:
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             say "[maximum score]".
 
         Understand "tw-print max_score" as reporting max score.
@@ -900,10 +920,12 @@ class Inform7Game:
 
         Printing the id of player is an action applying to nothing.
         Carry out printing the id of player:
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             print id of player.
 
         Printing the id of EndOfObject is an action applying to nothing.
         Carry out printing the id of EndOfObject:
+            Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
             print id of EndOfObject.
 
         Understand "tw-print player id" as printing the id of player.

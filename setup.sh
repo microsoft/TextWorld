@@ -56,15 +56,6 @@ if [ "${machine}" == 'Mac' ] && [ -e inform7-6M62 ]; then
     hdiutil detach /Volumes/Inform/
 fi
 
-# Install a modified fork of Frotz and build it specifically for interaction with the command line
-if [ ! -d frotz ]; then
-    echo "Installing frotz"
-    git clone https://github.com/danielricks/frotz.git
-fi
-(
-    cd frotz/
-    make -B dumb
-)
 
 # Install modified fork of Glulx and build it - we have this one locally
 (

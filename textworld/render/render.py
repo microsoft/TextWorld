@@ -11,8 +11,8 @@ from typing import Union, Dict, Optional
 import numpy as np
 import networkx as nx
 
+from textworld.core import GameState
 from textworld.logic import Proposition, Action
-from textworld.envs.glulx.git_glulx_ml import GlulxGameState
 from textworld.logic import State
 from textworld.generator import World, Game
 from textworld.utils import maybe_mkdir, get_webdriver
@@ -88,7 +88,7 @@ class GraphRoom(object):
         self.items.append(item)
 
 
-def load_state_from_game_state(game_state: GlulxGameState, format: str = 'png', limit_player_view: bool = False) -> dict:
+def load_state_from_game_state(game_state: GameState, format: str = 'png', limit_player_view: bool = False) -> dict:
     """
     Generates serialization of game state.
 
@@ -97,11 +97,11 @@ def load_state_from_game_state(game_state: GlulxGameState, format: str = 'png', 
     :param limit_player_view: Whether to limit the player's view. Default: False.
     :return: The graph generated from this World
     """
-    game_infos = game_state.game_infos
+    game_infos = game_state.game.infos
     game_infos["objective"] = game_state.objective
-    last_action = game_state.action
+    last_action = game_state.last_action
     # Create a world from the current state's facts.
-    world = World.from_facts(game_state.state.facts)
+    world = World.from_facts(game_state._facts)
     return load_state(world, game_infos, last_action, format, limit_player_view)
 
 
@@ -351,7 +351,7 @@ def concat_images(*images):
     return new_im
 
 
-def visualize(world: Union[Game, State, GlulxGameState, World],
+def visualize(world: Union[Game, State, GameState, World],
               interactive: bool = False):
     """
     Show the current state of the world.
@@ -369,7 +369,7 @@ def visualize(world: Union[Game, State, GlulxGameState, World],
         game = world
         state = load_state(game.world, game.infos)
         state["objective"] = game.objective
-    elif isinstance(world, GlulxGameState):
+    elif isinstance(world, GameState):
         state = load_state_from_game_state(game_state=world)
     elif isinstance(world, World):
         state = load_state(world)

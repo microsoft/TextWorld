@@ -3,6 +3,7 @@
 set -e
 
 if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+    brew update
     brew tap homebrew/cask
     brew cask install google-chrome chromedriver
     brew install graphviz

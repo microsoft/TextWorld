@@ -35,7 +35,7 @@ def test_html_viewer():
     # options.binary_location = "/bin/chromium"
     driver = get_webdriver()
 
-    driver.get("http://127.0.0.1:8080")
+    driver.get("http://127.0.0.1:{}".format(env.port))
     nodes = driver.find_elements_by_class_name("node")
     assert len(nodes) == num_nodes
     items = driver.find_elements_by_class_name("item")

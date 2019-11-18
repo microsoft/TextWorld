@@ -23,19 +23,19 @@ def test_filter_wrapper():
         options.path = tmpdir
         game_file = compile_game(game, options)
 
-        env = textworld.start(game_file)
-        env_options = EnvInfos()
-        for attr in env_options.__slots__:
+        env_infos = EnvInfos()
+        for attr in env_infos.__slots__:
             if attr == "extras":
                 continue  # Skip since it's not a boolean attribute.
 
-            setattr(env_options, attr, True)
+            setattr(env_infos, attr, True)
 
-        assert len(env_options) == len(env_options.__slots__) - 1
-        assert len(env_options) == len(env_options.basics)
+        env = textworld.start(game_file, env_infos)
+        assert len(env_infos) == len(env_infos.__slots__) - 1
+        assert len(env_infos) == len(env_infos.basics)
 
-        env = Filter(env, env_options)
+        env = Filter(env)
         _, infos = env.reset()
 
-        for attr in env_options.basics:
+        for attr in env_infos.basics:
             assert attr in infos

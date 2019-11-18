@@ -1,10 +1,17 @@
 
 import multiprocessing as mp
 from typing import Tuple, List, Dict
+from collections import defaultdict
 
 import numpy as np
 
 import gym
+
+
+def _list_of_dicts_to_dict_of_lists(list_: List[Dict]) -> Dict[str, List]:
+    # Convert List[Dict] to Dict[List]
+    keys = set(key for dict_ in list_ for key in dict_)
+    return {key: [dict_.get(key) for dict_ in list_] for key in keys}
 
 
 def _child(id, parent_pipe, pipe):
@@ -128,21 +135,12 @@ class ParallelBatchEnv(gym.Env):
             infos: Information requested when creating the environments.
         """
         self.last = [None] * self.batch_size
-        obs, infos = [], None
         for env in self.envs:
             env.call("reset")
 
-        for env in self.envs:
-            result = env.result()
-            ob, info = result
-            obs.append(ob)
-
-            if infos is None:
-                infos = {k: [] for k in info}
-
-            for k, v in info.items():
-                infos[k].append(v)
-
+        results = [env.result() for env in self.envs]
+        obs, infos = zip(*results)
+        infos = _list_of_dicts_to_dict_of_lists(infos)
         return obs, infos
 
     def step(self, actions: List[str]) -> Tuple[List[str], int, bool, Dict[str, List[str]]]:
@@ -164,25 +162,10 @@ class ParallelBatchEnv(gym.Env):
                 env.call("step", action)
                 results.append(None)
 
-        obs, rewards, dones, infos = [], [], [], None
-        for i, (env, result) in enumerate(zip(self.envs, results)):
-            if result is None:
-                result = env.result()
-
-            ob, reward, done, info = result
-
-            obs.append(ob)
-            rewards.append(reward)
-            dones.append(done)
-
-            if infos is None:
-                infos = {k: [] for k in info}
-
-            for k, v in info.items():
-                infos[k].append(v)
-
-            self.last[i] = result
-
+        results = [result or env.result() for env, result in zip(self.envs, results)]
+        obs, rewards, dones, infos = zip(*results)
+        self.last = results
+        infos = _list_of_dicts_to_dict_of_lists(infos)
         return obs, rewards, dones, infos
 
     def render(self, mode='human'):
@@ -244,17 +227,9 @@ class BatchEnv(gym.Env):
             infos: Information requested when creating the environments.
         """
         self.last = [None] * self.batch_size
-        obs, infos = [], None
-        for env in self.envs:
-            ob, info = env.reset()
-            obs.append(ob)
-
-            if infos is None:
-                infos = {k: [] for k in info}
-
-            for k, v in info.items():
-                infos[k].append(v)
-
+        results = [env.reset() for env in self.envs]
+        obs, infos = zip(*results)
+        infos = _list_of_dicts_to_dict_of_lists(infos)
         return obs, infos
 
     def step(self, actions):
@@ -267,25 +242,17 @@ class BatchEnv(gym.Env):
             done: Whether the game is over or not.
             infos: Information requested when creating the environments.
         """
-        obs, rewards, dones, infos = [], [], [], None
+        results = []
         for i, (env, action) in enumerate(zip(self.envs, actions)):
             if self.last[i] is not None and self.last[i][2]:  # Game is done
-                ob, reward, done, info = self.last[i]  # Copy last infos over.
+                results.append(self.last[i])  # Copy last infos over.
             else:
-                ob, reward, done, info = env.step(action)
+                results.append(env.step(action))
 
-            obs.append(ob)
-            rewards.append(reward)
-            dones.append(done)
+        self.last = results
 
-            if infos is None:
-                infos = {k: [] for k in info}
-
-            for k, v in info.items():
-                infos[k].append(v)
-
-            self.last[i] = ob, reward, done, info
-
+        obs, rewards, dones, infos = zip(*results)
+        infos = _list_of_dicts_to_dict_of_lists(infos)
         return obs, rewards, dones, infos
 
     def render(self, mode='human'):

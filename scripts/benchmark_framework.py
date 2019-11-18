@@ -7,6 +7,8 @@ from os.path import join as pjoin
 
 import numpy as np
 
+import gym
+
 import textworld
 from textworld import g_rng
 
@@ -41,8 +43,15 @@ def generate_never_ending_game(args):
 
 
 def benchmark(game_file, args):
-    env = textworld.start(game_file)
-    print("Using {}".format(env.__class__.__name__))
+    infos = textworld.EnvInfos()
+    if args.activate_state_tracking or args.mode == "random-cmd":
+        infos.admissible_commands = True
+
+    if args.compute_intermediate_reward:
+        infos.intermediate_reward = True
+
+    env = textworld.start(game_file, infos)
+    print("Using {}".format(env))
 
     if args.mode == "random":
         agent = textworld.agents.NaiveAgent()
@@ -52,13 +61,6 @@ def benchmark(game_file, args):
         agent = textworld.agents.WalkthroughAgent()
 
     agent.reset(env)
-
-    if args.activate_state_tracking:
-        env.activate_state_tracking
-
-    if args.compute_intermediate_reward:
-        env.compute_intermediate_reward()
-
     game_state = env.reset()
 
     if args.verbose:
@@ -66,6 +68,7 @@ def benchmark(game_file, args):
 
     reward = 0
     done = False
+    nb_resets = 1
     start_time = time.time()
     for _ in range(args.max_steps):
         command = agent.act(game_state, reward, done)
@@ -74,6 +77,7 @@ def benchmark(game_file, args):
         if done:
             #print("Win! Reset.")
             env.reset()
+            nb_resets += 1
             done = False
 
         if args.verbose:
@@ -81,25 +85,28 @@ def benchmark(game_file, args):
 
     duration = time.time() - start_time
     speed = args.max_steps / duration
-    print("Done {:,} steps in {:.2f} secs ({:,.1f} steps/sec)".format(args.max_steps, duration, speed))
+    print("Done {:,} steps in {:.2f} secs ({:,.1f} steps/sec) with {} resets.".format(args.max_steps, duration, speed, nb_resets))
     return speed
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--game",
+                        help="Path to an existing game.")
     parser.add_argument("--nb-rooms", type=int, default=20,
                         help="Nb. of rooms in the world. Default: %(default)s")
     parser.add_argument("--nb-objects", type=int, default=50,
                         help="Nb. of objects in the world. Default: %(default)s")
     parser.add_argument("--quest-length", type=int, default=5,
                         help="Minimum nb. of actions the quest requires to be completed. Default: %(default)s")
-    parser.add_argument("--quest-breadth", type=int, default=3,
+    parser.add_argument("--quest-breadth", type=int, default=1,
                         help="Control how non-linear a quest can be. Default: %(default)s")
     parser.add_argument("--max-steps", type=int, default=1000,
                         help="Stop the game after that many steps. Default: %(default)s")
     parser.add_argument("--output", default="./gen_games/",
                         help="Output folder to save generated game files.")
     parser.add_argument("--mode", default="random-cmd", choices=["random", "random-cmd", "walkthrough"])
+    parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--no-quest", action="store_true")
     parser.add_argument("--compute_intermediate_reward", action="store_true")
     parser.add_argument("--activate_state_tracking", action="store_true")
@@ -111,11 +118,13 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    game_file = generate_never_ending_game(args)
+    game_file = args.game
+    if args.game is None:
+        game_file = generate_never_ending_game(args)
 
 
     speeds = []
-    for _ in range(10):
+    for _ in range(3):
         speed = benchmark(game_file, args)
         speeds.append(speed)
         args.agent_seed = args.agent_seed + 1

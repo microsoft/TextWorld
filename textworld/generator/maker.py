@@ -614,7 +614,7 @@ class GameMaker:
             game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
             recorder = Recorder()
             agent = textworld.agents.HumanAgent(autocompletion=True)
-            textworld.play(game_file, agent=agent, wrapper=recorder)
+            textworld.play(game_file, agent=agent, wrappers=[recorder])
 
         # Skip "None" actions.
         actions = [action for action in recorder.actions if action is not None]
@@ -653,7 +653,7 @@ class GameMaker:
                 game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
                 recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
-                textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
+                textworld.play(game_file, agent=agent, wrappers=[recorder], silent=True)
             except textworld.agents.WalkthroughDone:
                 pass  # Quest is done.
 
@@ -704,7 +704,7 @@ class GameMaker:
                 game_file = self.compile(pjoin(tmpdir, "record_event.ulx"))
                 recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
-                textworld.play(game_file, agent=agent, wrapper=recorder, silent=True)
+                textworld.play(game_file, agent=agent, wrappers=[recorder], silent=True)
             except textworld.agents.WalkthroughDone:
                 pass  # Quest is done.
 

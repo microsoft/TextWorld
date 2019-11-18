@@ -8,7 +8,7 @@ urwid>=2.0.1
 more_itertools
 tatsu>=4.3.0
 hashids>=1.2.0
-jericho>=1.1.5
+jericho>=2.1.1
 
 # For visualization
 pybars3>=0.9.3

@@ -101,7 +101,7 @@ Cleaning up the output is essentially done in the :py:class:`Zork1GameState <tex
             return self._inventory
 
         def _retrieve_score(self):
-            if self.has_won or self.has_lost:
+            if self.won or self.lost:
                 _score_text = self.feedback
             else:
                 # Issue the "score" command and parse its output.
@@ -141,12 +141,12 @@ Cleaning up the output is essentially done in the :py:class:`Zork1GameState <tex
             return self._description
 
         @property
-        def has_won(self):
+        def won(self):
             """ Whether the player has won the game or not. """
             return "Inside the Barrow" in self.feedback.split("\n")[0]
 
         @property
-        def has_lost(self):
+        def lost(self):
             """ Whether the player has lost the game or not. """
             return self.nb_deaths >= 3
 

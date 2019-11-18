@@ -33,31 +33,29 @@ class HumanAgent(Agent):
             self._history = InMemoryHistory()
 
     def reset(self, env):
-        if self.autocompletion or self.walkthrough:
-            try:
-                env.activate_state_tracking()
-                env.compute_intermediate_reward()
-                # Commands typed by the player are already displayed.
-                env.display_command_during_render = False
-            except AttributeError:
-                msg = ("Hints (command completion and walkthrough) are"
-                       " only supported for generated games.")
-                raise NameError(msg)
+        # Commands typed by the player are already displayed.
+        env.display_command_during_render = False
+
+        if self.autocompletion:
+            env.infos.admissible_commands = True
+
+        if self.walkthrough:
+            env.infos.policy_commands = True
 
     def act(self, game_state, reward, done):
-        if (self.walkthrough and game_state._compute_intermediate_reward and len(game_state.policy_commands) > 0 and not game_state.game_ended):
+        if (self.walkthrough and game_state.intermediate_reward and len(game_state.policy_commands) > 0 and not done):
             text = '[{:02.1%}|({}): {}]\n'.format(game_state.score, game_state.intermediate_reward, " > ".join(game_state.policy_commands))
             print("Walkthrough: {}\n".format(text))
 
         if prompt_toolkit_available:
             actions_completer = None
-            if self.autocompletion and hasattr(game_state, "admissible_commands"):
+            if self.autocompletion and game_state.admissible_commands:
                 actions_completer = WordCompleter(game_state.admissible_commands,
                                                   ignore_case=True, sentence=True)
             action = prompt('> ', completer=actions_completer,
                             history=self._history, enable_history_search=True)
         else:
-            if self.autocompletion and hasattr(game_state, "admissible_commands"):
+            if self.autocompletion and game_state.admissible_commands:
                 print("Available actions: {}\n".format(game_state.admissible_commands))
 
             action = input('> ')
