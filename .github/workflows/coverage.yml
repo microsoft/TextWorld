@@ -1,0 +1,29 @@
+name: Code coverage
+on: [pull_request]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python 3.7
+      uses: actions/setup-python@master
+      with:
+        version: 3.7
+    - name: Install dependencies
+      run: |
+        sudo apt update && sudo apt install -y --no-install-recommends chromium-chromedriver graphviz
+        pip install -r requirements.txt
+    - name: Install TextWorld
+      run: |
+        ./.travis/setup.sh
+    - name: Run tests
+      run: |
+        ./.travis/test.sh
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1.0.4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        yml: .codecov.yml
