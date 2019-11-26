@@ -7,6 +7,8 @@ Creates server for streamed game state
 """
 import os
 import json
+import logging
+import textwrap
 from os.path import join as pjoin
 
 from multiprocessing import Process, Pipe
@@ -14,21 +16,41 @@ from multiprocessing.connection import Connection
 from threading import Thread
 from queue import Queue
 
-import webbrowser
-import flask
-import gevent
-from gevent import pywsgi
-import logging
-from flask import Flask, request
-import pybars
-
 from textworld.core import GameState
-from textworld.render import load_state_from_game_state
+from textworld.utils import check_modules
+import textworld.render
+
+# Try importing optional libraries.
+missing_modules = []
+try:
+    import webbrowser
+except ImportError:
+    missing_modules.append("webbrowser")
+
+try:
+    import flask
+    from flask import Flask, request
+except ImportError:
+    missing_modules.append("flask")
+
+try:
+    import gevent
+    from gevent import pywsgi
+except ImportError:
+    missing_modules.append("gevent")
+
+try:
+    import pybars
+except ImportError:
+    missing_modules.append("pybars")
+
 
 WEB_SERVER_RESOURCES = pjoin(os.path.abspath(os.path.dirname(__file__)), "tmpl")
 
 
 def get_html_template(game_state=None):
+    check_modules(["pybars"], missing_modules)
+
     # read in template
     compiler = pybars.Compiler()
     with open(pjoin(WEB_SERVER_RESOURCES, 'slideshow.handlebars'), 'r') as f:
@@ -45,7 +67,7 @@ def get_html_template(game_state=None):
     return html
 
 
-class ServerSentEvent(object):
+class ServerSentEvent:
 
     def __init__(self, data: any):
         """
@@ -68,7 +90,7 @@ class ServerSentEvent(object):
         return "%s\n\n" % "\n".join(lines)
 
 
-class SupressStdStreams(object):
+class SupressStdStreams:
     def __init__(self):
         """
         for surpressing std.out streams
@@ -105,7 +127,7 @@ def find_free_port(port_range):
     raise ValueError("Could not find any available port.")
 
 
-class VisualizationService(object):
+class VisualizationService:
     """
     Server for visualization.
 
@@ -117,9 +139,23 @@ class VisualizationService(object):
         self.prev_state = None
         self.command = None
         self._process = None
-        state_dict = load_state_from_game_state(game_state)
+        state_dict = textworld.render.load_state_from_game_state(game_state)
         self._history = '<p class="objective-text">{}</p>'.format(game_state.objective.strip().replace("\n", "<br/>"))
-        initial_description = game_state.feedback.replace(game_state.objective, "")
+
+        banner = textwrap.dedent(r"""
+             ________  __       __
+            |        \|  \  _  |  \
+             \$$$$$$$$| $$ / \ | $$
+               | $$   | $$/  $\| $$
+               | $$   | $$  $$$\ $$
+               | $$   | $$ $$\$$\$$
+               | $$   | $$$$  \$$$$
+               | $$   | $$$    \$$$
+                \$$    \$$      \$$
+        """)  # noqa: W605
+
+        feedback = game_state.feedback.split(game_state.objective, 1)[-1]
+        initial_description = banner.replace(" ", "&nbsp;") + feedback
         self._history += '<p class="feedback-text">{}</p>'.format(initial_description.strip().replace("\n", "<br/>"))
         state_dict["history"] = self._history
         state_dict["command"] = ""
@@ -157,6 +193,7 @@ class VisualizationService(object):
 
         print("Viewer started at http://localhost:{}.".format(self.port))
         if self.open_automatically:
+            check_modules(["webbrowser"], missing_modules)
             with SupressStdStreams():
                 webbrowser.open("http://localhost:{}/".format(self.port))
 
@@ -167,7 +204,7 @@ class VisualizationService(object):
         :param game_state: Glulx game state.
         :param command: previous command
         """
-        state_dict = load_state_from_game_state(game_state)
+        state_dict = textworld.render.load_state_from_game_state(game_state)
         self._history += '<p class="command-text">> {}</p>'.format(command)
         self._history += '<p class="feedback-text">{}</p>'.format(game_state.feedback.strip().replace("\n", "<br/>"))
         state_dict["command"] = command
@@ -178,7 +215,7 @@ class VisualizationService(object):
         self._process.terminate()
 
 
-class Server(object):
+class Server:
     """
     Visualization server.
     Uses Server-sent Events to update game_state for visualization.
@@ -191,7 +228,8 @@ class Server(object):
         :param game_state: game state returned from load_state_from_game_state
         :param port: port to run visualization on
         """
-        super(Server, self).__init__()
+        check_modules(["gevent", "flask"], missing_modules)
+        super().__init__()
 
         # disabling loggers
         log = logging.getLogger('werkzeug')

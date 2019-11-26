@@ -3,6 +3,8 @@
 
 
 import io
+import os
+import time
 import json
 import tempfile
 from os.path import join as pjoin
@@ -15,10 +17,29 @@ from textworld.core import GameState
 from textworld.logic import Proposition, Action
 from textworld.logic import State
 from textworld.generator import World, Game
-from textworld.utils import maybe_mkdir, get_webdriver
+from textworld.utils import maybe_mkdir, check_modules
 
 from textworld.generator.game import EntityInfo
 from textworld.generator.data import KnowledgeBase
+
+from textworld.render.serve import get_html_template
+
+# Try importing optional libraries.
+missing_modules = []
+try:
+    import webbrowser
+except ImportError:
+    missing_modules.append("webbrowser")
+
+try:
+    from PIL import Image
+except ImportError:
+    missing_modules.append("pillow")
+
+try:
+    from selenium import webdriver
+except ImportError:
+    missing_modules.append("selenium")
 
 
 XSCALE, YSCALE = 6, 3
@@ -98,7 +119,7 @@ def load_state_from_game_state(game_state: GameState, format: str = 'png', limit
     :return: The graph generated from this World
     """
     game_infos = game_state.game.infos
-    game_infos["objective"] = game_state.objective
+    game_infos["objective"] = game_state.objective  # TODO: should not modify game.infos inplace!
     last_action = game_state.last_action
     # Create a world from the current state's facts.
     world = World.from_facts(game_state._facts)
@@ -234,6 +255,7 @@ def load_state(world: World,
     # Objective
     if "objective" in game_infos:
         result["objective"] = game_infos["objective"]
+        del game_infos["objective"]  # TODO: objective should not be part of game_infos in the first place.
 
     # Objects
     all_items = {}
@@ -319,8 +341,7 @@ def take_screenshot(url: str, id: str = 'world'):
     :param id: ID of DOM element.
     :return: Image object.
     """
-    from PIL import Image
-
+    check_modules(["pillow"], missing_modules)
     driver = get_webdriver()
 
     driver.get(url)
@@ -340,7 +361,8 @@ def take_screenshot(url: str, id: str = 'world'):
 
 
 def concat_images(*images):
-    from PIL import Image
+    check_modules(["pillow"], missing_modules)
+
     widths, heights = zip(*(i.size for i in images))
     total_width = sum(widths)
     max_height = max(heights)
@@ -355,6 +377,83 @@ def concat_images(*images):
     return new_im
 
 
+class WebdriverNotFoundError(Exception):
+    pass
+
+
+def which(program):
+    """
+    helper to see if a program is in PATH
+    :param program: name of program
+    :return: path of program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, _ = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def get_webdriver(path=None):
+    """
+    Get the driver and options objects.
+    :param path: path to browser binary.
+    :return: driver
+    """
+    check_modules(["selenium", "webdriver"], missing_modules)
+
+    def chrome_driver(path=None):
+        import urllib3
+        from selenium.webdriver.chrome.options import Options
+        options = Options()
+        options.add_argument('headless')
+        options.add_argument('ignore-certificate-errors')
+        options.add_argument("test-type")
+        options.add_argument("no-sandbox")
+        options.add_argument("disable-gpu")
+        if path is not None:
+            options.binary_location = path
+
+        SELENIUM_RETRIES = 10
+        SELENIUM_DELAY = 3  # seconds
+        for _ in range(SELENIUM_RETRIES):
+            try:
+                return webdriver.Chrome(chrome_options=options)
+            except urllib3.exceptions.ProtocolError:  # https://github.com/SeleniumHQ/selenium/issues/5296
+                time.sleep(SELENIUM_DELAY)
+
+        raise ConnectionResetError('Cannot connect to Chrome, giving up after {SELENIUM_RETRIES} attempts.')
+
+    def firefox_driver(path=None):
+        from selenium.webdriver.firefox.options import Options
+        options = Options()
+        options.add_argument('headless')
+        driver = webdriver.Firefox(firefox_binary=path, options=options)
+        return driver
+
+    driver_mapping = {
+        'geckodriver': firefox_driver,
+        'chromedriver': chrome_driver,
+        'chromium-driver': chrome_driver
+    }
+
+    for driver in driver_mapping.keys():
+        found = which(driver)
+        if found is not None:
+            return driver_mapping.get(driver, None)(path)
+
+    raise WebdriverNotFoundError("Chrome/Chromium/FireFox Webdriver not found.")
+
+
 def visualize(world: Union[Game, State, GameState, World],
               interactive: bool = False):
     """
@@ -363,11 +462,7 @@ def visualize(world: Union[Game, State, GameState, World],
     :param interactive: Whether or not to visualize the state in the browser.
     :return: Image object of the visualization.
     """
-    try:
-        import webbrowser
-        from textworld.render.serve import get_html_template
-    except ImportError:
-        raise ImportError('Visualization dependencies not installed. Try running `pip install textworld[vis]`')
+    check_modules(["webbrowser"], missing_modules)
 
     if isinstance(world, Game):
         game = world

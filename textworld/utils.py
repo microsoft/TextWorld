@@ -4,7 +4,6 @@
 
 import os
 import re
-import time
 import shutil
 import tempfile
 import itertools
@@ -37,79 +36,6 @@ class RandomGenerator:
         rng = np.random.RandomState(self._seed)
         self._seed += 1
         return rng
-
-
-def which(program):
-    """
-    helper to see if a program is in PATH
-    :param program: name of program
-    :return: path of program or None
-    """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
-
-
-def get_webdriver(path=None):
-    """
-    Get the driver and options objects.
-    :param path: path to browser binary.
-    :return: driver
-    """
-    from selenium import webdriver
-
-    def chrome_driver(path=None):
-        import urllib3
-        from selenium.webdriver.chrome.options import Options
-        options = Options()
-        options.add_argument('headless')
-        options.add_argument('ignore-certificate-errors')
-        options.add_argument("test-type")
-        options.add_argument("no-sandbox")
-        options.add_argument("disable-gpu")
-        if path is not None:
-            options.binary_location = path
-
-        SELENIUM_RETRIES = 10
-        SELENIUM_DELAY = 3  # seconds
-        for _ in range(SELENIUM_RETRIES):
-            try:
-                return webdriver.Chrome(chrome_options=options)
-            except urllib3.exceptions.ProtocolError:  # https://github.com/SeleniumHQ/selenium/issues/5296
-                time.sleep(SELENIUM_DELAY)
-
-        raise ConnectionResetError('Cannot connect to Chrome, giving up after {SELENIUM_RETRIES} attempts.')
-
-    def firefox_driver(path=None):
-        from selenium.webdriver.firefox.options import Options
-        options = Options()
-        options.add_argument('headless')
-        driver = webdriver.Firefox(firefox_binary=path, options=options)
-        return driver
-
-    driver_mapping = {
-        'geckodriver': firefox_driver,
-        'chromedriver': chrome_driver,
-        'chromium-driver': chrome_driver
-    }
-
-    for driver in driver_mapping.keys():
-        found = which(driver)
-        if found is not None:
-            return driver_mapping.get(driver, None)(path)
-
-    raise ModuleNotFoundError("Chrome/Chromium/FireFox Webdriver not found.")
 
 
 class RegexDict(OrderedDict):
@@ -278,6 +204,14 @@ def save_graph_to_svg(G, labels, filename, backward=False):
         n.set_label(labels[name.strip('"')])
 
     pydot_graph.write_svg(filename)
+
+
+def check_modules(required_modules: List[str], missing_modules: List[str]):
+    """ Check whether some required modules are missing. """
+    missing_modules = sorted(set(missing_modules) & set(required_modules))
+    if len(missing_modules) > 0:
+        msg = "Missing module(s): {}. Try running\npip install textworld[vis]".format(", ".join(missing_modules))
+        raise ImportError(msg)
 
 
 #: Global random generator.

@@ -4,9 +4,10 @@
 
 import textworld
 
-from textworld.utils import make_temp_directory, get_webdriver
+from textworld.utils import make_temp_directory
 from textworld.generator import compile_game
 from textworld.envs.wrappers import HtmlViewer
+from textworld.render import get_webdriver
 
 
 def test_html_viewer():
