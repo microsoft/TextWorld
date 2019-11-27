@@ -70,13 +70,13 @@ class UrwidQuestQuerier(urwid.PopUpLauncher):
 
 def query_for_important_facts(actions: List[Action],
                               facts: Optional[List[Proposition]] = None,
-                              varinfos:Optional[Dict[str, EntityInfo]] = None) -> Optional[List[Proposition]]:
+                              varinfos: Optional[Dict[str, EntityInfo]] = None) -> Optional[List[Proposition]]:
     """ Queries the user, asking which facts are important.
 
     Args:
         actions: Actions used to determine or extract relevant facts.
         facts: All facts existing at the end of the game.
-    
+
     Returns:
         The list of facts that are required to win;
         or `None` if `facts` was not provided;

@@ -169,8 +169,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     world.set_player_room(starting_room)
     # Add object the player has to pick up.
     types_counts = kb.types.count(world.state)
-    obj_type = kb.types.sample(parent_type='o', rng=rng_objects,
-                                       include_parent=True)
+    obj_type = kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
     var_id = get_new(obj_type, types_counts)
     right_obj = Variable(var_id, obj_type)
     world.add_fact(Proposition("in", [right_obj, world.inventory]))
@@ -178,9 +177,9 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     # Add containers and supporters to the world.
     types_counts = kb.types.count(world.state)
     objects = []
-    distractor_types = uniquify(['c', 's'] +
-                                kb.types.descendants('c') +
-                                kb.types.descendants('s'))
+    distractor_types = uniquify(['c', 's']
+                                + kb.types.descendants('c')
+                                + kb.types.descendants('s'))
     for i in range(n_distractors):
         obj_type = rng_objects.choice(distractor_types)
         var_id = get_new(obj_type, types_counts)  # This update the types_counts.
@@ -190,8 +189,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Add object the player should not pick up.
     types_counts = kb.types.count(world.state)
-    obj_type = kb.types.sample(parent_type='o', rng=rng_objects,
-                                       include_parent=True)
+    obj_type = kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
     var_id = get_new(obj_type, types_counts)
     wrong_obj = Variable(var_id, obj_type)
     # Place it anywhere in the world.
@@ -202,8 +200,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     options.chaining.rules_per_depth = [kb.rules.get_matching("take.*")]
     options.chaining.backward = True
     options.chaining.rng = rng_quest
-    #options.chaining.restricted_types = exceptions
-    #exceptions = ["r", "c", "s", "d"] if mode == "easy" else ["r"]
+    # options.chaining.restricted_types = exceptions
+    # exceptions = ["r", "c", "s", "d"] if mode == "easy" else ["r"]
     chain = textworld.generator.sample_quest(world.state, options.chaining)
 
     # Add objects needed for the quest.

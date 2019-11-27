@@ -11,8 +11,6 @@ from textworld.generator.game import Game, GameOptions
 from textworld.envs import GitGlulxEnv
 from textworld.envs import JerichoEnv
 from textworld.envs import TWInform7
-from textworld.envs.wrappers import Filter
-from textworld.envs.wrappers.tw_inform7 import MissingGameInfosError
 
 from textworld.agents import HumanAgent
 

@@ -13,7 +13,7 @@ from textworld.logic import State, Proposition, Variable
 from textworld.generator.vtypes import VariableTypeTree, VariableType
 from textworld.generator.vtypes import parse_variable_types, get_new
 
-from textworld.generator import testing, KnowledgeBase
+from textworld.generator import testing
 
 
 class TestIntegration(unittest.TestCase):

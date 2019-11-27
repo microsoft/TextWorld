@@ -3,16 +3,12 @@
 
 
 # -*- coding: utf-8 -*-
-import os
-import re
 import sys
 import textwrap
 import subprocess
 from pkg_resources import Requirement, resource_filename
 
-from typing import Mapping, Union, Tuple, List
-
-import numpy as np
+from typing import Union
 
 from glk import ffi, lib
 from io import StringIO
@@ -22,7 +18,6 @@ from textworld.core import GameState
 from textworld.core import GameNotRunningError
 
 GLULX_PATH = resource_filename(Requirement.parse('textworld'), 'textworld/thirdparty/glulx/Git-Glulx')
-
 
 
 def _strip_input_prompt_symbol(text: str) -> str:

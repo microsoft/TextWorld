@@ -85,11 +85,12 @@ def build_and_compile_game(options: GameOptions):
 
     quest2_cmds = quest1_cmds + ["close chest"]
     quest2_actions = M.new_event_using_commands(quest2_cmds).actions
-    chest_closed_with_carrot = Event(conditions={
-                                        M.new_fact("in", carrot, chest),
-                                        M.new_fact("closed", chest)
-                                     },
-                                     actions=quest2_actions)
+    chest_closed_with_carrot = Event(
+        conditions={
+            M.new_fact("in", carrot, chest),
+            M.new_fact("closed", chest)
+        },
+        actions=quest2_actions)
 
     quest2 = Quest(win_events=[chest_closed_with_carrot],
                    fail_events=[eating_carrot])

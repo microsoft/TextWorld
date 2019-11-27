@@ -144,7 +144,7 @@ class GameLogger:
             text = []
             for i, c in enumerate(bincount):
                 text.append(str(c))
-                if (i+1) % 5 == 0 and (i+1) < len(bincount):
+                if (i + 1) % 5 == 0 and (i + 1) < len(bincount):
                     text.append("|")
 
             return " ".join(text)

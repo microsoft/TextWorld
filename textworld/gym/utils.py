@@ -65,7 +65,7 @@ def register_games(game_files: List[str],
         kwargs={
             'game_files': game_files,
             'request_infos': request_infos,
-            }
+        }
     )
     return env_id
 

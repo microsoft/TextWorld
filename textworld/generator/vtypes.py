@@ -16,6 +16,7 @@ _PUNCT = ["::", ":", "$", "(", ")", ",", "&", "->"]
 
 _Token = namedtuple("_Token", ("type", "value"))
 
+
 def _tokenize(expr):
     """
     Helper tokenizer for logical expressions.
@@ -105,10 +106,10 @@ class VariableType:
         return cls(type, name, parent)
 
     def __eq__(self, other):
-        return (isinstance(other, VariableType) and
-                self.name == other.name and
-                self.type == other.type and
-                self.parent == other.parent)
+        return (isinstance(other, VariableType)
+                and self.name == other.name
+                and self.type == other.type
+                and self.parent == other.parent)
 
     def __str__(self):
         signature = "{}: {}".format(self.name, self.type)

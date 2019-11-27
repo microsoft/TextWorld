@@ -18,7 +18,7 @@ except ImportError:
 
 try:
     # For command line history when prompt_toolkit is not available.
-    import readline
+    import readline  # noqa: F401
 except ImportError:
     pass
 
@@ -44,7 +44,11 @@ class HumanAgent(Agent):
 
     def act(self, game_state, reward, done):
         if (self.walkthrough and game_state.intermediate_reward and len(game_state.policy_commands) > 0 and not done):
-            text = '[{:02.1%}|({}): {}]\n'.format(game_state.score, game_state.intermediate_reward, " > ".join(game_state.policy_commands))
+            text = '[{score:02.1%}|({intermediate_score}): {policy}]\n'.format(
+                score=game_state.score,
+                intermediate_score=game_state.intermediate_reward,
+                policy=" > ".join(game_state.policy_commands)
+            )
             print("Walkthrough: {}\n".format(text))
 
         if prompt_toolkit_available:

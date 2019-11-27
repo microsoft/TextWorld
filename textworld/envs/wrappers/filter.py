@@ -2,9 +2,9 @@
 # Licensed under the MIT license.
 
 
-from typing import Tuple, Mapping, Any, List, Iterable
+from typing import Tuple, Mapping, Any
 
-from textworld.core import EnvInfos, Environment, GameState, Wrapper
+from textworld.core import GameState, Wrapper
 
 
 class Filter(Wrapper):

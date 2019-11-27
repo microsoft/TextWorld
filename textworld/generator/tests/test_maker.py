@@ -134,9 +134,6 @@ def test_making_a_small_game(play_the_game=False):
     foods = [M.new(type='f') for _ in range(3)]
     M.inventory.add(*foods)
 
-    ## Add 10 random objects scattered in the world.
-    #M.populate(nb_objects=10)
-
     game = M.build()
     assert "GameMaker" in game.metadata["desc"]
 

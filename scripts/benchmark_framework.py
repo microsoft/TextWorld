@@ -7,8 +7,6 @@ from os.path import join as pjoin
 
 import numpy as np
 
-import gym
-
 import textworld
 from textworld import g_rng
 
@@ -75,7 +73,6 @@ def benchmark(game_file, args):
         game_state, reward, done = env.step(command)
 
         if done:
-            #print("Win! Reset.")
             env.reset()
             nb_resets += 1
             done = False
@@ -85,7 +82,8 @@ def benchmark(game_file, args):
 
     duration = time.time() - start_time
     speed = args.max_steps / duration
-    print("Done {:,} steps in {:.2f} secs ({:,.1f} steps/sec) with {} resets.".format(args.max_steps, duration, speed, nb_resets))
+    msg = "Done {:,} steps in {:.2f} secs ({:,.1f} steps/sec) with {} resets."
+    print(msg.format(args.max_steps, duration, speed, nb_resets))
     return speed
 
 
@@ -122,7 +120,6 @@ if __name__ == "__main__":
     if args.game is None:
         game_file = generate_never_ending_game(args)
 
-
     speeds = []
     for _ in range(3):
         speed = benchmark(game_file, args)
@@ -130,4 +127,3 @@ if __name__ == "__main__":
         args.agent_seed = args.agent_seed + 1
 
     print("-----\nAverage: {:,.1f} steps/sec".format(np.mean(speeds)))
-

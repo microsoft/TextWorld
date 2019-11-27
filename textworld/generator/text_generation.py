@@ -5,7 +5,6 @@
 import re
 from collections import OrderedDict
 
-from textworld.generator.data import KnowledgeBase
 from textworld.generator.game import Quest, Event, Game
 
 from textworld.generator.text_grammar import Grammar
@@ -84,22 +83,22 @@ def assign_name_to_object(obj, grammar, game_infos):
     grammar.used_names.add(obj_infos.name)
 
 
-def assign_description_to_object(obj, grammar, game_infos):
+def assign_description_to_object(obj, grammar, game):
     """
     Assign a descripton to an object.
     """
-    if game_infos[obj.id].desc is not None:
+    if game.infos[obj.id].desc is not None:
         return  # Already have a description.
 
     # Update the object description
     desc_tag = "#({})_desc#".format(obj.type)
-    game_infos[obj.id].desc = ""
+    game.infos[obj.id].desc = ""
     if grammar.has_tag(desc_tag):
-        game_infos[obj.id].desc = expand_clean_replace(desc_tag, grammar, obj, game_infos)
+        game.infos[obj.id].desc = expand_clean_replace(desc_tag, grammar, obj, game)
 
     # If we have an openable object, append an additional description
-    if KnowledgeBase.default().types.is_descendant_of(obj.type, ["c", "d"]):
-        game_infos[obj.id].desc += grammar.expand(" #openable_desc#")
+    if game.kb.types.is_descendant_of(obj.type, ["c", "d"]):
+        game.infos[obj.id].desc += grammar.expand(" #openable_desc#")
 
 
 def generate_text_from_grammar(game, grammar: Grammar):
@@ -127,7 +126,7 @@ def generate_text_from_grammar(game, grammar: Grammar):
             continue
 
         assign_name_to_object(obj, grammar, game.infos)
-        assign_description_to_object(obj, grammar, game.infos)
+        assign_description_to_object(obj, grammar, game)
 
     # Generate the room descriptions.
     for room in game.world.rooms:
@@ -151,10 +150,11 @@ def assign_description_to_room(room, game, grammar):
     Assign a descripton to a room.
     """
     # Add the decorative text
-    room_desc = expand_clean_replace("#dec#\n\n", grammar, room, game.infos)
+    room_desc = expand_clean_replace("#dec#\n\n", grammar, room, game)
 
     # Convert the objects into groupings based on adj/noun/type
-    objs = [o for o in room.content if KnowledgeBase.default().types.is_descendant_of(o.type, KnowledgeBase.default().types.CLASS_HOLDER)]
+
+    objs = [o for o in room.content if game.kb.types.is_descendant_of(o.type, game.kb.types.CLASS_HOLDER)]
     groups = OrderedDict()
     groups["adj"] = OrderedDict()
     groups["noun"] = OrderedDict()
@@ -189,19 +189,19 @@ def assign_description_to_room(room, game, grammar):
 
                     if type == "noun":
                         desc = desc.replace("(val)", "{}s".format(getattr(obj_infos, type)))
-                        desc = desc.replace("(name)", obj_list_to_prop_string(group_filt, "adj", game.infos, det_type="one"))
+                        desc = desc.replace("(name)", obj_list_to_prop_string(group_filt, "adj", game, det_type="one"))
                     elif type == "adj":
                         _adj = getattr(obj_infos, type) if getattr(obj_infos, type) is not None else ""
                         desc = desc.replace("(val)", "{}things".format(_adj))
-                        desc = desc.replace("(name)", obj_list_to_prop_string(group_filt, "noun", game.infos))
+                        desc = desc.replace("(name)", obj_list_to_prop_string(group_filt, "noun", game))
 
                     for o2 in group_filt:
                         ignore.append(o2.id)
-                        if KnowledgeBase.default().types.is_descendant_of(o2.type, KnowledgeBase.default().types.CLASS_HOLDER):
-                            for vtype in [o2.type] + KnowledgeBase.default().types.get_ancestors(o2.type):
+                        if game.kb.types.is_descendant_of(o2.type, game.kb.types.CLASS_HOLDER):
+                            for vtype in [o2.type] + game.kb.types.get_ancestors(o2.type):
                                 tag = "#room_desc_({})_multi_{}#".format(vtype, "adj" if type == "noun" else "noun")
                                 if grammar.has_tag(tag):
-                                    desc += expand_clean_replace(" " + tag, grammar, o2, game.infos)
+                                    desc += expand_clean_replace(" " + tag, grammar, o2, game)
                                     break
 
                     room_desc += " {}".format(fix_determinant(desc))
@@ -211,10 +211,10 @@ def assign_description_to_room(room, game, grammar):
                 continue
 
         if obj.type not in ["P", "I", "d"]:
-            for vtype in [obj.type] + KnowledgeBase.default().types.get_ancestors(obj.type):
+            for vtype in [obj.type] + game.kb.types.get_ancestors(obj.type):
                 tag = "#room_desc_({})#".format(vtype)
                 if grammar.has_tag(tag):
-                    room_desc += expand_clean_replace(" " + tag, grammar, obj, game.infos)
+                    room_desc += expand_clean_replace(" " + tag, grammar, obj, game)
                     break
 
     room_desc += "\n\n"
@@ -247,7 +247,7 @@ def assign_description_to_room(room, game, grammar):
 
     else:
         for dir_, door_obj in exits_with_closed_door:
-            d_desc = expand_clean_replace(" #room_desc_(d)#", grammar, door_obj, game.infos)
+            d_desc = expand_clean_replace(" #room_desc_(d)#", grammar, door_obj, game)
             d_desc = d_desc.replace("(dir)", dir_)
             exits_desc.append(d_desc)
 
@@ -262,7 +262,7 @@ def assign_description_to_room(room, game, grammar):
 
     else:
         for dir_, door_obj in exits_with_open_door:
-            d_desc = expand_clean_replace(" #room_desc_(d)#", grammar, door_obj, game.infos)
+            d_desc = expand_clean_replace(" #room_desc_(d)#", grammar, door_obj, game)
             d_desc = d_desc.replace("(dir)", dir_)
             exits_desc.append(d_desc)
 
@@ -296,7 +296,7 @@ class MergeAction:
         self.end = None
 
 
-def generate_instruction(action, grammar, game_infos, world, counts):
+def generate_instruction(action, grammar, game, counts):
     """
     Generate text instruction for a specific action.
     """
@@ -330,23 +330,23 @@ def generate_instruction(action, grammar, game_infos, world, counts):
     if isinstance(action, MergeAction):
         action_mapping = action.mapping
     else:
-        action_mapping = KnowledgeBase.default().rules[action.name].match(action)
+        action_mapping = game.kb.rules[action.name].match(action)
 
     for ph, var in action_mapping.items():
         if var.type == "r":
 
             # We can use a simple description for the room
-            r = world.find_room_by_id(var.name)  # Match on 'name'
+            r = game.world.find_room_by_id(var.name)  # Match on 'name'
             if r is None:
                 mapping[ph.name] = ''
             else:
-                mapping[ph.name] = game_infos[r.id].name
+                mapping[ph.name] = game.infos[r.id].name
         elif var.type in ["P", "I"]:
             continue
         else:
             # We want a more complex description for the objects
-            obj = world.find_object_by_id(var.name)
-            obj_infos = game_infos[obj.id]
+            obj = game.world.find_object_by_id(var.name)
+            obj_infos = game.infos[obj.id]
 
             if grammar.options.ambiguous_instructions:
                 assert False, "not tested"
@@ -357,10 +357,10 @@ def generate_instruction(action, grammar, game_infos, world, counts):
                         if t == "noun":
                             choices.append(getattr(obj_infos, t))
                         elif t == "type":
-                            choices.append(KnowledgeBase.default().types.get_description(getattr(obj_infos, t)))
+                            choices.append(game.kb.types.get_description(getattr(obj_infos, t)))
                         else:
                             # For adj, we pick an abstraction on the type
-                            atype = KnowledgeBase.default().types.get_description(grammar.rng.choice(KnowledgeBase.default().types.get_ancestors(obj.type)))
+                            atype = game.kb.types.get_description(grammar.rng.choice(game.kb.types.get_ancestors(obj.type)))
                             choices.append("{} {}".format(getattr(obj_infos, t), atype))
 
                 # If we have no possibilities, use the name (ie. prioritize abstractions)
@@ -417,19 +417,19 @@ def describe_event(event: Event, game: Game, grammar: Grammar) -> str:
     else:
         # Generate a description for either the last, or all commands
         if grammar.options.only_last_action:
-            actions_desc, _ = generate_instruction(event.actions[-1], grammar, game.infos, game.world, counts)
+            actions_desc, _ = generate_instruction(event.actions[-1], grammar, game, counts)
             only_one_action = True
         else:
             actions_desc_list = []
             # Decide if we blend instructions together or not
             if grammar.options.blend_instructions:
-                instructions = get_action_chains(event.actions, grammar, game.infos)
+                instructions = get_action_chains(event.actions, grammar, game)
             else:
                 instructions = event.actions
 
             only_one_action = len(instructions) < 2
             for c in instructions:
-                desc, separator = generate_instruction(c, grammar, game.infos, game.world, counts)
+                desc, separator = generate_instruction(c, grammar, game, counts)
                 actions_desc_list.append(desc)
                 if c != instructions[-1] and len(separator) > 0:
                     actions_desc_list.append(separator)
@@ -451,7 +451,7 @@ def describe_event(event: Event, game: Game, grammar: Grammar) -> str:
     return event_desc
 
 
-def get_action_chains(actions, grammar, game_infos):
+def get_action_chains(actions, grammar, game):
     """ Reduce the action list by combining similar actions. """
     seq_lim = -1
     sequences = []
@@ -460,7 +460,7 @@ def get_action_chains(actions, grammar, game_infos):
     for size in range(len(actions), 1, -1):
         for start in range(len(actions) - size + 1):
             if start > seq_lim:
-                is_sequence, seq = is_seq(actions[start:start + size], game_infos)
+                is_sequence, seq = is_seq(actions[start:start + size], game)
                 if is_sequence and grammar.has_tag("#{}#".format(seq.name)):
                     seq.start = start
                     seq.end = start + size
@@ -482,20 +482,20 @@ def get_action_chains(actions, grammar, game_infos):
     return final_seq
 
 
-def is_seq(chain, game_infos):
+def is_seq(chain, game):
     """ Check if we have a theoretical chain in actions. """
     seq = MergeAction()
 
     room_placeholder = Placeholder('r')
 
-    action_mapping = KnowledgeBase.default().rules[chain[0].name].match(chain[0])
+    action_mapping = game.kb.rules[chain[0].name].match(chain[0])
     for ph, var in action_mapping.items():
         if ph.type not in ["P", "I"]:
             seq.mapping[ph] = var
             seq.const.append(var)
 
     for c in chain:
-        c_action_mapping = KnowledgeBase.default().rules[c.name].match(c)
+        c_action_mapping = game.kb.rules[c.name].match(c)
 
         # Update our action name
         seq.name += "_{}".format(c.name.split("/")[0])
@@ -535,32 +535,32 @@ def replace_num(phrase, val):
         return phrase.replace("(^)", "several")
 
 
-def expand_clean_replace(symbol, grammar, obj, game_infos):
+def expand_clean_replace(symbol, grammar, obj, game):
     """ Return a cleaned/keyword replaced symbol. """
-    obj_infos = game_infos[obj.id]
+    obj_infos = game.infos[obj.id]
     phrase = grammar.expand(symbol)
     phrase = phrase.replace("(obj)", obj_infos.id)
     phrase = phrase.replace("(name)", obj_infos.name)
     phrase = phrase.replace("(name-n)", obj_infos.noun if obj_infos.adj is not None else obj_infos.name)
     phrase = phrase.replace("(name-adj)", obj_infos.adj if obj_infos.adj is not None else grammar.expand("#ordinary_adj#"))
     if obj.type != "":
-        phrase = phrase.replace("(name-t)", KnowledgeBase.default().types.get_description(obj.type))
+        phrase = phrase.replace("(name-t)", game.kb.types.get_description(obj.type))
     else:
         assert False, "Does this even happen?"
 
     return fix_determinant(phrase)
 
 
-def clean_replace_objs(grammar, desc, objs, game_infos):
+def clean_replace_objs(grammar, desc, objs, game):
     """ Return a cleaned/keyword replaced for a list of objects. """
-    desc = desc.replace("(obj)", obj_list_to_prop_string(objs, "id", game_infos, det=False))
-    desc = desc.replace("(name)", obj_list_to_prop_string(objs, "name", game_infos, det=False))
-    desc = desc.replace("(name-n)", obj_list_to_prop_string(objs, "noun", game_infos, det=False))
-    desc = desc.replace("(name-adj)", obj_list_to_prop_string(objs, "adj", game_infos, det=False))
-    desc = desc.replace("(name-definite)", obj_list_to_prop_string(objs, "name", game_infos, det=True, det_type="the"))
-    desc = desc.replace("(name-indefinite)", obj_list_to_prop_string(objs, "name", game_infos, det=True, det_type="a"))
-    desc = desc.replace("(name-n-definite)", obj_list_to_prop_string(objs, "noun", game_infos, det=True, det_type="the"))
-    desc = desc.replace("(name-n-indefinite)", obj_list_to_prop_string(objs, "noun", game_infos, det=True, det_type="a"))
+    desc = desc.replace("(obj)", obj_list_to_prop_string(objs, "id", game, det=False))
+    desc = desc.replace("(name)", obj_list_to_prop_string(objs, "name", game, det=False))
+    desc = desc.replace("(name-n)", obj_list_to_prop_string(objs, "noun", game, det=False))
+    desc = desc.replace("(name-adj)", obj_list_to_prop_string(objs, "adj", game, det=False))
+    desc = desc.replace("(name-definite)", obj_list_to_prop_string(objs, "name", game, det=True, det_type="the"))
+    desc = desc.replace("(name-indefinite)", obj_list_to_prop_string(objs, "name", game, det=True, det_type="a"))
+    desc = desc.replace("(name-n-definite)", obj_list_to_prop_string(objs, "noun", game, det=True, det_type="the"))
+    desc = desc.replace("(name-n-indefinite)", obj_list_to_prop_string(objs, "noun", game, det=True, det_type="a"))
     return desc
 
 
@@ -576,9 +576,9 @@ def repl_sing_plur(phrase, length):
     return phrase
 
 
-def obj_list_to_prop_string(objs, property, game_infos, det=True, det_type="a"):
+def obj_list_to_prop_string(objs, property, game, det=True, det_type="a"):
     """ Convert an object list to a nl string list of names. """
-    return list_to_string(list(map(lambda obj: getattr(game_infos[obj.id], property), objs)), det=det, det_type=det_type)
+    return list_to_string(list(map(lambda obj: getattr(game.infos[obj.id], property), objs)), det=det, det_type=det_type)
 
 
 def list_to_string(lst, det, det_type="a"):

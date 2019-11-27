@@ -10,8 +10,7 @@ import textworld
 from textworld import g_rng
 
 import textworld.agents
-from textworld.generator import World, Quest
-from textworld.generator.chaining import sample_quest
+from textworld.generator import World
 from textworld.logic import Variable, Proposition
 
 

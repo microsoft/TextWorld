@@ -2,14 +2,11 @@
 # Licensed under the MIT license.
 
 
-import os
-import pickle
 import shutil
 import tempfile
 import unittest
 from os.path import join as pjoin
 
-import numpy as np
 import numpy.testing as npt
 
 import textworld

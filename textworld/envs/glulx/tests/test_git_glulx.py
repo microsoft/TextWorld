@@ -2,13 +2,10 @@
 # Licensed under the MIT license.
 
 
-import pickle
 import shutil
 import tempfile
 import unittest
-from os.path import join as pjoin
 
-import numpy as np
 import numpy.testing as npt
 
 import textworld
@@ -17,9 +14,6 @@ from textworld import testing
 
 from textworld.core import GameNotRunningError
 
-from textworld.utils import make_temp_directory
-from textworld.generator import data
-from textworld.generator.game import Quest, Event
 from textworld.envs.glulx.git_glulx import GitGlulxEnv
 
 

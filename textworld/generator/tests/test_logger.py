@@ -6,7 +6,6 @@ import numpy as np
 from os.path import join as pjoin
 
 import textworld
-from textworld import g_rng
 from textworld.utils import make_temp_directory
 from textworld.generator.logger import GameLogger
 

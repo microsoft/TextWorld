@@ -1,7 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-from typing import Optional, Mapping, Any, List, Tuple, Iterable
+
+from typing import Optional, Any, List, Tuple, Iterable
 
 import sys
 import textwrap
@@ -93,8 +94,8 @@ class EnvInfos:
         # Check `kwargs` keys are all valid.
         unknown_keys = set(kwargs.keys()) - set(self.__slots__)
         if len(unknown_keys) > 0:
-            msg = ("Unknown information requested: {}.".format(sorted(unknown_keys)) +
-                   " Available information are: {}".format(sorted(self.__slots__)))
+            msg = ("Unknown information requested: {}.".format(sorted(unknown_keys))
+                   + " Available information are: {}".format(sorted(self.__slots__)))
             raise ValueError(msg)
 
     @property

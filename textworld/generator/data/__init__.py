@@ -100,7 +100,8 @@ class KnowledgeBase:
         self.constraints = _to_regex_dict(self.logic.constraints.values())
         self.inform7_commands = {i7cmd.rule: i7cmd.command for i7cmd in self.logic.inform7.commands.values()}
         self.inform7_events = {i7cmd.rule: i7cmd.event for i7cmd in self.logic.inform7.commands.values()}
-        self.inform7_predicates = {i7pred.predicate.signature: (i7pred.predicate, i7pred.source) for i7pred in self.logic.inform7.predicates.values()}
+        self.inform7_predicates = {i7pred.predicate.signature: (i7pred.predicate, i7pred.source)
+                                   for i7pred in self.logic.inform7.predicates.values()}
         self.inform7_variables = {i7type.name: i7type.kind for i7type in self.logic.inform7.types.values()}
         self.inform7_variables_description = {i7type.name: i7type.definition for i7type in self.logic.inform7.types.values()}
         self.inform7_addons_code = self.logic.inform7.code

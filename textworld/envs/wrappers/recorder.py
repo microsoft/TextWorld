@@ -5,7 +5,6 @@
 from typing import Tuple
 
 from textworld.core import GameState, Wrapper
-from textworld.core import EnvInfoMissingError
 
 
 class Recorder(Wrapper):

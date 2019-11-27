@@ -16,7 +16,7 @@ from textworld.utils import maybe_mkdir, str2bool
 from textworld.logic import State
 from textworld.generator.chaining import ChainingOptions, sample_quest
 from textworld.generator.world import World
-from textworld.generator.game import Game, Quest, Event, World, GameOptions
+from textworld.generator.game import Game, Quest, Event, GameOptions
 from textworld.generator.graph_networks import create_map, create_small_map
 from textworld.generator.text_generation import generate_text_from_grammar
 
@@ -147,7 +147,7 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
     actions = []
     for chain in reversed(chains):
         for i in range(1, len(chain.nodes)):
-            actions.append(chain.actions[i-1])
+            actions.append(chain.actions[i - 1])
             if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
                 event = Event(actions)
                 quests.append(Quest(win_events=[event]))
