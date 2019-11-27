@@ -268,19 +268,19 @@ class TestStateTracking(unittest.TestCase):
         for env in [self.env_ulx, self.env_z8]:
             initial_state = env.reset()
 
-            assert initial_state.policy_commands == self.game.main_quest.commands
+            assert tuple(initial_state.policy_commands) == self.game.main_quest.commands
 
             game_state, _, _ = env.step("drop carrot")
-            expected = ["take carrot"] + self.game.main_quest.commands
-            assert game_state.policy_commands == expected, game_state.policy_commands
+            expected = ("take carrot",) + self.game.main_quest.commands
+            assert tuple(game_state.policy_commands) == expected, game_state.policy_commands
 
             game_state, _, _ = env.step("take carrot")
             expected = self.game.main_quest.commands
-            assert game_state.policy_commands == expected
+            assert tuple(game_state.policy_commands) == expected
 
             game_state, _, _ = env.step("go east")
             expected = self.game.main_quest.commands[1:]
-            assert game_state.policy_commands == expected
+            assert tuple(game_state.policy_commands) == expected
 
             game_state, _, _ = env.step("insert carrot into chest")
             game_state, _, _ = env.step("close chest")
@@ -288,7 +288,7 @@ class TestStateTracking(unittest.TestCase):
 
             # Test parallel subquests.
             game_state = env.reset()
-            commands = self.game.main_quest.commands
+            commands = list(self.game.main_quest.commands)
             assert game_state.policy_commands == commands
             game_state, _, _ = env.step("close wooden door")
             assert game_state.policy_commands == ["open wooden door"] + commands
@@ -302,7 +302,7 @@ class TestStateTracking(unittest.TestCase):
 
             # Irreversible action.
             game_state = env.reset()
-            assert game_state.policy_commands == self.game.main_quest.commands
+            assert tuple(game_state.policy_commands) == self.game.main_quest.commands
             game_state, _, done = env.step("eat carrot")
             assert done
             assert game_state.lost
