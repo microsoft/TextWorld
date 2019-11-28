@@ -14,4 +14,4 @@ if [[ $TRAVIS_OS_NAME == "osx" ]]; then
 fi
 
 pip install .
-pip install nose coverage
+pip install nose coverage codecov
