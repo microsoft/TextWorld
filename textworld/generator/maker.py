@@ -2,7 +2,6 @@
 # Licensed under the MIT license.
 
 
-import os
 from os.path import join as pjoin
 from collections import OrderedDict
 
@@ -13,7 +12,7 @@ import textworld
 
 from textworld.utils import make_temp_directory
 
-from textworld.generator.graph_networks import reverse_direction, direction
+from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
@@ -252,10 +251,10 @@ class WorldRoom(WorldEntity):
         """
         super().__init__(*args, **kwargs)
         self.exits = {}
-        for direction in DIRECTIONS:
-            exit = WorldRoomExit(self, direction)
-            self.exits[direction] = exit
-            setattr(self, direction, exit)
+        for d in DIRECTIONS:
+            exit = WorldRoomExit(self, d)
+            self.exits[d] = exit
+            setattr(self, d, exit)
 
 
 class WorldRoomExit:
@@ -505,8 +504,8 @@ class GameMaker:
             The matching path path, if it exists.
         """
         for path in self.paths:
-            if ((path.src == room1 and path.dest == room2) or
-                (path.src == room2 and path.dest == room1)):
+            if (((path.src == room1 and path.dest == room2)
+                 or (path.src == room2 and path.dest == room1))):
                 return path
 
         return None
@@ -709,7 +708,7 @@ class GameMaker:
                 pass  # Quest is done.
 
         # Skip "None" actions.
-        actions, commands = zip(*[(action, command) for action, command in zip(recorder.actions, commands) if action is not None])
+        actions, commands = zip(*[(a, c) for a, c in zip(recorder.actions, commands) if a is not None])
         event = Event(actions=actions, commands=commands)
         return event
 

@@ -189,6 +189,7 @@ class ChainingOptions:
 
         return "\n".join(infos)
 
+
 @total_ordering
 class _PartialAction:
     """
@@ -521,8 +522,9 @@ def get_chains(state: State, options: ChainingOptions) -> Iterable[Chain]:
             for child in chainer.backtrack(node):
                 stack.append(child)
 
-            if (node.length >= options.min_length and node.depth >= options.min_depth and
-                node.breadth >= options.min_breadth):
+            if ((node.length >= options.min_length
+                 and node.depth >= options.min_depth
+                 and node.breadth >= options.min_breadth)):
                 yield chainer.make_chain(node)
 
 

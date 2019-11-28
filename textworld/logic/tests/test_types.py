@@ -2,8 +2,6 @@
 # Licensed under the MIT license.
 
 
-from nose.tools import assert_raises
-
 from textworld.logic import Type, TypeHierarchy, Variable
 
 
@@ -81,7 +79,7 @@ def test_multi_closure():
         (a, d), (b, b), (b, c), (c, b), (c, c), (d, a),
                 (a, b), (a, c), (b, a), (c, a),
                             (a, a),
-    }
+    }  # noqa: E131
 
     assert len(pairs) == len(expected)
     assert set(pairs) == expected
@@ -93,7 +91,7 @@ def test_multi_closure():
         (a, d), (b, b), (b, c), (c, b), (c, c), (d, a),
                 (b, d), (c, d), (d, b), (d, c),
                             (d, d),
-    }
+    }  # noqa: E131
 
     assert len(pairs) == len(expected)
     assert set(pairs) == expected

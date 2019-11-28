@@ -20,6 +20,7 @@ from textworld.textgen import TextGrammar
 
 NB_EXPANSION_RETRIES = 20
 
+
 def fix_determinant(var):
     var = var.replace("  ", " ")
     var = var.replace(" a a", " an a")
@@ -95,8 +96,8 @@ class GrammarOptions:
         return cls(data)
 
     def __eq__(self, other) -> bool:
-        return (isinstance(other, GrammarOptions) and
-                all(getattr(self, slot) == getattr(other, slot) for slot in self.__slots__))
+        return (isinstance(other, GrammarOptions)
+                and all(getattr(self, slot) == getattr(other, slot) for slot in self.__slots__))
 
     @property
     def uuid(self) -> str:
@@ -165,11 +166,11 @@ class Grammar:
             self._parse(filename)
 
     def __eq__(self, other):
-        return (isinstance(other, Grammar) and
-                self.overflow_dict == other.overflow_dict and
-                self.grammar == other.grammar and
-                self.options.uuid == other.options.uuid and
-                self.used_names == other.used_names)
+        return (isinstance(other, Grammar)
+                and self.overflow_dict == other.overflow_dict
+                and self.grammar == other.grammar
+                and self.options.uuid == other.options.uuid
+                and self.used_names == other.used_names)
 
     def _parse(self, path: str):
         """

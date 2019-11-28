@@ -124,8 +124,12 @@ def temp_viz(nodes, edges, pos, color=[]):
                                    alpha=0.8)
     plt.show()
 
-# create state object from world and game_info
-def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None, action: Optional[Action] = None, format: str = 'png', limit_player_view: bool = False) -> dict:
+
+def load_state(world: World,
+               game_infos: Optional[Dict[str, EntityInfo]] = None,
+               action: Optional[Action] = None,
+               format: str = 'png',
+               limit_player_view: bool = False) -> dict:
     """
     Generates serialization of game state.
 
@@ -143,7 +147,6 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
         room = world.player_room
 
     edges = []
-    nodes = sorted([room.name for room in world.rooms])
     pos = {room.name: (0, 0)}
 
     def used_pos():
@@ -214,9 +217,7 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
             edges.append((room.name, target.name, room.doors.get(exit)))
             # temp_viz(nodes, edges, pos, color=[world.player_room.name])
 
-
     rooms = {}
-    player_room = world.player_room
     if game_infos is None:
         new_game = Game(world)
         game_infos = new_game.infos
@@ -296,20 +297,22 @@ def load_state(world: World, game_infos: Optional[Dict[str, EntityInfo]] = None,
         room.base_room = temp
         result["rooms"].append(room.__dict__)
 
-
     def _get_door(door):
         if door is None:
             return None
 
         return all_items[door.name].__dict__
 
-    result["connections"] = [{"src": game_infos[e[0]].name, "dest": game_infos[e[1]].name, 'door': _get_door(e[2])} for e in edges]
+    def _get_name(entity):
+        return game_infos[entity].name
+    result["connections"] = [{"src": _get_name(e[0]), "dest": _get_name(e[1]), "door": _get_door(e[2])}
+                             for e in edges]
     result["inventory"] = [inv.__dict__ for inv in inventory_items]
 
     return result
 
 
-def take_screenshot(url: str, id: str='world'):
+def take_screenshot(url: str, id: str = 'world'):
     """
     Takes a screenshot of DOM element given its id.
     :param url: URL of webpage to open headlessly.
@@ -334,6 +337,7 @@ def take_screenshot(url: str, id: str='world'):
     bottom = location['y'] + size['height']
     image = image.crop((left, top, right, bottom))
     return image
+
 
 def concat_images(*images):
     from PIL import Image

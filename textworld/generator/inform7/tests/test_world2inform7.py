@@ -3,7 +3,6 @@
 
 
 import itertools
-from os.path import join as pjoin
 
 import textworld
 from textworld import g_rng
@@ -15,7 +14,6 @@ from textworld.generator import World, Quest, Event
 from textworld.generator import compile_game
 from textworld.generator import make_small_map, make_grammar, make_game_with
 from textworld.generator.chaining import ChainingOptions, sample_quest
-from textworld.logic import Proposition
 
 
 def _compile_game(game, path):
@@ -136,10 +134,10 @@ def test_quest_with_multiple_winning_and_losing_conditions():
 
     # The goal
     quest = Quest(win_events=[Event(conditions={M.new_fact("in", carrot, chest),
-                                                     M.new_fact("closed", chest)}),
+                                                M.new_fact("closed", chest)}),
                               Event(conditions={M.new_fact("eaten", lettuce)})],
                   fail_events=[Event(conditions={M.new_fact("in", lettuce, chest),
-                                                      M.new_fact("closed", chest)}),
+                                                 M.new_fact("closed", chest)}),
                                Event(conditions={M.new_fact("eaten", carrot)})])
     M.quests = [quest]
     game = M.build()
@@ -212,7 +210,7 @@ def test_cannot_win_or_lose_a_quest_twice():
 
     # The goals
     event_carrot_in_closed_chest = Event(conditions={M.new_fact("in", carrot, chest),
-                                                          M.new_fact("closed", chest)})
+                                                     M.new_fact("closed", chest)})
     event_drop_carrot_R1 = Event(conditions={M.new_fact("at", carrot, R1)})
     event_drop_carrot_R2 = Event(conditions={M.new_fact("at", carrot, R2)})
 
@@ -220,7 +218,7 @@ def test_cannot_win_or_lose_a_quest_twice():
                    fail_events=[event_drop_carrot_R1, event_drop_carrot_R2])
 
     event_lettuce_in_closed_chest = Event(conditions={M.new_fact("in", lettuce, chest),
-                                                           M.new_fact("closed", chest)})
+                                                      M.new_fact("closed", chest)})
     event_drop_lettuce_R1 = Event(conditions={M.new_fact("at", lettuce, R1)})
     event_drop_lettuce_R2 = Event(conditions={M.new_fact("at", lettuce, R2)})
 
@@ -302,7 +300,7 @@ def test_disambiguation_questions():
         # extra information like `description` or `inventory` before answering
         # the question works.
         assert game_state.description == previous_description
-        assert game_state.inventory  == previous_inventory
+        assert game_state.inventory == previous_inventory
 
         # Now answering the question.
         game_state, _, _ = env.step("apple")

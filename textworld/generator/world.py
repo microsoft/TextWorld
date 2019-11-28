@@ -418,7 +418,7 @@ class World:
                 obj_type = "k"
             else:
                 obj_type = self.kb.types.sample(parent_type='t', rng=rng, exceptions=["d", "r"],
-                                                 include_parent=False, probs=object_types_probs)
+                                                include_parent=False, probs=object_types_probs)
 
             if self.kb.types.is_descendant_of(obj_type, "o"):
                 obj_name = get_new(obj_type, types_counts)
@@ -591,8 +591,7 @@ class World:
         return state
 
     def __eq__(self, other: Any) -> bool:
-        return (isinstance(other, World) and
-                self.state == other.state)
+        return (isinstance(other, World) and self.state == other.state)
 
     def __hash__(self) -> int:
         return hash(frozenset(self.facts))

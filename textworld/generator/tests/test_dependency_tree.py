@@ -3,7 +3,6 @@
 
 
 import unittest
-from numpy.testing import assert_raises
 
 from textworld.generator.dependency_tree import DependencyTree
 from textworld.generator.dependency_tree import DependencyTreeElement

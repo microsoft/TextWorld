@@ -21,7 +21,7 @@ def reverse_direction(direction):
     if index % 2 == 0:
         return DIRECTIONS[index + 1]
 
-    return DIRECTIONS[index -1]
+    return DIRECTIONS[index - 1]
 
 
 def xy_diff(x, y):
@@ -101,8 +101,7 @@ def relabel(G):
     left_most, bottom = extremes(G)
     x = left_most[0]
     y = bottom[1]
-    mapping = lambda n: (n[0]-x, n[1]-y)
-    G = nx.relabel_nodes(G, mapping=mapping)
+    G = nx.relabel_nodes(G, mapping=lambda n: (n[0] - x, n[1] - y))
     return G
 
 
@@ -139,7 +138,7 @@ def create_small_map(rng, n_rooms, possible_door_states=["open", "closed", "lock
     G.add_node(room0, name="r_0")
 
     D = list(directions.keys())
-    for i in range(n_rooms-1):
+    for i in range(n_rooms - 1):
         rng.shuffle(D)
         new_room = D.pop()
         G.add_node(new_room, name="r_{}".format(len(G)))
@@ -165,5 +164,6 @@ def shortest_path(G, source, target):
     d = []
     path = nx.algorithms.shortest_path(G, source, target)
     for i in range(len(path) - 1):
-            d.append(direction(path[i], path[i+1]))
+        d.append(direction(path[i], path[i + 1]))
+
     return d

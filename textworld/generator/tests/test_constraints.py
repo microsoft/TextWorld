@@ -3,12 +3,11 @@
 
 
 from textworld.generator.data import KnowledgeBase
-from textworld.logic import Action, Proposition, State, Variable
+from textworld.logic import Proposition, State, Variable
 
 
 def check_state(state):
     fail = Proposition("fail", [])
-    debug = Proposition("debug", [])
 
     constraints = state.all_applicable_actions(KnowledgeBase.default().constraints.values())
     for constraint in constraints:
@@ -40,11 +39,6 @@ def test_constraints():
     counter = Variable("counter", "s")
     robe = Variable("robe", "o")
 
-    # Make sure the number of basic constraints matches the number
-    # of constraints in constraints.txt
-    basic_constraints = [k for k in kb.constraints.keys() if "-" not in k]
-    # assert len(basic_constraints) == 32
-
     # Doors can only have one state.
     door_states = ["open", "closed", "locked"]
     for door_state in door_states:
@@ -56,7 +50,7 @@ def test_constraints():
 
             state2 = state.copy()
 
-            state2.add_fact(Proposition(door_state2, [glass_door])) # New door
+            state2.add_fact(Proposition(door_state2, [glass_door]))  # New door
             assert check_state(state2)
 
             state2.add_fact(Proposition(door_state2, [wooden_door]))
@@ -73,7 +67,7 @@ def test_constraints():
 
             state2 = state.copy()
 
-            state2.add_fact(Proposition(container_state2, [cabinet])) # New container
+            state2.add_fact(Proposition(container_state2, [cabinet]))  # New container
             assert check_state(state2)
 
             state2.add_fact(Proposition(container_state2, [chest]))
@@ -93,8 +87,11 @@ def test_constraints():
     for obj_location in obj_locations:
         assert check_state(State(kb.logic, [obj_location]))
         for obj_location2 in obj_locations:
-            if obj_location == obj_location2: break
-            assert not check_state(State(kb.logic, [obj_location, obj_location2])), "{}, {}".format(obj_location, obj_location2)
+            if obj_location == obj_location2:
+                break
+
+            state = State(kb.logic, [obj_location, obj_location2])
+            assert not check_state(state), "{}, {}".format(obj_location, obj_location2)
 
     # Only one key can match a container and vice-versa.
     assert check_state(State(kb.logic, [Proposition("match", [rusty_key, chest])]))

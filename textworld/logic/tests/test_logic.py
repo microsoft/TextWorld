@@ -178,24 +178,31 @@ def test_match():
         Placeholder.parse("d"): Variable.parse("d"),
     }
 
-    action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r) & $free(r1: r, r2: r) & $free(r2: r, r1: r) -> at(P, r2: r)")
+    action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r)"
+                          "      & $free(r1: r, r2: r) & $free(r2: r, r1: r) -> at(P, r2: r)")
     assert rule.match(action) == mapping
 
     # Order shouldn't matter
 
-    action = Action.parse("go :: $link(r1: r, d, r2: r) & $free(r1: r, r2: r) & $free(r2: r, r1: r) & at(P, r1: r) -> at(P, r2: r)")
+    action = Action.parse("go :: $link(r1: r, d, r2: r) & $free(r1: r, r2: r)"
+                          "      & $free(r2: r, r1: r) & at(P, r1: r) -> at(P, r2: r)")
     assert rule.match(action) == mapping
 
-    action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r) & $free(r2: r, r1: r) & $free(r1: r, r2: r) -> at(P, r2: r)")
+    action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r)"
+                          "      & $free(r2: r, r1: r) & $free(r1: r, r2: r) -> at(P, r2: r)")
     assert rule.match(action) == mapping
 
     # Predicate matches can't conflict
-    action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r) & $free(r2: r, r1: r) & $free(r1: r, r2: r) -> at(P, r3: r)")
-    assert rule.match(action) == None
+    action = Action.parse("go :: at(P, r1: r) & $link(r1: r, d, r2: r)"
+                          "      & $free(r2: r, r1: r) & $free(r1: r, r2: r) -> at(P, r3: r)")
+    assert rule.match(action) is None
 
 
 def test_match_complex():
-    rule = Rule.parse("combine/3 :: $at(P, r) & $correct_location(r) & $in(tool, I) & $in(tool', I) & $in(tool'', I) & in(o, I) & in(o', I) & in(o'', I) & $out(o''') & $used(slot) & used(slot') & used(slot'') -> in(o''', I) & free(slot') & free(slot'')")
+    rule = Rule.parse("combine/3 :: $at(P, r) & $correct_location(r) & $in(tool, I)"
+                      "             & $in(tool', I) & $in(tool'', I) & in(o, I) & in(o', I)"
+                      "             & in(o'', I) & $out(o''') & $used(slot) & used(slot') & used(slot'')"
+                      "          -> in(o''', I) & free(slot') & free(slot'')")
 
     mapping = {
         Placeholder.parse("P"): Variable.parse("P"),
@@ -213,6 +220,10 @@ def test_match_complex():
         Placeholder.parse("slot''"): Variable.parse("slot3: slot"),
     }
 
-    action = Action.parse("combine/3 :: $at(P, r) & $correct_location(r) & $in(tool1: tool, I) & $in(tool2: tool, I) & $in(tool3: tool, I) & in(o1: o, I) & in(o2: o, I) & in(o3: o, I) & $out(o4: o) & $used(slot1: slot) & used(slot2: slot) & used(slot3: slot) -> in(o4: o, I) & free(slot2: slot) & free(slot3: slot)")
-    for _ in range(10000):
+    action = Action.parse("combine/3 :: $at(P, r) & $correct_location(r) & $in(tool1: tool, I)"
+                          "             & $in(tool2: tool, I) & $in(tool3: tool, I) & in(o1: o, I)"
+                          "             & in(o2: o, I) & in(o3: o, I) & $out(o4: o) & $used(slot1: slot)"
+                          "             & used(slot2: slot) & used(slot3: slot)"
+                          "          -> in(o4: o, I) & free(slot2: slot) & free(slot3: slot)")
+    for _ in range(1000):
         assert rule.match(action) == mapping

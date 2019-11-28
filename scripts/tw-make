@@ -36,8 +36,11 @@ def _maybe_load_third_party_module():
     if args.third_party:
         if not args.silent:
             print("Importing challenges from {}.".format(args.third_party))
-        import importlib.machinery
-        importlib.machinery.SourceFileLoader("tw_custom_challenge", args.third_party).load_module()
+
+        import importlib
+        spec = importlib.util.spec_from_file_location("tw_custom_challenge", args.third_party)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
 
 
 def parse_args():
@@ -93,39 +96,39 @@ def parse_args():
 
     quest_group = custom_parser.add_argument_group('Quest settings')
     quest_group.add_argument("--nb-parallel-quests", type=int, default=1,
-                               help="Nb. of parallel quests the game will have. Default: %(default)s.")
+                             help="Nb. of parallel quests the game will have. Default: %(default)s.")
     quest_group.add_argument("--quest-length", type=int, metavar="LENGTH",
-                               help="Nb. of actions the quest requires to be completed. It is a shorthand"
-                                    " for '--quest-min-length N --quest-max-length N --quest-max-depth N'.")
+                             help="Nb. of actions the quest requires to be completed. It is a shorthand"
+                                  " for '--quest-min-length N --quest-max-length N --quest-max-depth N'.")
     quest_group.add_argument("--quest-breadth", type=int, metavar="BREADTH",
-                               help="Nb. of subquests the quests will have. It is a shorthand"
-                                    " for '--quest-min-breadth N --quest-max-breadth N'.")
+                             help="Nb. of subquests the quests will have. It is a shorthand"
+                                  " for '--quest-min-breadth N --quest-max-breadth N'.")
 
     quest_group_advanced = custom_parser.add_argument_group('Quest settings (advanced)')
     quest_group_advanced.add_argument("--quest-min-length", type=int, default=1, metavar="LENGTH",
-                               help="Minimum nb. of actions the quest requires to be completed. "
-                                    " This setting is ignored if --quest-length is provided."
-                                    " Default: %(default)s.")
+                                      help="Minimum nb. of actions the quest requires to be completed. "
+                                           " This setting is ignored if --quest-length is provided."
+                                           " Default: %(default)s.")
     quest_group_advanced.add_argument("--quest-max-length", type=int, default=5, metavar="LENGTH",
-                               help="Maximum nb. of actions the quest requires to be completed. "
-                                    " This setting is ignored if --quest-length is provided."
-                                    " Default: %(default)s.")
+                                      help="Maximum nb. of actions the quest requires to be completed. "
+                                           " This setting is ignored if --quest-length is provided."
+                                           " Default: %(default)s.")
 
     quest_group_advanced.add_argument("--quest-min-breadth", type=int, default=1, metavar="BREADTH",
-                               help="Minimum nb. of subquests the quests can have. "
-                                    " This setting is ignored if --quest-breadth is provided."
-                                    " Default: %(default)s.")
+                                      help="Minimum nb. of subquests the quests can have. "
+                                           " This setting is ignored if --quest-breadth is provided."
+                                           " Default: %(default)s.")
     quest_group_advanced.add_argument("--quest-max-breadth", type=int, default=5, metavar="BREADTH",
-                               help="Maxmimum nb. of subquests the quests can have. "
-                                    " This setting is ignored if --quest-breadth is provided."
-                                    " Default: %(default)s.")
+                                      help="Maxmimum nb. of subquests the quests can have. "
+                                           " This setting is ignored if --quest-breadth is provided."
+                                           " Default: %(default)s.")
 
     quest_group_advanced.add_argument("--quest-min-depth", type=int, default=1, metavar="DEPTH",
-                               help="Minimum nb. of actions the subquests can have. Default: %(default)s.")
+                                      help="Minimum nb. of actions the subquests can have. Default: %(default)s.")
     quest_group_advanced.add_argument("--quest-max-depth", type=int, default=5, metavar="DEPTH",
-                               help="Maximum nb. of actions the subquests can have. "
-                                    " This setting is ignored if --quest-length is provided."
-                                    " Default: %(default)s.")
+                                      help="Maximum nb. of actions the subquests can have. "
+                                           " This setting is ignored if --quest-length is provided."
+                                           " Default: %(default)s.")
 
     challenge_parsers = []
     for challenge_name, (desc, _, add_challenge_arguments) in textworld.challenges.CHALLENGES.items():
@@ -188,14 +191,14 @@ if __name__ == "__main__":
             game_file, game = textworld.make(options)
         except NoSuchQuestExistError:
             msg = ("No quest can be generated with the provided options:\n"
-                   "\n{}\n".format(options) +
-                   "\nTry relaxing the quest generation constraints via"
+                   "\n{}\n".format(options)
+                   + "\nTry relaxing the quest generation constraints via"
                    " the quest advanced settings (see 'tw-make custom --help').")
             custom_parser.error(msg)
         except MissingTextGrammar:
             msg = ("Theme '--theme {theme}' doesn't exist.\n"
                    "Check in available themes in '{path}/'."
-                  ).format(theme=args.theme, path=options.kb.text_grammars_path)
+                   ).format(theme=args.theme, path=options.kb.text_grammars_path)
             custom_parser.error(msg)
 
     elif args.subcommand in textworld.challenges.CHALLENGES:

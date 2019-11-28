@@ -127,8 +127,7 @@ def test_populate_room_with():
     world.populate_room_with(objects=[obj], room=room)
 
     assert obj in world.objects
-    assert (Proposition('at', [obj, room]) in world.facts or
-            Proposition('in', [obj, I]) in world.facts)
+    assert (Proposition('at', [obj, room]) in world.facts or Proposition('in', [obj, I]) in world.facts)
 
 
 def test_populate_with():
@@ -145,5 +144,4 @@ def test_populate_with():
     world.populate_with(objects=[obj])
 
     assert obj in world.objects
-    assert (Proposition('at', [obj, room]) in world.facts or
-            Proposition('in', [obj, I]) in world.facts)
+    assert (Proposition('at', [obj, room]) in world.facts or Proposition('in', [obj, I]) in world.facts)

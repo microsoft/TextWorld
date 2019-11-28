@@ -2,7 +2,6 @@
 # Licensed under the MIT license.
 
 
-from textworld import testing
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.chaining import ChainingOptions, get_chains
 from textworld.logic import GameLogic, Proposition, State, Variable
@@ -239,7 +238,7 @@ def test_parallel_quests():
     assert chains[0].nodes[1].parent == chains[0].nodes[2]
     assert chains[0].nodes[2].depth == 1
     assert chains[0].nodes[2].breadth == 1
-    assert chains[0].nodes[2].parent == None
+    assert chains[0].nodes[2].parent is None
 
     options.min_breadth = 1
     options.create_variables = True

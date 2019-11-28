@@ -60,6 +60,7 @@ def which(program):
 
     return None
 
+
 def get_webdriver(path=None):
     """
     Get the driver and options objects.
@@ -96,7 +97,6 @@ def get_webdriver(path=None):
         options.add_argument('headless')
         driver = webdriver.Firefox(firefox_binary=path, options=options)
         return driver
-
 
     driver_mapping = {
         'geckodriver': firefox_driver,
@@ -244,7 +244,6 @@ def unique_product(*iterables):
                 result[i] = e
                 yield from _unique_product_recursive(pools, result, i + 1)
                 result[i] = _SENTINEL
-
 
     pools = [tuple(pool) for pool in iterables]
     result = [_SENTINEL] * len(pools)

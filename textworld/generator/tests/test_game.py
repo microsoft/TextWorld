@@ -6,20 +6,18 @@ import unittest
 import textwrap
 from typing import Iterable
 
-import numpy as np
 import numpy.testing as npt
 
 import textworld
 from textworld import g_rng
 from textworld import GameMaker
-from textworld.utils import make_temp_directory
 
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import World
-from textworld.generator import make_small_map, make_grammar, make_game_with
+from textworld.generator import make_small_map
 
 from textworld.generator.chaining import ChainingOptions, sample_quest
-from textworld.logic import Action, State
+from textworld.logic import Action
 
 from textworld.generator.game import Quest, Game, Event
 from textworld.generator.game import QuestProgression, GameProgression, EventProgression
@@ -27,7 +25,7 @@ from textworld.generator.game import UnderspecifiedEventError, UnderspecifiedQue
 from textworld.generator.game import ActionDependencyTree, ActionDependencyTreeElement
 from textworld.generator.inform7 import Inform7Game
 
-from textworld.logic import Proposition, GameLogic
+from textworld.logic import GameLogic
 
 
 def _find_action(command: str, actions: Iterable[Action], inform7: Inform7Game) -> None:
@@ -198,10 +196,10 @@ class TestQuest(unittest.TestCase):
 
         cls.eventA = M.new_event_using_commands(commands)
         cls.eventB = Event(conditions={M.new_fact("at", carrot, R1),
-                                            M.new_fact("closed", path.door)})
+                                       M.new_fact("closed", path.door)})
         cls.eventC = Event(conditions={M.new_fact("eaten", carrot)})
         cls.eventD = Event(conditions={M.new_fact("closed", chest),
-                                            M.new_fact("closed", path.door)})
+                                       M.new_fact("closed", path.door)})
         cls.quest = Quest(win_events=[cls.eventA, cls.eventB],
                           fail_events=[cls.eventC, cls.eventD],
                           reward=2)
@@ -422,7 +420,7 @@ class TestGame(unittest.TestCase):
             'lock {d} with {k}', 'look', 'open {c}', 'open {d}', 'put {o} on {s}',
             'take {o}', 'take {o} from {c}', 'take {o} from {s}',
             'unlock {c} with {k}', 'unlock {d} with {k}'
-            }
+        }
         assert set(self.game.command_templates) == expected_templates
 
     def test_serialization(self):
@@ -440,7 +438,6 @@ class TestGame(unittest.TestCase):
 
 
 class TestEventProgression(unittest.TestCase):
-
 
     @classmethod
     def setUpClass(cls):
@@ -528,8 +525,8 @@ class TestQuestProgression(unittest.TestCase):
         commands = ["take lettuce", "insert lettuce into chest", "close chest"]
         event = M.new_event_using_commands(commands)
         cls.eventB = Event(actions=event.actions,
-                                conditions={M.new_fact("in", lettuce, chest),
-                                            M.new_fact("closed", chest)})
+                           conditions={M.new_fact("in", lettuce, chest),
+                                       M.new_fact("closed", chest)})
 
         cls.fail_eventA = Event(conditions={M.new_fact("eaten", carrot)})
         cls.fail_eventB = Event(conditions={M.new_fact("eaten", lettuce)})
@@ -863,7 +860,7 @@ class TestGameProgression(unittest.TestCase):
         quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2])
         winning_facts = [M.new_fact("in", lettuce, chest),
                          M.new_fact("in", carrot, chest),
-                         M.new_fact("closed", chest),]
+                         M.new_fact("closed", chest)]
         quest3.win_events[0].set_conditions(winning_facts)
         quest3.desc = "Put the lettuce and the carrot into the chest before closing it."
 

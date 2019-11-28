@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from os.path import join as pjoin
 
-import numpy as np
 import numpy.testing as npt
 
 import textworld
@@ -21,7 +20,6 @@ from textworld.envs.wrappers.tw_inform7 import GameData, Inform7Data
 from textworld.envs.wrappers.tw_inform7 import StateTracking
 from textworld.envs.wrappers.tw_inform7 import MissingGameInfosError
 
-from textworld.generator.maker import GameMaker
 from textworld.utils import make_temp_directory
 
 
@@ -293,8 +291,9 @@ class TestStateTracking(unittest.TestCase):
             game_state, _, _ = env.step("close wooden door")
             assert game_state.policy_commands == ["open wooden door"] + commands
             game_state, _, _ = env.step("drop carrot")
-            assert (game_state.policy_commands == ["take carrot", "open wooden door"] + commands or
-                    game_state.policy_commands == ["open wooden door", "take carrot"] + commands), game_state.policy_commands
+            is_policy1 = (game_state.policy_commands == ["take carrot", "open wooden door"] + commands)
+            is_policy2 = (game_state.policy_commands == ["open wooden door", "take carrot"] + commands)
+            assert is_policy1 or is_policy2, game_state.policy_commands
             game_state, _, _ = env.step("open wooden door")
             assert game_state.policy_commands == ["take carrot"] + commands
             game_state, _, _ = env.step("go east")

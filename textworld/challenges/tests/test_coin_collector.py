@@ -7,7 +7,7 @@ from textworld.challenges.coin_collector import make
 
 def test_making_coin_collector():
     expected = {
-        1:   {"quest_length": 1, "nb_rooms": 1},
+        1: {"quest_length": 1, "nb_rooms": 1},
         100: {"quest_length": 100, "nb_rooms": 100},
         101: {"quest_length": 1, "nb_rooms": 2},
         200: {"quest_length": 100, "nb_rooms": 200},

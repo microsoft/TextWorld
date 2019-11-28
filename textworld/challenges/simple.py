@@ -78,8 +78,6 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     metadata["quest_length"] = None  # TBD
 
     rngs = options.rngs
-    rng_map = rngs['map']
-    rng_objects = rngs['objects']
     rng_grammar = rngs['grammar']
     rng_quest = rngs['quest']
 
@@ -99,10 +97,10 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 
     # Connect rooms together.
     bedroom_kitchen = M.connect(bedroom.east, kitchen.west)
-    kitchen_bathroom = M.connect(kitchen.north, bathroom.south)
-    kitchen_livingroom = M.connect(kitchen.south, livingroom.north)
+    M.connect(kitchen.north, bathroom.south)
+    M.connect(kitchen.south, livingroom.north)
     kitchen_backyard = M.connect(kitchen.east, backyard.west)
-    backyard_garden = M.connect(backyard.south, garden.north)
+    M.connect(backyard.south, garden.north)
 
     # Add doors.
     bedroom_kitchen.door = M.new(type='d', name='wooden door')
@@ -319,7 +317,6 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
                 Event(conditions={M.new_fact("in", food, M.inventory)})
             ])
         )
-
 
     if settings["rewards"] in ["dense", "balanced"]:
         # Retrieving the food item.

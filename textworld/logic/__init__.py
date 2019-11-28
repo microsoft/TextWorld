@@ -2,12 +2,11 @@
 # Licensed under the MIT license.
 
 
-from collections import Counter, defaultdict, deque, namedtuple
+from collections import Counter, defaultdict, deque
 from functools import total_ordering, lru_cache
-import re
 from tatsu.model import NodeWalker
 import textwrap
-from typing import Callable, Container, Dict, Iterable, List, Mapping, Optional, Set, Sequence
+from typing import Callable, Dict, Iterable, List, Mapping, Optional, Set, Sequence
 
 try:
     from typing import Collection
@@ -203,6 +202,7 @@ class _ModelConverter(NodeWalker):
 
 
 _PARSER = GameLogicParser(semantics=GameLogicModelBuilderSemantics(), parseinfo=True)
+
 
 def _parse_and_convert(*args, **kwargs):
     model = _PARSER.parse(*args, **kwargs)
@@ -594,7 +594,9 @@ class Signature(with_metaclass(SignatureTracker, object)):
 
 
 PropositionTracker = memento_factory('PropositionTracker',
-                                     lambda cls, args, kwargs: (cls, args[0] + '//'.join(v.name for v in args[1]) if len(args) == 2 else ""))
+                                     lambda cls, args, kwargs: (
+                                         cls,
+                                         args[0] + '//'.join(v.name for v in args[1]) if len(args) == 2 else ""))
 
 
 @total_ordering
@@ -1157,7 +1159,6 @@ class Rule:
         The instantiated Action with each Placeholder mapped to the corresponding Variable.
         """
 
-        #key = "//".join(str(mapping[ph]) for ph in self.placeholders)  # Seems faster
         key = tuple(mapping[ph] for ph in self.placeholders)
         if key in self._cache:
             return self._cache[key]
@@ -1339,12 +1340,12 @@ class GameLogic:
         self.predicates.add(signature)
 
     def _add_alias(self, alias: Alias):
-       sig = alias.pattern.signature
-       if sig in self.aliases:
-           raise ValueError("Duplicate alias {}".format(alias))
-       if sig in self.predicates:
-           raise ValueError("Alias {} is also a predicate".format(alias))
-       self.aliases[sig] = alias
+        sig = alias.pattern.signature
+        if sig in self.aliases:
+            raise ValueError("Duplicate alias {}".format(alias))
+        if sig in self.predicates:
+            raise ValueError("Alias {} is also a predicate".format(alias))
+        self.aliases[sig] = alias
 
     def _add_rule(self, rule: Rule):
         if rule.name in self.rules:
@@ -1644,7 +1645,8 @@ class State:
         state.apply(action)
         return state
 
-    def all_applicable_actions(self, rules: Iterable[Rule], mapping: Mapping[Placeholder, Variable] = None) -> Iterable[Action]:
+    def all_applicable_actions(self, rules: Iterable[Rule],
+                               mapping: Mapping[Placeholder, Variable] = None) -> Iterable[Action]:
         """
         Get all the rule instantiations that would be valid actions in this state.
 
@@ -1664,9 +1666,9 @@ class State:
             yield from self.all_instantiations(rule, mapping)
 
     def all_instantiations(self,
-        rule: Rule,
-        mapping: Mapping[Placeholder, Variable] = None
-    ) -> Iterable[Action]:
+                           rule: Rule,
+                           mapping: Mapping[Placeholder, Variable] = None
+                           ) -> Iterable[Action]:
         """
         Find all possible actions that can be instantiated from a rule in this state.
 
@@ -1686,11 +1688,11 @@ class State:
             yield rule.instantiate(assignment)
 
     def all_assignments(self,
-        rule: Rule,
-        mapping: Mapping[Placeholder, Optional[Variable]] = None,
-        partial: bool = False,
-        allow_partial: Callable[[Placeholder], bool] = None,
-    ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
+                        rule: Rule,
+                        mapping: Mapping[Placeholder, Optional[Variable]] = None,
+                        partial: bool = False,
+                        allow_partial: Callable[[Placeholder], bool] = None,
+                        ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
         """
         Find all possible placeholder assignments that would allow a rule to be instantiated in this state.
 
@@ -1740,12 +1742,12 @@ class State:
             return self._all_applicable_assignments(rule, mapping, used_vars, new_phs_by_depth, 0)
 
     def _all_applicable_assignments(self,
-        rule: Rule,
-        mapping: Dict[Placeholder, Optional[Variable]],
-        used_vars: Set[Variable],
-        new_phs_by_depth: List[List[Placeholder]],
-        depth: int,
-    ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
+                                    rule: Rule,
+                                    mapping: Dict[Placeholder, Optional[Variable]],
+                                    used_vars: Set[Variable],
+                                    new_phs_by_depth: List[List[Placeholder]],
+                                    depth: int,
+                                    ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
         """
         Find all assignments that would be applicable in this state.  We recurse through the rule's preconditions, at
         each level determining possible variable assignments from the current facts.
@@ -1782,18 +1784,18 @@ class State:
                     used_vars.discard(var)
 
     def _all_assignments(self,
-        placeholders: List[Placeholder],
-        mapping: Dict[Placeholder, Variable],
-        used_vars: Set[Variable],
-        partial: bool,
-        allow_partial: Callable[[Placeholder], bool] = None,
-    ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
+                         placeholders: List[Placeholder],
+                         mapping: Dict[Placeholder, Variable],
+                         used_vars: Set[Variable],
+                         partial: bool,
+                         allow_partial: Callable[[Placeholder], bool] = None,
+                         ) -> Iterable[Mapping[Placeholder, Optional[Variable]]]:
         """
         Find all possible assignments of the given placeholders, without regard to whether any predicates match.
         """
 
         if allow_partial is None:
-            allow_partial = lambda ph: True
+            allow_partial = lambda ph: True  # noqa: E731
 
         candidates = []
         for ph in placeholders:

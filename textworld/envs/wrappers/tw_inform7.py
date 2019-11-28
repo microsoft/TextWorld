@@ -6,15 +6,15 @@
 import os
 import re
 
-from typing import Mapping, Union, Tuple, List
+from typing import Mapping, Tuple, List
 
 import textworld
-from textworld.core import GameState
 from textworld.generator.game import Game, GameProgression
 from textworld.generator.inform7 import Inform7Game
 
 
 AVAILABLE_INFORM7_EXTRA_INFOS = ["description", "inventory", "score", "moves"]
+
 
 class MissingGameInfosError(NameError):
     """
@@ -163,11 +163,11 @@ class StateTracking(textworld.core.Wrapper):
 
     @property
     def tracking(self):
-        return (self.infos.intermediate_reward or
-                self.infos.policy_commands or
-                self.infos.admissible_commands or
-                self.infos.facts or
-                self.infos.last_action)
+        return (self.infos.intermediate_reward
+                or self.infos.policy_commands
+                or self.infos.admissible_commands
+                or self.infos.facts
+                or self.infos.last_action)
 
     def load(self, gamefile: str) -> None:
         self._wrapped_env.load(gamefile)

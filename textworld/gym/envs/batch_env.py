@@ -1,7 +1,6 @@
 
 import multiprocessing as mp
 from typing import Tuple, List, Dict
-from collections import defaultdict
 
 import numpy as np
 

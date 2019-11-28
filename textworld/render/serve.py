@@ -272,7 +272,7 @@ class Server(object):
                 result = q.get()
                 ev = ServerSentEvent(json.dumps(result))
                 yield ev.encode()
-        except Exception as e:
+        except Exception:
             pass
 
     def subscribe(self):

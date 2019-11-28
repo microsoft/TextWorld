@@ -95,7 +95,7 @@ class JerichoEnv(textworld.Environment):
         self.state.last_command = command.strip()
         res = self._jericho.step(self.state.last_command)
         # As of Jericho >= 2.1.0, the reward is returned instead of the score.
-        self.state.raw, _, self.state.done, _  = res
+        self.state.raw, _, self.state.done, _ = res
         self._gather_infos()
         return self.state, self.state.score, self.state.done
 

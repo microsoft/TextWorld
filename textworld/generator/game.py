@@ -46,6 +46,7 @@ class UnderspecifiedQuestError(NameError):
 
 def gen_commands_from_actions(actions: Iterable[Action], kb: Optional[KnowledgeBase] = None) -> List[str]:
     kb = kb or KnowledgeBase.default()
+
     def _get_name_mapping(action):
         mapping = kb.rules[action.name].match(action)
         return {ph.name: var.name for ph, var in mapping.items()}
@@ -331,9 +332,9 @@ class EntityInfo:
         self.room_type = None
 
     def __eq__(self, other: Any) -> bool:
-        return (isinstance(other, EntityInfo) and
-                all(getattr(self, slot) == getattr(other, slot)
-                    for slot in self.__slots__))
+        return (isinstance(other, EntityInfo)
+                and all(getattr(self, slot) == getattr(other, slot)
+                        for slot in self.__slots__))
 
     def __hash__(self) -> int:
         return hash(tuple(getattr(self, slot) for slot in self.__slots__))
@@ -468,7 +469,8 @@ class Game:
 
         version = data.get("version", cls._SERIAL_VERSION)
         if version != cls._SERIAL_VERSION:
-            raise ValueError("Cannot deserialize a TextWorld version {} game, expected version {}".format(version, cls._SERIAL_VERSION))
+            msg = "Cannot deserialize a TextWorld version {} game, expected version {}"
+            raise ValueError(msg.format(version, cls._SERIAL_VERSION))
 
         kb = KnowledgeBase.deserialize(data["KB"])
         world = World.deserialize(data["world"], kb=kb)
@@ -506,13 +508,13 @@ class Game:
         return data
 
     def __eq__(self, other: Any) -> bool:
-        return (isinstance(other, Game) and
-                self.world == other.world and
-                self.infos == other.infos and
-                self.quests == other.quests and
-                self.extras == other.extras and
-                self.main_quest == other.main_quest and
-                self._objective == other._objective)
+        return (isinstance(other, Game)
+                and self.world == other.world
+                and self.infos == other.infos
+                and self.quests == other.quests
+                and self.extras == other.extras
+                and self.main_quest == other.main_quest
+                and self._objective == other._objective)
 
     def __hash__(self) -> int:
         state = (self.world,

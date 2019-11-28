@@ -1,0 +1,18 @@
+name: PEP8
+on: [pull_request]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python 3.7
+      uses: actions/setup-python@master
+      with:
+        version: 3.7
+    - name: flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # The GitHub editor is 127 chars wide
+        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics

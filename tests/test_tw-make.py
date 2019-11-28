@@ -3,8 +3,9 @@
 
 import os
 import glob
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 from os.path import join as pjoin
+import textwrap
 
 import textworld
 import textworld.agents
@@ -62,6 +63,7 @@ def test_making_a_custom_game():
         agent = textworld.agents.WalkthroughAgent()
         textworld.play(output_folder + ".ulx", agent=agent, silent=True)
 
+
 def test_making_challenge_game():
     settings = {
         "tw-treasure_hunter": ["--level", "1"],
@@ -93,3 +95,60 @@ def test_making_a_game_using_basic_theme():
         # Solve the game using WalkthroughAgent.
         agent = textworld.agents.WalkthroughAgent()
         textworld.play(game_file, agent=agent, silent=True)
+
+
+def test_third_party():
+    with make_temp_directory(prefix="test_tw-make_third_party") as tmpdir:
+        challenge_py = pjoin(tmpdir, "my_challenge.py")
+        with open(challenge_py, "w") as f:
+            f.write(textwrap.dedent("""\
+            import argparse
+            from typing import Mapping, Optional
+
+            import textworld
+            from textworld.challenges import register
+
+            from textworld import Game, GameOptions
+
+
+            def build_argparser(parser=None):
+                parser = parser or argparse.ArgumentParser()
+
+                group = parser.add_argument_group('This challenge settings')
+                group.add_argument("--nb-locations", required=True, type=int,
+                                   help="Number of locations in the game.")
+
+                return parser
+
+
+            def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> Game:
+                options = options or GameOptions
+                options.nb_rooms = settings["nb_locations"]
+                game = textworld.generator.make_game(options)
+                return game
+
+
+            # Register this new challenge.
+            register(name="my-challenge",
+                    desc="Generate new challenge game",
+                    make=make_game,
+                    add_arguments=build_argparser)
+            """))
+
+        NB_LOCATIONS = 3
+
+        output_folder = pjoin(tmpdir, "gen_games")
+        game_file = pjoin(output_folder, "game_1234.ulx")
+        command = ["tw-make", "--third-party", challenge_py, "my-challenge", "--seed", "1234", "--output", game_file]
+        try:
+            check_call(command)
+        except CalledProcessError as e:
+            assert e.returncode == 2  # Missing the --nb-locations argument.
+        else:
+            assert False, "tw-make should have failed."
+
+        command += ["--nb-locations", str(NB_LOCATIONS)]
+        assert check_call(command) == 0
+
+        game = textworld.Game.load(game_file.replace(".ulx", ".json"))
+        assert len(game.world.rooms) == NB_LOCATIONS
