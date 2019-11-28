@@ -90,7 +90,7 @@ def test_reloading_game_with_custom_kb():
 
     commands = ["drop customized object"]
     quest = M.set_quest_from_commands(commands)
-    assert quest.commands == commands
+    assert quest.commands == tuple(commands)
     game = M.build()
     assert game == Game.deserialize(game.serialize())
 
