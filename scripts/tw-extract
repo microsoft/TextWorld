@@ -25,14 +25,14 @@ def parse_args():
                                        help='Type of information to extract.')
 
     vocab_parser = subparsers.add_parser("vocab", parents=[general_parser],
-                                          help='Extract vocabulary.')
+                                         help='Extract vocabulary.')
     vocab_parser.add_argument("games", metavar="game", nargs="+",
-                               help="List of TextWorld games (.ulx|.json).")
+                              help="List of TextWorld games (.ulx|.json).")
     vocab_parser.add_argument("--output", default="vocab.txt",
                               help="Output file containing all words (.txt). Default: %(default)s")
 
     entities_parser = subparsers.add_parser("entities", parents=[general_parser],
-                                             help='Extract entity names.')
+                                            help='Extract entity names.')
     entities_parser.add_argument("games", metavar="game", nargs="+",
                                  help="List of TextWorld games (.ulx|.json).")
     entities_parser.add_argument("--output", default="entities.txt",

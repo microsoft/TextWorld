@@ -11,7 +11,6 @@ import textworld
 import textworld.agents
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("game")
