@@ -2,8 +2,6 @@
 # Licensed under the MIT license.
 
 
-import re
-import os
 import sys
 import textwrap
 from io import StringIO
@@ -12,7 +10,6 @@ from typing import List, Optional, Dict, Any, Tuple, Union
 import numpy as np
 import gym
 from gym.utils import colorize
-import jericho
 
 import textworld
 import textworld.text_utils
@@ -66,17 +63,8 @@ class TextworldGamesEnv(gym.Env):
         self.seed(1234)
 
         if action_space is None or observation_space is None:
-            # Extract vocabulary from games.
-            json_files = [os.path.splitext(gamefile)[0] + ".json" for gamefile in self.gamefiles]
-            games_iter = (textworld.Game.load(gamefile) for gamefile in json_files if os.path.isfile(gamefile))
-            vocab = set(textworld.text_utils.extract_vocab(games_iter))
-
-            zmachine_games = [gamefile for gamefile in self.gamefiles if re.search(r"\.z[1-8]$", gamefile)]
-            for gamefile in zmachine_games:
-                env = jericho.FrotzEnv(gamefile)
-                vocab |= set(entry.word for entry in env.get_dictionary())
-
-            vocab = sorted(vocab)
+            # Extract vocabulary from all games.
+            vocab = sorted(textworld.text_utils.extract_vocab_from_gamefiles(self.gamefiles))
 
         self.action_space = action_space or text_spaces.Word(max_length=8, vocab=vocab)
         self.observation_space = observation_space or text_spaces.Word(max_length=200, vocab=vocab)

@@ -4,12 +4,14 @@
 # Licensed under the MIT license.
 
 import os
+import re
 import sys
 import pprint
 import argparse
 
-from textworld.text_utils import extract_vocab
+from textworld.text_utils import extract_vocab_from_gamefiles
 from textworld.generator import Game
+from textworld.generator.text_grammar import Grammar, GrammarOptions
 
 
 def parse_args():
@@ -19,22 +21,26 @@ def parse_args():
     general_group = general_parser.add_argument_group('General settings')
     general_group.add_argument("-v", "--verbose", action="store_true")
     general_group.add_argument("-f", "--force", action="store_true")
+    general_group.add_argument("--merge", action="store_true",
+                               help="Merge extracted information to existing output file.")
 
     parser = argparse.ArgumentParser(parents=[general_parser], description=DESCRIPTION)
     subparsers = parser.add_subparsers(dest="subcommand",
                                        help='Type of information to extract.')
 
     vocab_parser = subparsers.add_parser("vocab", parents=[general_parser],
-                                          help='Extract vocabulary.')
-    vocab_parser.add_argument("games", metavar="game", nargs="+",
-                               help="List of TextWorld games (.ulx|.json).")
+                                         help='Extract vocabulary.')
+    vocab_parser.add_argument("games", metavar="game", nargs="*",
+                              help="List of TextWorld games (.ulx|.z8|.json).")
     vocab_parser.add_argument("--output", default="vocab.txt",
                               help="Output file containing all words (.txt). Default: %(default)s")
+    vocab_parser.add_argument("--theme",
+                              help="Provide a text grammar theme from which to extract words.")
 
     entities_parser = subparsers.add_parser("entities", parents=[general_parser],
-                                             help='Extract entity names.')
+                                            help='Extract entity names.')
     entities_parser.add_argument("games", metavar="game", nargs="+",
-                                 help="List of TextWorld games (.ulx|.json).")
+                                 help="List of TextWorld games (.ulx|.z8|.json).")
     entities_parser.add_argument("--output", default="entities.txt",
                                  help="Output file containing all entity names (.txt). Default: %(default)s")
 
@@ -47,32 +53,54 @@ def main():
     if not args.subcommand:
         parser.error("A subcommand is required.")
 
+    if os.path.isfile(args.output) and not (args.force or args.merge):
+        msg = "{} already exists. Either use --merge or --force to overwrite."
+        print(msg.format(args.output))
+        sys.exit(1)
+
     if args.subcommand == "entities":
-        unit = ["entity", "entities"]
+        units = ["entity", "entities"]
         infos = set()
         for gamefile in args.games:
-            game = Game.load(gamefile.replace(".ulx", ".json"))
+            jsonfile = os.path.splitext(gamefile)[0] + ".json"
+            game = Game.load(jsonfile)
             infos |= set(game.objects_names)
 
     elif args.subcommand == "vocab":
-        unit = ["word", "words"]
-        games_iter = (Game.load(gamefile.replace(".ulx", ".json"))
-                      for gamefile in args.games)
-        infos = extract_vocab(games_iter)
+        units = ["word", "words"]
+        infos = extract_vocab_from_gamefiles(args.games)
+
+        if args.theme:
+            # Extract words from text grammar theme.
+            grammar = Grammar(GrammarOptions(theme=args.theme))
+            grammar_words = grammar.get_vocabulary()
+            text = " ".join(set(grammar_words))
+            # Strip out all non-alphabetic characters
+            text = re.sub(r"[^a-z0-9\-_ ']", " ", text.lower())
+            infos |= set(word.strip("-'_") for word in text.split())
 
     infos = sorted(infos)
 
+    unit = units[1] if len(infos) > 1 else units[0]
     if args.verbose:
+        print("{} found:".format(unit.title()))
         pprint.pprint(infos)
 
-    length = len(infos)
-    unit = unit[1] if len(infos) > 1 else unit[1]
-    print("Extracted {} {}.".format(length, unit))
+    print("-> Found {} {}.".format(len(infos), unit))
 
-    if os.path.isfile(args.output) and not args.force:
-        msg = "{} already exists. Use --force to overwrite."
-        print(msg.format(args.output))
-        sys.exit(1)
+    if args.merge and os.path.isfile(args.output):
+        with open(args.output) as f:
+            old_infos = set(f.read().split("\n"))
+
+        new_infos = set(infos) - old_infos
+        unit = units[1] if len(new_infos) > 1 else units[0]
+        if args.verbose and len(new_infos) > 0:
+            print("\nNew {}:".format(unit))
+            pprint.pprint(sorted(new_infos))
+
+        infos = sorted(set(infos) | old_infos)
+        unit = units[1] if len(infos) > 1 else units[0]
+        print("-> Saved {} {} ({} new).".format(len(infos), unit, len(new_infos)))
 
     with open(args.output, "w") as f:
         f.write("\n".join(infos))

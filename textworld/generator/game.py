@@ -475,7 +475,7 @@ class Game:
         kb = KnowledgeBase.deserialize(data["KB"])
         world = World.deserialize(data["world"], kb=kb)
         game = cls(world)
-        game.grammar = Grammar(data["grammar"])
+        game.grammar_options = GrammarOptions(data["grammar"])
         game.quests = tuple([Quest.deserialize(d) for d in data["quests"]])
         game._infos = {k: EntityInfo.deserialize(v) for k, v in data["infos"]}
         game.metadata = data.get("metadata", {})
