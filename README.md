@@ -114,6 +114,7 @@ If you use TextWorld, please cite the following BibTex:
             Tavian Barnes and
             Emery Fine and
             James Moore and
+            Ruo Yu Tao and
             Matthew Hausknecht and
             Layla El Asri and
             Mahmoud Adada and
