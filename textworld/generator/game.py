@@ -924,6 +924,10 @@ class GameProgression:
             for quest_progression in self.quest_progressions:
                 quest_progression.update(action=None, state=self.state)
 
+            if self.game.main_quest:
+                self.main_quest_progression = QuestProgression(self.game.main_quest, game.kb)
+                self.main_quest_progression.update(action=None, state=self.state)
+
     @property
     def done(self) -> bool:
         """ Whether all quests are completed or at least one has failed or is unfinishable. """
@@ -974,6 +978,9 @@ class GameProgression:
         if self.done:
             return None
 
+        if self.game.main_quest:
+            return self.main_quest_progression.winning_policy
+
         # Greedily build a new winning policy by merging all quest trees.
         trees = [quest._tree for quest in self.quest_progressions if quest.completable and not quest.done]
         if None in trees:
@@ -1003,6 +1010,9 @@ class GameProgression:
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:
             quest_progression.update(action, self.state)
+
+        if self.game.main_quest:
+            self.main_quest_progression.update(action, self.state)
 
 
 class GameOptions:
