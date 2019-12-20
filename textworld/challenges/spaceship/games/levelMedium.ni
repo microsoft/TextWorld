@@ -24,16 +24,22 @@ A room has a text called internal name.
 
 
 Understand the command "check" as something new. 
-Understand "check email" as checking email. 
+Understand "check laptop for email" as checking email. 
 checking email is an action applying to nothing. 
 
+Before checking email:
+	if a CPU-like (called pc) is read:
+		Say "You've already read all today's emails.";
+		rule fails;
+	otherwise:
+		if a random chance of 3 in 4 succeeds:
+			Say "No emails yet! Wait.";
+			rule fails.
+
 Carry out checking email: 
-	if a CPU-like (called pc) is unread:                     
-		if a random chance of 1 in 4 succeeds: 
-			Now the pc is read; 
-			Say "Email: Your mission is started.";                                                                       
-		otherwise:
-			Say "No emails yet! Wait.".  
+	if a CPU-like (called pc) is unread: 
+		Say "Email: Your mission is started. You should go and check outside of the spaceship.";
+		Now the pc is read.
 
 
 connectivity relates a button-like to a door. The verb to pair to means the connectivity relation. 
@@ -77,6 +83,7 @@ _reading is an action applying to a thing.
 
 Carry out _reading: 
 	if a text-like (called tx) is unread: 
+		Say "You read the book and realized about that crucial hint.";
 		Now the tx is read; 
 
 
@@ -164,31 +171,31 @@ The s_0 and the s_1 and the s_2 and the s_3 and the s_4 are privately-named.
 The txt_0 are text-likes.
 The txt_0 are privately-named.
 
-The description of d_0 is "it's a commanding door A [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
+The description of d_0 is "The door A looks sturdy. [if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if]".
 The printed name of d_0 is "door A".
 Understand "door A" as d_0.
 Understand "door" as d_0.
 Understand "A" as d_0.
 The d_0 is closed.
-The description of d_1 is "it's a manageable door B [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
+The description of d_1 is "it's a manageable door B [if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if]".
 The printed name of d_1 is "door B".
 Understand "door B" as d_1.
 Understand "door" as d_1.
 Understand "B" as d_1.
 The d_1 is locked.
-The description of d_2 is "The door C looks imposing. [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
+The description of d_2 is "The door C looks sturdy. [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
 The printed name of d_2 is "door C".
 Understand "door C" as d_2.
 Understand "door" as d_2.
 Understand "C" as d_2.
 The d_2 is locked.
-The description of d_3 is "it is what it is, a door D [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
+The description of d_3 is "it is what it is, a door D [if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if]".
 The printed name of d_3 is "door D".
 Understand "door D" as d_3.
 Understand "door" as d_3.
 Understand "D" as d_3.
 The d_3 is locked.
-The description of d_4 is "The door E looks rugged. [if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if]".
+The description of d_4 is "The door E looks sturdy. [if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]".
 The printed name of d_4 is "door E".
 Understand "door E" as d_4.
 Understand "door" as d_4.
@@ -324,7 +331,7 @@ Understand "key" as k_4.
 Understand "2" as k_4.
 The k_4 is in the c_6.
 The matching key of the c_4 is the k_4.
-The description of k_5 is "The code key 2 is cold to the touch".
+The description of k_5 is "The metal of the code key 2 is rusty.".
 The printed name of k_5 is "code key 2".
 Understand "code key 2" as k_5.
 Understand "code" as k_5.
@@ -352,21 +359,21 @@ The printed name of cpu_0 is "laptop".
 Understand "laptop" as cpu_0.
 The cpu_0 is on the s_0.
 The cpu_0 is unread.
-The description of o_0 is "The bunch of sticked papers is dirty.".
+The description of o_0 is "The bunch of sticked papers appears to be to fit in here".
 The printed name of o_0 is "bunch of sticked papers".
 Understand "bunch of sticked papers" as o_0.
 Understand "bunch" as o_0.
 Understand "sticked" as o_0.
 Understand "papers" as o_0.
 The o_0 is on the s_3.
-The description of o_1 is "The lots of hanged notebooks is modern.".
+The description of o_1 is "The lots of hanged notebooks seems well matched to everything else here".
 The printed name of o_1 is "lots of hanged notebooks".
 Understand "lots of hanged notebooks" as o_1.
 Understand "lots" as o_1.
 Understand "hanged" as o_1.
 Understand "notebooks" as o_1.
 The o_1 is on the s_3.
-The description of o_2 is "The attached bags for mechanical tools is dirty.".
+The description of o_2 is "The attached bags for mechanical tools is clean.".
 The printed name of o_2 is "attached bags for mechanical tools".
 Understand "attached bags for mechanical tools" as o_2.
 Understand "attached" as o_2.
@@ -387,17 +394,23 @@ Test quest0_0 with ""
 Every turn:
 	if quest0 completed is true:
 		do nothing;
-	else if The cpu_0 is read:
-		increase the score by 1; [Quest completed]
+	else if The player is in r_0:
+		increase the score by 0; [Quest completed]
 		Now the quest0 completed is true;
 
 The quest1 completed is a truth state that varies.
 The quest1 completed is usually false.
+
+Test quest1_0 with ""
+
 Every turn:
 	if quest1 completed is true:
 		do nothing;
-	else if The cpu_0 is unread and The d_0 is open:
+	else if The cpu_0 is unread and The d_0 is open and the player was in r_0 and The player is in r_1:
 		end the story; [Lost]
+	else if The d_0 is open and the player was in r_0 and The cpu_0 is read and The player is in r_1:
+		increase the score by 1; [Quest completed]
+		Now the quest1 completed is true;
 
 The quest2 completed is a truth state that varies.
 The quest2 completed is usually false.
@@ -431,7 +444,7 @@ Test quest4_0 with ""
 Every turn:
 	if quest4 completed is true:
 		do nothing;
-	else if The b_0 is pushed and The l_0 is worn in:
+	else if The l_0 is worn in and The b_0 is pushed:
 		increase the score by 1; [Quest completed]
 		Now the quest4 completed is true;
 
@@ -440,7 +453,7 @@ The quest5 completed is usually false.
 Every turn:
 	if quest5 completed is true:
 		do nothing;
-	else if The b_0 is pushed and The l_0 is worn out:
+	else if The l_0 is worn out and The b_0 is pushed:
 		end the story; [Lost]
 
 The quest6 completed is a truth state that varies.

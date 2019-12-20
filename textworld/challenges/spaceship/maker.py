@@ -465,10 +465,10 @@ def test():
 def test_commands(game, arr):
     with make_temp_directory() as tmpdir:
         silent = False
-        game_file = game.compile(pjoin(tmpdir, "test_game.ulx"))
+        game_file = game.compile(pjoin(tmpdir, "test_game_1.ulx"))
         env = start(game_file)
         env.activate_state_tracking()
-        game_state = env.reset()
+        env.reset()
 
         agent = textworld.agents.HumanAgent(autocompletion=True)
         agent.reset(env)
@@ -478,12 +478,14 @@ def test_commands(game, arr):
 
         try:
             for command in arr:
+                print(command)
                 game_state, reward, done = env.step(command)
 
                 if not silent:
                     env.render()
 
                 print("Available actions: {}\n".format(game_state.admissible_commands))
+                print('==================================================')
 
         except KeyboardInterrupt:
             pass  # Stop the game.
@@ -494,7 +496,7 @@ def test_commands(game, arr):
 def spaceship_maker_level_medium_v1():
     # GameMaker object for handcrafting text-based games.
     kb = KnowledgeBase.load(target_dir=PATH)
-    gm = GameMaker(kb=kb, theme='Spaceship')
+    gm = GameMaker(kb=kb, theme='spaceship')
 
     # ===== Sleep Station Design =======================================================================================
     sleep_station = gm.new_room("Sleep Station")
@@ -517,14 +519,12 @@ def spaceship_maker_level_medium_v1():
                         "attached or hooked to it, why? Come on! we are in space, there is no gravity here."
     sleep_station.add(surf_1)   # The card box contains nothing at this game
 
-    # laptop = gm.new(type='o', name="laptop")
     laptop = gm.new(type='cpu', name='laptop')
     laptop.infos.desc = "This is your personal laptop which is attached to the surface of the table. You can do " \
                         "regular things with this, like check your emails, watch YouTube, Skype with family,etc." \
                         "Since you are here, we recommend you to check your emails. New missions are posted through " \
                         "emails."
     surf_1.add(laptop)
-    # gm.add_fact('turned_off', laptop)
     gm.add_fact('unread/e', laptop)
 
     # ===== US LAB Design ==============================================================================================
@@ -725,6 +725,7 @@ def spaceship_maker_level_medium_v1():
 
     # ===== Player and Inventory Design ================================================================================
     gm.set_player(sleep_station)
+    # gm.set_player(us_lab)
 
     key_7 = gm.new(type='k', name="hearty key")
     key_7.infos.desc = "This key is shaped like a heart, not a normal key for a spaceship, ha ha ha..."
@@ -823,7 +824,141 @@ def spaceship_maker_level_medium_v1():
     #                                         'check email',
     #                                         'open door A']
 
-    return quest_design(gm)
+    quest_design(gm)
+
+    # test_commands(gm, ['look', 'open door A', 'go south'])
+    test_commands(gm, ['open door A', 'go north', 'go south'])
+    # return quest_design(gm)
+
+
+def spaceship_maker_level_medium_v2():
+    # GameMaker object for handcrafting text-based games.
+    kb = KnowledgeBase.load(target_dir=PATH)
+    gm = GameMaker(kb=kb, theme='spaceship')
+
+    # ===== Sleep Station Design =======================================================================================
+    sleep_station = gm.new_room("Sleep Station")
+    sleep_station.infos.desc = "This is a typical bedroom in spaceship; here,  it is called sleep station. It is " \
+                               "small but comfortable to take a good rest after a day full of missions. However, " \
+                               "today your mission will start from here. Wait to be notified by a message. So, you " \
+                               "should find that message first." \
+                               " " \
+                               "BTW, don't forget that when the Hatch door is open, you should already have worn " \
+                               "your specially-designed outfit to be able to enter and stay at Hatch area; otherwise " \
+                               "you'll die! Yes! Living in space is tough."
+
+    sleep_bag = gm.new(type='c', name="sleeping bag")
+    sleep_bag.infos.desc = "cool! You can sleep in a comfy bag."
+    sleep_station.add(sleep_bag)  # Sleeping bag is fixed in place in the Sleep Station.
+    gm.add_fact("open", sleep_bag)
+
+    surf_1 = gm.new(type='s', name='vertical desk')  # surf_1 is a table (supporter) in the Sleep Station.
+    surf_1.infos.desc = "This is not a regular table. The surface is installed vertically and your objects are " \
+                        "attached or hooked to it, why? Come on! we are in space, there is no gravity here."
+    sleep_station.add(surf_1)   # The card box contains nothing at this game
+
+    laptop = gm.new(type='cpu', name='laptop')
+    laptop.infos.desc = "This is your personal laptop which is attached to the surface of the table. You can do " \
+                        "regular things with this, like check your emails, watch YouTube, Skype with family,etc." \
+                        "Since you are here, we recommend you to check your emails. New missions are posted through " \
+                        "emails."
+    surf_1.add(laptop)
+    gm.add_fact('unread/e', laptop)
+
+    # ===== US LAB Design ==============================================================================================
+    us_lab = gm.new_room("US LAB")
+    us_lab.infos.desc = "This is where Americans do their research on Space. In addition to all computers and " \
+                        "lab gadgets, you can find a couple of objects here which are useful during our game. Let's " \
+                        "explore the room."
+
+    box_a = gm.new(type='c', name="box A")
+    box_a.infos.desc = "This a regular box, keeps the electronic key to open door C. But it is locked. The lock " \
+                       "looks like a keypad, means that the key is in fact just a code! So, ... let's search around " \
+                       "to find its key."
+    us_lab.add(box_a)
+    gm.add_fact("locked", box_a)
+
+    key_1 = gm.new(type='k', name="electronic key 1")
+    key_1.infos.desc = "This key is a card key which opens door C."
+    box_a.add(key_1)
+
+    cloth = gm.new(type='l', name="outfit")
+    us_lab.add(cloth)
+    gm.add_fact("takenoff", cloth)
+    gm.add_fact("clean", cloth)
+
+    corridor_1 = gm.connect(sleep_station.south, us_lab.north)
+    door_a = gm.new_door(corridor_1, name="door A")
+    gm.add_fact("closed", door_a)
+
+    # # ===== European Module Design =====================================================================================
+    # european_module = gm.new_room("European Module")
+    # european_module.infos.desc = "This room belongs to European scientists. Isn't it cool? what do they research? " \
+    #                              "well, we can explore it later... For now, there is a key code here. This code " \
+    #                              "opens the box in the next room and consequently takes you to the next stage. So, " \
+    #                              "explore the table to find the key."
+    #
+    # surf_2 = gm.new(type='s', name='table')
+    # surf_2.infos.desc = "This is a simple table located in the middle of the room. Let's take a look at it..."
+    # european_module.add(surf_2)
+    #
+    # box_b = gm.new(type='c', name="box B")
+    # box_b.infos.desc = "This a regular box, keeps the key to open box A."
+    # surf_2.add(box_b)
+    # gm.add_fact("closed", box_b)
+    #
+    # key_2 = gm.new(type='k', name="code key 1")
+    # key_2.infos.desc = "This key is in fact a digital code which opens the box in the US Lab area. The code, " \
+    #                    "in fact, is written on a piece of paper."
+    # box_b.add(key_2)
+    # gm.add_fact("match", key_2, box_a)
+    #
+    # chair_1 = gm.new(type='s', name='chair')
+    # chair_1.infos.desc = "this is a dark-gray chair which is developed to be used in space."
+    # european_module.add(chair_1)
+    #
+    # corridor_2 = gm.connect(us_lab.east, european_module.west)
+    # door_b = gm.new_door(corridor_2, name="door B")
+    # gm.add_fact("closed", door_b)
+
+    # ===== Player and Inventory Design ================================================================================
+    gm.set_player(us_lab)
+
+    quest_design_2(gm)
+
+    return gm
+
+
+def quest_design_2(game):
+    quests = []
+
+    # 1. Is the Player performing successful in the Sleeping Station
+    win_quest = Event(conditions={
+        game.new_fact("at", game._entities['P'], game._entities['r_0'])
+    })
+    quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
+
+    fail_quest = Event(conditions={
+        game.new_fact("event", game._entities['P'], game._entities['r_0']),
+        game.new_fact("at", game._entities['P'], game._entities['r_1']),
+        game.new_fact("open", game._entities['d_0']),
+        game.new_fact("unread/e", game._entities['cpu_0']),
+    })
+    win_quest = Event(conditions={
+        game.new_fact("event", game._entities['P'], game._entities['r_0']),
+        game.new_fact("at", game._entities['P'], game._entities['r_1']),
+        game.new_fact("open", game._entities['d_0']),
+        game.new_fact("read/e", game._entities['cpu_0']),
+    })
+    quests.append(Quest(win_events=[win_quest], fail_events=[fail_quest]))
+
+    # 2.
+    win_quest = Event(conditions={game.new_fact("worn", game._entities['l_0'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+
+    game.quests = quests
+
+    return game.build()
 
 
 def quest_design(game):
@@ -832,43 +967,42 @@ def quest_design(game):
     # 1. Player is in the Sleeping Station
     win_quest = Event(conditions={game.new_fact("read/e", game._named_entities['laptop'])})
     quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    fail_quest = Event(conditions={game.new_fact("unread/e", game._named_entities['laptop']),
-                                   game.new_fact("open", game._named_entities['door A'])})
+    tp = Event(conditions={game.new_fact("unread/e", game._named_entities['laptop'])})
+    fail_quest = tp
     quests.append(Quest(win_events=[], fail_events=[fail_quest]))
 
     # 2. Player is in US LAB to find Electronic Key 1
     win_quest = Event(conditions={game.new_fact("in", game._named_entities['electronic key 1'], game._entities['I'])})
     quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
-    # 3. Player is in Russian Module and take digital Key 1 and/or push the button
-    win_quest = Event(conditions={game.new_fact("in", game._named_entities['digital key 1'], game._entities['I'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    win_quest = Event(conditions={game.new_fact("pushed", game._named_entities['exit push button']),
-                                  game.new_fact("worn", game._named_entities['outfit'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    fail_quest = Event(conditions={game.new_fact("pushed", game._named_entities['exit push button']),
-                                   game.new_fact("takenoff", game._named_entities['outfit'])})
-    quests.append(Quest(win_events=[], fail_events=[fail_quest]))
-
-    # 4. Player is the Control Module and take Electronic Key 2
-    win_quest = Event(conditions={game.new_fact("in", game._named_entities['digital key 2'], game._entities['I'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 5. Player reads the Secret Code book at Control Module
-    win_quest = Event(conditions={game.new_fact("read/t", game._named_entities['Secret Codes Handbook'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 6. Player is in Hatch room and wears the cloth
-    win_quest = Event(conditions={game.new_fact("worn", game._named_entities['outfit'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # 7. Player goes outside
-    win_quest = Event(conditions={game.new_fact("at", game._entities['P'], game._named_entities['Outside'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    # # 3. Player is in Russian Module and take digital Key 1 and/or push the button
+    # win_quest = Event(conditions={game.new_fact("in", game._named_entities['digital key 1'], game._entities['I'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    # win_quest = Event(conditions={game.new_fact("pushed", game._named_entities['exit push button']),
+    #                               game.new_fact("worn", game._named_entities['outfit'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    # fail_quest = Event(conditions={game.new_fact("pushed", game._named_entities['exit push button']),
+    #                                game.new_fact("takenoff", game._named_entities['outfit'])})
+    # quests.append(Quest(win_events=[], fail_events=[fail_quest]))
+    #
+    # # 4. Player is the Control Module and take Electronic Key 2
+    # win_quest = Event(conditions={game.new_fact("in", game._named_entities['digital key 2'], game._entities['I'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    #
+    # # 5. Player reads the Secret Code book at Control Module
+    # win_quest = Event(conditions={game.new_fact("read/t", game._named_entities['Secret Codes Handbook'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    #
+    # # 6. Player is in Hatch room and wears the cloth
+    # win_quest = Event(conditions={game.new_fact("worn", game._named_entities['outfit'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    #
+    # # 7. Player goes outside
+    # win_quest = Event(conditions={game.new_fact("at", game._entities['P'], game._named_entities['Outside'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
     game.quests = quests
 
-    # game.test()
     _game = game.build()
 
     return _game
@@ -967,4 +1101,15 @@ if __name__ == "__main__":
     # spaceship_maker_level_medium()
     # test()
     # testFW_easyGame()
-    spaceship_maker_level_medium_v1()
+    # spaceship_maker_level_medium_v1()
+    game = spaceship_maker_level_medium_v2()
+    test_commands(game, [
+        'open door A',
+        'go north',
+        'check laptop for email',
+        'check laptop for email',
+        'go south',
+        'take outfit',
+        'wear the outfit',
+    ])
+

@@ -132,7 +132,8 @@ class Grammar:
 
     _cache = {}
 
-    def __init__(self, options: Union[GrammarOptions, Mapping[str, Any]] = {}, rng: Optional[RandomState] = None):
+    def __init__(self, options: Union[GrammarOptions, Mapping[str, Any]] = {}, rng: Optional[RandomState] = None,
+                 kb: Optional[KnowledgeBase] = None):
         """
         Arguments:
             options:
@@ -159,6 +160,10 @@ class Grammar:
         # Load the object names file
         path = pjoin(KnowledgeBase.default().text_grammars_path, glob.escape(self.theme) + "*.twg")
         files = glob.glob(path)
+        if kb is not None:
+            path = pjoin(kb.text_grammars_path, glob.escape(self.theme) + "*.twg")
+            files += glob.glob(path)
+
         if len(files) == 0:
             raise MissingTextGrammar(path)
 

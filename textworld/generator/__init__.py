@@ -159,9 +159,9 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
     return quests
 
 
-def make_grammar(options: Mapping = {}, rng: Optional[RandomState] = None) -> Grammar:
+def make_grammar(options: Mapping = {}, rng: Optional[RandomState] = None, kb: Optional[KnowledgeBase] = None) -> Grammar:
     rng = g_rng.next() if rng is None else rng
-    grammar = Grammar(options, rng)
+    grammar = Grammar(options, rng, kb)
     grammar.check()
     return grammar
 

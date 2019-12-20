@@ -30,7 +30,7 @@ type txt : o {
         }
 
         commands {            
-            read/book     :: "read the book"    :: "reading the book";
+            read/book     :: "read the {txt}"    :: "_reading the {txt}";
             examine/book  :: "examine {txt}"  :: "examining the {txt}";
         }
         
@@ -41,6 +41,7 @@ type txt : o {
         
             Carry out _reading: 
                 if a text-like (called tx) is unread: 
+                    Say "You read the book and realized about that crucial hint.";
                     Now the tx is read; 
         """;
     }

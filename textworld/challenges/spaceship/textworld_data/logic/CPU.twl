@@ -1,25 +1,15 @@
 # CPU-Like
 type cpu : o {
     predicates {
-        #turned_on(cpu);
-        #turned_off(cpu);
-
         read/e(cpu);
         unread/e(cpu);
     }
 
     rules {
         check/e     :: $at(P, r) & $at(s, r) & $on(cpu, s) & unread/e(cpu) -> read/e(cpu);
-        examine/cpu :: at(P, r) & $at(s, r) & $on(cpu, s) -> at(P, r);  # Nothing changes.
-    }
-
-    reverse_rules {
-        check/e     :: check/e;
-        examine/cpu :: examine/cpu;
     }
 
     constraints {
-        #cpu1 :: turned_on(cpu) & turned_off(cpu) -> fail();
         cpu2 :: read/e(cpu) & unread/e(cpu) -> fail();        
     }
 
@@ -27,34 +17,35 @@ type cpu : o {
         type {
             kind :: "CPU-like";
             definition :: "A CPU-like can be either read or unread. A CPU-like is usually unread.";
-            #definition :: "A CPU-like can be either turned on or turned off. A CPU-like is usually turned off. A CPU-like can be either read or unread. A CPU-like is usually unread.";
         }
 
         predicates {
-            #turned_on(cpu)  :: "The {cpu} is turned on";
-            #turned_off(cpu) :: "The {cpu} is turned off";
-
             read/e(cpu)     :: "The {cpu} is read";
             unread/e(cpu)   :: "The {cpu} is unread";
         }
 
         commands {            
-            check/e     :: "check email"    :: "checking email";
-            examine/cpu :: "examine {cpu}"  :: "examining the {cpu}";
+            check/e     :: "check laptop for email"    :: "checking email";
         }
 
         code :: """
             Understand the command "check" as something new. 
-            Understand "check email" as checking email. 
+            Understand "check laptop for email" as checking email. 
             checking email is an action applying to nothing. 
 
+            Before checking email:
+                if a CPU-like (called pc) is read:
+                    Say "You've already read all today's emails.";
+                    rule fails;
+                otherwise:
+                    if a random chance of 3 in 4 succeeds:
+                        Say "No emails yet! Wait.";
+                        rule fails.
+
             Carry out checking email: 
-                if a CPU-like (called pc) is unread:                     
-                    if a random chance of 1 in 4 succeeds: 
-                        Now the pc is read; 
-                        Say "Email: Your mission is started.";                                                                       
-                    otherwise:
-                        Say "No emails yet! Wait.".  
+                if a CPU-like (called pc) is unread: 
+                    Say "Email: Your mission is started. You should go and check outside of the spaceship.";
+                    Now the pc is read.
         """;
     }
 }

@@ -990,6 +990,9 @@ class GameProgression:
         for quest_progression in self.quest_progressions:
             quest_progression.update(action, self.state)
 
+            for win_event in quest_progression.win_events:
+                self.state.apply(win_event.event.condition)
+
 
 class GameOptions:
     """

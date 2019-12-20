@@ -332,8 +332,8 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         gm.set_player(starting_room)
 
     else:
-        gm.set_player(us_lab)
-        # gm.set_player(sleep_station)
+        # gm.set_player(us_lab)
+        gm.set_player(sleep_station)
 
     key_7 = gm.new(type='k', name="hearty key")
     key_7.infos.desc = "This key is shaped like a heart, not a normal key for a spaceship, ha ha ha..."
@@ -353,15 +353,6 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     uuid = "tw-spaceship-{level}".format(level=str.title(settings["level"]))
     game.metadata["uuid"] = uuid
 
-    from maker import test_commands
-    test_commands(gm, [
-        # 'look',
-        'open door A',
-        'go north',
-        # 'check laptop for email',
-        'go south'
-    ])
-
     return game
 
 
@@ -372,7 +363,7 @@ def quest_design_easy(game):
 def quest_design_medium(game):
     quests = []
 
-    # 1. Is the Player in the Sleeping Station
+    # 1. Is the Player performing successful in the Sleeping Station
     win_quest = Event(conditions={
         game.new_fact("at", game._entities['P'], game._entities['r_0'])
     })
@@ -382,8 +373,46 @@ def quest_design_medium(game):
         game.new_fact("event", game._entities['P'], game._entities['r_0']),
         game.new_fact("at", game._entities['P'], game._entities['r_1']),
         game.new_fact("open", game._entities['d_0']),
+        game.new_fact("unread/e", game._entities['cpu_0']),
     })
+
+    win_quest = Event(conditions={
+        game.new_fact("event", game._entities['P'], game._entities['r_0']),
+        game.new_fact("at", game._entities['P'], game._entities['r_1']),
+        game.new_fact("open", game._entities['d_0']),
+        game.new_fact("read/e", game._entities['cpu_0']),
+    })
+    quests.append(Quest(win_events=[win_quest], fail_events=[fail_quest]))
+
+    # 2. Player is in US LAB to find Electronic Key 1
+    win_quest = Event(conditions={game.new_fact("in", game._entities['k_0'], game._entities['I'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+
+    # 3. Player is in Russian Module and take digital Key 1 and/or push the button
+    win_quest = Event(conditions={game.new_fact("in", game._entities['k_2'], game._entities['I'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    win_quest = Event(conditions={game.new_fact("pushed", game._entities['b_0']),
+                                  game.new_fact("worn", game._entities['l_0'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+    fail_quest = Event(conditions={game.new_fact("pushed", game._entities['b_0']),
+                                   game.new_fact("takenoff", game._entities['l_0'])})
     quests.append(Quest(win_events=[], fail_events=[fail_quest]))
+
+    # 4. Player is the Control Mo/dule and take Electronic Key 2
+    win_quest = Event(conditions={game.new_fact("in", game._entities['k_5'], game._entities['I'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+
+    # 5. Player reads the Secret Code book at Control Module
+    win_quest = Event(conditions={game.new_fact("read/t", game._entities['txt_0'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+
+    # 6. Player is in Hatch room and wears the cloth
+    win_quest = Event(conditions={game.new_fact("worn", game._entities['l_0'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+
+    # 7. Player goes outside
+    win_quest = Event(conditions={game.new_fact("at", game._entities['P'], game._entities['r_7'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
     game.quests = quests
 
@@ -394,10 +423,10 @@ def quest_design_difficult(game):
     return None
 
 
-g = make_game({'level': 'medium'})
+# g = make_game({'level': 'medium'})
 
 
-# register(name="tw-spaceship",
-#          desc="Generate a Spaceship challenge game",
-#          make=make_game,
-#          add_arguments=build_argparser)
+register(name="tw-spaceship",
+         desc="Generate a Spaceship challenge game",
+         make=make_game,
+         add_arguments=build_argparser)

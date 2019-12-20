@@ -363,8 +363,6 @@ class Inform7Game:
         if maximum_score >= 0:
             source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
 
-        print(maximum_score)
-        print(wining)
         # Build test condition for winning the game.
         game_winning_test = "1 is 0 [always false]"
         if wining > 0:

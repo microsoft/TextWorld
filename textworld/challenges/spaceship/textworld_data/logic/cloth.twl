@@ -8,8 +8,8 @@ type l : o {
     	}
 
     rules {
-        wear/l    :: in(l, I) -> worn(l);
-        takeoff/l :: worn(l) -> in(l, I);
+        wear/l    :: in(l, I) & takenoff(l) -> worn(l);
+        takeoff/l :: worn(l) -> in(l, I) & takenoff(l);
 
         wash/l    :: $at(l,r) & dirty(l) -> clean(l);
         dirty/l   :: $worn(l,P) & clean(l) -> dirty(l);
@@ -31,9 +31,7 @@ type l : o {
             definition :: "cloth-like are wearable. cloth-like can be either clean or dirty. cloth-like are usually clean. cloth-like can be either worn in or worn out. cloth-like are usually worn out.";                                          
         }
 
-        predicates {            
-	        #worn(l)    :: "The {P} wears the {l}.";
-	        #takenoff(l) :: "The {P} does not wear the {l}.";
+        predicates {
             worn(l)    :: "The {l} is worn in";
 	        takenoff(l) :: "The {l} is worn out";            
             clean(l)    :: "The {l} is clean";
@@ -41,7 +39,7 @@ type l : o {
         }
 
         commands {
-            wear/l :: "wear {l}" :: "wearing the {l}";
+            wear/l :: "wear {l}" :: "_wearing the {l}";
             takeoff/l :: "take off {l}" :: "taking off the {l}";
 
             clean/l :: "clean {l}" :: "cleaning the {l}";
