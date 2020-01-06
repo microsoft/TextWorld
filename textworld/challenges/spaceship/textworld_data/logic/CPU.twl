@@ -6,7 +6,8 @@ type cpu : o {
     }
 
     rules {
-        check/e     :: $at(P, r) & $at(s, r) & $on(cpu, s) & unread/e(cpu) -> read/e(cpu);
+        check/e1     :: $at(P, r) & $at(s, r) & $on(cpu, s) & unread/e(cpu) -> read/e(cpu);
+        check/e2     :: $at(P, r) & $in(cpu, I) & unread/e(cpu) -> read/e(cpu);
     }
 
     constraints {
@@ -25,7 +26,8 @@ type cpu : o {
         }
 
         commands {            
-            check/e     :: "check laptop for email"    :: "checking email";
+            check/e1     :: "check laptop for email"    :: "checking email";
+            check/e2     :: "check laptop for email"    :: "checking email";
         }
 
         code :: """

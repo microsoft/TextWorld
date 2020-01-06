@@ -263,7 +263,7 @@ class NeuralAgent:
         return returns[::-1], advantages[::-1]
 
 
-def play(agent, path, max_step=50, nb_episodes=1, verbose=True):
+def play(agent, path, max_step=50, nb_episodes=10, verbose=True):
     """
         This code uses the cooking agent design in the spaceship game.
 
@@ -304,7 +304,6 @@ def play(agent, path, max_step=50, nb_episodes=1, verbose=True):
             command = agent.act(obs, score, done, infos)
             obs, score, done, infos = env.step(command)
             nb_moves += 1
-
         agent.act(obs, score, done, infos)  # Let the agent know the game is done.
 
         if verbose:
@@ -319,19 +318,26 @@ def play(agent, path, max_step=50, nb_episodes=1, verbose=True):
         if os.path.isdir(path):
             print(msg.format(np.mean(avg_moves), np.mean(avg_norm_scores), 1))
         else:
+            print(avg_scores)
             print(msg.format(np.mean(avg_moves), np.mean(avg_scores), infos["max_score"]))
 
 
 agent = NeuralAgent()
+step_size = 750
 
 print(" =====  Training  ===================================================== ")
 agent.train()  # Tell the agent it should update its parameters.
 start_time = time()
-play(agent, "./games/levelMedium.ulx", nb_episodes=25, verbose=False)
+print(os.path.realpath("./games/levelMedium_v1.ulx"))
+play(agent, "./games/levelMedium_v1.ulx", max_step=step_size, nb_episodes=2000, verbose=False)
 print("Trained in {:.2f} secs".format(time() - start_time))
 
 print(' =====  Test  ========================================================= ')
-# agent.test()
-agent.test(method='eps-soft')
-play(agent, "./games/levelMedium.ulx")  # Medium level game.
+agent.test(method='random')
+play(agent, "./games/levelMedium_v1.ulx", max_step=step_size)  # Medium level game.
 
+save_path = "./model/levelMedium_v1_random.npy"
+if not os.path.exists(os.path.dirname(save_path)):
+    os.mkdir(os.path.dirname(save_path))
+
+np.save(save_path, agent)
