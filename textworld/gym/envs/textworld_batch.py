@@ -26,6 +26,7 @@ class TextworldBatchGymEnv(gym.Env):
                  request_infos: Optional[EnvInfos] = None,
                  batch_size: int = 1,
                  asynchronous: bool = True,
+                 auto_reset: bool = False,
                  action_space: Optional[gym.Space] = None,
                  observation_space: Optional[gym.Space] = None) -> None:
         """ Environment for playing text-based games in batch.
@@ -51,6 +52,8 @@ class TextworldBatchGymEnv(gym.Env):
                 If `True`, wraps the environments in an `AsyncBatchEnv` (which uses
                 `multiprocessing` to run the environments in parallel). If `False`,
                 wraps the environments in a `SyncBatchEnv`. Default: `True`.
+            auto_reset:
+                TODO
             action_space:
                 The action space be used with OpenAI baselines.
                 (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
@@ -69,7 +72,7 @@ class TextworldBatchGymEnv(gym.Env):
             return env
 
         env_fns = [_make_env for _ in range(self.batch_size)]
-        self.batch_env = AsyncBatchEnv(env_fns) if self.batch_size > 1 and asynchronous else SyncBatchEnv(env_fns)
+        self.batch_env = AsyncBatchEnv(env_fns, auto_reset) if self.batch_size > 1 and asynchronous else SyncBatchEnv(env_fns, auto_reset)
 
         self.action_space = action_space
         self.observation_space = observation_space
