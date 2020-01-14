@@ -6,7 +6,7 @@
 import os
 import re
 
-from typing import Mapping, Tuple, List
+from typing import Mapping, Tuple, List, Optional
 
 import textworld
 from textworld.generator.game import Game, GameProgression
@@ -29,7 +29,7 @@ class MissingGameInfosError(NameError):
         super().__init__(msg.format(env.__class__.__name__))
 
 
-def _detect_extra_infos(text: str) -> Mapping[str, str]:
+def _detect_extra_infos(text: str, tracked_infos: Optional[List[str]] = None) -> Mapping[str, str]:
     """ Detect extra information printed out at every turn.
 
     Extra information can be enabled via the special command:
@@ -43,14 +43,20 @@ def _detect_extra_infos(text: str) -> Mapping[str, str]:
         A dictionary where the keys are text commands and the corresponding
         values are the extra information displayed between tags.
     """
+    tracked_infos = tracked_infos or AVAILABLE_INFORM7_EXTRA_INFOS
     matches = {}
-    for tag in AVAILABLE_INFORM7_EXTRA_INFOS:
+    for tag in tracked_infos:
+        if tag not in AVAILABLE_INFORM7_EXTRA_INFOS:
+            raise ValueError("TW game doesn't support tag: {}".format(tag))
+
         regex = re.compile(r"<{tag}>\n(.*)</{tag}>".format(tag=tag), re.DOTALL)
         match = re.search(regex, text)
         if match:
             _, cleaned_text = _detect_i7_events_debug_tags(match.group(1))
             matches[tag] = cleaned_text.strip()
             text = re.sub(regex, "", text)
+        else:
+            matches[tag] = None
 
     return matches, text
 
@@ -108,16 +114,12 @@ class Inform7Data(textworld.core.Wrapper):
     def _gather_infos(self):
         # Carry over information from previous game step.
         if self.prev_state is not None:
-            for attr in ["description", "inventory"]:
-                if getattr(self.infos, attr) and self.state.get(attr) is None:
-                    self.state[attr] = self.prev_state[attr]
+            for attr in self._tracked_infos:
+                self.state[attr] = self.state.get(attr) or self.prev_state.get(attr)
 
-            # Always track moves and score.
-            for attr in ["moves", "score"]:
-                self.state[attr] = self.state.get(attr, self.prev_state.get(attr))
-
-        if self.state["score"] is not None and type(self.state["score"]) is not int:
-            self.state["score"] = int(self.state["score"].strip())
+        for info in ["score", "moves"]:
+            if self.state[info] is not None and type(self.state[info]) is not int:
+                self.state[info] = int(self.state[info].strip())
 
         self.state["won"] = '*** The End ***' in self.state["feedback"]
         self.state["lost"] = '*** You lost! ***' in self.state["feedback"]
@@ -125,7 +127,7 @@ class Inform7Data(textworld.core.Wrapper):
     def step(self, command: str):
         self.prev_state = self.state
         self.state, _, _, = self._wrapped_env.step(command)
-        extra_infos, self.state["feedback"] = _detect_extra_infos(self.state["feedback"])
+        extra_infos, self.state["feedback"] = _detect_extra_infos(self.state["feedback"], self._tracked_infos)
         self.state.update(extra_infos)
         self._gather_infos()
         self.state["done"] = self.state["won"] or self.state["lost"]
@@ -135,23 +137,26 @@ class Inform7Data(textworld.core.Wrapper):
         """ Send a command to the game without affecting the Environment's state. """
         return self.unwrapped._send(command)
 
+    def _track_info(self, info):
+        extra_infos, _ = _detect_extra_infos(self._send('tw-extra-infos {}'.format(info)))
+        self._tracked_infos.append(info)
+        self.state.update(extra_infos)
+
     def reset(self):
+        self._tracked_infos = []
         self.prev_state = None
         self.state = self._wrapped_env.reset()
 
-        extra_infos = {}
-
         if self.infos.inventory:
-            extra_infos, _ = _detect_extra_infos(self._send('tw-extra-infos inventory'))
+            self._track_info("inventory")
 
         if self.infos.description:
-            extra_infos, _ = _detect_extra_infos(self._send('tw-extra-infos description'))
+            self._track_info("description")
 
         # Always track moves and score.
-        extra_infos, _ = _detect_extra_infos(self._send('tw-extra-infos moves'))
-        extra_infos, _ = _detect_extra_infos(self._send('tw-extra-infos score'))
+        self._track_info("moves")
+        self._track_info("score")
 
-        self.state.update(extra_infos)
         self._gather_infos()
         return self.state
 

@@ -68,6 +68,9 @@ class TestInform7Data(unittest.TestCase):
             game_state, _, _ = env.step("go east")
             game_state, _, _ = env.step("look")
             assert game_state.feedback.strip() == game_state.description.strip()
+            previous_description = game_state.description
+            game_state, _, _ = env.step("not a valid command")  # Description info should stay the same.
+            assert game_state.description == previous_description
 
             # End the game.
             game_state, _, _ = env.step("insert carrot into chest")
@@ -81,6 +84,9 @@ class TestInform7Data(unittest.TestCase):
             assert "carrot" in initial_state.inventory
             game_state, _, _ = env.step("inventory")
             assert game_state.feedback.strip() == initial_state.inventory.strip()
+            previous_inventory = game_state.inventory
+            game_state, _, _ = env.step("not a valid command")  # Inventory info should stay the same.
+            assert game_state.inventory == previous_inventory
             game_state, _, _ = env.step("drop carrot")
             assert "nothing" in game_state.inventory, game_state.inventory
 
@@ -102,8 +108,26 @@ class TestInform7Data(unittest.TestCase):
             assert game_state.score == 0
             game_state, _, _ = env.step("insert carrot into chest")
             assert game_state.score == 2
+            previous_score = game_state.score
+            game_state, _, _ = env.step("not a valid command")  # Score info should stay the same.
+            assert game_state.score == previous_score
             game_state, _, _ = env.step("close chest")
             assert game_state.score == 3
+
+    def test_moves(self):
+        for env in [self.env_ulx, self.env_z8]:
+            initial_state = env.reset()
+
+            assert initial_state.moves == 0
+            game_state, _, _ = env.step("go east")
+            assert game_state.moves == 1
+            game_state, _, _ = env.step("insert carrot into chest")
+            assert game_state.moves == 2
+            previous_moves = game_state.moves
+            game_state, _, _ = env.step("not a valid command")  # Moves info should stay the same.
+            assert game_state.moves == previous_moves
+            game_state, _, _ = env.step("close chest")
+            assert game_state.moves == 3
 
     def test_won(self):
         for env in [self.env_ulx, self.env_z8]:
