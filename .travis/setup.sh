@@ -3,6 +3,9 @@
 set -e
 
 if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+    # Disable Homebrew's auto-update
+    # See https://discuss.circleci.com/t/brew-link-step-failing-on-python-dependency/33925/8
+    brew unlink python@2
     brew update
     brew tap homebrew/cask
     brew cask install google-chrome chromedriver
