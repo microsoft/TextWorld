@@ -190,7 +190,7 @@ def test_auto_reset():
 
         init_obs, init_infos = env.reset()
         dones = [False] * batch_size
-        for cmd in game1.main_quest.commands:
+        for cmd in game1.metadata["walkthrough"]:
             assert sum(dones) == 0
             obs, scores, dones, infos = env.step([cmd] * batch_size)
 
@@ -205,7 +205,7 @@ def test_auto_reset():
         assert obs[0] == init_obs[0] and obs[1] == init_obs[1]
         assert all(v[0] == init_infos[k][0] and v[1] == init_infos[k][1] for k, v in infos.items())
 
-        for cmd in game1.main_quest.commands:
+        for cmd in game1.metadata["walkthrough"]:
             assert sum(dones) == 0
             obs, scores, dones, infos = env.step([cmd] * batch_size)
 
@@ -215,7 +215,5 @@ def test_auto_reset():
         for _ in range(max_episode_steps):
             obs, scores, dones, infos = env.step(["wait"] * batch_size)
 
-        assert type(dones) is bool  # Gym's timeout overwrites `done` value.
-        assert dones
-
+        assert sum(dones) == 4  # All env have played maximum number of steps.
         env.close()

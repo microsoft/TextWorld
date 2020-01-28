@@ -9,6 +9,7 @@ from textworld import EnvInfos
 def register_games(gamefiles: List[str],
                    request_infos: Optional[EnvInfos] = None,
                    batch_size: Optional[int] = None,
+                   auto_reset: bool = False,
                    max_episode_steps: int = 50,
                    asynchronous: bool = True,
                    action_space: Optional[gym.Space] = None,
@@ -34,8 +35,12 @@ def register_games(gamefiles: List[str],
             .. warning:: When `batch_size` is provided (even for batch_size=1), `env.step` expects
                          a list of commands as input and outputs a list of states. `env.reset` also
                          outputs a list of states.
+        auto_reset:
+            If `True`, each game *independently* resets once it is done (i.e., reset happens
+            on the next `env.step` call).
+            Otherwise, once a game is done, subsequent calls to `env.step` won't have any effects.
         max_episode_steps:
-            Terminate a game after that many steps.
+            Number of steps allocated to play each game. Once exhausted, the game is done.
         asynchronous:
             If `True`, games in the batch are played in parallel.
         action_space:
@@ -87,12 +92,13 @@ def register_games(gamefiles: List[str],
     register(
         id=env_id,
         entry_point=entry_point,
-        max_episode_steps=max_episode_steps,
         kwargs={
             'gamefiles': gamefiles,
             'request_infos': request_infos,
             'batch_size': batch_size,
             'asynchronous': asynchronous,
+            'auto_reset': auto_reset,
+            'max_episode_steps': max_episode_steps,
             'action_space': action_space,
             'observation_space': observation_space,
             **kwargs}
@@ -103,6 +109,7 @@ def register_games(gamefiles: List[str],
 def register_game(gamefile: str,
                   request_infos: Optional[EnvInfos] = None,
                   batch_size: Optional[int] = None,
+                  auto_reset: bool = False,
                   max_episode_steps: int = 50,
                   asynchronous: bool = True,
                   action_space: Optional[gym.Space] = None,
@@ -127,8 +134,12 @@ def register_game(gamefile: str,
             .. warning:: When `batch_size` is provided (even for batch_size=1), `env.step` expects
                          a list of commands as input and outputs a list of states. `env.reset` also
                          outputs a list of states.
+        auto_reset:
+            If `True`, each game *independently* resets once it is done (i.e., reset happens
+            on the next `env.step` call).
+            Otherwise, once a game is done, subsequent calls to `env.step` won't have any effects.
         max_episode_steps:
-            Terminate a game after that many steps.
+            Number of steps allocated to play each game. Once exhausted, the game is done.
         asynchronous:
             If `True`, games in the batch are played in parallel.
         action_space:
