@@ -227,3 +227,44 @@ def test_match_complex():
                           "          -> in(o4: o, I) & free(slot2: slot) & free(slot3: slot)")
     for _ in range(1000):
         assert rule.match(action) == mapping
+
+
+def test_mementos_memoization():
+    # Variable-free proposition.
+    fact = Proposition("name")
+    assert Proposition("name") is fact
+    assert Proposition(name="name") is fact
+    assert Proposition("name", []) is fact
+    assert Proposition("name", arguments=[]) is fact
+    assert Proposition(name="name", arguments=[]) is fact
+    assert Proposition("name2") is not fact
+
+    # General proposition.
+    variables = [Variable("var_1"), Variable("var_2")]
+    fact2 = Proposition("name", variables)
+    assert fact2 is not fact
+    assert Proposition("name", variables) is fact2
+    assert Proposition("name", arguments=variables) is fact2
+    assert Proposition(name="name", arguments=variables) is fact2
+    assert Proposition("name2", variables) is not fact2
+
+    assert Proposition("name", variables[:1]) is not fact2  # Missing a variable.
+    assert Proposition("name", variables[::-1]) is not fact2  # Variable are reversed.
+
+    # Type-free signature.
+    sig = Signature("name")
+    assert Signature("name") is sig
+    assert Signature("name", []) is sig
+    assert Signature("name", types=[]) is sig
+    assert Signature(name="name", types=[]) is sig
+
+    # General signature.
+    types = ["type_A", "type_B"]
+    sig2 = Signature("name", types)
+    assert sig2 is not sig
+    assert Signature("name", types) is sig2
+    assert Signature("name", types=types) is sig2
+    assert Signature(name="name", types=types) is sig2
+
+    assert Signature("name", types[:1]) is not sig2  # Missing a variable.
+    assert Signature("name", types[::-1]) is not sig2  # Variable are reversed.

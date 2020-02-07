@@ -531,8 +531,14 @@ class Variable:
         return cls(data["name"], data["type"])
 
 
-SignatureTracker = memento_factory('SignatureTracker',
-                                   lambda cls, args, kwargs: (cls, args[0] + '//'.join(args[1])))
+SignatureTracker = memento_factory(
+    'SignatureTracker',
+    lambda cls, args, kwargs: (
+        cls,
+        kwargs.get("name", args[0] if len(args) >= 1 else None),
+        tuple(kwargs.get("types", args[1] if len(args) == 2 else []))
+    )
+)
 
 
 @total_ordering
@@ -593,10 +599,14 @@ class Signature(with_metaclass(SignatureTracker, object)):
         return _parse_and_convert(expr, rule_name="onlySignature")
 
 
-PropositionTracker = memento_factory('PropositionTracker',
-                                     lambda cls, args, kwargs: (
-                                         cls,
-                                         args[0] + '//'.join(v.name for v in args[1]) if len(args) == 2 else ""))
+PropositionTracker = memento_factory(
+    'PropositionTracker',
+    lambda cls, args, kwargs: (
+        cls,
+        kwargs.get("name", args[0] if len(args) >= 1 else None),
+        tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) == 2 else []))
+    )
+)
 
 
 @total_ordering
