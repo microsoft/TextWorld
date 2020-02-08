@@ -682,6 +682,33 @@ class GameMaker:
         args = [entity.var for entity in entities]
         return Proposition(name, args)
 
+    def new_rule_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+        """ Create new fact about a rule.
+
+        Args:
+            name: The name of the rule which can be used for the new rule fact as well.
+            *entities: A list of entities as arguments to the new rule fact.
+        """
+
+        def new_conditions(conditions, args):
+            new_ph = []
+            for pred in conditions:
+                new_var = [var for ph in pred.parameters for var in args if ph.type == var.type]
+                new_ph.append(Proposition(pred.name, new_var))
+
+            return new_ph
+
+        args = [entity.var for entity in entities]
+
+        for rule in self._kb.rules.values():
+            if rule.name == name.name:
+                precond = new_conditions(rule.preconditions, args)
+                postcond = new_conditions(rule.postconditions, args)
+
+                return Action(rule.name, precond, postcond)
+
+        return None
+
     def new_event_using_commands(self, commands: List[str]) -> Event:
         """ Creates a new event using predefined text commands.
 

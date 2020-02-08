@@ -39,6 +39,12 @@ class UnderspecifiedEventError(NameError):
         super().__init__(msg)
 
 
+class UnderspecifiedEventActionError(NameError):
+    def __init__(self):
+        msg = "No action is defined, action is required to create an event."
+        super().__init__(msg)
+
+
 class UnderspecifiedQuestError(NameError):
     def __init__(self):
         msg = "At least one winning or failing event is needed to create a quest."
@@ -68,13 +74,13 @@ class Event:
     """
     Event happening in TextWorld.
 
-    An event gets triggered when its set of conditions become all statisfied.
+    An event gets triggered when its set of conditions become all satisfied.
 
     Attributes:
         actions: Actions to be performed to trigger this event
         commands: Human readable version of the actions.
         condition: :py:class:`textworld.logic.Action` that can only be applied
-                    when all conditions are statisfied.
+                    when all conditions are satisfied.
     """
 
     def __init__(self, actions: Iterable[Action] = (),
@@ -111,6 +117,7 @@ class Event:
 
     def is_triggering(self, state: State) -> bool:
         """ Check if this event would be triggered in a given state. """
+
         return state.is_applicable(self.condition)
 
     def set_conditions(self, conditions: Iterable[Proposition]) -> Action:
@@ -167,6 +174,7 @@ class Event:
             `Event`'s data serialized to be JSON compatible.
         """
         data = {}
+        # data["class"] = "Event"
         data["commands"] = self.commands
         data["actions"] = [action.serialize() for action in self.actions]
         data["condition"] = self.condition.serialize()
@@ -175,6 +183,85 @@ class Event:
     def copy(self) -> "Event":
         """ Copy this event. """
         return self.deserialize(self.serialize())
+
+
+class EventAction:
+    def __init__(self, action: Iterable[Action] = (), precond_verb_tense: dict = (), postcond_verb_tense: dict = ()) -> None:
+        self.verb_tense_precond = precond_verb_tense
+        self.verb_tense_postcond = postcond_verb_tense
+        self.event, self.actions = self.set_actions(action)
+
+    def set_parameters(self, output: dict, acts: Iterable[Proposition], verbs: Iterable[dict]):
+        def tense(val):
+            if val == 1:
+                return 'will'
+            elif val == 0:
+                return 'is'
+            elif val == -1:
+                return 'was'
+            elif val == -2:
+                return 'has been'
+            elif val == -3:
+                return 'had been'
+
+        if not verbs:
+            return output
+
+        for prop in acts:
+            if prop.name in verbs.keys():
+                output['name'].append(prop.name)
+                [output['argument'].append(v) for v in prop.arguments]
+                output['verb_val'].append(verbs[prop.name])
+                output['verb_def'].append(tense(verbs[prop.name]))
+
+        return output
+
+    def set_actions(self, action: Iterable[Action]):
+        # tp_action = action
+        tp_action = [a for a in action]
+        params = {'name': [], 'argument': [], 'verb_val': [], 'verb_def': []}
+        params = self.set_parameters(params, tp_action[0].removed, self.verb_tense_precond)
+        params = self.set_parameters(params, tp_action[0].added, self.verb_tense_postcond)
+        event = Proposition("event", arguments=params['argument'], definition=params['name'],
+                            verb_var=params['verb_val'], verb_def=params['verb_def'])
+        return event, action
+
+    def is_triggering(self, action: Action) -> bool:
+        """ Check if this event would be triggered for a given action. """
+        return action == [a for a in self.actions][0]
+
+    @classmethod
+    def deserialize(cls, data: Mapping) -> "EventAction":
+        """ Creates an `EventAction` from serialized data.
+
+        Args:
+            data: Serialized data with the needed information to build a
+                  `EventAction` object.
+        """
+        actions = [Action.deserialize(d) for d in data["actions"]]
+        event = cls(actions, data["precond_verb_tense"], data["postcond_verb_tense"])
+        return event
+
+    def serialize(self) -> Mapping:
+        """ Serialize this event.
+
+        Results:
+            `EventAction`'s data serialized to be JSON compatible.
+        """
+        return {"actions": [action.serialize() for action in self.actions],
+                "precond_verb_tense": self.verb_tense_precond,
+                "postcond_verb_tense": self.verb_tense_postcond,
+                }
+
+    def __hash__(self) -> int:
+        return hash((self.actions, self.event, self.verb_tense_precond, self.verb_tense_postcond))
+
+    def __eq__(self, other: Any) -> bool:
+        return (isinstance(other, EventAction) and
+                self.actions == other.actions and
+                self.event == other.event and
+                self.verb_tense_precond == other.verb_tense_precond and
+                self.verb_tense_postcond == other.verb_tense_postcond)
 
 
 class Quest:
@@ -196,8 +283,10 @@ class Quest:
     """
 
     def __init__(self,
-                 win_events: Iterable[Event] = (),
-                 fail_events: Iterable[Event] = (),
+                 # win_events: Iterable[Event] = (),
+                 # fail_events: Iterable[Event] = (),
+                 win_events: Iterable = (),
+                 fail_events: Iterable = (),
                  reward: Optional[int] = None,
                  desc: Optional[str] = None,
                  commands: Iterable[str] = ()) -> None:
@@ -279,8 +368,22 @@ class Quest:
             data: Serialized data with the needed information to build a
                   `Quest` object.
         """
-        win_events = [Event.deserialize(d) for d in data["win_events"]]
-        fail_events = [Event.deserialize(d) for d in data["fail_events"]]
+        win_events = []
+        for d in data["win_events"]:
+            if "precond_verb_tense" in d.keys():
+                win_events.append(EventAction.deserialize(d))
+
+            if "condition" in d.keys():
+                win_events.append(Event.deserialize(d))
+
+        fail_events = []
+        for d in data["fail_events"]:
+            if "precond_verb_tense" in d.keys():
+                fail_events.append(EventAction.deserialize(d))
+
+            if "condition" in d.keys():
+                fail_events.append(Event.deserialize(d))
+
         commands = data.get("commands", [])
         reward = data["reward"]
         desc = data["desc"]
@@ -426,6 +529,8 @@ class Game:
             generate_text_from_grammar(self, self.grammar)
 
         for quest in self.quests:
+            # TODO: should have a generic way of generating text commands from actions
+            #       instead of relying on inform7 convention.
             for event in quest.win_events:
                 event.commands = _gen_commands(event.actions)
 
@@ -578,21 +683,6 @@ class Game:
     def objective(self, value: str):
         self._objective = value
 
-    @property
-    def walkthrough(self) -> Optional[List[str]]:
-        walkthrough = self.metadata.get("walkthrough")
-        if walkthrough:
-            return walkthrough
-
-        # Check if we can derive a walkthrough from the quests.
-        policy = GameProgression(self).winning_policy
-        if policy:
-            mapping = {k: info.name for k, info in self._infos.items()}
-            walkthrough = [a.format_command(mapping) for a in policy]
-            self.metadata["walkthrough"] = walkthrough
-
-        return walkthrough
-
 
 class ActionDependencyTreeElement(DependencyTreeElement):
     """ Representation of an `Action` in the dependency tree.
@@ -613,7 +703,11 @@ class ActionDependencyTreeElement(DependencyTreeElement):
         of the action1 is not empty, i.e. action1 needs the
         propositions added by action2.
         """
-        return len(other.action.added & self.action._pre_set) > 0
+        if isinstance(self.action, frozenset):
+            act = d = [a for a in self.action][0]
+        else:
+            act = self.action
+        return len(other.action.added & act._pre_set) > 0
 
     @property
     def action(self) -> Action:
@@ -722,7 +816,7 @@ class EventProgression:
     relevant actions to be performed.
     """
 
-    def __init__(self, event: Event, kb: KnowledgeBase) -> None:
+    def __init__(self, event, kb: KnowledgeBase) -> None:
         """
         Args:
             quest: The quest to keep track of its completion.
@@ -737,13 +831,18 @@ class EventProgression:
         self._tree = ActionDependencyTree(kb=self._kb,
                                           element_type=ActionDependencyTreeElement)
 
-        if len(event.actions) > 0:
-            self._tree.push(event.condition)
+        if isinstance(event, Event):
+            if len(event.actions) > 0:
+                self._tree.push(event.condition)
 
-            for action in event.actions[::-1]:
-                self._tree.push(action)
+                for action in event.actions[::-1]:
+                    self._tree.push(action)
 
-            self._policy = event.actions + (event.condition,)
+                self._policy = event.actions + (event.condition,)
+
+        # if isinstance(event, EventAction):
+        #     self._tree.push([a for a in event.actions][0])
+        #     self._policy = event.actions
 
     def copy(self) -> "EventProgression":
         """ Return a soft copy. """
@@ -790,7 +889,12 @@ class EventProgression:
 
         if state is not None:
             # Check if event is triggered.
-            self._triggered = self.event.is_triggering(state)
+
+            if isinstance(self.event, Event):
+                self._triggered = self.event.is_triggering(state)
+
+            if isinstance(self.event, EventAction):
+                self._triggered = self.event.is_triggering(action)
 
             # Try compressing the winning policy given the new game state.
             if self.compress_policy(state):
@@ -941,7 +1045,6 @@ class GameProgression:
         self.state = game.world.state.copy()
         self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
                                                                      self.game.kb.types.constants_mapping))
-
         self.quest_progressions = []
         if track_quests:
             self.quest_progressions = [QuestProgression(quest, game.kb) for quest in game.quests]
@@ -1033,10 +1136,22 @@ class GameProgression:
         # Get valid actions.
         self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
                                                                      self.game.kb.types.constants_mapping))
-
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:
             quest_progression.update(action, self.state)
+
+        for quest_progression in self.quest_progressions:
+            for win_event in quest_progression.win_events:
+                if quest_progression.quest.reward >= 0:
+                    if isinstance(win_event.event, Event):
+                        self.state.apply(win_event.event.condition)
+                    if isinstance(win_event.event, EventAction):
+                        propos = [prop for prop in win_event.event.actions[0].added]
+                        self.state.apply(Action("trigger", preconditions=propos,
+                                                postconditions=propos + [win_event.event.event]))
+
+                    self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
+                                                                                 self.game.kb.types.constants_mapping))
 
 
 class GameOptions:
@@ -1162,7 +1277,7 @@ class GameOptions:
     @property
     def rngs(self) -> Dict[str, RandomState]:
         rngs = {}
-        for key, seed in self.seeds.items():
+        for key, seed in self._seeds.items():
             rngs[key] = RandomState(seed)
 
         return rngs

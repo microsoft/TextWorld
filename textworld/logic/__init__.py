@@ -615,9 +615,10 @@ class Proposition(with_metaclass(PropositionTracker, object)):
     An instantiated Predicate, with concrete variables for each placeholder.
     """
 
-    __slots__ = ("name", "arguments", "signature", "_hash")
+    __slots__ = ("name", "arguments", "signature", "_hash", "definition", "verb_var", "verb_def")
 
-    def __init__(self, name: str, arguments: Iterable[Variable] = []):
+    def __init__(self, name: str, arguments: Iterable[Variable] = [], definition: str = None,
+                 verb_var: int = None, verb_def: str = None):
         """
         Create a Proposition.
 
@@ -633,6 +634,9 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         self.arguments = tuple(arguments)
         self.signature = Signature(name, [var.type for var in self.arguments])
         self._hash = hash((self.name, self.arguments))
+        self.definition = definition
+        self.verb_var = verb_var
+        self.verb_def = verb_def
 
     @property
     def names(self) -> Collection[str]:
@@ -648,11 +652,47 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         """
         return self.signature.types
 
+    def make_str(self, max_arg=False):
+        args = [v for v in self.arguments]
+        txt = []
+        for i in range(len(args)):
+            if max_arg:
+                txt.append("({})".format(", ".join(map(str, [args[i], self.verb_def[i], self.definition[i]]))))
+            else:
+                txt.append("({})".format(", ".join(map(str, [args[i], self.definition[i]]))))
+
+        return "{}".format(", ".join(txt))
+
     def __str__(self):
-        return "{}({})".format(self.name, ", ".join(map(str, self.arguments)))
+        def make_str(max_arg=False):
+            args = [v for v in self.arguments]
+            txt = []
+            for i in range(len(args)):
+                if max_arg:
+                    txt.append("({})".format(", ".join(map(str, [args[i], self.verb_def[i], self.definition[i]]))))
+                else:
+                    txt.append("({})".format(", ".join(map(str, [args[i], self.definition[i]]))))
+
+            return "{}".format(", ".join(txt))
+
+        if self.definition and self.verb_def:
+            return "{}({txt})".format(self.name, txt=make_str(max_arg=True))
+
+        elif self.definition:
+            return "{}({txt})".format(self.name, txt=make_str())
+
+        else:
+            return "{}({})".format(self.name, ", ".join(map(str, self.arguments)))
 
     def __repr__(self):
-        return "Proposition({!r}, {!r})".format(self.name, self.arguments)
+        if self.definition and self.verb:
+            return "Proposition({!r}, {!r}, {!r}, {!r})".format(self.name, self.arguments, self.definition,
+                                                                self.verb_def)
+        elif self.definition:
+            return "Proposition({!r}, {!r}, {!r})".format(self.name, self.arguments, self.definition)
+
+        else:
+            return "Proposition({!r}, {!r})".format(self.name, self.arguments)
 
     def __eq__(self, other):
         if isinstance(other, Proposition):

@@ -15,7 +15,7 @@ from pkg_resources import Requirement, resource_filename
 
 from textworld.utils import make_temp_directory, str2bool, chunk
 
-from textworld.generator.game import Game
+from textworld.generator.game import Event, EventAction, Game
 from textworld.generator.world import WorldRoom, WorldEntity
 from textworld.logic import Signature, Proposition, Action, Variable
 
@@ -121,6 +121,26 @@ class Inform7Game:
 
         return " and ".join(i7_conds)
 
+    def gen_source_for_rule(self, rule: Action) -> Optional[str]:
+        pt = self.kb.inform7_events[rule.name]
+        if pt is None:
+            msg = "Undefined Inform7's command: {}".format(rule.name)
+            warnings.warn(msg, TextworldInform7Warning)
+            return None
+
+        return pt.format(**self._get_entities_mapping(rule))
+
+    def gen_source_for_actions(self, acts: Iterable[Action]) -> str:
+        """Generate Inform 7 source for winning/losing actions."""
+
+        i7_acts = []
+        for act in acts:
+            i7_act = self.gen_source_for_rule(act)
+            if i7_act:
+                i7_acts.append(i7_act)
+
+        return " and ".join(i7_acts)
+
     def gen_source_for_objects(self, objects: Iterable[WorldEntity]) -> str:
         source = ""
         for obj in objects:
@@ -195,6 +215,10 @@ class Inform7Game:
         mapping = self.kb.rules[action.name].match(action)
         return {ph.name: self.entity_infos[var.name].name for ph, var in mapping.items()}
 
+    def _get_entities_mapping(self, action):
+        mapping = self.kb.rules[action.name].match(action)
+        return {ph.name: self.entity_infos[var.name].id for ph, var in mapping.items()}
+
     def gen_commands_from_actions(self, actions: Iterable[Action]) -> List[str]:
         commands = []
         for action in actions:
@@ -239,6 +263,8 @@ class Inform7Game:
         """
         # Prioritze actions with many precondition terms.
         actions = sorted(actions, key=lambda a: len(a.preconditions), reverse=True)
+        from pprint import pprint
+        pprint(actions)
         for action in actions:
             event = self.kb.inform7_events[action.name]
             if event.format(**self._get_name_mapping(action)).lower() == i7_event.lower():
@@ -312,6 +338,7 @@ class Inform7Game:
 
         objective = self.game.objective.replace("\n", "[line break]")
         maximum_score = 0
+        wining = 0
         for quest_id, quest in enumerate(self.game.quests):
             maximum_score += quest.reward
 
@@ -337,20 +364,39 @@ class Inform7Game:
             else if {conditions}:
                 end the story; [Lost]""")
 
-            win_template = textwrap.dedent("""
+            win_template_state = textwrap.dedent("""
             else if {conditions}:
                 increase the score by {reward}; [Quest completed]
                 Now the quest{quest_id} completed is true;""")
 
+            win_template_action = textwrap.dedent("""
+            else:
+                After {conditions}:
+                    increase the score by {reward}; [Quest completed]
+                    Now the quest{quest_id} completed is true;""")
+
             for fail_event in quest.fail_events:
-                conditions = self.gen_source_for_conditions(fail_event.condition.preconditions)
+                if isinstance(fail_event, Event):
+                    param = fail_event.condition
+                if isinstance(fail_event, EventAction):
+                    param = [act for act in fail_event.actions][0]
+
+                conditions = self.gen_source_for_conditions(param.preconditions)
                 quest_ending_conditions += fail_template.format(conditions=conditions)
 
             for win_event in quest.win_events:
-                conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
-                quest_ending_conditions += win_template.format(conditions=conditions,
-                                                               reward=quest.reward,
-                                                               quest_id=quest_id)
+                if isinstance(win_event, Event):
+                    conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
+                    quest_ending_conditions += win_template_state.format(conditions=conditions,
+                                                                         reward=quest.reward,
+                                                                         quest_id=quest_id)
+
+                if isinstance(win_event, EventAction):
+                    conditions = self.gen_source_for_actions([act for act in win_event.actions])
+                    quest_ending_conditions += win_template_action.format(conditions=conditions,
+                                                                          reward=quest.reward,
+                                                                          quest_id=quest_id)
+                wining += 1
 
             quest_ending = """\
             Every turn:\n{conditions}
@@ -359,13 +405,15 @@ class Inform7Game:
             source += textwrap.dedent(quest_ending)
 
         # Enable scoring is at least one quest has nonzero reward.
-        if maximum_score != 0:
+        if maximum_score >= 0:
             source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
+
 
         # Build test condition for winning the game.
         game_winning_test = "1 is 0 [always false]"
-        if len(self.game.quests) > 0:
-            game_winning_test = "score is maximum score"
+        if wining > 0:
+            if maximum_score != 0:
+                game_winning_test = "score is at least maximum score"
 
         # Remove square bracket when printing score increases. Square brackets are conflicting with
         # Inform7's events parser in tw_inform7.py.
@@ -382,6 +430,7 @@ class Inform7Game:
                 Now the last notified score is the score;
             if {game_winning_test}:
                 end the story finally; [Win]
+
 
         The simpler notify score changes rule substitutes for the notify score changes rule.
 
