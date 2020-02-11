@@ -389,13 +389,6 @@ class Game:
         self._infos = self._build_infos()
         self.kb = world.kb
 
-        # Check if we can derive a global winning policy from the quests.
-        self.main_quest = None
-        policy = GameProgression(self).winning_policy
-        if policy:
-            win_event = Event(actions=policy)
-            self.main_quest = Quest(win_events=[win_event])
-
         self.change_grammar(grammar)
 
     @property
@@ -416,18 +409,17 @@ class Game:
         game = Game(self.world, None, self.quests)
         game._infos = dict(self.infos)
         game._objective = self._objective
-        game.main_quest = self.main_quest
         game.metadata = dict(self.metadata)
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
         """ Changes the grammar used and regenerate all text. """
-        from textworld.generator.inform7 import Inform7Game
-        from textworld.generator.text_generation import generate_text_from_grammar
 
         self.grammar = grammar
         _gen_commands = gen_commands_from_actions
         if self.grammar:
+            from textworld.generator.inform7 import Inform7Game
+            from textworld.generator.text_generation import generate_text_from_grammar
             inform7 = Inform7Game(self)
             _gen_commands = inform7.gen_commands_from_actions
             generate_text_from_grammar(self, self.grammar)
@@ -441,9 +433,15 @@ class Game:
             if quest.win_events:
                 quest.commands = quest.win_events[0].commands
 
-        if self.main_quest:
-            win_event = self.main_quest.win_events[0]
-            self.main_quest.commands = _gen_commands(win_event.actions)
+        # Check if we can derive a global winning policy from the quests.
+        if self.grammar:
+            from textworld.generator.text_generation import describe_event
+            policy = GameProgression(self).winning_policy
+            if policy:
+                mapping = {k: info.name for k, info in self._infos.items()}
+                commands = [a.format_command(mapping) for a in policy]
+                self.metadata["walkthrough"] = commands
+                self.objective = describe_event(Event(policy), self, self.grammar)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -478,8 +476,6 @@ class Game:
         game._infos = {k: EntityInfo.deserialize(v) for k, v in data["infos"]}
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
-        if "main_quest" in data:
-            game.main_quest = Quest.deserialize(data["main_quest"])
 
         return game
 
@@ -498,8 +494,6 @@ class Game:
         data["KB"] = self.kb.serialize()
         data["metadata"] = self.metadata
         data["objective"] = self._objective
-        if self.main_quest:
-            data["main_quest"] = self.main_quest.serialize()
 
         return data
 
@@ -508,7 +502,6 @@ class Game:
                 and self.world == other.world
                 and self.infos == other.infos
                 and self.quests == other.quests
-                and self.main_quest == other.main_quest
                 and self.metadata == other.metadata
                 and self._objective == other._objective)
 
@@ -579,8 +572,6 @@ class Game:
 
         # TODO: Find a better way of describing the objective of the game with several quests.
         self._objective = "\nAND\n".join(quest.desc for quest in self.quests if quest.desc)
-        if self.main_quest:
-            self._objective = self.main_quest.desc
 
         return self._objective
 

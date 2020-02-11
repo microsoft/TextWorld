@@ -214,8 +214,11 @@ if __name__ == "__main__":
     if args.verbose:
         print("\nObjective:")
         print(game.objective)
-        print("\nWalkthrough:")
-        print(" > ".join(game.main_quest.commands))
+
+        if "walkthrough" in game.metadata:
+            print("\nWalkthrough:")
+            print(" > ".join(game.metadata["walkthrough"]))
+
         nb_locations = sum(1 for e in game.infos.values() if e.type == "r")
         nb_objects = sum(1 for e in game.infos.values() if e.type not in {"r", "d", "P", "I"})
         print("\n-= Stats =-")

@@ -96,7 +96,7 @@ def build_and_compile_game(options: GameOptions):
                    fail_events=[eating_carrot])
 
     M.quests = [quest1, quest2]
+    M.set_walkthrough(quest2_cmds)
     game = M.build()
-    game.main_quest = M.new_quest_using_commands(quest2_cmds)
     game_file = _compile_test_game(game, options)
     return game, game_file

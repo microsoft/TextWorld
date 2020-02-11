@@ -12,6 +12,7 @@ import numpy as np
 
 import textworld
 
+from textworld.core import EnvInfos
 from textworld.utils import make_temp_directory
 
 from textworld.generator import Grammar
@@ -729,6 +730,38 @@ class GameMaker:
         """
         event = self.new_event_using_commands(commands)
         return Quest(win_events=[event], commands=event.commands)
+
+    def set_walkthrough(self, commands: List[str]):
+        with make_temp_directory() as tmpdir:
+            game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
+            recorder = Recorder()
+            agent = textworld.agents.WalkthroughAgent(commands)
+            env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
+            state = env.reset()
+
+            events = {event: event.copy() for quest in self.quests for event in quest.win_events}
+            event_progressions = [ep for qp in state._game_progression.quest_progressions for ep in qp.win_events]
+
+            done = False
+            actions = []
+            for i, cmd in enumerate(commands):
+                if done:
+                    msg = "Game has ended before finishing playing all commands."
+                    raise ValueError(msg)
+
+                events_triggered = [ep.triggered for ep in event_progressions]
+
+                state, score, done = env.step(cmd)
+                actions.append(state._last_action)
+
+                for was_triggered, ep in zip(events_triggered, event_progressions):
+                    if not was_triggered and ep.triggered:
+                        events[ep.event].actions = list(actions)
+                        events[ep.event].commands = commands[:i+1]
+
+        for k, v in events.items():
+            k.actions = v.actions
+            k.commands = v.commands
 
     def validate(self) -> bool:
         """ Check if the world is valid and can be compiled.

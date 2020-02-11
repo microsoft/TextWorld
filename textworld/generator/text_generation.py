@@ -135,12 +135,7 @@ def generate_text_from_grammar(game, grammar: Grammar):
 
     # Generate the instructions.
     for quest in game.quests:
-        if quest.desc is None:  # Skip quests which already have a description.
-            quest.desc = assign_description_to_quest(quest, game, grammar)
-
-    # Generate the instructions for the main quest, if needed.
-    if game.main_quest and game.main_quest.desc is None:
-        game.main_quest.desc = assign_description_to_quest(game.main_quest, game, grammar)
+        quest.desc = assign_description_to_quest(quest, game, grammar)
 
     return game
 

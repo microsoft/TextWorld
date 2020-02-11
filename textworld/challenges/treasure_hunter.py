@@ -212,7 +212,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
     game = textworld.generator.make_game_with(world, [quest], grammar)
-    game.metadata = metadata
+    game.metadata.update(metadata)
     mode_choice = modes.index(mode)
     uuid = "tw-treasure_hunter-{specs}-{grammar}-{seeds}"
     uuid = uuid.format(specs=encode_seeds((mode_choice, options.nb_rooms, options.quest_length)),
