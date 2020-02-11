@@ -84,8 +84,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     # Make the generation process reproducible.
     textworld.g_rng.set_seed(2018)
 
-    M = textworld.GameMaker()
-    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
+    M = textworld.GameMaker(options)
 
     # Start by building the layout of the world.
     bedroom = M.new_room("bedroom")

@@ -1093,6 +1093,9 @@ class GameOptions:
 
     @property
     def seeds(self):
+        if self._seeds is None:
+            self.seeds = {}  # Generate seeds from g_rng.
+
         return self._seeds
 
     @seeds.setter

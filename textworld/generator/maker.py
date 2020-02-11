@@ -8,15 +8,19 @@ from collections import OrderedDict
 from typing import List, Iterable, Union, Optional
 
 import networkx as nx
+import numpy as np
+
 import textworld
 
 from textworld.utils import make_temp_directory
 
+from textworld.generator import Grammar
 from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
+from textworld.generator.game import GameOptions
 from textworld.generator.game import Game, World, Quest, Event, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
@@ -356,21 +360,21 @@ class GameMaker:
         paths (List[WorldPath]): The connections between the rooms.
     """
 
-    def __init__(self, kb: Optional[KnowledgeBase] = None) -> None:
+    def __init__(self, options: Optional[GameOptions] = None) -> None:
         """
         Creates an empty world, with a player and an empty inventory.
         """
+        self.options = options or GameOptions()
         self._entities = {}
         self._named_entities = {}
         self.quests = []
         self.rooms = []
         self.paths = []
-        self._kb = kb or KnowledgeBase.default()
+        self._kb = self.options.kb
         self._types_counts = self._kb.types.count(State(self._kb.logic))
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.nowhere = []
-        self.grammar = textworld.generator.make_grammar()
         self._game = None
         self._distractors_facts = []
 
@@ -766,16 +770,9 @@ class GameMaker:
             if k in self._entities:
                 game.infos[k] = self._entities[k].infos
 
-            # If we can, reuse information generated during last build.
-            if self._game is not None and k in self._game.infos:
-                var_infos = game.infos[k]
-                var_infos.name = self._game.infos[k].name
-                var_infos.adj = self._game.infos[k].adj
-                var_infos.noun = self._game.infos[k].noun
-                var_infos.room_type = self._game.infos[k].room_type
-
-        # Generate text for recently added objects.
-        game.change_grammar(self.grammar)
+        # Use text grammar to generate name and description.
+        grammar = Grammar(self.options.grammar, rng=np.random.RandomState(self.options.seeds["grammar"]))
+        game.change_grammar(grammar)
         game.metadata["desc"] = "Generated with textworld.GameMaker."
 
         self._game = game  # Keep track of previous build.

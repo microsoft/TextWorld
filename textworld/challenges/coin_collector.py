@@ -124,10 +124,9 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     rng_map = rngs['map']
     rng_grammar = rngs['grammar']
 
-    # Generate map.
-    M = textworld.GameMaker()
-    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
+    M = textworld.GameMaker(options)
 
+    # Generate map.
     rooms = []
     walkthrough = []
     for i in range(options.quest_length):
