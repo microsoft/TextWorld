@@ -102,7 +102,7 @@ def play(game_file: str, agent: Optional[Agent] = None, max_nb_steps: int = 1000
 
     if not silent:
         msg = "Done after {} steps. Score {}/{}."
-        msg = msg.format(game_state.nb_moves, game_state.score, game_state.max_score)
+        msg = msg.format(game_state.moves, game_state.score, game_state.max_score)
         print(msg)
 
 

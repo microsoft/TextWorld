@@ -198,7 +198,7 @@ class StateTracking(textworld.core.Wrapper):
         self.state["_winning_policy"] = self._current_winning_policy
         if self.infos.policy_commands:
             self.state["policy_commands"] = []
-            if self._game_progression.winning_policy is not None:
+            if self._current_winning_policy is not None:
                 self.state["policy_commands"] = self._inform7.gen_commands_from_actions(self._current_winning_policy)
 
         if self.infos.intermediate_reward:
