@@ -1257,7 +1257,7 @@ class Rule:
                 name = self.reverse_rule.name
 
         if self.reverse_rule:
-           return self.reverse_rule
+            return self.reverse_rule
 
         rule = Rule(name, self.postconditions, self.preconditions)
         rule.reverse_rule = self

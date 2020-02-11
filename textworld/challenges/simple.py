@@ -78,7 +78,6 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     metadata["quest_length"] = None  # TBD
 
     rngs = options.rngs
-    rng_grammar = rngs['grammar']
     rng_quest = rngs['quest']
 
     # Make the generation process reproducible.

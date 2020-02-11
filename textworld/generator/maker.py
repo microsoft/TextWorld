@@ -734,8 +734,6 @@ class GameMaker:
     def set_walkthrough(self, commands: List[str]):
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
-            recorder = Recorder()
-            agent = textworld.agents.WalkthroughAgent(commands)
             env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
             state = env.reset()
 
@@ -757,7 +755,7 @@ class GameMaker:
                 for was_triggered, ep in zip(events_triggered, event_progressions):
                     if not was_triggered and ep.triggered:
                         events[ep.event].actions = list(actions)
-                        events[ep.event].commands = commands[:i+1]
+                        events[ep.event].commands = commands[:i + 1]
 
         for k, v in events.items():
             k.actions = v.actions

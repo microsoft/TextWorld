@@ -43,7 +43,7 @@ def start(path: str, infos: Optional[EnvInfos] = None,
     # Guess the backend from the extension.
     if path.endswith(".ulx"):
         env = GitGlulxEnv(infos)
-    elif re.search("\.z[1-8]", path):
+    elif re.search(r"\.z[1-8]", path):
         env = JerichoEnv(infos)
     else:
         msg = "Unsupported game format: {}".format(path)

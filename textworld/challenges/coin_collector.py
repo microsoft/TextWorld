@@ -122,7 +122,6 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     rngs = options.rngs
     rng_map = rngs['map']
-    rng_grammar = rngs['grammar']
 
     M = textworld.GameMaker(options)
 
