@@ -3,6 +3,7 @@
 
 
 import os
+import re
 from typing import Optional, Tuple, List
 
 from textworld.core import EnvInfos, Environment, Agent
@@ -40,14 +41,12 @@ def start(path: str, infos: Optional[EnvInfos] = None,
         raise IOError(msg)
 
     # Guess the backend from the extension.
-    backend = "glulx" if path.endswith(".ulx") else "zmachine"
-
-    if backend == "zmachine":
-        env = JerichoEnv(infos)
-    elif backend == "glulx":
+    if path.endswith(".ulx"):
         env = GitGlulxEnv(infos)
+    elif re.search("\.z[1-8]", path):
+        env = JerichoEnv(infos)
     else:
-        msg = "Unsupported backend: {}".format(backend)
+        msg = "Unsupported game format: {}".format(path)
         raise ValueError(msg)
 
     if TWInform7.compatible(path):

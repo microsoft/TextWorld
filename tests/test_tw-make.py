@@ -66,8 +66,8 @@ def test_making_a_custom_game():
 
 def test_making_challenge_game():
     settings = {
-        "tw-treasure_hunter": ["--level", "1"],
-        "tw-coin_collector": ["--level", "1", "--force-entity-numbering"],
+        "tw-treasure_hunter": ["--level", "5"],
+        "tw-coin_collector": ["--level", "5", "--force-entity-numbering"],
         "tw-simple": ["--rewards", "dense", "--goal", "brief"],
     }
     with make_temp_directory(prefix="test_tw-challenge") as tmpdir:
