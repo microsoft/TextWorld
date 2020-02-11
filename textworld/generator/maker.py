@@ -8,15 +8,20 @@ from collections import OrderedDict
 from typing import List, Iterable, Union, Optional
 
 import networkx as nx
+import numpy as np
+
 import textworld
 
+from textworld.core import EnvInfos
 from textworld.utils import make_temp_directory
 
+from textworld.generator import Grammar
 from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
+from textworld.generator.game import GameOptions
 from textworld.generator.game import Game, World, Quest, Event, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
@@ -356,21 +361,21 @@ class GameMaker:
         paths (List[WorldPath]): The connections between the rooms.
     """
 
-    def __init__(self, kb: Optional[KnowledgeBase] = None) -> None:
+    def __init__(self, options: Optional[GameOptions] = None) -> None:
         """
         Creates an empty world, with a player and an empty inventory.
         """
+        self.options = options or GameOptions()
         self._entities = {}
         self._named_entities = {}
         self.quests = []
         self.rooms = []
         self.paths = []
-        self._kb = kb or KnowledgeBase.default()
+        self._kb = self.options.kb
         self._types_counts = self._kb.types.count(State(self._kb.logic))
         self.player = self.new(type='P')
         self.inventory = self.new(type='I')
         self.nowhere = []
-        self.grammar = textworld.generator.make_grammar()
         self._game = None
         self._distractors_facts = []
 
@@ -726,6 +731,36 @@ class GameMaker:
         event = self.new_event_using_commands(commands)
         return Quest(win_events=[event], commands=event.commands)
 
+    def set_walkthrough(self, commands: List[str]):
+        with make_temp_directory() as tmpdir:
+            game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
+            env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
+            state = env.reset()
+
+            events = {event: event.copy() for quest in self.quests for event in quest.win_events}
+            event_progressions = [ep for qp in state._game_progression.quest_progressions for ep in qp.win_events]
+
+            done = False
+            actions = []
+            for i, cmd in enumerate(commands):
+                if done:
+                    msg = "Game has ended before finishing playing all commands."
+                    raise ValueError(msg)
+
+                events_triggered = [ep.triggered for ep in event_progressions]
+
+                state, score, done = env.step(cmd)
+                actions.append(state._last_action)
+
+                for was_triggered, ep in zip(events_triggered, event_progressions):
+                    if not was_triggered and ep.triggered:
+                        events[ep.event].actions = list(actions)
+                        events[ep.event].commands = commands[:i + 1]
+
+        for k, v in events.items():
+            k.actions = v.actions
+            k.commands = v.commands
+
     def validate(self) -> bool:
         """ Check if the world is valid and can be compiled.
 
@@ -766,16 +801,9 @@ class GameMaker:
             if k in self._entities:
                 game.infos[k] = self._entities[k].infos
 
-            # If we can, reuse information generated during last build.
-            if self._game is not None and k in self._game.infos:
-                var_infos = game.infos[k]
-                var_infos.name = self._game.infos[k].name
-                var_infos.adj = self._game.infos[k].adj
-                var_infos.noun = self._game.infos[k].noun
-                var_infos.room_type = self._game.infos[k].room_type
-
-        # Generate text for recently added objects.
-        game.change_grammar(self.grammar)
+        # Use text grammar to generate name and description.
+        grammar = Grammar(self.options.grammar, rng=np.random.RandomState(self.options.seeds["grammar"]))
+        game.change_grammar(grammar)
         game.metadata["desc"] = "Generated with textworld.GameMaker."
 
         self._game = game  # Keep track of previous build.

@@ -22,7 +22,7 @@ import textworld
 from textworld.generator.graph_networks import reverse_direction
 
 from textworld.utils import encode_seeds
-from textworld.generator.game import GameOptions
+from textworld.generator.game import GameOptions, Quest, Event
 from textworld.challenges import register
 
 
@@ -122,12 +122,10 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     rngs = options.rngs
     rng_map = rngs['map']
-    rng_grammar = rngs['grammar']
+
+    M = textworld.GameMaker(options)
 
     # Generate map.
-    M = textworld.GameMaker()
-    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
-
     rooms = []
     walkthrough = []
     for i in range(options.quest_length):
@@ -144,9 +142,9 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     M.set_player(rooms[0])
 
-    # Add object the player has to pick up.
-    obj = M.new(type="o", name="coin")
-    rooms[-1].add(obj)
+    # Add a coin for the player to pick up.
+    coin = M.new(type="o", name="coin")
+    rooms[-1].add(coin)
 
     # Add distractor rooms, if needed.
     chain_of_rooms = list(rooms)
@@ -168,12 +166,17 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
         rooms.append(dest)
 
     # Generate the quest thats by collecting the coin.
+    quest = Quest(win_events=[
+        Event(conditions={M.new_fact("in", coin, M.inventory)})
+    ])
+
+    M.quests = [quest]
+
     walkthrough.append("take coin")
-    # TODO: avoid compiling the game at all (i.e. use the inference engine).
-    M.set_quest_from_commands(walkthrough)
+    M.set_walkthrough(walkthrough)
 
     game = M.build()
-    game.metadata = metadata
+    game.metadata.update(metadata)
     mode_choice = 0 if mode == "simple" else 1
     uuid = "tw-coin_collector-{specs}-{grammar}-{seeds}"
     uuid = uuid.format(specs=encode_seeds((mode_choice, options.nb_rooms, options.quest_length)),

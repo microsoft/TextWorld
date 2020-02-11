@@ -289,20 +289,18 @@ class TestStateTracking(unittest.TestCase):
     def test_policy_commands(self):
         for env in [self.env_ulx, self.env_z8]:
             initial_state = env.reset()
+            walkthrough = tuple(self.game.metadata["walkthrough"])
 
-            assert tuple(initial_state.policy_commands) == self.game.main_quest.commands
+            assert tuple(initial_state.policy_commands) == walkthrough
 
             game_state, _, _ = env.step("drop carrot")
-            expected = ("take carrot",) + self.game.main_quest.commands
-            assert tuple(game_state.policy_commands) == expected, game_state.policy_commands
+            assert tuple(game_state.policy_commands) == ("take carrot",) + walkthrough
 
             game_state, _, _ = env.step("take carrot")
-            expected = self.game.main_quest.commands
-            assert tuple(game_state.policy_commands) == expected
+            assert tuple(game_state.policy_commands) == walkthrough
 
             game_state, _, _ = env.step("go east")
-            expected = self.game.main_quest.commands[1:]
-            assert tuple(game_state.policy_commands) == expected
+            assert tuple(game_state.policy_commands) == walkthrough[1:]
 
             game_state, _, _ = env.step("insert carrot into chest")
             game_state, _, _ = env.step("close chest")
@@ -310,22 +308,22 @@ class TestStateTracking(unittest.TestCase):
 
             # Test parallel subquests.
             game_state = env.reset()
-            commands = list(self.game.main_quest.commands)
-            assert game_state.policy_commands == commands
+            walkthrough = list(walkthrough)
+            assert game_state.policy_commands == walkthrough
             game_state, _, _ = env.step("close wooden door")
-            assert game_state.policy_commands == ["open wooden door"] + commands
+            assert game_state.policy_commands == ["open wooden door"] + walkthrough
             game_state, _, _ = env.step("drop carrot")
-            is_policy1 = (game_state.policy_commands == ["take carrot", "open wooden door"] + commands)
-            is_policy2 = (game_state.policy_commands == ["open wooden door", "take carrot"] + commands)
+            is_policy1 = (game_state.policy_commands == ["take carrot", "open wooden door"] + walkthrough)
+            is_policy2 = (game_state.policy_commands == ["open wooden door", "take carrot"] + walkthrough)
             assert is_policy1 or is_policy2, game_state.policy_commands
             game_state, _, _ = env.step("open wooden door")
-            assert game_state.policy_commands == ["take carrot"] + commands
+            assert game_state.policy_commands == ["take carrot"] + walkthrough
             game_state, _, _ = env.step("go east")
-            assert game_state.policy_commands == ["go west", "take carrot"] + commands
+            assert game_state.policy_commands == ["go west", "take carrot"] + walkthrough
 
             # Irreversible action.
             game_state = env.reset()
-            assert tuple(game_state.policy_commands) == self.game.main_quest.commands
+            assert tuple(game_state.policy_commands) == tuple(walkthrough)
             game_state, _, done = env.step("eat carrot")
             assert done
             assert game_state.lost
@@ -338,7 +336,7 @@ class TestStateTracking(unittest.TestCase):
             assert "examine carrot" in game_state.admissible_commands
             assert "examine wooden door" in game_state.admissible_commands
 
-            for command in self.game.main_quest.commands:
+            for command in self.game.metadata["walkthrough"]:
                 assert "look" in game_state.admissible_commands
                 assert "inventory" in game_state.admissible_commands
                 assert command in game_state.admissible_commands

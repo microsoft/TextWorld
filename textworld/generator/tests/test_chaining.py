@@ -126,6 +126,12 @@ def test_going_through_door():
 
     chains = list(get_chains(state, options))
     assert len(chains) == 18
+    # print()
+    # for i, chain in enumerate(chains):
+    #     actions = ["{}({})".format(n.action.name, ", ".join(v.name for v in n.action.variables)) for n in chain.nodes[::-1]]
+    #     msg = " -> ".join(actions)
+    #     print("{:2d}. {}".format(i + 1, msg))
+    #
     # 1. take/c(P, room, c_0, o_0, I)
     # 2. take/c(P, room, c_0, o_0, I) -> go/north(P, r_0, room)
     # 3. take/c(P, room, c_0, o_0, I) -> go/north(P, r_0, room) -> open/d(P, r_0, d_0, room)

@@ -64,9 +64,10 @@ class TestIntegration(unittest.TestCase):
     def test_game_walkthrough_agent(self):
         agent = textworld.agents.WalkthroughAgent()
         env = textworld.start(self.game_file)
-        commands = self.game.main_quest.commands
+
         agent.reset(env)
         game_state = env.reset()
+        commands = game_state.get("extra.walkthrough")
 
         reward = 0
         done = False

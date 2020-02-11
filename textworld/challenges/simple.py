@@ -78,14 +78,12 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     metadata["quest_length"] = None  # TBD
 
     rngs = options.rngs
-    rng_grammar = rngs['grammar']
     rng_quest = rngs['quest']
 
     # Make the generation process reproducible.
     textworld.g_rng.set_seed(2018)
 
-    M = textworld.GameMaker()
-    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
+    M = textworld.GameMaker(options)
 
     # Start by building the layout of the world.
     bedroom = M.new_room("bedroom")
@@ -318,14 +316,6 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
             ])
         )
 
-    if settings["rewards"] in ["dense", "balanced"]:
-        # Retrieving the food item.
-        quests.append(
-            Quest(win_events=[
-                Event(conditions={M.new_fact("in", food, M.inventory)})
-            ])
-        )
-
     if settings["rewards"] in ["dense", "balanced", "sparse"]:
         # Putting the food on the stove.
         quests.append(
@@ -350,9 +340,8 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     note = M.new(type='o', name='note', desc=objective)
     kitchen_island.add(note)
 
+    M.set_walkthrough(walkthrough)
     game = M.build()
-    game.main_quest = M.new_quest_using_commands(walkthrough)
-    game.change_grammar(game.grammar)
 
     if settings["goal"] == "detailed":
         # Use the detailed version of the objective.
@@ -364,7 +353,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         # No description of the objective.
         game.objective = ""
 
-    game.metadata = metadata
+    game.metadata.update(metadata)
     uuid = "tw-simple-r{rewards}+g{goal}+{dataset}-{flags}-{seeds}"
     uuid = uuid.format(rewards=str.title(settings["rewards"]), goal=str.title(settings["goal"]),
                        dataset="test" if settings["test"] else "train",

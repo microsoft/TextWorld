@@ -15,14 +15,15 @@ def test_register_game():
         options.seeds = 1234
         gamefile, game = textworld.make(options)
         env_options = EnvInfos(inventory=True, description=True,
-                               admissible_commands=True)
+                               admissible_commands=True,
+                               extras=["walkthrough"])
 
         env_id = textworld.gym.register_game(gamefile, env_options, name="test-single")
         env = gym.make(env_id)
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
 
-        for cmd in game.main_quest.commands:
+        for cmd in infos.get("extra.walkthrough"):
             obs, score, done, infos = env.step(cmd)
 
         assert done
@@ -37,14 +38,14 @@ def test_register_zmachine_game():
         options.file_ext = ".z8"
         gamefile, game = textworld.make(options)
         os.remove(gamefile.replace(".z8", ".json"))  # Simulate an existing Z-Machine game.
-        env_options = EnvInfos()
+        env_options = EnvInfos(extras=["walkthrough"])
 
         env_id = textworld.gym.register_game(gamefile, env_options, name="test-zmachine")
         env = gym.make(env_id)
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
 
-        for cmd in game.main_quest.commands:
+        for cmd in game.metadata["walkthrough"]:
             obs, score, done, infos = env.step(cmd)
 
         assert done
@@ -60,7 +61,8 @@ def test_register_games():
         options.seeds = 4321
         gamefile2, game2 = textworld.make(options)
         env_options = EnvInfos(inventory=True, description=True,
-                               admissible_commands=True)
+                               admissible_commands=True,
+                               extras=["walkthrough"])
 
         env_id = textworld.gym.register_games([gamefile1, gamefile2], env_options, name="test-multi")
         env = gym.make(env_id)
@@ -69,7 +71,7 @@ def test_register_games():
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
 
-        for cmd in game2.main_quest.commands:
+        for cmd in game2.metadata["walkthrough"]:
             obs, score, done, infos = env.step(cmd)
 
         assert done
@@ -77,7 +79,7 @@ def test_register_games():
 
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
-        for cmd in game1.main_quest.commands:
+        for cmd in game1.metadata["walkthrough"]:
             obs, score, done, infos = env.step(cmd)
 
         assert done
@@ -97,7 +99,8 @@ def test_batch():
         gamefile, game = textworld.make(options)
 
         env_options = EnvInfos(inventory=True, description=True,
-                               admissible_commands=True)
+                               admissible_commands=True,
+                               extras=["walkthrough"])
         env_id = textworld.gym.register_games([gamefile], env_options, name="test-batch")
         env_id = textworld.gym.make_batch(env_id, batch_size)
         env = gym.make(env_id)
@@ -109,8 +112,8 @@ def test_batch():
         for values in infos.values():
             assert len(values) == batch_size
 
-        for cmd in game.main_quest.commands:
-            obs, scores, dones, infos = env.step([cmd] * batch_size)
+        for cmds in infos.get("extra.walkthrough"):
+            obs, scores, dones, infos = env.step(cmds)
 
         env.close()
 
@@ -127,7 +130,8 @@ def test_batch_parallel():
         gamefile, game = textworld.make(options)
 
         env_options = EnvInfos(inventory=True, description=True,
-                               admissible_commands=True)
+                               admissible_commands=True,
+                               extras=["walkthrough"])
         env_id = textworld.gym.register_game(gamefile, env_options, name="test-batch-parallel")
         env_id = textworld.gym.make_batch(env_id, batch_size, parallel=True)
         env = gym.make(env_id)
@@ -139,8 +143,8 @@ def test_batch_parallel():
         for values in infos.values():
             assert len(values) == batch_size
 
-        for cmd in game.main_quest.commands:
-            obs, scores, dones, infos = env.step([cmd] * batch_size)
+        for cmds in infos.get("extra.walkthrough"):
+            obs, scores, dones, infos = env.step(cmds)
 
         env.close()
 

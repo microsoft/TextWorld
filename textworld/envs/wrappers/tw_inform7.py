@@ -198,7 +198,7 @@ class StateTracking(textworld.core.Wrapper):
         self.state["_winning_policy"] = self._current_winning_policy
         if self.infos.policy_commands:
             self.state["policy_commands"] = []
-            if self._game_progression.winning_policy is not None:
+            if self._current_winning_policy is not None:
                 self.state["policy_commands"] = self._inform7.gen_commands_from_actions(self._current_winning_policy)
 
         if self.infos.intermediate_reward:
@@ -302,7 +302,7 @@ class GameData(textworld.core.Wrapper):
         self.state["objective"] = self._game.objective
         self.state["max_score"] = self._game.max_score
 
-        for k, v in self._game.extras.items():
+        for k, v in self._game.metadata.items():
             self.state["extra.{}".format(k)] = v
 
     def reset(self):

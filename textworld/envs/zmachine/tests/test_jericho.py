@@ -149,7 +149,7 @@ class TestJerichoEnv(unittest.TestCase):
         game_state = env.reset()
         assert game_state.max_score is None
 
-        for command in self.game.main_quest.commands:
+        for command in self.game.metadata["walkthrough"]:
             game_state, score, done = env.step(command)
             # Score is None and `done` is always False for unsupported games.
             assert score is None

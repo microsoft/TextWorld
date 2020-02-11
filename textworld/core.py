@@ -15,7 +15,7 @@ class EnvInfos:
 
     Information can be requested by setting one or more attributes to True.
     The attribute `extras` should be a list of strings corresponding to
-    information specific to certain games.
+    keys in the metadata dictionary of TextWorld generated games.
 
     """
 

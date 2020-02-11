@@ -19,6 +19,7 @@ from textworld.generator import make_small_map
 from textworld.generator.chaining import ChainingOptions, sample_quest
 from textworld.logic import Action
 
+from textworld.generator.game import GameOptions
 from textworld.generator.game import Quest, Game, Event
 from textworld.generator.game import QuestProgression, GameProgression, EventProgression
 from textworld.generator.game import UnderspecifiedEventError, UnderspecifiedQuestError
@@ -76,9 +77,9 @@ def test_reloading_game_with_custom_kb():
     """
 
     logic = GameLogic.parse(twl)
-    kb = KnowledgeBase(logic, "")
-
-    M = GameMaker(kb=kb)
+    options = GameOptions()
+    options.kb = KnowledgeBase(logic, "")
+    M = GameMaker(options)
 
     room = M.new_room("room")
     M.set_player(room)

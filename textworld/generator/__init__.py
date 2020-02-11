@@ -212,8 +212,7 @@ def make_game(options: GameOptions) -> Game:
         world.populate(nb_distractors, rng=rngs['objects'])
 
     grammar = make_grammar(options.grammar, rng=rngs['grammar'])
-    game = make_game_with(world, quests, grammar)
-    game.change_grammar(grammar)
+    game = Game(world, grammar, quests)
     game.metadata["uuid"] = options.uuid
 
     return game
