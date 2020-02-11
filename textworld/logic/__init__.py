@@ -947,6 +947,9 @@ class Action:
         """
 
         self.name = name
+        self.command_template = None
+        self.reverse_name = None
+        self.reverse_command_template = None
         self.preconditions = tuple(preconditions)
         self.postconditions = tuple(postconditions)
 
@@ -1023,6 +1026,9 @@ class Action:
             "name": self.name,
             "preconditions": [prop.serialize() for prop in self.preconditions],
             "postconditions": [prop.serialize() for prop in self.postconditions],
+            "command_template": self.command_template,
+            "reverse_name": self.reverse_name,
+            "reverse_command_template": self.reverse_command_template,
         }
 
     @classmethod
@@ -1030,9 +1036,13 @@ class Action:
         name = data["name"]
         pre = [Proposition.deserialize(prop) for prop in data["preconditions"]]
         post = [Proposition.deserialize(prop) for prop in data["postconditions"]]
-        return cls(name, pre, post)
+        action = cls(name, pre, post)
+        action.command_template = data.get("command_template")
+        action.reverse_name = data.get("reverse_name")
+        action.reverse_command_template = data.get("reverse_command_template")
+        return action
 
-    def inverse(self, name=None) -> "Action":
+    def inverse(self, name: Optional[str] = None) -> "Action":
         """
         Invert the direction of this action.
 
@@ -1045,10 +1055,15 @@ class Action:
         -------
         An action that does the exact opposite of this one.
         """
+        name = name or self.reverse_name or "r_" + self.name
+        action = Action(name, self.postconditions, self.preconditions)
+        action.command_template = self.reverse_command_template
+        action.reverse_command_template = self.command_template
+        return action
 
-        if name is None:
-            name = self.name
-        return Action(name, self.postconditions, self.preconditions)
+    def format_command(self, mapping: Dict[str, str] = {}):
+        mapping = mapping or {v.name: v.name for v in self.variables}
+        return self.command_template.format(**mapping)
 
 
 class Rule:
@@ -1071,7 +1086,8 @@ class Rule:
         """
 
         self.name = name
-        self.template = None
+        self.command_template = None
+        self.reverse_rule = None
         self._cache = {}
         self.preconditions = tuple(preconditions)
         self.postconditions = tuple(postconditions)
@@ -1139,6 +1155,13 @@ class Rule:
         post = [Predicate.deserialize(pred) for pred in data["postconditions"]]
         return cls(name, pre, post)
 
+    def _make_command_template(self, mapping: Mapping[Placeholder, Variable]) -> str:
+        if self.command_template is None:
+            return None
+
+        substitutions = {ph.name: "{{{}}}".format(var.name) for ph, var in mapping.items()}
+        return self.command_template.format(**substitutions)
+
     def substitute(self, mapping: Mapping[Placeholder, Placeholder], name=None) -> "Rule":
         """
         Copy this rule, substituting certain placeholders for others.
@@ -1176,8 +1199,11 @@ class Rule:
         pre_inst = [pred.instantiate(mapping) for pred in self.preconditions]
         post_inst = [pred.instantiate(mapping) for pred in self.postconditions]
         action = Action(self.name, pre_inst, post_inst)
-        if self.template:
-            action.template = self.template.format(**{ph.name: "{{{}}}".format(var.name) for ph, var in mapping.items()})
+
+        action.command_template = self._make_command_template(mapping)
+        if self.reverse_rule:
+            action.reverse_name = self.reverse_rule.name
+            action.reverse_command_template = self.reverse_rule._make_command_template(mapping)
 
         self._cache[key] = action
         return action
@@ -1227,7 +1253,15 @@ class Rule:
 
         if name is None:
             name = self.name
-        return Rule(name, self.postconditions, self.preconditions)
+            if self.reverse_rule:
+                name = self.reverse_rule.name
+
+        if self.reverse_rule:
+           return self.reverse_rule
+
+        rule = Rule(name, self.postconditions, self.preconditions)
+        rule.reverse_rule = self
+        return rule
 
 
 class Inform7Type:
@@ -1324,7 +1358,7 @@ class Inform7Logic:
             if not rule:
                 continue
 
-            rule.template = command.command
+            rule.command_template = command.command
 
 
 class GameLogic:
@@ -1385,6 +1419,11 @@ class GameLogic:
 
         self.rules = {name: self.normalize_rule(rule) for name, rule in self.rules.items()}
         self.constraints = {name: self.normalize_rule(rule) for name, rule in self.constraints.items()}
+
+        for name, rule in self.rules.items():
+            r_name = self.reverse_rules.get(name)
+            if r_name:
+                rule.reverse_rule = self.rules[r_name]
 
         self.inform7._initialize(self)
 

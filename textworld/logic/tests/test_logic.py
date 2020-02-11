@@ -6,7 +6,10 @@ from nose.tools import assert_raises
 
 from tatsu.exceptions import ParseError
 
-from textworld.logic import Action, Rule, Placeholder, Predicate, Proposition, Signature, State, Variable
+from textworld.logic import Action, Rule
+from textworld.logic import Variable, Placeholder
+from textworld.logic import Proposition, Predicate, Signature
+from textworld.logic import State, GameLogic
 from textworld.generator import KnowledgeBase
 
 
@@ -268,3 +271,52 @@ def test_mementos_memoization():
 
     assert Signature("name", types[:1]) is not sig2  # Missing a variable.
     assert Signature("name", types[::-1]) is not sig2  # Variable are reversed.
+
+
+def test_reverse_rule_and_action():
+    logic = GameLogic.parse("""
+        type container {
+            predicates {
+                open(container);
+                closed(container);
+            }
+
+            rules {
+                open  :: closed(container) -> open(container);
+                close :: open(container) -> closed(container);
+            }
+
+            reverse_rules {
+                open :: close;
+            }
+
+            inform7 {
+                commands {
+                    open :: "open {container}" :: "opening the {container}";
+                    close :: "close {container}" :: "closing the {container}";
+                }
+            }
+
+        }
+    """)
+
+    open_rule = logic.rules["open"]
+    close_rule = logic.rules["close"]
+    assert open_rule.reverse_rule == close_rule
+    assert close_rule.reverse_rule == open_rule
+
+    open_action = open_rule.instantiate({
+        Placeholder("container", "container"): Variable("c_0", "container")
+    })
+
+    mapping = {"c_0": "chest"}
+    assert open_action.format_command(mapping) == "open chest"
+    r_open_action = open_action.inverse()
+    assert r_open_action.name == "close"
+    assert r_open_action.format_command(mapping) == "close chest"
+
+    # Action's command template should persist through serialization.
+    open_action2 = Action.deserialize(open_action.serialize())
+    open_action2.format_command(mapping) == "open chest"
+
+    assert open_action2.inverse() == r_open_action

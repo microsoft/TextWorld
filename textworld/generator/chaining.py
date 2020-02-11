@@ -395,7 +395,7 @@ class _Chainer:
             parent = nav_parent.parent
             if parent.action is not None and parent.action.name == "open/d":
                 break
-            if self.backward and action.name == "open/d":
+            if self.backward and action.name == "close/d":
                 break
             nav_parent = parent
 
