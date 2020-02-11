@@ -302,7 +302,7 @@ class GameData(textworld.core.Wrapper):
         self.state["objective"] = self._game.objective
         self.state["max_score"] = self._game.max_score
 
-        for k, v in self._game.extras.items():
+        for k, v in self._game.metadata.items():
             self.state["extra.{}".format(k)] = v
 
     def reset(self):

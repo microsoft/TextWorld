@@ -388,7 +388,6 @@ class Game:
         self._objective = None
         self._infos = self._build_infos()
         self.kb = world.kb
-        self.extras = {}
 
         # Check if we can derive a global winning policy from the quests.
         self.main_quest = None
@@ -419,7 +418,6 @@ class Game:
         game._objective = self._objective
         game.main_quest = self.main_quest
         game.metadata = dict(self.metadata)
-        game.extras = dict(self.extras)
         return game
 
     def change_grammar(self, grammar: Grammar) -> None:
@@ -480,7 +478,6 @@ class Game:
         game._infos = {k: EntityInfo.deserialize(v) for k, v in data["infos"]}
         game.metadata = data.get("metadata", {})
         game._objective = data.get("objective", None)
-        game.extras = data.get("extras", {})
         if "main_quest" in data:
             game.main_quest = Quest.deserialize(data["main_quest"])
 
@@ -501,7 +498,6 @@ class Game:
         data["KB"] = self.kb.serialize()
         data["metadata"] = self.metadata
         data["objective"] = self._objective
-        data["extras"] = self.extras
         if self.main_quest:
             data["main_quest"] = self.main_quest.serialize()
 
@@ -512,15 +508,14 @@ class Game:
                 and self.world == other.world
                 and self.infos == other.infos
                 and self.quests == other.quests
-                and self.extras == other.extras
                 and self.main_quest == other.main_quest
+                and self.metadata == other.metadata
                 and self._objective == other._objective)
 
     def __hash__(self) -> int:
         state = (self.world,
                  frozenset(self.quests),
                  frozenset(self.infos.items()),
-                 frozenset(self.extras.items()),
                  self._objective)
 
         return hash(state)
