@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict
 
 import numpy as np
 
-import gym
+from textworld.core import Environment
 
 
 def _list_of_dicts_to_dict_of_lists(list_: List[Dict]) -> Dict[str, List]:
@@ -13,14 +13,14 @@ def _list_of_dicts_to_dict_of_lists(list_: List[Dict]) -> Dict[str, List]:
     return {key: [dict_.get(key) for dict_ in list_] for key in keys}
 
 
-def _child(id, parent_pipe, pipe):
+def _child(env_fn, parent_pipe, pipe):
     """
     Event loop run by the child processes
     """
     try:
         parent_pipe.close()
 
-        env = gym.make(id)
+        env = env_fn()
 
         while True:
             command = pipe.recv()
@@ -40,18 +40,18 @@ def _child(id, parent_pipe, pipe):
                 result = hasattr(obj, attrs[-1])
 
             pipe.send(result)
+
     finally:
         pipe.close()
-        print(id, "closed")
 
 
 class _ChildEnv:
     """
     Wrapper for an env in a child process.
     """
-    def __init__(self, id):
+    def __init__(self, env_fn):
         self._pipe, child_pipe = mp.Pipe()
-        self._process = mp.Process(target=_child, args=(id, self._pipe, child_pipe))
+        self._process = mp.Process(target=_child, args=(env_fn, self._pipe, child_pipe))
         self._process.daemon = True
         self._process.start()
         child_pipe.close()
@@ -80,44 +80,40 @@ class _ChildEnv:
         self.hasattr(*args)
         return self.result()
 
-    def close(self):
-        self.call_sync("close")
+    def __del__(self):
         self._pipe.close()
         self._process.terminate()
         self._process.join()
 
 
-class ParallelBatchEnv(gym.Env):
-    """ Environment to run multiple games in parallel.
-    """
-    def __init__(self, env_id, batch_size):
+class AsyncBatchEnv(Environment):
+    """ Environment to run multiple games in parallel asynchronously. """
+
+    def __init__(self, env_fns: List[callable]):
         """
         Parameters
         ----------
-        env_id : list of str or str
-            Environment IDs that will compose a batch. If only
-            one env_id is provided, it will be repeated `batch_size` times.
-        batch_size : int
-            Number of environment to run in parallel.
+        env_fns : iterable of callable
+            Functions that create the environments.
         """
-        self.env_ids = env_id if type(env_id) is list else [env_id] * batch_size
-        self.batch_size = batch_size
-        assert len(self.env_ids) == self.batch_size
+        self.env_fns = env_fns
+        self.batch_size = len(self.env_fns)
 
         self.envs = []
-        for id in self.env_ids:
-            self.envs.append(_ChildEnv(id))
+        for env_fn in self.env_fns:
+            self.envs.append(_ChildEnv(env_fn))
 
-        self.observation_space = self.envs[0].get_sync("observation_space")
-        self.action_space = self.envs[0].get_sync("action_space")
+    def load(self, game_files: List[str]) -> None:
+        assert len(game_files) == len(self.envs)
+        for env, game_file in zip(self.envs, game_files):
+            env.call("load", game_file)
 
-    def skip(self, ngames=1):
+        # Join
         for env in self.envs:
-            env.call_sync("unwrapped.skip", ngames)
+            env.result()
 
     def seed(self, seed=None):
-        # Use different seed for each env to decorrelate
-        # the examples in the batch.
+        # Use a different seed for each env to decorrelate batch examples.
         rng = np.random.RandomState(seed)
         seeds = list(rng.randint(65635, size=self.batch_size))
         for env, seed in zip(self.envs, seeds):
@@ -155,8 +151,8 @@ class ParallelBatchEnv(gym.Env):
         results = []
 
         for i, (env, action) in enumerate(zip(self.envs, actions)):
-            if self.last[i] is not None and self.last[i][2]:  # Game is done
-                results.append(self.last[i])  # Copy last infos over.
+            if self.last[i] is not None and self.last[i][2]:  # Game has ended on the last step.
+                results.append(self.last[i])  # Copy last state over.
             else:
                 env.call("step", action)
                 results.append(None)
@@ -171,45 +167,41 @@ class ParallelBatchEnv(gym.Env):
         for env in self.envs:
             env.call("render", mode)
 
-        renderings = []
-        for env in self.envs:
-            renderings.append(env.result())
-
-        return renderings
+        return [env.result() for env in self.envs]
 
     def close(self):
         for env in self.envs:
-            env.close()
+            env.call("close")
+
+        # Join
+        for env in self.envs:
+            env.result()
+
+    def __del__(self):
+        pass  # Override `Environment.__del__` behavior.
 
 
-class BatchEnv(gym.Env):
-    """ Environment to run multiple games independently.
-    """
-    def __init__(self, env_id, batch_size):
+class SyncBatchEnv(Environment):
+    """ Environment to run multiple games independently synchronously. """
+
+    def __init__(self, env_fns: List[callable]):
         """
         Parameters
         ----------
-        env_id : list of str or str
-            Environment IDs that will compose a batch. If only
-            one env_id is provided, it will be repeated `batch_size` times.
-        batch_size : int
-            Number of independent environments to run.
+        env_fns : iterable of callable
+            Functions that create the environments
         """
-        self.env_ids = env_id if type(env_id) is list else [env_id] * batch_size
-        self.batch_size = batch_size
-        assert len(self.env_ids) == self.batch_size
+        self.env_fns = env_fns
+        self.batch_size = len(self.env_fns)
+        self.envs = [env_fn() for env_fn in self.env_fns]
 
-        self.envs = [gym.make(self.env_ids[i]) for i in range(self.batch_size)]
-        self.observation_space = self.envs[0].observation_space
-        self.action_space = self.envs[0].action_space
-
-    def skip(self, ngames=1):
-        for env in self.envs:
-            env.env.skip(ngames)
+    def load(self, game_files: List[str]) -> None:
+        assert len(game_files) == len(self.envs)
+        for env, game_file in zip(self.envs, game_files):
+            env.load(game_file)
 
     def seed(self, seed=None):
-        # Use different seed for each env to decorrelate
-        # the examples in the batch.
+        # Use a different seed for each env to decorrelate batch examples.
         rng = np.random.RandomState(seed)
         seeds = list(rng.randint(65635, size=self.batch_size))
         for env, seed in zip(self.envs, seeds):
@@ -243,8 +235,8 @@ class BatchEnv(gym.Env):
         """
         results = []
         for i, (env, action) in enumerate(zip(self.envs, actions)):
-            if self.last[i] is not None and self.last[i][2]:  # Game is done
-                results.append(self.last[i])  # Copy last infos over.
+            if self.last[i] is not None and self.last[i][2]:  # Game has ended on the last step.
+                results.append(self.last[i])  # Copy last state over.
             else:
                 results.append(env.step(action))
 
@@ -255,12 +247,7 @@ class BatchEnv(gym.Env):
         return obs, rewards, dones, infos
 
     def render(self, mode='human'):
-        renderings = []
-        for env in self.envs:
-            rendering = env.render(mode=mode)
-            renderings.append(rendering)
-
-        return renderings
+        return [env.render(mode=mode) for env in self.envs]
 
     def close(self):
         for env in self.envs:

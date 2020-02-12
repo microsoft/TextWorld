@@ -20,7 +20,9 @@ class Char(gym.spaces.MultiDiscrete):
     Notes
     -----
     The following special token will be prepended (if needed) to the vocabulary:
-    # : Padding token
+
+      * '#' : Padding token
+
     """
 
     def __init__(self, max_length, vocab=None, extra_vocab=[]):
@@ -93,10 +95,24 @@ class Word(gym.spaces.MultiDiscrete):
     Notes
     -----
     The following special tokens will be prepended (if needed) to the vocabulary:
-    <PAD> : Padding
-    <UNK> : Unknown word
-    <S>   : Beginning of sentence
-    </S>  : End of sentence
+
+      * '<PAD>' : Padding
+      * '<UNK>' : Unknown word
+      * '<S>'   : Beginning of sentence
+      * '</S>'  : End of sentence
+
+    Example
+    -------
+    Let's create an action space that can be used with
+    :py:meth:`textworld.gym.register_game <textworld.gym.utils.register_game>`.
+    We are going to assume actions are short phrases up to 8 words long.
+
+    >>> import textworld
+    >>> gamefiles = ["/path/to/game.ulx", "/path/to/another/game.z8"]
+    >>> vocab = textworld.vocab.extract_from(gamefiles)
+    >>> vocab = sorted(vocab)  # Sorting the vocabulary, optional.
+    >>> action_space = textworld.gym.text_spaces.Word(max_length=8, vocab=vocab)
+
     """
 
     def __init__(self, max_length, vocab):

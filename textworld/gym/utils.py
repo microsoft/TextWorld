@@ -1,28 +1,49 @@
 from typing import List, Optional
 
+import gym
 from gym.envs.registration import register, registry
 
 from textworld import EnvInfos
 
 
-def register_games(game_files: List[str],
+def register_games(gamefiles: List[str],
                    request_infos: Optional[EnvInfos] = None,
+                   batch_size: Optional[int] = None,
                    max_episode_steps: int = 50,
-                   name: str = "") -> str:
+                   asynchronous: bool = True,
+                   action_space: Optional[gym.Space] = None,
+                   observation_space: Optional[gym.Space] = None,
+                   name: str = "",
+                   **kwargs) -> str:
     """ Make an environment that will cycle through a list of games.
 
     Arguments:
-        game_files:
-            Paths for the TextWorld games (`*.ulx` + `*.json`, `*.z[1-8]`).
+        gamefiles:
+            Paths for the TextWorld games (`*.ulx|*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
             (see
             :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
             for the list of available information).
 
-            .. warning:: This is only supported for `*.ulx` games generated with TextWorld.
+            .. warning:: Only supported for TextWorld games (i.e., with a corresponding `*.json` file).
+        batch_size:
+            If provided, it indicates the number of games to play at the same time.
+            By default, a single game is played at once.
+
+            .. warning:: When `batch_size` is provided (even for batch_size=1), `env.step` expects
+                         a list of commands as input and outputs a list of states. `env.reset` also
+                         outputs a list of states.
         max_episode_steps:
             Terminate a game after that many steps.
+        asynchronous:
+            If `True`, games in the batch are played in parallel.
+        action_space:
+            The action space be used with OpenAI baselines.
+            (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
+        observation_space:
+            The observation space be used with OpenAI baselines
+            (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
         name:
             Name for the new environment, i.e. "tw-{name}-v0". By default,
             the returned env_id is "tw-v0".
@@ -37,13 +58,13 @@ def register_games(game_files: List[str],
         >>> options.seeds = 1234
         >>> game = make_game(options)
         >>> game.extras["more"] = "This is extra information."
-        >>> game_file = compile_game(game)
+        >>> gamefile = compile_game(game)
         <BLANKLINE>
         >>> import gym
         >>> import textworld.gym
         >>> from textworld import EnvInfos
         >>> request_infos = EnvInfos(description=True, inventory=True, extras=["more"])
-        >>> env_id = textworld.gym.register_games([game_file], request_infos)
+        >>> env_id = textworld.gym.register_games([gamefile], request_infos)
         >>> env = gym.make(env_id)
         >>> ob, infos = env.reset()
         >>> print(infos["extra.more"])
@@ -58,36 +79,64 @@ def register_games(game_files: List[str],
         versions = [int(env_id.rsplit("-v", 1)[-1]) for env_id in registry.env_specs if env_id.startswith(base)]
         env_id = "{}-v{}".format(base, max(versions) + 1)
 
+    entry_point = "textworld.gym.envs:TextworldBatchGymEnv"
+    if batch_size is None:
+        batch_size = 1
+        entry_point = "textworld.gym.envs:TextworldGymEnv"
+
     register(
         id=env_id,
-        entry_point='textworld.gym.envs:TextworldGamesEnv',
+        entry_point=entry_point,
         max_episode_steps=max_episode_steps,
         kwargs={
-            'game_files': game_files,
+            'gamefiles': gamefiles,
             'request_infos': request_infos,
-        }
+            'batch_size': batch_size,
+            'asynchronous': asynchronous,
+            'action_space': action_space,
+            'observation_space': observation_space,
+            **kwargs}
     )
     return env_id
 
 
-def register_game(game_file: str,
+def register_game(gamefile: str,
                   request_infos: Optional[EnvInfos] = None,
+                  batch_size: Optional[int] = None,
                   max_episode_steps: int = 50,
-                  name: str = "") -> str:
+                  asynchronous: bool = True,
+                  action_space: Optional[gym.Space] = None,
+                  observation_space: Optional[gym.Space] = None,
+                  name: str = "",
+                  **kwargs) -> str:
     """ Make an environment for a particular game.
 
     Arguments:
-        game_file:
-            Path for the TextWorld game (`*.ulx` + `*.json`, `*.z[1-8]`).
+        gamefile:
+            Path for the TextWorld game (`*.ulx|*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
-            (see
-            :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+            (see :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
             for the list of available information).
 
-            .. warning:: This is only supported for `*.ulx` games generated with TextWorld.
+            .. warning:: Only supported for TextWorld games (i.e., with a corresponding `*.json` file).
+        batch_size:
+            If provided, it indicates the number of games to play at the same time.
+            By default, a single game is played at once.
+
+            .. warning:: When `batch_size` is provided (even for batch_size=1), `env.step` expects
+                         a list of commands as input and outputs a list of states. `env.reset` also
+                         outputs a list of states.
         max_episode_steps:
             Terminate a game after that many steps.
+        asynchronous:
+            If `True`, games in the batch are played in parallel.
+        action_space:
+            The action space be used with OpenAI baselines.
+            (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
+        observation_space:
+            The observation space be used with OpenAI baselines
+            (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
         name:
             Name for the new environment, i.e. "tw-{name}-v0". By default,
             the returned env_id is "tw-v0".
@@ -102,45 +151,27 @@ def register_game(game_file: str,
         >>> options.seeds = 1234
         >>> game = make_game(options)
         >>> game.extras["more"] = "This is extra information."
-        >>> game_file = compile_game(game)
+        >>> gamefile = compile_game(game)
         <BLANKLINE>
         >>> import gym
         >>> import textworld.gym
         >>> from textworld import EnvInfos
         >>> request_infos = EnvInfos(description=True, inventory=True, extras=["more"])
-        >>> env_id = textworld.gym.register_game(game_file, request_infos)
+        >>> env_id = textworld.gym.register_game(gamefile, request_infos)
         >>> env = gym.make(env_id)
         >>> ob, infos = env.reset()
         >>> print(infos["extra.more"])
         This is extra information.
 
     """
-    return register_games([game_file], request_infos, max_episode_steps, name)
-
-
-def make_batch(env_id: str, batch_size: int, parallel: bool = False) -> str:
-    """ Make an environment that runs multiple games independently.
-
-    Arguments:
-        env_id:
-            Environment ID that will compose a batch.
-        batch_size:
-            Number of independent environments to run.
-        parallel:
-            If True, the environment will be executed in different processes.
-
-    Returns:
-        The corresponding gym-compatible env_id to use.
-    """
-    batch_env_id = "batch{}-".format(batch_size) + env_id
-    entry_point = 'textworld.gym.envs:BatchEnv'
-    if parallel and batch_size > 1:
-        entry_point = 'textworld.gym.envs:ParallelBatchEnv'
-
-    register(
-        id=batch_env_id,
-        entry_point=entry_point,
-        kwargs={'env_id': env_id, 'batch_size': batch_size}
+    return register_games(
+        gamefiles=[gamefile],
+        request_infos=request_infos,
+        batch_size=batch_size,
+        max_episode_steps=max_episode_steps,
+        asynchronous=asynchronous,
+        action_space=action_space,
+        observation_space=observation_space,
+        name=name,
+        **kwargs
     )
-
-    return batch_env_id

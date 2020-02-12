@@ -90,19 +90,25 @@ def test_register_games():
         assert obs1 != obs2
 
 
-def test_batch():
+def test_batch_sync():
     batch_size = 5
     with make_temp_directory() as tmpdir:
         options = textworld.GameOptions()
         options.path = tmpdir
         options.seeds = 1234
-        gamefile, game = textworld.make(options)
+        options.file_ext = ".ulx"
+        gamefile1, game = textworld.make(options)
+        options.file_ext = ".z8"
+        gamefile2, game = textworld.make(options)
 
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True,
                                extras=["walkthrough"])
-        env_id = textworld.gym.register_games([gamefile], env_options, name="test-batch")
-        env_id = textworld.gym.make_batch(env_id, batch_size)
+        env_id = textworld.gym.register_games([gamefile1, gamefile2],
+                                              request_infos=env_options,
+                                              batch_size=batch_size,
+                                              name="test-batch",
+                                              asynchronous=False)
         env = gym.make(env_id)
 
         obs, infos = env.reset()
@@ -121,19 +127,25 @@ def test_batch():
         assert all(score == 1 for score in scores)
 
 
-def test_batch_parallel():
+def test_batch_async():
     batch_size = 5
     with make_temp_directory() as tmpdir:
         options = textworld.GameOptions()
         options.path = tmpdir
         options.seeds = 1234
-        gamefile, game = textworld.make(options)
+        options.file_ext = ".ulx"
+        gamefile1, game = textworld.make(options)
+        options.file_ext = ".z8"
+        gamefile2, game = textworld.make(options)
 
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True,
                                extras=["walkthrough"])
-        env_id = textworld.gym.register_game(gamefile, env_options, name="test-batch-parallel")
-        env_id = textworld.gym.make_batch(env_id, batch_size, parallel=True)
+        env_id = textworld.gym.register_games([gamefile1, gamefile2],
+                                              request_infos=env_options,
+                                              batch_size=batch_size,
+                                              name="test-batch-parallel",
+                                              asynchronous=True)
         env = gym.make(env_id)
 
         obs, infos = env.reset()

@@ -277,15 +277,19 @@ class Wrapper:
         return self
 
     def _wrap(self, env) -> None:
-        """ Centralize method for wrappings an environment.
+        """ Stores reference to the wrapped environment.
         Args:
             env: environment to wrap.
         """
         self._wrapped_env = env
 
     def __getattr__(self, attr: str):
-        if self._wrapped_env:
-            return getattr(self._wrapped_env, attr)
+        _wrapped_env = self.__dict__.get("_wrapped_env")
+        if _wrapped_env is None:
+            _wrapped_env = getattr(super(), attr, None)
+
+        if _wrapped_env:
+            return getattr(_wrapped_env, attr)
 
         return super().__getattribute__(attr)
 
