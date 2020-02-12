@@ -12,7 +12,7 @@ import gym
 from gym.utils import colorize
 
 from textworld import EnvInfos
-from textworld.envs.wrappers import Filter, GenericEnvironment
+from textworld.envs.wrappers import Filter, GenericEnvironment, Limit
 from textworld.envs.batch import AsyncBatchEnv, SyncBatchEnv
 
 from textworld.gym.envs.utils import shuffled_cycle
@@ -26,6 +26,8 @@ class TextworldBatchGymEnv(gym.Env):
                  request_infos: Optional[EnvInfos] = None,
                  batch_size: int = 1,
                  asynchronous: bool = True,
+                 auto_reset: bool = False,
+                 max_episode_steps: Optional[int] = None,
                  action_space: Optional[gym.Space] = None,
                  observation_space: Optional[gym.Space] = None) -> None:
         """ Environment for playing text-based games in batch.
@@ -51,6 +53,12 @@ class TextworldBatchGymEnv(gym.Env):
                 If `True`, wraps the environments in an `AsyncBatchEnv` (which uses
                 `multiprocessing` to run the environments in parallel). If `False`,
                 wraps the environments in a `SyncBatchEnv`. Default: `True`.
+            auto_reset:
+                If `True`, each game *independently* resets once it is done (i.e., reset happens
+                on the next `env.step` call).
+                Otherwise, once a game is done, subsequent calls to `env.step` won't have any effects.
+            max_episode_steps:
+                Number of steps allocated to play each game. Once exhausted, the game is done.
             action_space:
                 The action space be used with OpenAI baselines.
                 (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
@@ -65,11 +73,15 @@ class TextworldBatchGymEnv(gym.Env):
 
         def _make_env():
             env = GenericEnvironment(self.request_infos)
+            if max_episode_steps:
+                env = Limit(env, max_episode_steps=max_episode_steps)
+
             env = Filter(env)
             return env
 
         env_fns = [_make_env for _ in range(self.batch_size)]
-        self.batch_env = AsyncBatchEnv(env_fns) if self.batch_size > 1 and asynchronous else SyncBatchEnv(env_fns)
+        BatchEnvType = AsyncBatchEnv if self.batch_size > 1 and asynchronous else SyncBatchEnv
+        self.batch_env = BatchEnvType(env_fns, auto_reset)
 
         self.action_space = action_space
         self.observation_space = observation_space

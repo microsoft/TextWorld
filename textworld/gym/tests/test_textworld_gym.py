@@ -162,3 +162,58 @@ def test_batch_async():
 
         assert all(dones)
         assert all(score == 1 for score in scores)
+
+
+def test_auto_reset():
+    batch_size = 4
+    max_episode_steps = 13
+    with make_temp_directory() as tmpdir:
+        options = textworld.GameOptions()
+        options.path = tmpdir
+        options.seeds = 1234
+        options.file_ext = ".ulx"
+        game_file1, game1 = textworld.make(options)
+        options.seeds = 4321
+        options.file_ext = ".z8"
+        game_file2, game2 = textworld.make(options)
+
+        env_options = EnvInfos(inventory=True, description=True,
+                               admissible_commands=True)
+        env_id = textworld.gym.register_games([game_file1, game_file1, game_file2, game_file2],
+                                              request_infos=env_options,
+                                              batch_size=batch_size,
+                                              max_episode_steps=max_episode_steps,
+                                              name="test-auto-reset",
+                                              asynchronous=True,
+                                              auto_reset=True)
+        env = gym.make(env_id)
+
+        init_obs, init_infos = env.reset()
+        dones = [False] * batch_size
+        for cmd in game1.metadata["walkthrough"]:
+            assert sum(dones) == 0
+            obs, scores, dones, infos = env.step([cmd] * batch_size)
+
+        # Two of the envs should be done.
+        assert sum(dones) == 2
+        assert sum(scores) == 2
+
+        # The two envs should auto-reset on the next action.
+        obs, scores, dones, infos = env.step(["wait"] * batch_size)
+        assert sum(dones) == 0
+        assert sum(scores) == 0  # Score should auto reset.
+        assert obs[0] == init_obs[0] and obs[1] == init_obs[1]
+        assert all(v[0] == init_infos[k][0] and v[1] == init_infos[k][1] for k, v in infos.items())
+
+        for cmd in game1.metadata["walkthrough"]:
+            assert sum(dones) == 0
+            obs, scores, dones, infos = env.step([cmd] * batch_size)
+
+        assert sum(dones) == 2
+
+        obs, infos = env.reset()
+        for _ in range(max_episode_steps):
+            obs, scores, dones, infos = env.step(["wait"] * batch_size)
+
+        assert sum(dones) == 4  # All env have played maximum number of steps.
+        env.close()

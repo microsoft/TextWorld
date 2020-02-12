@@ -89,7 +89,7 @@ class _ChildEnv:
 class AsyncBatchEnv(Environment):
     """ Environment to run multiple games in parallel asynchronously. """
 
-    def __init__(self, env_fns: List[callable]):
+    def __init__(self, env_fns: List[callable], auto_reset: bool = False):
         """
         Parameters
         ----------
@@ -97,6 +97,7 @@ class AsyncBatchEnv(Environment):
             Functions that create the environments.
         """
         self.env_fns = env_fns
+        self.auto_reset = auto_reset
         self.batch_size = len(self.env_fns)
 
         self.envs = []
@@ -152,7 +153,14 @@ class AsyncBatchEnv(Environment):
 
         for i, (env, action) in enumerate(zip(self.envs, actions)):
             if self.last[i] is not None and self.last[i][2]:  # Game has ended on the last step.
-                results.append(self.last[i])  # Copy last state over.
+                obs, reward, done, infos = self.last[i]  # Copy last state over.
+
+                if self.auto_reset:
+                    reward, done = 0., False
+                    obs, infos = env.call_sync("reset")
+
+                results.append((obs, reward, done, infos))
+
             else:
                 env.call("step", action)
                 results.append(None)
@@ -184,7 +192,7 @@ class AsyncBatchEnv(Environment):
 class SyncBatchEnv(Environment):
     """ Environment to run multiple games independently synchronously. """
 
-    def __init__(self, env_fns: List[callable]):
+    def __init__(self, env_fns: List[callable], auto_reset: bool = False):
         """
         Parameters
         ----------
@@ -193,6 +201,7 @@ class SyncBatchEnv(Environment):
         """
         self.env_fns = env_fns
         self.batch_size = len(self.env_fns)
+        self.auto_reset = auto_reset
         self.envs = [env_fn() for env_fn in self.env_fns]
 
     def load(self, game_files: List[str]) -> None:
@@ -236,7 +245,13 @@ class SyncBatchEnv(Environment):
         results = []
         for i, (env, action) in enumerate(zip(self.envs, actions)):
             if self.last[i] is not None and self.last[i][2]:  # Game has ended on the last step.
-                results.append(self.last[i])  # Copy last state over.
+                obs, reward, done, infos = self.last[i]  # Copy last state over.
+
+                if self.auto_reset:
+                    reward, done = 0., False
+                    obs, infos = env.reset()
+
+                results.append((obs, reward, done, infos))
             else:
                 results.append(env.step(action))
 

@@ -16,6 +16,7 @@ class TextworldGymEnv(TextworldBatchGymEnv):
     def __init__(self,
                  gamefiles: List[str],
                  request_infos: Optional[EnvInfos] = None,
+                 max_episode_steps: Optional[int] = None,
                  action_space: Optional[gym.Space] = None,
                  observation_space: Optional[gym.Space] = None,
                  **kwargs) -> None:
@@ -31,6 +32,8 @@ class TextworldGymEnv(TextworldBatchGymEnv):
                 for the list of available information).
 
                 .. warning:: Only supported for TextWorld games (i.e., that have a corresponding `*.json` file).
+            max_episode_steps:
+                Number of steps allocated to play each game. Once exhausted, the game is done.
             action_space:
                 The action space be used with OpenAI baselines.
                 (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
@@ -40,6 +43,7 @@ class TextworldGymEnv(TextworldBatchGymEnv):
         """
         super().__init__(gamefiles=gamefiles,
                          request_infos=request_infos,
+                         max_episode_steps=max_episode_steps,
                          action_space=action_space,
                          observation_space=observation_space,
                          **kwargs)
