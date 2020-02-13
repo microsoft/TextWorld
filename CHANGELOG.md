@@ -2,10 +2,11 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2] - 2019-09-??
+## [1.2.0] - 2020-02-12
 
 ### Breaking
 
+- `Game.main_quest` attribute has been removed. To get walkthrough commands, use `Game.metadata["walkthrough"]` instead.
 - `textworld.envs.wrappers.Filter` expects the environment to wrap as its first argument.
 - `textworld.logic.State` now requires the `GameLogic` to be provided, so that it can know about the type hierarchy of each variable.
 - `has_won` and `has_lost` of `textworld.core.EnvInfos` have been renamed `won` and `lost`.
@@ -13,11 +14,18 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 ### Removed
 
+- `textworld.gym.make_batch` (use `textworld.gym.register_games(batch_size=...)` instead).
 - `textworld.envs.FrotzEnv` (use `textworld.envs.JerichoEnv` instead)
 - `textworld.envs.GitGlulxML` (use `textworld.envs.TWInform7` instead)
 
 ### Added
 
+- Tool to visualize game state as a graph.
+- Add auto-reset option when playing batch of games.
+- Z-Machine can now be played with the Gym interface.
+- Set up CI with Azure Pipelines to check PEP8 and track code coverage.
+- Add caching for `Signature`/`Proposition` instantiation.
+- `textworld.GameMaker` constructor takes optionally a `GameOptions` instance as input.
 - Support requesting list of facts and current location as additional infos.
 - Added `--entity-numbering` option to `tw-make`.
 - Requesting additional information for TW games compiled to Z-Machine.

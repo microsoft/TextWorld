@@ -16,11 +16,10 @@ fi
 
 # But don't include too much in the source package
 rm -rf textworld/thirdparty/I7* textworld/thirdparty/inform7-6M62
-(cd textworld/thirdparty/frotz && make clean && rm -f dfrotz)
 make -C textworld/thirdparty/glulx/Git-Glulx clean
 make -C textworld/thirdparty/glulx/cheapglk clean
 rm -rf build *.egg-info
 
 python setup.py sdist
 
-docker run --rm -v "$PWD":/usr/src/TextWorld quay.io/pypa/manylinux1_x86_64 /usr/src/TextWorld/tools/package-impl.sh
+docker run --dns 1.1.1.1 --rm -v "$PWD":/usr/src/TextWorld quay.io/pypa/manylinux1_x86_64 /usr/src/TextWorld/tools/package-impl.sh
