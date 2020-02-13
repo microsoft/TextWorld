@@ -30,12 +30,18 @@ Or, after cloning the repo, go inside the root folder of the project (i.e. along
 
     pip install .
 
-#### Extras
+#### Visualization
 
-In order to use the `take_screenshot` or `visualize` functions in `textworld.render`, you'll need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on which browser you have installed).
+TextWorld comes with some tools to visualize game states. Make sure all dependencies are installed by running
+
+    pip install textworld[vis]
+
+Then, you will need to install either the [Chrome](https://sites.google.com/a/chromium.org/chromedriver/) or [Firefox](https://github.com/mozilla/geckodriver) webdriver (depending on which browser you have currently installed).
 If you have Chrome already installed you can use the following command to install chromedriver
 
     pip install chromedriver_installer
+
+Current visualization tools include: `take_screenshot`, `visualize` and `show_graph` from [`textworld.render`](https://textworld.readthedocs.io/en/latest/textworld.render.html).
 
 ## Usage
 
@@ -47,7 +53,6 @@ TextWorld provides an easy way of generating simple text-based games via the `tw
 
 where `custom` indicates we want to customize the game using the following options: `--world-size` controls the number of rooms in the world, `--nb-objects` controls the number of objects that can be interacted with (excluding doors) and `--quest-length` controls the minimum number of commands that is required to type in order to win the game. Once done, the game `custom_game.ulx` will be saved in the `tw_games/` folder.
 
-
 ### Playing a game (terminal)
 
 To play a game, one can use the `tw-play` script. For instance, the command to play the game generated in the previous section would be
@@ -55,6 +60,12 @@ To play a game, one can use the `tw-play` script. For instance, the command to p
     tw-play tw_games/custom_game.ulx
 
 > **Note:** Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported.
+
+To visualize the game state while playing, use the `--viewer [port]` option.
+
+    tw-play tw_games/custom_game.ulx --viewer
+
+A new browser tab should open and track your progress in the game.
 
 ### Playing a game (Python + [Gym](https://github.com/openai/gym))
 

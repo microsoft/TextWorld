@@ -6,6 +6,8 @@ import threading
 from typing import Tuple
 
 from textworld.core import Environment, GameState, Wrapper
+from textworld.render.serve import VisualizationService
+from textworld.render import WebdriverNotFoundError
 
 
 class HtmlViewer(Wrapper):
@@ -85,11 +87,10 @@ class HtmlViewer(Wrapper):
 
         self._stop_server()  # In case it is still running.
         try:
-            from textworld.render.serve import VisualizationService
             self._server = VisualizationService(game_state, self.open_automatically)
             self._server.start(threading.current_thread(), port=self._port)
-        except ModuleNotFoundError as e:
-            print("Importing HtmlViewer without installed dependencies. Try re-installing textworld.")
+        except WebdriverNotFoundError as e:
+            print("Missing dependencies for using HtmlViewer. See 'Visualization' section of TextWorld's README.md")
             raise e
 
         return game_state
