@@ -1,5 +1,5 @@
 -r ../requirements.txt
-sphinx
+sphinx>=2
 recommonmark
 sphinx_autodoc_typehints
 -e git://github.com/snide/sphinx_rtd_theme.git#egg=sphinx_rtd_theme

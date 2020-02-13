@@ -15,31 +15,21 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
 import os
 import sphinx_rtd_theme
 import subprocess
-import textworld
 
 # -- Project information -----------------------------------------------------
 
 project = 'TextWorld'
-copyright = '2018, Microsoft'
-author = 'Marc-Alexandre Côté, Tavian Barnes, Matthew Hausknecht, James Moore, Ákos Kádár, Ben Kybartas'
-
-# The short X.Y version
-version = textworld.__version__
-
-# The full version, including alpha/beta/rc tags
-if os.path.isdir(os.path.join(os.path.dirname(__file__), "../../.git")):
-    result = subprocess.run(["git", "describe", "--always"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    release = result.stdout.decode("utf-8").strip()
-else:
-    release = version
-
+copyright = '2018-2020, Microsoft'
+authors = ", ".join([
+    "Marc-Alexandre Côté", "Ákos Kádár", "Xingdi Yuan",
+    "Ben Kybartas", "Tavian Barnes", "Emery Fine", "James Moore",
+    "Ruo Yu Tao", "Matthew Hausknecht", "Layla El Asri", "Mahmoud Adada",
+    "Wendy Tay", "Adam Trischler"
+])
 
 # -- General configuration ---------------------------------------------------
 
@@ -160,8 +150,7 @@ default_role = "py:obj"
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'TextWorld.tex', 'TextWorld Documentation',
-     'Marc-Alexandre Côté, Tavian Barnes, Matthew Hausknecht, James Moore, Ákos Kádár, Ben Kybartas', 'manual'),
+    (master_doc, 'TextWorld.tex', 'TextWorld Documentation', authors, 'manual'),
 ]
 
 
@@ -170,8 +159,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'textworld', 'TextWorld Documentation',
-     [author], 1)
+    (master_doc, 'textworld', 'TextWorld Documentation', authors.split(","), 1)
 ]
 
 
@@ -182,7 +170,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'TextWorld', 'TextWorld Documentation',
-     author, 'TextWorld', 'One line description of project.',
+     authors, 'TextWorld', 'TextWorld is a text-based learning environment for Reinforcement Learning agent.',
      'Miscellaneous'),
 ]
 

@@ -9,10 +9,8 @@ TextWorld is a text-based learning environment for Reinforcement Learning agent.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Notes
 
    notes/framework.md
-   notes/custom_env.md
    notes/troubleshoot.rst
 
 .. toctree::
