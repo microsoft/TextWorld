@@ -63,6 +63,18 @@ def _check_type_conflict(name, old_type, new_type):
         raise ValueError("Conflicting types for `{}`: have `{}` and `{}`.".format(name, old_type, new_type))
 
 
+class UnderspecifiedPredicateError(NameError):
+    def __init__(self):
+        msg = "The verb and definition of the predicate either should both be None or both take values."
+        super().__init__(msg)
+
+
+class UnderspecifiedPropositionError(NameError):
+    def __init__(self):
+        msg = "The verb and definition of the proposition either should both be None or both take values."
+        super().__init__(msg)
+
+
 class _ModelConverter(NodeWalker):
     """
     Converts TatSu model objects to our types.
@@ -118,10 +130,10 @@ class _ModelConverter(NodeWalker):
         return self._walk_variable_ish(node, Variable)
 
     def walk_SignatureNode(self, node):
-        return Signature(node.name, node.types)
+        return Signature(node.name, node.types, node.verb, node.definition)
 
     def walk_PropositionNode(self, node):
-        return Proposition(node.name, self.walk(node.arguments))
+        return Proposition(node.name, self.walk(node.arguments), node.verb, node.definition)
 
     def walk_ActionNode(self, node):
         return self._walk_action_ish(node, Action)
@@ -130,7 +142,7 @@ class _ModelConverter(NodeWalker):
         return self._walk_variable_ish(node, Placeholder)
 
     def walk_PredicateNode(self, node):
-        return Predicate(node.name, self.walk(node.parameters))
+        return Predicate(node.name, self.walk(node.parameters), node.verb, node.definition)
 
     def walk_RuleNode(self, node):
         return self._walk_action_ish(node, Rule)
@@ -547,9 +559,9 @@ class Signature(with_metaclass(SignatureTracker, object)):
     The type signature of a Predicate or Proposition.
     """
 
-    __slots__ = ("name", "types", "_hash")
+    __slots__ = ("name", "types", "_hash", "verb", "definition")
 
-    def __init__(self, name: str, types: Iterable[str]):
+    def __init__(self, name: str, types: Iterable[str], verb=None, definition=None):
         """
         Create a Signature.
 
@@ -563,17 +575,40 @@ class Signature(with_metaclass(SignatureTracker, object)):
 
         self.name = name
         self.types = tuple(types)
-        self._hash = hash((self.name, self.types))
+        self.verb = verb
+        self.definition = definition
+        if self.verb and self.definition:
+            self._hash = hash((self.name, self.types, self.verb, self.definition))
+        elif self.verb:
+            self._hash = hash((self.name, self.types, self.verb))
+        elif self.definition:
+            self._hash = hash((self.name, self.types, self.definition))
+        else:
+            self._hash = hash((self.name, self.types))
 
     def __str__(self):
-        return "{}({})".format(self.name, ", ".join(map(str, self.types)))
+        if self.verb and self.definition:
+            return "{}(({}), vt, def)".format(self.name, ", ".join(map(str, self.types)))
+        elif self.verb:
+            return "{}(({}), vt)".format(self.name, ", ".join(map(str, self.types)))
+        elif self.definition:
+            return "{}(({}), def)".format(self.name, ", ".join(map(str, self.types)))
+        else:
+            return "{}({})".format(self.name, ", ".join(map(str, self.types)))
 
     def __repr__(self):
-        return "Signature({!r}, {!r})".format(self.name, self.types)
+        if self.verb and self.definition:
+            return "Signature({!r}, {!r}, vt, def)".format(self.name, self.types)
+        elif self.verb:
+            return "Signature({!r}, {!r}, vt)".format(self.name, self.types)
+        elif self.definition:
+            return "Signature({!r}, {!r}, def)".format(self.name, self.types)
+        else:
+            return "Signature({!r}, {!r})".format(self.name, self.types)
 
     def __eq__(self, other):
         if isinstance(other, Signature):
-            return self.name == other.name and self.types == other.types
+            return self.name == other.name and self.types == other.types and self.verb == other.verb and self.definition == other.definition
         else:
             return NotImplemented
 
@@ -615,10 +650,9 @@ class Proposition(with_metaclass(PropositionTracker, object)):
     An instantiated Predicate, with concrete variables for each placeholder.
     """
 
-    __slots__ = ("name", "arguments", "signature", "_hash", "definition", "verb_var", "verb_def")
+    __slots__ = ("name", "arguments", "signature", "_hash", "verb", "definition", "activate")
 
-    def __init__(self, name: str, arguments: Iterable[Variable] = [], definition: str = None,
-                 verb_var: int = None, verb_def: str = None):
+    def __init__(self, name: str, arguments: Iterable[Variable] = [], verb: str = None, definition: str = None):
         """
         Create a Proposition.
 
@@ -632,11 +666,28 @@ class Proposition(with_metaclass(PropositionTracker, object)):
 
         self.name = name
         self.arguments = tuple(arguments)
-        self.signature = Signature(name, [var.type for var in self.arguments])
-        self._hash = hash((self.name, self.arguments))
-        self.definition = definition
-        self.verb_var = verb_var
-        self.verb_def = verb_def
+
+        if (not verb and definition) or (verb and not definition):
+            raise UnderspecifiedPropositionError
+
+        if verb == 'is':
+            self.verb = ()
+            self.definition = ()
+        else:
+            self.verb = verb
+            self.definition = definition
+
+        self.signature = Signature(name, [var.type for var in self.arguments], self.verb, self.definition)
+
+        if self.verb and self.definition:
+            self._hash = hash((self.name, self.arguments, self.verb, self.definition))
+        else:
+            self._hash = hash((self.name, self.arguments))
+
+        if self.name == 'event':
+            self.activate = (False, 0)
+        else:
+            self.activate = (True, 1)
 
     @property
     def names(self) -> Collection[str]:
@@ -644,6 +695,16 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         The names of the variables in this proposition.
         """
         return tuple([var.name for var in self.arguments])
+
+    @property
+    def verb_tense(self) -> Collection[str]:
+        """
+        The verb tense of this proposition.
+        """
+        if self.verb:
+            return tuple(self.verb)
+        else:
+            return tuple("is")
 
     @property
     def types(self) -> Collection[str]:
@@ -664,39 +725,20 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         return "{}".format(", ".join(txt))
 
     def __str__(self):
-        def make_str(max_arg=False):
-            args = [v for v in self.arguments]
-            txt = []
-            for i in range(len(args)):
-                if max_arg:
-                    txt.append("({})".format(", ".join(map(str, [args[i], self.verb_def[i], self.definition[i]]))))
-                else:
-                    txt.append("({})".format(", ".join(map(str, [args[i], self.definition[i]]))))
-
-            return "{}".format(", ".join(txt))
-
-        if self.definition and self.verb_def:
-            return "{}({txt})".format(self.name, txt=make_str(max_arg=True))
-
-        elif self.definition:
-            return "{}({txt})".format(self.name, txt=make_str())
-
+        if self.definition and self.verb:
+            return "{}(({}), {}, {})".format(self.name, ", ".join(map(str, self.arguments)), self.verb, self.definition)
         else:
             return "{}({})".format(self.name, ", ".join(map(str, self.arguments)))
 
     def __repr__(self):
         if self.definition and self.verb:
-            return "Proposition({!r}, {!r}, {!r}, {!r})".format(self.name, self.arguments, self.definition,
-                                                                self.verb_def)
-        elif self.definition:
-            return "Proposition({!r}, {!r}, {!r})".format(self.name, self.arguments, self.definition)
-
+            return "Proposition({!r}, {!r}, {!r}, {!r})".format(self.name, self.arguments, self.verb, self.definition)
         else:
             return "Proposition({!r}, {!r})".format(self.name, self.arguments)
 
     def __eq__(self, other):
         if isinstance(other, Proposition):
-            return self.name == other.name and self.arguments == other.arguments
+            return (self.name, self.arguments, self.verb, self.definition) == (other.name, other.arguments, other.verb, other.definition)
         else:
             return NotImplemented
 
@@ -725,13 +767,17 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         return {
             "name": self.name,
             "arguments": [var.serialize() for var in self.arguments],
+            "verb": self.verb,
+            "definition": self.definition
         }
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Proposition":
         name = data["name"]
         args = [Variable.deserialize(arg) for arg in data["arguments"]]
-        return cls(name, args)
+        verb = data["verb"]
+        definition = data["definition"]
+        return cls(name, args, verb, definition)
 
 
 @total_ordering
@@ -815,7 +861,7 @@ class Predicate:
     A boolean-valued function over variables.
     """
 
-    def __init__(self, name: str, parameters: Iterable[Placeholder]):
+    def __init__(self, name: str, parameters: Iterable[Placeholder], verb=None, definition=None):
         """
         Create a Predicate.
 
@@ -829,7 +875,11 @@ class Predicate:
 
         self.name = name
         self.parameters = tuple(parameters)
-        self.signature = Signature(name, [ph.type for ph in self.parameters])
+        if (not verb and definition) or (verb and not definition):
+            raise UnderspecifiedPredicateError
+        self.verb = verb
+        self.definition = definition
+        self.signature = Signature(name, [ph.type for ph in self.parameters], self.verb, self.definition)
 
     @property
     def names(self) -> Collection[str]:
@@ -846,19 +896,28 @@ class Predicate:
         return self.signature.types
 
     def __str__(self):
-        return "{}({})".format(self.name, ", ".join(map(str, self.parameters)))
+        if self.verb and self.definition:
+            return "{}(({}), vt, def)".format(self.name, ", ".join(map(str, self.parameters)))
+        else:
+            return "{}({})".format(self.name, ", ".join(map(str, self.parameters)))
 
     def __repr__(self):
-        return "Predicate({!r}, {!r})".format(self.name, self.parameters)
+        if self.verb and self.definition:
+            return "Predicate({!r}, {!r}, vt, def)".format(self.name, self.parameters)
+        else:
+            return "Predicate({!r}, {!r})".format(self.name, self.parameters)
 
     def __eq__(self, other):
         if isinstance(other, Predicate):
-            return (self.name, self.parameters) == (other.name, other.parameters)
+            return (self.name, self.parameters, self.verb, self.definition) == (other.name, other.parameters, other.verb, other.definition)
         else:
             return NotImplemented
 
     def __hash__(self):
-        return hash((self.name, self.parameters))
+        if self.verb and self.definition:
+            return hash((self.name, self.types, self.verb, self.definition))
+        else:
+            return hash((self.name, self.parameters))
 
     def __lt__(self, other):
         if isinstance(other, Predicate):
@@ -882,13 +941,17 @@ class Predicate:
         return {
             "name": self.name,
             "parameters": [ph.serialize() for ph in self.parameters],
+            "verb": self.verb,
+            "definition": self.definition
         }
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Predicate":
         name = data["name"]
         params = [Placeholder.deserialize(ph) for ph in data["parameters"]]
-        return cls(name, params)
+        verb = data["verb"]
+        definition = data["definition"]
+        return cls(name, params, verb, definition)
 
     def substitute(self, mapping: Mapping[Placeholder, Placeholder]) -> "Predicate":
         """
@@ -901,9 +964,9 @@ class Predicate:
         """
 
         params = [mapping.get(param, param) for param in self.parameters]
-        return Predicate(self.name, params)
+        return Predicate(self.name, params, self.verb, self.definition)
 
-    def instantiate(self, mapping: Mapping[Placeholder, Variable]) -> Proposition:
+    def instantiate(self, mapping: Mapping[Placeholder, Variable], special=None) -> Proposition:
         """
         Instantiate this predicate with the given mapping.
 
@@ -918,7 +981,10 @@ class Predicate:
         """
 
         args = [mapping[param] for param in self.parameters]
-        return Proposition(self.name, args)
+        if Proposition.name == 'event':
+            return Proposition(self.name, args, verb=special.verb, definition=special.definition)
+        else:
+            return Proposition(self.name, args)
 
     def match(self, proposition: Proposition) -> Optional[Mapping[Placeholder, Variable]]:
         """
@@ -1231,6 +1297,11 @@ class Rule:
         -------
         The instantiated Action with each Placeholder mapped to the corresponding Variable.
         """
+        for pred in self.preconditions:
+            if pred.signature == specials.keys():
+                pred.instantiate(mapping, specials[pred.signature])
+            else:
+                pred.instantiate(mapping)
 
         key = tuple(mapping[ph] for ph in self.placeholders)
         if key in self._cache:
@@ -1272,7 +1343,8 @@ class Rule:
         # Using `unique_product` avoids generating those in the first place.
         for assignment in unique_product(*candidates):
             mapping = {ph: var for ph, var in zip(self.placeholders, assignment)}
-            if self.instantiate(mapping) == action:
+            mapping_special = {pred.signature: pred for pred in action.preconditions if pred.name == 'event'}
+            if self.instantiate(mapping, mapping_special) == action:
                 return mapping
 
         return None
@@ -1968,3 +2040,13 @@ class State:
         lines.append("})")
 
         return "\n".join(lines)
+
+    def get_facts(self):
+        all_facts = []
+        for sig in sorted(self._facts.keys()):
+            facts = self._facts[sig]
+            if len(facts) == 0:
+                continue
+            for fact in sorted(facts):
+                all_facts.append(fact)
+        return all_facts

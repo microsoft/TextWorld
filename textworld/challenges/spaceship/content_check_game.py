@@ -11,7 +11,7 @@ from textworld import g_rng
 from textworld import GameMaker
 from textworld.challenges import register
 from textworld.generator.data import KnowledgeBase
-from textworld.generator.game import GameOptions, Event, Quest, EventAction
+from textworld.generator.game import GameOptions, EventCondition, Quest, EventAction
 
 
 g_rng.set_seed(20190826)
@@ -56,8 +56,8 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         box_colors = [
             'Red',
             'Blue',
-            # 'White',
-            # 'Green',
+            'White',
+            'Green',
         ]
 
     elif settings["level"] == 'medium':
@@ -107,12 +107,12 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     table.infos.desc = "This is a regular table."
     test_room.add(table)
 
-    # laptop = gm.new(type='cpu', name='laptop')
-    # laptop.infos.desc = "This is a laptop which is on the table. You can do regular things with this, like check " \
-    #                     "your emails, watch YouTube, Skype with family, etc. Check your emails to find out which " \
-    #                     "box is important."
-    # table.add(laptop)
-    # gm.add_fact('unread/e', laptop)
+    laptop = gm.new(type='cpu', name='laptop')
+    laptop.infos.desc = "This is a laptop which is on the table. You can do regular things with this, like check " \
+                        "your emails, watch YouTube, Skype with family, etc. Check your emails to find out which " \
+                        "box is important."
+    table.add(laptop)
+    gm.add_fact('unread/e', laptop)
 
     boxes = []
     for n in range(options.nb_objects):
@@ -130,32 +130,13 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     from textworld.challenges.spaceship.maker import test_commands
     test_commands(gm, [
 
-        'open red box',
-
+        # 'open Blue box',
+        # 'open White box',
+        # 'open Red box',
         # 'close red box',
-        #
-        # 'open red box',
-        # 'close red box',
+        'check laptop for email',
+        'open Red box',
 
-
-
-        # 'open blue box',
-        # 'look',
-        #
-        # 'open blue box',
-        #
-        # # 'examine Table',
-        # # 'look',
-        # 'open blue box',
-        # 'open blue box',
-        # # 'look',
-        # 'close Black box',
-        # # 'open White box',
-        # # 'close White box',
-        # # 'check laptop for email',
-        # 'open black box',
-        # # 'look',
-        # # 'close White box',
     ])
 
     game.metadata = metadata
@@ -168,58 +149,38 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 def quest_design(game):
     quests = []
 
-    win_quest = Event(conditions={game.new_fact("open", game._entities['c_0'])})
-    quests.append(Quest(win_events=[win_quest], fail_events=[], reward=5))
+    # win_quest = Event(conditions={game.new_fact("open", game._entities['c_0'])})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[], reward=5))
+    #
+    # win_quest = EventAction(action={game.new_rule_fact(game._kb.rules['open/c1'],
+    #                                                    game._entities['P'],
+    #                                                    game._entities['r_0'],
+    #                                                    game._entities['s_0'],
+    #                                                    game._entities['c_0'],
+    #                                                    )},
+    #                         precond_verb_tense={'closed': -2},
+    #                         postcond_verb_tense={'open': -1})
+    # quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
-    win_quest = EventAction(action={game.new_rule_fact(game._kb.rules['open/c1'],
+    # for i in ['c_0', 'c_1', 'c_2', 'c_3']:
+    #     win_quest = Event(conditions={game.new_fact("open", game._entities[i]),
+    #                                   game.new_fact("unread/e", game._entities['cpu_0']),
+    #                                   })
+    #     quests.append(Quest(win_events=[win_quest], fail_events=[], reward=-1))
+
+    win_quest = EventCondition(conditions={game.new_fact("closed", game._entities['c_0'])},
+                               verb_tense={'closed': 'has been'})
+    quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
+
+    win_quest = EventAction(action={game.new_rule_fact(game._kb.rules['open/c'],
                                                        game._entities['P'],
                                                        game._entities['r_0'],
                                                        game._entities['s_0'],
                                                        game._entities['c_0'],
-                                                       )},
-                            precond_verb_tense={'closed': -2},
-                            postcond_verb_tense={'open': -1})
+                                                       game._entities['cpu_0'],
+                                                       additional=('has been', 'closed'),
+                                                       )})
     quests.append(Quest(win_events=[win_quest], fail_events=[]))
-
-    # for i in ['c_0', 'c_1', 'c_2', 'c_3']:
-    #     win_quest = Event(conditions={
-    #         game.new_fact("open", game._entities[i]),
-    #         game.new_fact("unread/e", game._entities['cpu_0']),
-    #     })
-    #     quests.append(Quest(win_events=[win_quest], fail_events=[], reward=-1))
-    #
-    # win_quest = Event(conditions={
-    #     game.new_fact("closed", game._entities['c_2']),
-    # })
-    # quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
-    #
-    # win_quest = Event(conditions={
-    #     game.new_fact("event", game._entities['c_2']),
-    #     game.new_fact("open", game._entities['c_2']),
-    #     # game.new_fact("read/e", game._entities['cpu_0']),
-    # })
-    # quests.append(Quest(win_events=[win_quest], fail_events=[], reward=5))
-    #
-    # win_quest = Event(conditions={
-    #     game.new_fact("event", game._entities['c_2']),
-    #     # game.new_fact("open", game._entities['c_2']),
-    #     game.new_fact("read/e", game._entities['cpu_0']),
-    # })
-    # quests.append(Quest(win_events=[win_quest], fail_events=[], reward=5))
-    #
-    # win_quest = Event(conditions={
-    #     # game.new_fact("event", game._entities['c_2']),
-    #     game.new_fact("closed", game._entities['c_2']),
-    #     game.new_fact("event", game._entities['cpu_0']),
-    # })
-    # quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
-    #
-    # win_quest = Event(conditions={
-    #     game.new_fact("event", game._entities['cpu_0']),
-    #     game.new_fact("event", game._entities['c_2']),
-    #     game.new_fact("open", game._entities['c_2']),
-    # })
-    # quests.append(Quest(win_events=[win_quest], fail_events=[], reward=5))
 
     game.quests = quests
 

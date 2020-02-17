@@ -3,64 +3,46 @@ type c : t {
     predicates {
         open(c);
         closed(c);
-        locked(c);
 
         in(o, c);        
     }
 
-    rules {
-        lock/c    :: $at(P, r) & $at(c, r) & $in(k, I) & $match(k, c) & closed(c) -> locked(c);
-        unlock/c  :: $at(P, r) & $at(c, r) & $in(k, I) & $match(k, c) & locked(c) -> closed(c);
+    rules {       
+        open/c    :: $at(P, r) & $at(s, r) & $on(c, s) & $event((vt, def), c) & closed(c) -> open(c);
+        close/c   :: $at(P, r) & $at(s, r) & $on(c, s) & open(c) -> closed(c);
 
-        open/c    :: $at(P, r) & $at(c, r) & closed(c) -> open(c);        
-        close/c   :: $at(P, r) & $at(c, r) & open(c)   -> closed(c);
-
-        lock/bx   :: $at(P, r) & $at(s, r) & $on(c, s) & $in(k, I) & $match(k, c) & closed(c) -> locked(c);
-        unlock/bx :: $at(P, r) & $at(s, r) & $on(c, s) & $in(k, I) & $match(k, c) & locked(c) -> closed(c);
-
-        open/bx   :: $at(P, r) & $at(s, r) & $on(c, s) & closed(c) -> open(c);
-        close/bx  :: $at(P, r) & $at(s, r) & $on(c, s) & open(c)   -> closed(c);
+        open/c1   :: $at(P, r) & $at(s, r) & $on(c, s) & closed(c) -> open(c);
+        close/c1  :: $at(P, r) & $at(s, r) & $on(c, s) & open(c) -> closed(c);
     }
 
     reverse_rules {
-        lock/c  :: unlock/c;
-        open/c  :: close/c;
-        lock/bx :: unlock/bx;
-        open/bx :: close/bx;
+        open/c   :: close/c;
+        open/c1  :: close/c1;
     }
 
     constraints {
-        c1 :: open(c)   & closed(c) -> fail();
-        c2 :: open(c)   & locked(c) -> fail();
-        c3 :: closed(c) & locked(c) -> fail();
+        c1 :: open(c) & closed(c) -> fail();
     }
 
     inform7 {
         type {
             kind :: "container";
-            definition :: "containers are openable, lockable and fixed in place. containers are usually closed.";
+            definition :: "containers are openable and fixed in place. containers are usually closed.";
         }
 
         predicates {
-            open(c) :: "The {c} is open";
+            open(c)   :: "The {c} is open";
             closed(c) :: "The {c} is closed";
-            locked(c) :: "The {c} is locked";
 
-            in(o, c) :: "The {o} is in the {c}";
+            in(o, c)  :: "The {o} is in the {c}";
         }
 
         commands {
             open/c    :: "open {c}" :: "opening the {c}";
             close/c   :: "close {c}" :: "closing the {c}";
 
-            lock/c    :: "lock {c} with {k}" :: "locking the {c} with the {k}";
-            unlock/c  :: "unlock {c} with {k}" :: "unlocking the {c} with the {k}";
-
-            open/bx   :: "open {c}" :: "opening the {c}";
-            close/bx  :: "close {c}" :: "closing the {c}";
-
-            lock/bx   :: "lock {c} with {k}" :: "locking the {c} with the {k}";
-            unlock/bx :: "unlock {c} with {k}" :: "unlocking the {c} with the {k}";
+            open/c1   :: "open {c}" :: "opening the {c}";
+            close/c1  :: "close {c}" :: "closing the {c}";
         }
     }
 }

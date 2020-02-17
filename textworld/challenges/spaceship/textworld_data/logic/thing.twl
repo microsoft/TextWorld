@@ -1,7 +1,7 @@
 # thing
 type t {
     predicates {
-        event(P, r);
+        event((vt, def), c);
     }
 
     rules {
@@ -18,8 +18,9 @@ type t {
         }
 
         predicates {
-        event(P, r) :: "the player was in {r}";
+        event((vt, def), c) :: "the {c} {vt} {def}";
         }
+
         commands {
             examine/t :: "examine {t}" :: "examining the {t}";
         }

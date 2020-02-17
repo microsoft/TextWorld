@@ -37,11 +37,15 @@ class VariableNode(ModelBase):
 class SignatureNode(ModelBase):
     name = None
     types = None
+    verb = None
+    definition = None
 
 
 class PropositionNode(ModelBase):
     arguments = None
     name = None
+    verb = None
+    definition = None
 
 
 class ActionPreconditionNode(ModelBase):
@@ -63,6 +67,8 @@ class PlaceholderNode(ModelBase):
 class PredicateNode(ModelBase):
     name = None
     parameters = None
+    verb = None
+    definition = None
 
 
 class RulePreconditionNode(ModelBase):

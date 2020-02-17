@@ -35,7 +35,12 @@ type cpu : o {
             Understand "check laptop for email" as checking email. 
             checking email is an action applying to nothing. 
 
-            Before checking email:
+            Carry out checking email: 
+                if a CPU-like (called pc) is unread: 
+                    Say "Open the white box to win.";
+                    Now the pc is read.
+
+            [Before checking email:
                 if a CPU-like (called pc) is read:
                     Say "You've already read all today's emails.";
                     rule fails;
@@ -47,7 +52,7 @@ type cpu : o {
             Carry out checking email: 
                 if a CPU-like (called pc) is unread: 
                     Say "Email: Your mission is started. You should go and check outside of the spaceship.";
-                    Now the pc is read.
+                    Now the pc is read.]
         """;
     }
 }

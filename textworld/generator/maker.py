@@ -22,7 +22,7 @@ from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
 from textworld.generator.game import GameOptions
-from textworld.generator.game import Game, World, Quest, Event, EntityInfo
+from textworld.generator.game import Game, World, Quest, EventCondition, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
@@ -631,7 +631,7 @@ class GameMaker:
                                                                   facts=recorder.last_game_state.state.facts,
                                                                   varinfos=self._working_game.infos)]
 
-        event = Event(actions=actions, conditions=winning_facts)
+        event = EventCondition(actions=actions, conditions=winning_facts)
         self.quests.append(Quest(win_events=[event]))
         # Calling build will generate the description for the quest.
         self.build()
@@ -675,7 +675,7 @@ class GameMaker:
             unrecognized_commands = [c for c, a in zip(commands, recorder.actions) if a is None]
             raise QuestError("Some of the actions were unrecognized: {}".format(unrecognized_commands))
 
-        event = Event(actions=actions, conditions=winning_facts)
+        event = EventCondition(actions=actions, conditions=winning_facts)
         self.quests = [Quest(win_events=[event])]
 
         # Calling build will generate the description for the quest.
@@ -719,7 +719,7 @@ class GameMaker:
 
         return None
 
-    def new_event_using_commands(self, commands: List[str]) -> Event:
+    def new_event_using_commands(self, commands: List[str]) -> EventCondition:
         """ Creates a new event using predefined text commands.
 
         This launches a `textworld.play` session to execute provided commands.
@@ -741,7 +741,7 @@ class GameMaker:
 
         # Skip "None" actions.
         actions, commands = zip(*[(a, c) for a, c in zip(recorder.actions, commands) if a is not None])
-        event = Event(actions=actions, commands=commands)
+        event = EventCondition(actions=actions, commands=commands)
         return event
 
     def new_quest_using_commands(self, commands: List[str]) -> Quest:

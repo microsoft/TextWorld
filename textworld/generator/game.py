@@ -69,9 +69,86 @@ def gen_commands_from_actions(actions: Iterable[Action], kb: Optional[KnowledgeB
     return commands
 
 
-class Event:
+def set_parameters(output: dict, acts: Iterable[Proposition], verbs: Iterable[dict]):
+    def tense(val):
+            if val == 1:
+                return 'will'
+            elif val == 0:
+                return 'is'
+            elif val == -1:
+                return 'was'
+            elif val == -2:
+                return 'has been'
+            elif val == -3:
+                return 'had been'
+
+    if not verbs:
+        return output
+
+    for prop in acts:
+        if prop.name in verbs.keys():
+            output['name'].append(prop.name)
+            [output['argument'].append(v) for v in prop.arguments]
+            output['verb_val'].append(verbs[prop.name])
+            output['verb_def'].append(tense(verbs[prop.name]))
+
+    return output
+
+
+class PropositionControl:
     """
-    Event happening in TextWorld.
+    Controlling the proposition's appearance within the game.
+
+    When a proposition is activated in the state set, it may be important to track this event. This basically is
+    determined in the quest design directly or indirectly. This class manages the creation of the event propositions,
+    Add or Remove the event proposition from the state set, etc.
+
+    Attributes:
+
+    """
+
+    def __init__(self, props: Iterable[Proposition], verbs: dict):
+
+        self.propositions = props
+        self.verbs = verbs
+        self.traceable_propositions, self.addon = self.set_events()
+
+    def set_events(self):
+        state_event, temp_event = [], []
+        for prop in self.propositions:
+            variables = sorted(set([v for v in prop.arguments]))
+            temp_event.append(Proposition("event", arguments=variables))
+
+            if prop.name in self.verbs.keys():
+                definition = prop.name
+                verb = self.verbs[prop.name]
+                state_event.append(Proposition("event", arguments=variables, definition=definition, verb=verb))
+        return state_event, temp_event
+
+    def set_activation_parameters(self, prop: Proposition):
+        if prop.name == 'event':
+            if not prop.activate[0]:
+                prop.activate[0] = True
+
+            if prop.verb == 'has been':
+                prop.activate[1] = 1
+
+    def set_activated(self, prop: Proposition):
+        if prop.activate[0] and not prop.activate[1]:
+            prop.activate[1] = 1
+
+    def remove(self, prop:Proposition, state: State):
+        if prop.name != 'event' or prop.verb != 'was':
+            return
+
+        if (prop.activate[0] and prop.activate[1]) and (prop in state.get_facts()):
+            if Proposition(prop.definition, prop.arguments) not in state.get_facts():
+                state.remove_fact(prop)
+
+
+class EventCondition:
+    """
+    EventCondition happening in TextWorld.
 
     An event gets triggered when its set of conditions become all satisfied.
 
@@ -84,7 +161,8 @@ class Event:
 
     def __init__(self, actions: Iterable[Action] = (),
                  conditions: Iterable[Proposition] = (),
-                 commands: Iterable[str] = ()) -> None:
+                 commands: Iterable[str] = (),
+                 verb_tense: dict = ()) -> None:
         """
         Args:
             actions: The actions to be performed to trigger this event.
@@ -96,7 +174,8 @@ class Event:
         """
         self.actions = actions
         self.commands = commands
-        self.condition = self.set_conditions(conditions)
+	self.verb_tense = verb_tense
+	self.condition, self.traceable = self.set_conditions(conditions)        
 
     @property
     def actions(self) -> Iterable[Action]:
@@ -138,48 +217,49 @@ class Event:
             # last action in the quest.
             conditions = self.actions[-1].postconditions
 
-        variables = sorted(set([v for c in conditions for v in c.arguments]))
-        event = Proposition("event", arguments=variables)
-        self.condition = Action("trigger", preconditions=conditions,
-                                postconditions=list(conditions) + [event])
-        return self.condition
+        event = PropositionControl(conditions, self.verb_tense)
+        traceable = event.traceable_propositions
+        condition = Action("trigger", preconditions=conditions, postconditions=list(conditions) + event.addon)
+        return condition, traceable
 
     def __hash__(self) -> int:
-        return hash((self.actions, self.commands, self.condition))
+        return hash((self.actions, self.commands, self.condition, self.traceable,
+                     self.verb_tense))
 
     def __eq__(self, other: Any) -> bool:
-        return (isinstance(other, Event)
-                and self.actions == other.actions
-                and self.commands == other.commands
-                and self.condition == other.condition)
+        return (isinstance(other, EventCondition) and
+                self.actions == other.actions and
+                self.commands == other.commands and
+                self.condition == other.condition and
+                self.verb_tense == other.verb_tense and
+                self.traceable == other.traceable)
 
     @classmethod
-    def deserialize(cls, data: Mapping) -> "Event":
-        """ Creates an `Event` from serialized data.
+    def deserialize(cls, data: Mapping) -> "EventCondition":
+        """ Creates an `EventCondition` from serialized data.
 
         Args:
-            data: Serialized data with the needed information to build a
-                  `Event` object.
+            data: Serialized data with the needed information to build a `EventCondotion` object.
         """
         actions = [Action.deserialize(d) for d in data["actions"]]
         condition = Action.deserialize(data["condition"])
-        event = cls(actions, condition.preconditions, data["commands"])
+        event = cls(actions, condition.preconditions, data["commands"], data["verb_tense"])
         return event
 
     def serialize(self) -> Mapping:
         """ Serialize this event.
 
         Results:
-            `Event`'s data serialized to be JSON compatible.
+            `EventCondition`'s data serialized to be JSON compatible.
         """
         data = {}
-        # data["class"] = "Event"
         data["commands"] = self.commands
         data["actions"] = [action.serialize() for action in self.actions]
         data["condition"] = self.condition.serialize()
+        data["verb_tense"] = self.verb_tense
         return data
 
-    def copy(self) -> "Event":
+    def copy(self) -> "EventCondition":
         """ Copy this event. """
         return self.deserialize(self.serialize())
 
@@ -188,46 +268,37 @@ class EventAction:
     def __init__(self, action: Iterable[Action] = (), precond_verb_tense: dict = (), postcond_verb_tense: dict = ()) -> None:
         self.verb_tense_precond = precond_verb_tense
         self.verb_tense_postcond = postcond_verb_tense
-        self.event, self.actions = self.set_actions(action)
+        self.verb_tense = self.set_verbs()
+        self.actions = list(action)
+        self.traceable = self.set_actions()
 
-    def set_parameters(self, output: dict, acts: Iterable[Proposition], verbs: Iterable[dict]):
-        def tense(val):
-            if val == 1:
-                return 'will'
-            elif val == 0:
-                return 'is'
-            elif val == -1:
-                return 'was'
-            elif val == -2:
-                return 'has been'
-            elif val == -3:
-                return 'had been'
+    def set_verbs(self):
+        def mergeDict(dict1, dict2):
+            """
+            Merge dictionaries and keep values of common keys in list
+            """
 
-        if not verbs:
-            return output
+            dict3 = {**dict1, **dict2}
+            for key, value in dict3.items():
+                if key in dict1 and key in dict2:
+                    dict3[key] = [value, dict1[key]]
 
-        for prop in acts:
-            if prop.name in verbs.keys():
-                output['name'].append(prop.name)
-                [output['argument'].append(v) for v in prop.arguments]
-                output['verb_val'].append(verbs[prop.name])
-                output['verb_def'].append(tense(verbs[prop.name]))
+            return dict3
 
-        return output
+        return mergeDict(dict(self.verb_tense_precond), dict(self.verb_tense_postcond))
 
-    def set_actions(self, action: Iterable[Action]):
-        # tp_action = action
-        tp_action = [a for a in action]
-        params = {'name': [], 'argument': [], 'verb_val': [], 'verb_def': []}
-        params = self.set_parameters(params, tp_action[0].removed, self.verb_tense_precond)
-        params = self.set_parameters(params, tp_action[0].added, self.verb_tense_postcond)
-        event = Proposition("event", arguments=params['argument'], definition=params['name'],
-                            verb_var=params['verb_val'], verb_def=params['verb_def'])
-        return event, action
+    def set_actions(self):
+
+        props = [p for p in self.actions[0].removed] + [p for p in self.actions[0].added] + \
+                [p for p in self.actions[0].preconditions if p.name == 'event']
+
+        event = PropositionControl(props, self.verb_tense)
+        traceable = event.traceable_propositions
+        return traceable
 
     def is_triggering(self, action: Action) -> bool:
         """ Check if this event would be triggered for a given action. """
-        return action == [a for a in self.actions][0]
+        return action == self.actions[0]
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "EventAction":
@@ -237,8 +308,8 @@ class EventAction:
             data: Serialized data with the needed information to build a
                   `EventAction` object.
         """
-        actions = [Action.deserialize(d) for d in data["actions"]]
-        event = cls(actions, data["precond_verb_tense"], data["postcond_verb_tense"])
+        action = [Action.deserialize(d) for d in data["action"]]
+        event = cls(action, data["precond_verb_tense"], data["postcond_verb_tense"])
         return event
 
     def serialize(self) -> Mapping:
@@ -247,20 +318,25 @@ class EventAction:
         Results:
             `EventAction`'s data serialized to be JSON compatible.
         """
-        return {"actions": [action.serialize() for action in self.actions],
+        return {"action": [action.serialize() for action in self.actions],
                 "precond_verb_tense": self.verb_tense_precond,
                 "postcond_verb_tense": self.verb_tense_postcond,
                 }
 
     def __hash__(self) -> int:
-        return hash((self.actions, self.event, self.verb_tense_precond, self.verb_tense_postcond))
+        return hash((self.actions, self.verb_tense, self.verb_tense_precond, self.verb_tense_postcond, self.traceable))
 
     def __eq__(self, other: Any) -> bool:
         return (isinstance(other, EventAction) and
                 self.actions == other.actions and
-                self.event == other.event and
+                self.verb_tense == other.verb_tense and
                 self.verb_tense_precond == other.verb_tense_precond and
-                self.verb_tense_postcond == other.verb_tense_postcond)
+                self.verb_tense_postcond == other.verb_tense_postcond and
+                self.traceable == other.traceable)
+
+    def copy(self) -> "EventAction":
+        """ Copy this event. """
+        return self.deserialize(self.serialize())
 
 
 class Quest:
@@ -316,19 +392,19 @@ class Quest:
             raise UnderspecifiedQuestError()
 
     @property
-    def win_events(self) -> Iterable[Event]:
+    def win_events(self) -> Iterable[EventCondition]:
         return self._win_events
 
     @win_events.setter
-    def win_events(self, events: Iterable[Event]) -> None:
+    def win_events(self, events: Iterable[EventCondition]) -> None:
         self._win_events = tuple(events)
 
     @property
-    def fail_events(self) -> Iterable[Event]:
+    def fail_events(self) -> Iterable[EventCondition]:
         return self._fail_events
 
     @fail_events.setter
-    def fail_events(self, events: Iterable[Event]) -> None:
+    def fail_events(self, events: Iterable[EventCondition]) -> None:
         self._fail_events = tuple(events)
 
     @property
@@ -373,7 +449,7 @@ class Quest:
                 win_events.append(EventAction.deserialize(d))
 
             if "condition" in d.keys():
-                win_events.append(Event.deserialize(d))
+                win_events.append(EventCondition.deserialize(d))
 
         fail_events = []
         for d in data["fail_events"]:
@@ -381,7 +457,7 @@ class Quest:
                 fail_events.append(EventAction.deserialize(d))
 
             if "condition" in d.keys():
-                fail_events.append(Event.deserialize(d))
+                fail_events.append(EventCondition.deserialize(d))
 
         commands = data.get("commands", [])
         reward = data["reward"]
@@ -808,7 +884,7 @@ class EventProgression:
     relevant actions to be performed.
     """
 
-    def __init__(self, event, kb: KnowledgeBase) -> None:
+    def __init__(self, event: Union[EventCondition, EventAction], kb: KnowledgeBase) -> None:
         """
         Args:
             quest: The quest to keep track of its completion.
@@ -823,7 +899,7 @@ class EventProgression:
         self._tree = ActionDependencyTree(kb=self._kb,
                                           element_type=ActionDependencyTreeElement)
 
-        if isinstance(event, Event):
+        if isinstance(event, EventCondition):
             if len(event.actions) > 0:
                 self._tree.push(event.condition)
 
@@ -831,10 +907,6 @@ class EventProgression:
                     self._tree.push(action)
 
                 self._policy = event.actions + (event.condition,)
-
-        # if isinstance(event, EventAction):
-        #     self._tree.push([a for a in event.actions][0])
-        #     self._policy = event.actions
 
     @property
     def triggering_policy(self) -> List[Action]:
@@ -873,7 +945,7 @@ class EventProgression:
         if state is not None:
             # Check if event is triggered.
 
-            if isinstance(self.event, Event):
+            if isinstance(self.event, EventCondition):
                 self._triggered = self.event.is_triggering(state)
 
             if isinstance(self.event, EventAction):
@@ -1108,8 +1180,9 @@ class GameProgression:
         for quest_progression in self.quest_progressions:
             for win_event in quest_progression.win_events:
                 if quest_progression.quest.reward >= 0:
-                    if isinstance(win_event.event, Event):
+                    if isinstance(win_event.event, EventCondition):
                         self.state.apply(win_event.event.condition)
+
                     if isinstance(win_event.event, EventAction):
                         propos = [prop for prop in win_event.event.actions[0].added]
                         self.state.apply(Action("trigger", preconditions=propos,

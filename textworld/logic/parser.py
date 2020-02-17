@@ -123,16 +123,29 @@ class GameLogicParser(Parser):
         self.name_last_node('name')
         self._token('(')
 
-        def sep2():
+        with self._optional():
+            self._token('(')
+            self._name_()
+            self.name_last_node('verb')
+            self._token(',')
+            self._name_()
+            self.name_last_node('definition')
+            self._token(')')
+
+        with self._optional():
             self._token(',')
 
+        def sep2():
+            self._token(',')
         def block2():
             self._name_()
         self._gather(block2, sep2)
+
         self.name_last_node('types')
+
         self._token(')')
         self.ast._define(
-            ['name', 'types'],
+            ['name', 'types', 'verb', 'definition'],
             []
         )
 
@@ -141,6 +154,18 @@ class GameLogicParser(Parser):
         self._predName_()
         self.name_last_node('name')
         self._token('(')
+
+        with self._optional():
+            self._token('(')
+            self._name_()
+            self.name_last_node('verb')
+            self._token(',')
+            self._name_()
+            self.name_last_node('definition')
+            self._token(')')
+
+        with self._optional():
+            self._token(',')
 
         def sep2():
             self._token(',')
@@ -151,7 +176,7 @@ class GameLogicParser(Parser):
         self.name_last_node('arguments')
         self._token(')')
         self.ast._define(
-            ['arguments', 'name'],
+            ['arguments', 'name', 'verb', 'definition'],
             []
         )
 
@@ -213,16 +238,30 @@ class GameLogicParser(Parser):
         self.name_last_node('name')
         self._token('(')
 
+        with self._optional():
+            self._token('(')
+            self._name_()
+            self.name_last_node('verb')
+            self._token(',')
+            self._name_()
+            self.name_last_node('definition')
+            self._token(')')
+
+        with self._optional():
+            self._token(',')
+
         def sep2():
             self._token(',')
 
         def block2():
             self._placeholder_()
         self._gather(block2, sep2)
+
         self.name_last_node('parameters')
+
         self._token(')')
         self.ast._define(
-            ['name', 'parameters'],
+            ['name', 'parameters', 'verb', 'definition'],
             []
         )
 

@@ -15,7 +15,7 @@ from pkg_resources import Requirement, resource_filename
 
 from textworld.utils import make_temp_directory, str2bool, chunk
 
-from textworld.generator.game import Event, EventAction, Game
+from textworld.generator.game import EventCondition, EventAction, Game
 from textworld.generator.world import WorldRoom, WorldEntity
 from textworld.logic import Signature, Proposition, Action, Variable
 
@@ -375,7 +375,7 @@ class Inform7Game:
                     Now the quest{quest_id} completed is true;""")
 
             for fail_event in quest.fail_events:
-                if isinstance(fail_event, Event):
+                if isinstance(fail_event, EventCondition):
                     param = fail_event.condition
                 if isinstance(fail_event, EventAction):
                     param = [act for act in fail_event.actions][0]
@@ -384,7 +384,7 @@ class Inform7Game:
                 quest_ending_conditions += fail_template.format(conditions=conditions)
 
             for win_event in quest.win_events:
-                if isinstance(win_event, Event):
+                if isinstance(win_event, EventCondition):
                     conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
                     quest_ending_conditions += win_template_state.format(conditions=conditions,
                                                                          reward=quest.reward,
