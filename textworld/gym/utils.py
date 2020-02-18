@@ -42,7 +42,7 @@ def register_games(gamefiles: List[str],
         max_episode_steps:
             Number of steps allocated to play each game. Once exhausted, the game is done.
         asynchronous:
-            If `True`, games in the batch are played in parallel.
+            If `True`, games in the batch are played in parallel. Only when batch size is greater than one.
         action_space:
             The action space be used with OpenAI baselines.
             (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
@@ -141,7 +141,7 @@ def register_game(gamefile: str,
         max_episode_steps:
             Number of steps allocated to play each game. Once exhausted, the game is done.
         asynchronous:
-            If `True`, games in the batch are played in parallel.
+            If `True`, games in the batch are played in parallel. Only when batch size is greater than one.
         action_space:
             The action space be used with OpenAI baselines.
             (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).

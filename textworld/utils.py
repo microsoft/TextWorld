@@ -96,7 +96,7 @@ def maybe_mkdir(dirpath):
 
 
 @contextlib.contextmanager
-def make_temp_directory(suffix='', prefix='tmp', dir=None):
+def make_temp_directory(suffix='', prefix='tw_', dir=None):
     """ Create temporary folder to used in a with statement. """
     temp_dir = tempfile.mkdtemp(suffix, prefix, dir)
     try:

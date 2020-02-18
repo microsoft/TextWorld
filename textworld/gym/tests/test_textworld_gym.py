@@ -1,4 +1,9 @@
 import os
+import glob
+import shutil
+import tempfile
+import unittest
+from os.path import join as pjoin
 
 import gym
 
@@ -8,17 +13,43 @@ from textworld import EnvInfos
 from textworld.utils import make_temp_directory
 
 
-def test_register_game():
-    with make_temp_directory() as tmpdir:
+class TestGymIntegration(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmpdir = pjoin(tempfile.mkdtemp(prefix="test_textworld_gym"), "")
         options = textworld.GameOptions()
-        options.path = tmpdir
+        options.path = cls.tmpdir
         options.seeds = 1234
-        gamefile, game = textworld.make(options)
+        cls.gamefile1, cls.game1 = textworld.make(options)
+        options.seeds = 4321
+        cls.gamefile2, cls.game2 = textworld.make(options)
+
+        options.file_ext = ".z8"
+        options.seeds = 1234
+        cls.gamefile1_z8, _ = textworld.make(options)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmpdir)
+
+    def setUp(self):
+        self.before_tw = glob.glob(pjoin(tempfile.gettempdir(), "tw_*"))
+        self.before_mlglk = glob.glob(pjoin(tempfile.gettempdir(), "mlglk_*"))
+
+    def tearDown(self):
+        # Check for file leaks.
+        after_tw = glob.glob(pjoin(tempfile.gettempdir(), "tw_*"))
+        after_mlglk = glob.glob(pjoin(tempfile.gettempdir(), "mlglk_*"))
+        assert set(after_tw) == set(self.before_tw)
+        assert set(after_mlglk) == set(self.before_mlglk)
+
+    def test_register_game(self):
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True,
                                extras=["walkthrough"])
 
-        env_id = textworld.gym.register_game(gamefile, env_options, name="test-single")
+        env_id = textworld.gym.register_game(self.gamefile1, env_options, name="test-single")
         env = gym.make(env_id)
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
@@ -29,49 +60,45 @@ def test_register_game():
         assert done
         assert score == 1
 
+        env.close()
 
-def test_register_zmachine_game():
-    with make_temp_directory() as tmpdir:
-        options = textworld.GameOptions()
-        options.path = tmpdir
-        options.seeds = 1234
-        options.file_ext = ".z8"
-        gamefile, game = textworld.make(options)
-        os.remove(gamefile.replace(".z8", ".json"))  # Simulate an existing Z-Machine game.
-        env_options = EnvInfos(extras=["walkthrough"])
+    def test_registering_zmachine_game(self):
+        with make_temp_directory() as tmpdir:
+            options = textworld.GameOptions()
+            options.path = tmpdir
+            options.seeds = 1234
+            options.file_ext = ".z8"
+            gamefile, game = textworld.make(options)
+            os.remove(gamefile.replace(".z8", ".json"))  # Simulate an non-TextWorld Z-Machine game.
+            env_options = EnvInfos(extras=["walkthrough"])
 
-        env_id = textworld.gym.register_game(gamefile, env_options, name="test-zmachine")
-        env = gym.make(env_id)
-        obs, infos = env.reset()
-        assert len(infos) == len(env_options)
+            env_id = textworld.gym.register_game(gamefile, env_options, name="test-zmachine")
+            env = gym.make(env_id)
+            obs, infos = env.reset()
+            assert len(infos) == len(env_options)
 
-        for cmd in game.metadata["walkthrough"]:
-            obs, score, done, infos = env.step(cmd)
+            for cmd in game.metadata["walkthrough"]:
+                obs, score, done, infos = env.step(cmd)
 
-        assert done
-        assert score == 1
+            assert done
+            assert score == 1
 
+            env.close()
 
-def test_register_games():
-    with make_temp_directory() as tmpdir:
-        options = textworld.GameOptions()
-        options.path = tmpdir
-        options.seeds = 1234
-        gamefile1, game1 = textworld.make(options)
-        options.seeds = 4321
-        gamefile2, game2 = textworld.make(options)
+    def test_register_games(self):
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True,
                                extras=["walkthrough"])
 
-        env_id = textworld.gym.register_games([gamefile1, gamefile2], env_options, name="test-multi")
+        env_id = textworld.gym.register_games([self.gamefile1, self.gamefile2],
+                                              env_options, name="test-multi")
         env = gym.make(env_id)
         env.seed(2)  # Make game2 starts on the first reset call.
 
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
 
-        for cmd in game2.metadata["walkthrough"]:
+        for cmd in self.game2.metadata["walkthrough"]:
             obs, score, done, infos = env.step(cmd)
 
         assert done
@@ -79,7 +106,7 @@ def test_register_games():
 
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
-        for cmd in game1.metadata["walkthrough"]:
+        for cmd in self.game1.metadata["walkthrough"]:
             obs, score, done, infos = env.step(cmd)
 
         assert done
@@ -89,22 +116,14 @@ def test_register_games():
         obs2, infos = env.reset()
         assert obs1 != obs2
 
+        env.close()
 
-def test_batch_sync():
-    batch_size = 5
-    with make_temp_directory() as tmpdir:
-        options = textworld.GameOptions()
-        options.path = tmpdir
-        options.seeds = 1234
-        options.file_ext = ".ulx"
-        gamefile1, game = textworld.make(options)
-        options.file_ext = ".z8"
-        gamefile2, game = textworld.make(options)
-
+    def test_batch_sync(self):
+        batch_size = 5
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True,
                                extras=["walkthrough"])
-        env_id = textworld.gym.register_games([gamefile1, gamefile2],
+        env_id = textworld.gym.register_games([self.gamefile1, self.gamefile1_z8],
                                               request_infos=env_options,
                                               batch_size=batch_size,
                                               name="test-batch",
@@ -126,22 +145,12 @@ def test_batch_sync():
         assert all(dones)
         assert all(score == 1 for score in scores)
 
-
-def test_batch_async():
-    batch_size = 5
-    with make_temp_directory() as tmpdir:
-        options = textworld.GameOptions()
-        options.path = tmpdir
-        options.seeds = 1234
-        options.file_ext = ".ulx"
-        gamefile1, game = textworld.make(options)
-        options.file_ext = ".z8"
-        gamefile2, game = textworld.make(options)
-
+    def test_batch_async(self):
+        batch_size = 5
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True,
                                extras=["walkthrough"])
-        env_id = textworld.gym.register_games([gamefile1, gamefile2],
+        env_id = textworld.gym.register_games([self.gamefile1, self.gamefile1_z8],
                                               request_infos=env_options,
                                               batch_size=batch_size,
                                               name="test-batch-parallel",
@@ -163,23 +172,13 @@ def test_batch_async():
         assert all(dones)
         assert all(score == 1 for score in scores)
 
-
-def test_auto_reset():
-    batch_size = 4
-    max_episode_steps = 13
-    with make_temp_directory() as tmpdir:
-        options = textworld.GameOptions()
-        options.path = tmpdir
-        options.seeds = 1234
-        options.file_ext = ".ulx"
-        game_file1, game1 = textworld.make(options)
-        options.seeds = 4321
-        options.file_ext = ".z8"
-        game_file2, game2 = textworld.make(options)
+    def test_auto_reset(self):
+        batch_size = 4
+        max_episode_steps = 13
 
         env_options = EnvInfos(inventory=True, description=True,
                                admissible_commands=True)
-        env_id = textworld.gym.register_games([game_file1, game_file1, game_file2, game_file2],
+        env_id = textworld.gym.register_games([self.gamefile1, self.gamefile1_z8, self.gamefile2, self.gamefile2],
                                               request_infos=env_options,
                                               batch_size=batch_size,
                                               max_episode_steps=max_episode_steps,
@@ -190,7 +189,7 @@ def test_auto_reset():
 
         init_obs, init_infos = env.reset()
         dones = [False] * batch_size
-        for cmd in game1.metadata["walkthrough"]:
+        for cmd in self.game1.metadata["walkthrough"]:
             assert sum(dones) == 0
             obs, scores, dones, infos = env.step([cmd] * batch_size)
 
@@ -205,7 +204,7 @@ def test_auto_reset():
         assert obs[0] == init_obs[0] and obs[1] == init_obs[1]
         assert all(v[0] == init_infos[k][0] and v[1] == init_infos[k][1] for k, v in infos.items())
 
-        for cmd in game1.metadata["walkthrough"]:
+        for cmd in self.game1.metadata["walkthrough"]:
             assert sum(dones) == 0
             obs, scores, dones, infos = env.step([cmd] * batch_size)
 
@@ -217,3 +216,30 @@ def test_auto_reset():
 
         assert sum(dones) == 4  # All env have played maximum number of steps.
         env.close()
+
+    def test_make_env(self):
+        batch_size = 5
+        env_options = EnvInfos(inventory=True, description=True,
+                               admissible_commands=True,
+                               extras=["walkthrough"])
+        env_id = textworld.gym.register_games([self.gamefile1, self.gamefile1_z8],
+                                              request_infos=env_options,
+                                              batch_size=batch_size,
+                                              name="test-fileleak",
+                                              asynchronous=True)
+
+        for _ in range(3):
+            env = gym.make(env_id)
+
+            obs, infos = env.reset()
+            assert len(obs) == batch_size
+            assert len(set(obs)) == 1  # All the same game.
+            assert len(infos) == len(env_options)
+            for values in infos.values():
+                assert len(values) == batch_size
+
+            for cmds in infos.get("extra.walkthrough"):
+                obs, scores, dones, infos = env.step(cmds)
+
+            assert all(dones)
+            assert all(score == 1 for score in scores)
