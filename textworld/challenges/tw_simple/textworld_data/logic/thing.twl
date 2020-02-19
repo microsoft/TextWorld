@@ -1,0 +1,20 @@
+# thing
+type t {
+    rules {
+        examine/t :: at(P, r) & $at(t, r) -> at(P, r);
+    }
+
+    reverse_rules {
+        examine/t :: examine/t;
+    }
+
+    inform7 {
+        type {
+            kind :: "thing";
+        }
+
+        commands {
+            examine/t :: "examine {t}" :: "examining the {t}";
+        }
+    }
+}

@@ -1,0 +1,14 @@
+# object
+type o : t {
+    constraints {
+        obj1 :: in(o, I) & at(o, r) -> fail();
+        obj2 :: at(o, r) & at(o, r') -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "object-like";
+            definition :: "object-like is portable.";
+        }
+    }
+}

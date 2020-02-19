@@ -1,0 +1,32 @@
+# Inventory
+type I {
+    predicates {
+        in(o, I);
+    }
+
+    rules {
+        take :: $at(P, r) & at(o, r) -> in(o, I);
+        drop :: $at(P, r) & in(o, I) -> at(o, r);
+        inventory :: at(P, r) -> at(P, r);  # Nothing changes.
+        examine/I :: in(o, I) -> in(o, I);  # Nothing changes.
+    }
+
+    reverse_rules {
+        inventory :: inventory;
+        take :: drop;
+        examine/I :: examine/I;
+    }
+
+    inform7 {
+        predicates {
+            in(o, I) :: "The player carries the {o}";
+        }
+
+        commands {
+            take :: "take {o}" :: "taking the {o}";
+            drop :: "drop {o}" :: "dropping the {o}";
+            inventory :: "inventory" :: "taking inventory";
+            examine/I :: "examine {o}" :: "examining the {o}";
+        }
+    }
+}

@@ -1,0 +1,58 @@
+# Inventory
+type I {
+    predicates {
+        in(o, I);
+    }
+
+    rules {
+        inventory :: at(P, r) -> at(P, r);  # Nothing changes.
+
+        take :: $at(P, r) & at(o, r) -> in(o, I);
+        drop :: $at(P, r) & in(o, I) -> at(o, r);
+
+        take/c :: $at(P, r) & $at(c, r) & $open(c) & in(o, c) -> in(o, I);
+        insert :: $at(P, r) & $at(c, r) & $open(c) & in(o, I) -> in(o, c);
+
+        take/s :: $at(P, r) & $at(s, r) & on(o, s) -> in(o, I);
+        put    :: $at(P, r) & $at(s, r) & in(o, I) -> on(o, s);
+
+        examine/I :: in(o, I) -> in(o, I);  # Nothing changes.
+        examine/s :: at(P, r) & $at(s, r) & $on(o, s) -> at(P, r);  # Nothing changes.
+        examine/c :: at(P, r) & $at(c, r) & $open(c) & $in(o, c) -> at(P, r);  # Nothing changes.
+    }
+
+    reverse_rules {
+        inventory :: inventory;
+
+        take :: drop;
+        take/c :: insert;
+        take/s :: put;
+
+        examine/I :: examine/I;
+        examine/s :: examine/s;
+        examine/c :: examine/c;
+    }
+
+    inform7 {
+        predicates {
+            in(o, I) :: "The player carries the {o}";
+        }
+
+        commands {
+            take :: "take {o}" :: "taking the {o}";
+            drop :: "drop {o}" :: "dropping the {o}";
+
+            take/c :: "take {o} from {c}" :: "removing the {o} from the {c}";
+            insert :: "insert {o} into {c}" :: "inserting the {o} into the {c}";
+
+            take/s :: "take {o} from {s}" :: "removing the {o} from the {s}";
+            put :: "put {o} on {s}" :: "putting the {o} on the {s}";
+
+            inventory :: "inventory" :: "taking inventory";
+
+            examine/I :: "examine {o}" :: "examining the {o}";
+            examine/s :: "examine {o}" :: "examining the {o}";
+            examine/c :: "examine {o}" :: "examining the {o}";
+        }
+    }
+}
