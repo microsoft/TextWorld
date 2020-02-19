@@ -17,6 +17,17 @@ from textworld.envs.batch import AsyncBatchEnv, SyncBatchEnv
 
 from textworld.gym.envs.utils import shuffled_cycle
 
+from functools import partial
+
+
+def _make_env(request_infos, max_episode_steps=None):
+    env = GenericEnvironment(request_infos)
+    if max_episode_steps:
+        env = Limit(env, max_episode_steps=max_episode_steps)
+
+    env = Filter(env)
+    return env
+
 
 class TextworldBatchGymEnv(gym.Env):
     metadata = {'render.modes': ['human', 'ansi', 'text']}
@@ -71,15 +82,7 @@ class TextworldBatchGymEnv(gym.Env):
         self.request_infos = request_infos or EnvInfos()
         self.seed(1234)
 
-        def _make_env():
-            env = GenericEnvironment(self.request_infos)
-            if max_episode_steps:
-                env = Limit(env, max_episode_steps=max_episode_steps)
-
-            env = Filter(env)
-            return env
-
-        env_fns = [_make_env for _ in range(self.batch_size)]
+        env_fns = [partial(_make_env, self.request_infos, max_episode_steps) for _ in range(self.batch_size)]
         BatchEnvType = AsyncBatchEnv if self.batch_size > 1 and asynchronous else SyncBatchEnv
         self.batch_env = BatchEnvType(env_fns, auto_reset)
 

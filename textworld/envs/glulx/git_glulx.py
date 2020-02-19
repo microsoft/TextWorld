@@ -58,6 +58,9 @@ class GitGlulxEnv(textworld.Environment):
         except AttributeError:
             pass  # Attempted to kill before reset
 
+    def __del__(self):
+        self.close()
+
     def load(self, ulx_file: str) -> None:
         # TODO check file format.
         self.close()  # Terminate existing process if needed.

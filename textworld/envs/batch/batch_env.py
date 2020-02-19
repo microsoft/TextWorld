@@ -42,6 +42,7 @@ def _child(env_fn, parent_pipe, pipe):
             pipe.send(result)
 
     finally:
+        env.close()
         pipe.close()
 
 
@@ -81,6 +82,7 @@ class _ChildEnv:
         return self.result()
 
     def __del__(self):
+        self.call_sync("close")
         self._pipe.close()
         self._process.terminate()
         self._process.join()
@@ -184,9 +186,6 @@ class AsyncBatchEnv(Environment):
         # Join
         for env in self.envs:
             env.result()
-
-    def __del__(self):
-        pass  # Override `Environment.__del__` behavior.
 
 
 class SyncBatchEnv(Environment):
