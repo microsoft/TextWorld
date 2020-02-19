@@ -9,6 +9,7 @@ import re
 from typing import Mapping, Tuple, List, Optional
 
 import textworld
+from textworld.utils import str2bool
 from textworld.generator.game import Game, GameProgression
 from textworld.generator.inform7 import Inform7Game
 
@@ -262,6 +263,9 @@ class StateTracking(textworld.core.Wrapper):
 
         # Detect what events just happened in the game.
         i7_events, self.state["feedback"] = _detect_i7_events_debug_tags(self.state["feedback"])
+
+        if str2bool(os.environ.get("TEXTWORLD_DEBUG", False)):
+            print("[DEBUG] Detected Inform7 events:\n{}\n".format(i7_events))
 
         self._previous_winning_policy = self._current_winning_policy
         for i7_event in i7_events:
