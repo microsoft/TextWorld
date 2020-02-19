@@ -11,6 +11,10 @@ from textworld.generator.data import KnowledgeBase
 from textworld.logic import Action, GameLogic, Proposition, Rule, State, Variable
 
 
+class QuestGenerationError(Exception):
+    pass
+
+
 class ChainNode:
     """
     A node in a chain of actions.
@@ -542,9 +546,13 @@ def sample_quest(state: State, options: ChainingOptions) -> Optional[Chain]:
 
     Returns:
         A single possible quest.
+
+    Raises:
+        QuestGenerationError: No quest could be generated given the provided chaining options.
     """
 
     for chain in get_chains(state, options):
         return chain
 
-    return None
+    msg = ("No quest can be generated with the provided options:\n\n{}\n".format(options))
+    raise QuestGenerationError(msg)

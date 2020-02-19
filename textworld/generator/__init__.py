@@ -14,7 +14,8 @@ from numpy.random import RandomState
 from textworld import g_rng
 from textworld.utils import maybe_mkdir, str2bool
 from textworld.logic import State
-from textworld.generator.chaining import ChainingOptions, sample_quest
+from textworld.generator.chaining import ChainingOptions, QuestGenerationError
+from textworld.generator.chaining import sample_quest
 from textworld.generator.world import World
 from textworld.generator.game import Game, Quest, Event, GameOptions
 from textworld.generator.graph_networks import create_map, create_small_map
@@ -31,10 +32,6 @@ from textworld.generator.logger import GameLogger
 
 
 class GenerationWarning(UserWarning):
-    pass
-
-
-class NoSuchQuestExistError(NameError):
     pass
 
 
@@ -133,10 +130,6 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
     chains = []
     for _ in range(options.nb_parallel_quests):
         chain = sample_quest(state, options.chaining)
-        if chain is None:
-            msg = "No quest can be generated with the provided options."
-            raise NoSuchQuestExistError(msg)
-
         chains.append(chain)
         state = chain.initial_state  # State might have changed, i.e. options.create_variable is True.
 
