@@ -2,6 +2,39 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.0] - 2020-03-19
+
+### Breaking
+
+- In `tw-make`, can't change grammar options when generating games for TextWorld challenges. [#216](https://github.com/microsoft/TextWorld/pull/216)
+- `GameMaker.add_random_quest` -> `GameMaker.generate_random_quests`. [#222](https://github.com/microsoft/TextWorld/pull/222)
+- `GameMaker.add_distractors` -> `GameMaker.generate_distractors`. [#222](https://github.com/microsoft/TextWorld/pull/222)
+
+### Removed
+
+- Theme "basic1" (use "basic" instead). [#219](https://github.com/microsoft/TextWorld/pull/219)
+
+### Added
+
+- Add documentation for `tw-play`, `tw-make`, and `tw-extract`. [#227](https://github.com/microsoft/TextWorld/pull/227)
+- Add `feedback` field to `EnvInfos`. [#226](https://github.com/microsoft/TextWorld/pull/226)
+- Add `walkthrough` property to `Game` objects. [#225](https://github.com/microsoft/TextWorld/pull/225)
+- Add `walkthroughs` subcommand to `tw-extract`. [#223](https://github.com/microsoft/TextWorld/pull/223)
+- Add `commands` subcommand to `tw-extract`. [#223](https://github.com/microsoft/TextWorld/pull/223)
+- Docker image for TextWorld: [marccote19/textworld](https://hub.docker.com/r/marccote19/textworld). [#222](https://github.com/microsoft/TextWorld/pull/222)
+- Add `requirements-full.txt` which contains all Python dependencies for TextWorld. [#222](https://github.com/microsoft/TextWorld/pull/222)
+- Use `TEXTWORLD_DEBUG=1` to print Inform7 events detected by TextWorld when playing a game. [#217](https://github.com/microsoft/TextWorld/pull/217)
+- Add `ChainingOptions.allowed_types` which is complementary to `ChainingOptions.restricted_types`. [#219](https://github.com/microsoft/TextWorld/pull/219)
+- Speed up quest generation when `ChainingOptions.create_variables==True` by fixing `r` to corresponding value in `at(P, r)`. [#219](https://github.com/microsoft/TextWorld/pull/219)
+
+### Fixed
+
+- Updated games shipped with the notebooks. [#225](https://github.com/microsoft/TextWorld/pull/225)
+- Calling `GameOptions.seeds`, without setting a seed first, will return random seeds. [#222](https://github.com/microsoft/TextWorld/pull/222)
+- Challenges shipped with TextWorld now contain a snapshot of the KnowledgeBase to improve reproducibility. [#216](https://github.com/microsoft/TextWorld/pull/216)
+- Delete socket files created by `mlglk` on garbage collection. [#215](https://github.com/microsoft/TextWorld/pull/215)
+- Issues related to tw-treasure_hunter challenge (#85, #164).
+
 ## [1.2.0] - 2020-02-12
 
 ### Breaking
