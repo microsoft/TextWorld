@@ -1,9 +1,5 @@
 # thing
 type t {
-    predicates {
-        event((vt, def), c);
-    }
-
     rules {
         examine/t :: at(P, r) & $at(t, r) -> at(P, r);
     }
@@ -15,10 +11,6 @@ type t {
     inform7 { 
         type {
             kind :: "thing";
-        }
-
-        predicates {
-        event((vt, def), c) :: "the {c} {vt} {def}";
         }
 
         commands {

@@ -129,13 +129,15 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 
     from textworld.challenges.spaceship.maker import test_commands
     test_commands(gm, [
-
+        'open Red box',
+        'close Red box',
+        # 'open Red box',
         # 'open Blue box',
         # 'open White box',
         # 'open Red box',
         # 'close red box',
-        'check laptop for email',
-        'open Red box',
+        # 'check laptop for email',
+        # 'open Red box',
 
     ])
 
@@ -168,19 +170,26 @@ def quest_design(game):
     #                                   })
     #     quests.append(Quest(win_events=[win_quest], fail_events=[], reward=-1))
 
-    win_quest = EventCondition(conditions={game.new_fact("closed", game._entities['c_0'])},
-                               verb_tense={'closed': 'has been'})
+    win_quest = EventCondition(conditions={game.new_fact("open", game._entities['c_0'])},
+                               output_verb_tense={'open': 'was'})
     quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
 
-    win_quest = EventAction(action={game.new_rule_fact(game._kb.rules['open/c'],
+    win_quest = EventAction(action={game.new_rule_fact(game._kb.rules['close/c'],
                                                        game._entities['P'],
                                                        game._entities['r_0'],
                                                        game._entities['s_0'],
                                                        game._entities['c_0'],
-                                                       game._entities['cpu_0'],
-                                                       additional=('has been', 'closed'),
-                                                       )})
-    quests.append(Quest(win_events=[win_quest], fail_events=[]))
+                                                       game._entities['cpu_0'])})
+    quests.append(Quest(win_events=[win_quest], fail_events=[], reward=1))
+
+    # win_quest1 = EventCondition(conditions={game.new_fact("has_been__closed", game._entities['c_0'])})
+    # win_quest2 = EventAction(action={game.new_rule_fact(game._kb.rules['open/c'],
+    #                                                     game._entities['P'],
+    #                                                     game._entities['r_0'],
+    #                                                     game._entities['s_0'],
+    #                                                     game._entities['c_0'],
+    #                                                     game._entities['cpu_0'])})
+    # quests.append(Quest(win_events=[win_quest1, win_quest2], fail_events=[]))
 
     game.quests = quests
 

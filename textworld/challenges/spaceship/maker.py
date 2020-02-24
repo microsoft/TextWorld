@@ -8,7 +8,7 @@ from textworld import g_rng
 from textworld.helpers import start
 from textworld.utils import make_temp_directory
 import textworld
-from textworld.generator.game import Event, Quest, GameOptions
+from textworld.generator.game import EventCondition, Quest, GameOptions
 from textworld.generator import World
 
 
@@ -1268,18 +1268,18 @@ def quest_design_2(game):
     quests = []
 
     # 1. Is the Player performing successful in the Sleeping Station
-    win_quest = Event(conditions={
+    win_quest = EventCondition(conditions={
         game.new_fact("at", game._entities['P'], game._entities['r_0'])
     })
     quests.append(Quest(win_events=[win_quest], fail_events=[], reward=0))
 
-    fail_quest = Event(conditions={
+    fail_quest = EventCondition(conditions={
         game.new_fact("event", game._entities['P'], game._entities['r_0']),
         game.new_fact("at", game._entities['P'], game._entities['r_1']),
         game.new_fact("open", game._entities['d_0']),
         game.new_fact("unread/e", game._entities['cpu_0']),
     })
-    win_quest = Event(conditions={
+    win_quest = EventCondition(conditions={
         game.new_fact("event", game._entities['P'], game._entities['r_0']),
         game.new_fact("at", game._entities['P'], game._entities['r_1']),
         game.new_fact("open", game._entities['d_0']),
@@ -1288,7 +1288,7 @@ def quest_design_2(game):
     quests.append(Quest(win_events=[win_quest], fail_events=[fail_quest]))
 
     # 2.
-    win_quest = Event(conditions={game.new_fact("worn", game._entities['l_0'])})
+    win_quest = EventCondition(conditions={game.new_fact("worn", game._entities['l_0'])})
     quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
     game.quests = quests
@@ -1300,14 +1300,14 @@ def quest_design(game):
     quests = []
 
     # 1. Player is in the Sleeping Station
-    win_quest = Event(conditions={game.new_fact("read/e", game._named_entities['laptop'])})
+    win_quest = EventCondition(conditions={game.new_fact("read/e", game._named_entities['laptop'])})
     quests.append(Quest(win_events=[win_quest], fail_events=[]))
-    tp = Event(conditions={game.new_fact("unread/e", game._named_entities['laptop'])})
+    tp = EventCondition(conditions={game.new_fact("unread/e", game._named_entities['laptop'])})
     fail_quest = tp
     quests.append(Quest(win_events=[], fail_events=[fail_quest]))
 
     # 2. Player is in US LAB to find Electronic Key 1
-    win_quest = Event(conditions={game.new_fact("in", game._named_entities['electronic key 1'], game._entities['I'])})
+    win_quest = EventCondition(conditions={game.new_fact("in", game._named_entities['electronic key 1'], game._entities['I'])})
     quests.append(Quest(win_events=[win_quest], fail_events=[]))
 
     # # 3. Player is in Russian Module and take digital Key 1 and/or push the button

@@ -1,61 +1,61 @@
-# cloth
-type l : o {
-    predicates {            
-        worn(l);
-	    takenoff(l);
-        clean(l);
-	    dirty(l);
-    	}
+# # cloth
+# type l : o {
+#     predicates {            
+#         worn(l);
+# 	    takenoff(l);
+#         clean(l);
+# 	    dirty(l);
+#     	}
 
-    rules {
-        wear/l    :: in(l, I) & takenoff(l) -> worn(l);
-        takeoff/l :: worn(l) -> in(l, I) & takenoff(l);
+#     rules {
+#         wear/l    :: in(l, I) & takenoff(l) -> worn(l);
+#         takeoff/l :: worn(l) -> in(l, I) & takenoff(l);
 
-        wash/l    :: $at(l,r) & dirty(l) -> clean(l);
-        dirty/l   :: $worn(l,P) & clean(l) -> dirty(l);
-    	}
+#         wash/l    :: $at(l,r) & dirty(l) -> clean(l);
+#         dirty/l   :: $worn(l,P) & clean(l) -> dirty(l);
+#     	}
 
-    reverse_rules {
-        wear/l :: takeoff/l;
-        wash/l :: dirty/l;
-    	}
+#     reverse_rules {
+#         wear/l :: takeoff/l;
+#         wash/l :: dirty/l;
+#     	}
 
-    constraints {
-        l1 :: clean(l) & dirty(l) -> fail();
-        l2 :: worn(l) & takenoff(l) -> fail();
-    	}
+#     constraints {
+#         l1 :: clean(l) & dirty(l) -> fail();
+#         l2 :: worn(l) & takenoff(l) -> fail();
+#     	}
 
-    inform7 {
-        type {
-            kind :: "cloth-like";
-            definition :: "cloth-like are wearable. cloth-like can be either clean or dirty. cloth-like are usually clean. cloth-like can be either worn in or worn out. cloth-like are usually worn out.";                                          
-        }
+#     inform7 {
+#         type {
+#             kind :: "cloth-like";
+#             definition :: "cloth-like are wearable. cloth-like can be either clean or dirty. cloth-like are usually clean. cloth-like can be either worn in or worn out. cloth-like are usually worn out.";                                          
+#         }
 
-        predicates {
-            worn(l)    :: "The {l} is worn in";
-	        takenoff(l) :: "The {l} is worn out";            
-            clean(l)    :: "The {l} is clean";
-	        dirty(l)    :: "The {l} is dirty";            
-        }
+#         predicates {
+#             worn(l)    :: "The {l} is worn in";
+# 	        takenoff(l) :: "The {l} is worn out";            
+#             clean(l)    :: "The {l} is clean";
+# 	        dirty(l)    :: "The {l} is dirty";            
+#         }
 
-        commands {
-            wear/l :: "wear {l}" :: "_wearing the {l}";
-            takeoff/l :: "take off {l}" :: "taking off the {l}";
+#         commands {
+#             wear/l :: "wear {l}" :: "_wearing the {l}";
+#             takeoff/l :: "take off {l}" :: "taking off the {l}";
 
-            clean/l :: "clean {l}" :: "cleaning the {l}";
-	        dirty/l :: "dirty {l}" :: "dirtying the {l}";
-        }
+#             clean/l :: "clean {l}" :: "cleaning the {l}";
+# 	        dirty/l :: "dirty {l}" :: "dirtying the {l}";
+#         }
 
-        code :: """
-            Understand the command "wear" as something new. 
-            Understand "wear [something]" as _wearing. 
-            _wearing is an action applying to a thing.  
+#         code :: """
+#             Understand the command "wear" as something new. 
+#             Understand "wear [something]" as _wearing. 
+#             _wearing is an action applying to a thing.  
 
-            Carry out _wearing: 
-                if a cloth-like (called cl) is worn out:                     
-                    Now the cl is worn in;                                                                       
-                otherwise:
-                    Say "You have this cloth on.". 
-        """;
-    }
-}
+#             Carry out _wearing: 
+#                 if a cloth-like (called cl) is worn out:                     
+#                     Now the cl is worn in;                                                                       
+#                 otherwise:
+#                     Say "You have this cloth on.". 
+#         """;
+#     }
+# }

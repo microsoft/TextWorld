@@ -99,7 +99,12 @@ class Inform7Game:
     def gen_source_for_attributes(self, attributes: Iterable[Proposition]) -> str:
         source = ""
         for attr in attributes:
-            source_attr = self.gen_source_for_attribute(attr)
+            if attr.name.count('__') == 0:
+                attr_ = Proposition(name='is__' + attr.name, arguments=attr.arguments, verb='is', definition=attr.name)
+            else:
+                attr_ = attr
+
+            source_attr = self.gen_source_for_attribute(attr_)
             if source_attr:
                 source += source_attr + ".\n"
 
@@ -212,6 +217,9 @@ class Inform7Game:
 
     def _get_name_mapping(self, action):
         mapping = self.kb.rules[action.name].match(action)
+        for ph, var in mapping.items():
+            a = ph.name
+            b = self.entity_infos[var.name].name
         return {ph.name: self.entity_infos[var.name].name for ph, var in mapping.items()}
 
     def _get_entities_mapping(self, action):
@@ -374,27 +382,47 @@ class Inform7Game:
                     increase the score by {reward}; [Quest completed]
                     Now the quest{quest_id} completed is true;""")
 
+            win_template_state_action = textwrap.dedent("""
+                        else if {conditions}:
+                            After {actions}:
+                                increase the score by {reward}; [Quest completed]
+                                Now the quest{quest_id} completed is true;""")
+
             for fail_event in quest.fail_events:
                 if isinstance(fail_event, EventCondition):
                     param = fail_event.condition
                 if isinstance(fail_event, EventAction):
-                    param = [act for act in fail_event.actions][0]
+                    param = fail_event.actions[0]
 
                 conditions = self.gen_source_for_conditions(param.preconditions)
                 quest_ending_conditions += fail_template.format(conditions=conditions)
 
-            for win_event in quest.win_events:
-                if isinstance(win_event, EventCondition):
-                    conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
-                    quest_ending_conditions += win_template_state.format(conditions=conditions,
-                                                                         reward=quest.reward,
-                                                                         quest_id=quest_id)
+            if len(quest.win_events) < 2:
+                for win_event in quest.win_events:
+                    if isinstance(win_event, EventCondition):
+                        conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
+                        quest_ending_conditions += win_template_state.format(conditions=conditions,
+                                                                             reward=quest.reward,
+                                                                             quest_id=quest_id)
 
-                if isinstance(win_event, EventAction):
-                    conditions = self.gen_source_for_actions([act for act in win_event.actions])
-                    quest_ending_conditions += win_template_action.format(conditions=conditions,
-                                                                          reward=quest.reward,
-                                                                          quest_id=quest_id)
+                    if isinstance(win_event, EventAction):
+                        conditions = self.gen_source_for_actions(win_event.actions)
+                        quest_ending_conditions += win_template_action.format(conditions=conditions,
+                                                                              reward=quest.reward,
+                                                                              quest_id=quest_id)
+                    wining += 1
+            else:
+                for win_event in quest.win_events:
+                    if isinstance(win_event, EventCondition):
+                        conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
+
+                    if isinstance(win_event, EventAction):
+                        actions = self.gen_source_for_actions(win_event.actions)
+
+                quest_ending_conditions += win_template_state_action.format(conditions=conditions,
+                                                                            actions=actions,
+                                                                            reward=quest.reward,
+                                                                            quest_id=quest_id)
                 wining += 1
 
             quest_ending = """\

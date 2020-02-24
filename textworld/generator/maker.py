@@ -30,7 +30,7 @@ from textworld.envs.wrappers import Recorder
 
 def get_failing_constraints(state, kb: Optional[KnowledgeBase] = None):
     kb = kb or KnowledgeBase.default()
-    fail = Proposition("fail", [])
+    fail = Proposition("is__fail", [])
 
     failed_constraints = []
     constraints = state.all_applicable_actions(kb.constraints.values())
@@ -146,7 +146,7 @@ class WorldEntity:
             *entities: A list of entities as arguments to the new fact.
         """
         args = [entity.var for entity in entities]
-        self._facts.append(Proposition(name, args))
+        self._facts.append(Proposition(name='is__'+name, arguments=args, verb='is', definition=name))
 
     def remove_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
         args = [entity.var for entity in entities]
@@ -682,7 +682,7 @@ class GameMaker:
         self.build()
         return self.quests[-1]
 
-    def new_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+    def new_fact(self, name: str, *entities: List["WorldEntity"]) -> Proposition:
         """ Create new fact.
 
         Args:
@@ -692,7 +692,7 @@ class GameMaker:
         args = [entity.var for entity in entities]
         return Proposition(name, args)
 
-    def new_rule_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+    def new_rule_fact(self, name: str, *entities: List["WorldEntity"]) -> Union[None, Action]:
         """ Create new fact about a rule.
 
         Args:
@@ -704,8 +704,7 @@ class GameMaker:
             new_ph = []
             for pred in conditions:
                 new_var = [var for ph in pred.parameters for var in args if ph.type == var.type]
-                new_ph.append(Proposition(pred.name, new_var))
-
+                new_ph.append(Proposition(name=pred.name, arguments=new_var, verb=pred.verb, definition=pred.definition))
             return new_ph
 
         args = [entity.var for entity in entities]

@@ -69,32 +69,6 @@ def gen_commands_from_actions(actions: Iterable[Action], kb: Optional[KnowledgeB
     return commands
 
 
-def set_parameters(output: dict, acts: Iterable[Proposition], verbs: Iterable[dict]):
-    def tense(val):
-            if val == 1:
-                return 'will'
-            elif val == 0:
-                return 'is'
-            elif val == -1:
-                return 'was'
-            elif val == -2:
-                return 'has been'
-            elif val == -3:
-                return 'had been'
-
-    if not verbs:
-        return output
-
-    for prop in acts:
-        if prop.name in verbs.keys():
-            output['name'].append(prop.name)
-            [output['argument'].append(v) for v in prop.arguments]
-            output['verb_val'].append(verbs[prop.name])
-            output['verb_def'].append(tense(verbs[prop.name]))
-
-    return output
-
-
 class PropositionControl:
     """
     Controlling the proposition's appearance within the game.
@@ -114,31 +88,38 @@ class PropositionControl:
         self.traceable_propositions, self.addon = self.set_events()
 
     def set_events(self):
-        state_event, temp_event = [], []
-        for prop in self.propositions:
-            variables = sorted(set([v for v in prop.arguments]))
-            temp_event.append(Proposition("event", arguments=variables))
+        variables = sorted(set([v for c in self.propositions for v in c.arguments]))
+        event = Proposition("event", arguments=variables)
 
-            if prop.name in self.verbs.keys():
-                definition = prop.name
-                verb = self.verbs[prop.name]
-                state_event.append(Proposition("event", arguments=variables, definition=definition, verb=verb))
-        return state_event, temp_event
+        if self.verbs:
+            state_event = [Proposition(self.verbs[prop.definition].replace(' ', '_') + '__' + prop.definition,
+                                       arguments=prop.arguments, definition=prop.definition,
+                                       verb=self.verbs[prop.definition])
+                           for prop in self.propositions if prop.definition in self.verbs.keys()]
+        else:
+            state_event = []
 
-    def set_activation_parameters(self, prop: Proposition):
-        if prop.name == 'event':
-            if not prop.activate[0]:
+        return state_event, event
+
+    @classmethod
+    def add_propositions(cls, props: Iterable[Proposition]) -> Iterable[Proposition]:
+        for prop in props:
+            if not prop.name.startswith("is__"):
                 prop.activate[0] = True
 
-            if prop.verb == 'has been':
+            if prop.verb == "has been":
                 prop.activate[1] = 1
 
-    def set_activated(self, prop: Proposition):
+        return props
+
+    @classmethod
+    def set_activated(cls, prop: Proposition):
         if prop.activate[0] and not prop.activate[1]:
             prop.activate[1] = 1
 
-    def remove(self, prop:Proposition, state: State):
-        if prop.name != 'event' or prop.verb != 'was':
+    @classmethod
+    def remove(cls, prop: Proposition, state: State):
+        if prop.name.startswith('is__'):
             return
 
         if (prop.activate[0] and prop.activate[1]) and (prop in state.get_facts()):
@@ -162,7 +143,7 @@ class EventCondition:
     def __init__(self, actions: Iterable[Action] = (),
                  conditions: Iterable[Proposition] = (),
                  commands: Iterable[str] = (),
-                 verb_tense: dict = ()) -> None:
+                 output_verb_tense: dict = ()) -> None:
         """
         Args:
             actions: The actions to be performed to trigger this event.
@@ -219,7 +200,7 @@ class EventCondition:
 
         event = PropositionControl(conditions, self.verb_tense)
         traceable = event.traceable_propositions
-        condition = Action("trigger", preconditions=conditions, postconditions=list(conditions) + event.addon)
+        condition = Action("trigger", preconditions=conditions, postconditions=list(conditions) + [event.addon])
         return condition, traceable
 
     def __hash__(self) -> int:
@@ -243,7 +224,7 @@ class EventCondition:
         """
         actions = [Action.deserialize(d) for d in data["actions"]]
         condition = Action.deserialize(data["condition"])
-        event = cls(actions, condition.preconditions, data["commands"], data["verb_tense"])
+        event = cls(actions, condition.preconditions, data["commands"], data["output_verb_tense"])
         return event
 
     def serialize(self) -> Mapping:
@@ -256,7 +237,7 @@ class EventCondition:
         data["commands"] = self.commands
         data["actions"] = [action.serialize() for action in self.actions]
         data["condition"] = self.condition.serialize()
-        data["verb_tense"] = self.verb_tense
+        data["output_verb_tense"] = self.verb_tense
         return data
 
     def copy(self) -> "EventCondition":
@@ -265,9 +246,11 @@ class EventCondition:
 
 
 class EventAction:
-    def __init__(self, action: Iterable[Action] = (), precond_verb_tense: dict = (), postcond_verb_tense: dict = ()) -> None:
-        self.verb_tense_precond = precond_verb_tense
-        self.verb_tense_postcond = postcond_verb_tense
+    def __init__(self, action: Iterable[Action] = (),
+                 output_verb_tense_precond: dict = (),
+                 output_verb_tense_postcond: dict = ()) -> None:
+        self.verb_tense_precond = output_verb_tense_precond
+        self.verb_tense_postcond = output_verb_tense_postcond
         self.verb_tense = self.set_verbs()
         self.actions = list(action)
         self.traceable = self.set_actions()
@@ -288,9 +271,10 @@ class EventAction:
         return mergeDict(dict(self.verb_tense_precond), dict(self.verb_tense_postcond))
 
     def set_actions(self):
-
-        props = [p for p in self.actions[0].removed] + [p for p in self.actions[0].added] + \
-                [p for p in self.actions[0].preconditions if p.name == 'event']
+        props = []
+        for p in self.actions[0].all_propositions:
+            if p not in props:
+                props.append(p)
 
         event = PropositionControl(props, self.verb_tense)
         traceable = event.traceable_propositions
@@ -309,7 +293,7 @@ class EventAction:
                   `EventAction` object.
         """
         action = [Action.deserialize(d) for d in data["action"]]
-        event = cls(action, data["precond_verb_tense"], data["postcond_verb_tense"])
+        event = cls(action, data["output_verb_tense_precond"], data["output_verb_tense_postcond"])
         return event
 
     def serialize(self) -> Mapping:
@@ -319,8 +303,8 @@ class EventAction:
             `EventAction`'s data serialized to be JSON compatible.
         """
         return {"action": [action.serialize() for action in self.actions],
-                "precond_verb_tense": self.verb_tense_precond,
-                "postcond_verb_tense": self.verb_tense_postcond,
+                "output_verb_tense_precond": self.verb_tense_precond,
+                "output_verb_tense_postcond": self.verb_tense_postcond,
                 }
 
     def __hash__(self) -> int:
@@ -358,10 +342,8 @@ class Quest:
     """
 
     def __init__(self,
-                 # win_events: Iterable[Event] = (),
-                 # fail_events: Iterable[Event] = (),
-                 win_events: Iterable = (),
-                 fail_events: Iterable = (),
+                 win_events: Iterable[Union[EventCondition, EventAction]] = (),
+                 fail_events: Iterable[Union[EventCondition, EventAction]] = (),
                  reward: Optional[int] = None,
                  desc: Optional[str] = None,
                  commands: Iterable[str] = ()) -> None:
@@ -445,7 +427,7 @@ class Quest:
         """
         win_events = []
         for d in data["win_events"]:
-            if "precond_verb_tense" in d.keys():
+            if "output_verb_tense_precond" in d.keys():
                 win_events.append(EventAction.deserialize(d))
 
             if "condition" in d.keys():
@@ -453,7 +435,7 @@ class Quest:
 
         fail_events = []
         for d in data["fail_events"]:
-            if "precond_verb_tense" in d.keys():
+            if "output_verb_tense_precond" in d.keys():
                 fail_events.append(EventAction.deserialize(d))
 
             if "condition" in d.keys():
@@ -1090,13 +1072,30 @@ class GameProgression:
         """
         self.game = game
         self.state = game.world.state.copy()
-        self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
-                                                                     self.game.kb.types.constants_mapping))
+        self._valid_actions = self.valid_actions_gen()
         self.quest_progressions = []
         if track_quests:
             self.quest_progressions = [QuestProgression(quest, game.kb) for quest in game.quests]
             for quest_progression in self.quest_progressions:
                 quest_progression.update(action=None, state=self.state)
+
+    def valid_actions_gen(self):
+        potential_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
+                                                                   self.game.kb.types.constants_mapping))
+        a = []
+        for act in potential_actions:
+            k = []
+            for prop in [list(act.preconditions) + list(act.added)][0]:
+                if not prop.name.startswith('is__'):
+                    w = [p for p in self.state.get_facts() if not p.name.startswith('is__') and (p.name == prop.name)][0]
+                    k.append(w.activate[0] and (w.activate[1] == 1))
+                else:
+                    k.append(prop.activate[0] and (prop.activate[1] == 1))
+
+            if all(k):
+                a.append(act)
+
+        return a
 
     @property
     def done(self) -> bool:
@@ -1161,6 +1160,19 @@ class GameProgression:
         # Discard all "trigger" actions.
         return tuple(a for a in master_quest_tree.flatten() if a.name != "trigger")
 
+    def add_traceables(self):
+        for quest_progression in self.quest_progressions:
+            if quest_progression.quest.reward >= 0:
+                for win_event in quest_progression.win_events:
+                    if win_event.event.traceable:
+                        self.state.add_facts(PropositionControl.add_propositions(win_event.event.traceable))
+
+    def traceable_manager(self):
+        for prop in self.state.get_facts():
+            if not prop.name.startswith('is__'):
+                PropositionControl.set_activated(prop)
+                PropositionControl.remove(prop, self.state)
+
     def update(self, action: Action) -> None:
         """ Update the state of the game given the provided action.
 
@@ -1168,28 +1180,18 @@ class GameProgression:
             action: Action affecting the state of the game.
         """
         # Update world facts.
-        self.state.apply(action)
+        self.state.apply(self.state.state_action_valisate(action))
+        self.add_traceables()
 
-        # Get valid actions.
-        self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
-                                                                     self.game.kb.types.constants_mapping))
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:
             quest_progression.update(action, self.state)
 
-        for quest_progression in self.quest_progressions:
-            for win_event in quest_progression.win_events:
-                if quest_progression.quest.reward >= 0:
-                    if isinstance(win_event.event, EventCondition):
-                        self.state.apply(win_event.event.condition)
+        # Update world facts.
+        self.traceable_manager()
 
-                    if isinstance(win_event.event, EventAction):
-                        propos = [prop for prop in win_event.event.actions[0].added]
-                        self.state.apply(Action("trigger", preconditions=propos,
-                                                postconditions=propos + [win_event.event.event]))
-
-                    self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
-                                                                                 self.game.kb.types.constants_mapping))
+        # Get valid actions.
+        self._valid_actions = self.valid_actions_gen()
 
 
 class GameOptions:

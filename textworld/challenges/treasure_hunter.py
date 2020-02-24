@@ -30,7 +30,7 @@ import textworld
 from textworld.utils import uniquify
 from textworld.logic import Variable, Proposition
 from textworld.generator import World
-from textworld.generator.game import Quest, Event
+from textworld.generator.game import Quest, EventCondition
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
 
@@ -206,9 +206,9 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Add objects needed for the quest.
     world.state = chain.initial_state
-    event = Event(chain.actions)
+    event = EventCondition(chain.actions)
     quest = Quest(win_events=[event],
-                  fail_events=[Event(conditions={Proposition("in", [wrong_obj, world.inventory])})])
+                  fail_events=[EventCondition(conditions={Proposition("in", [wrong_obj, world.inventory])})])
 
     grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
     game = textworld.generator.make_game_with(world, [quest], grammar)

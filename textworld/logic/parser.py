@@ -117,33 +117,33 @@ class GameLogicParser(Parser):
             []
         )
 
+    def _predVT_(self, name):
+        self._constant(name[:name.find('__')].replace('_', ' '))
+
+    def _predDef_(self, name):
+        self._constant(name[name.find('__') + 2:])
+
     @tatsumasu('SignatureNode')
     def _signature_(self):  # noqa
+
         self._predName_()
+        if self.cst.count('__') == 0:
+            self.last_node = 'is__' + self.cst
         self.name_last_node('name')
+        self._predVT_(self.ast['name'])
+        self.name_last_node('verb')
+        self._predDef_(self.ast['name'])
+        self.name_last_node('definition')
         self._token('(')
-
-        with self._optional():
-            self._token('(')
-            self._name_()
-            self.name_last_node('verb')
-            self._token(',')
-            self._name_()
-            self.name_last_node('definition')
-            self._token(')')
-
-        with self._optional():
-            self._token(',')
 
         def sep2():
             self._token(',')
         def block2():
             self._name_()
         self._gather(block2, sep2)
-
         self.name_last_node('types')
-
         self._token(')')
+
         self.ast._define(
             ['name', 'types', 'verb', 'definition'],
             []
@@ -152,29 +152,23 @@ class GameLogicParser(Parser):
     @tatsumasu('PropositionNode')
     def _proposition_(self):  # noqa
         self._predName_()
+        if self.cst.count('__') == 0:
+            self.last_node = 'is__' + self.cst
         self.name_last_node('name')
+        self._predVT_(self.ast['name'])
+        self.name_last_node('verb')
+        self._predDef_(self.ast['name'])
+        self.name_last_node('definition')
         self._token('(')
-
-        with self._optional():
-            self._token('(')
-            self._name_()
-            self.name_last_node('verb')
-            self._token(',')
-            self._name_()
-            self.name_last_node('definition')
-            self._token(')')
-
-        with self._optional():
-            self._token(',')
 
         def sep2():
             self._token(',')
-
         def block2():
             self._variable_()
         self._gather(block2, sep2)
         self.name_last_node('arguments')
         self._token(')')
+
         self.ast._define(
             ['arguments', 'name', 'verb', 'definition'],
             []
@@ -235,31 +229,23 @@ class GameLogicParser(Parser):
     @tatsumasu('PredicateNode')
     def _predicate_(self):  # noqa
         self._predName_()
+        if self.cst.count('__') == 0:
+            self.last_node = 'is__' + self.cst
         self.name_last_node('name')
+        self._predVT_(self.ast['name'])
+        self.name_last_node('verb')
+        self._predDef_(self.ast['name'])
+        self.name_last_node('definition')
         self._token('(')
-
-        with self._optional():
-            self._token('(')
-            self._name_()
-            self.name_last_node('verb')
-            self._token(',')
-            self._name_()
-            self.name_last_node('definition')
-            self._token(')')
-
-        with self._optional():
-            self._token(',')
 
         def sep2():
             self._token(',')
-
         def block2():
             self._placeholder_()
         self._gather(block2, sep2)
-
         self.name_last_node('parameters')
-
         self._token(')')
+
         self.ast._define(
             ['name', 'parameters', 'verb', 'definition'],
             []

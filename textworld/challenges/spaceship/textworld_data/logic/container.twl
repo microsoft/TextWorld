@@ -1,15 +1,15 @@
 # container
 type c : t {
     predicates {
-        open(c);
+        open(c);       
         closed(c);
 
         in(o, c);        
     }
 
     rules {       
-        open/c    :: $at(P, r) & $at(s, r) & $on(c, s) & $event((vt, def), c) & closed(c) -> open(c);
-        close/c   :: $at(P, r) & $at(s, r) & $on(c, s) & open(c) -> closed(c);
+        open/c    :: $at(P, r) & $at(s, r) & $on(c, s) & $was__open(c) & closed(c) -> open(c);
+        close/c   :: $at(P, r) & $at(s, r) & $on(c, s) & $was__open(c) & open(c) -> closed(c);
 
         open/c1   :: $at(P, r) & $at(s, r) & $on(c, s) & closed(c) -> open(c);
         close/c1  :: $at(P, r) & $at(s, r) & $on(c, s) & open(c) -> closed(c);

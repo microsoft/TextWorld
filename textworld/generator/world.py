@@ -266,7 +266,7 @@ class World:
 
         # Handle door link facts.
         for fact in self.facts:
-            if fact.name != "link":
+            if fact.name != "is__link":
                 continue
 
             src = self._get_room(fact.arguments[0])
@@ -318,12 +318,14 @@ class World:
             obj = self._get_entity(fact.arguments[0])
             obj.add_related_fact(fact)
 
-            if fact.name == "match":
+            if fact.name == "is__match":
+            # if fact.name == "match":
                 other_obj = self._get_entity(fact.arguments[1])
                 obj.matching_entity_id = fact.arguments[1].name
                 other_obj.matching_entity_id = fact.arguments[0].name
 
-            if fact.name in ["in", "on", "at"]:
+            # if fact.name in ["in", "on", "at"]:
+            if fact.name in ["is__in", "is__on", "is__at"]:
                 holder = self._get_entity(fact.arguments[1])
                 holder.content.append(obj)
 
@@ -340,7 +342,7 @@ class World:
         return uniquify(facts)
 
     def get_visible_objects_in(self, obj: WorldObject) -> List[WorldObject]:
-        if "locked" in obj.properties or "closed" in obj.properties:
+        if "is__locked" in obj.properties or "is__closed" in obj.properties:
             return []
 
         objects = list(obj.content)
@@ -399,16 +401,16 @@ class World:
         lockable_objects = []
         for s in self.facts:
             # Look for containers and supporters to put stuff in/on them.
-            if s.name == "at" and s.arguments[0].type in ["c", "s"] and s.arguments[1].name == room.name:
+            if s.name == "is__at" and s.arguments[0].type in ["c", "s"] and s.arguments[1].name == room.name:
                 objects_holder.append(s.arguments[0])
 
             # Look for containers and doors without a matching key.
-            if s.name == "at" and s.arguments[0].type in ["c", "d"] and s.arguments[1].name == room.name:
+            if s.name == "is__at" and s.arguments[0].type in ["c", "d"] and s.arguments[1].name == room.name:
                 obj_propositions = [p.name for p in self.facts if s.arguments[0].name in p.names]
-                if "match" not in obj_propositions and s.arguments[0] not in lockable_objects:
+                if "is__match" not in obj_propositions and s.arguments[0] not in lockable_objects:
                     lockable_objects.append(s.arguments[0])
 
-                    if "locked" in obj_propositions or "closed" in obj_propositions:
+                    if "is__locked" in obj_propositions or "is__closed" in obj_propositions:
                         locked_or_closed_objects.append(s.arguments[0])
 
         object_id = 0
@@ -474,11 +476,11 @@ class World:
                 state.append(Proposition("at", [container, room]))
                 objects_holder.append(container)
 
-                container_state = rng.choice(["open", "closed", "locked"])
+                container_state = rng.choice(["is__open", "is__closed", "is__locked"])
                 state.append(Proposition(container_state, [container]))
 
                 lockable_objects.append(container)
-                if container_state in ["locked", "closed"]:
+                if container_state in ["is__locked", "is__closed"]:
                     locked_or_closed_objects.append(container)
 
             else:
@@ -517,16 +519,16 @@ class World:
         lockable_objects = []
         for s in self.facts:
             # Look for containers and supporters to put stuff in/on them.
-            if s.name == "at" and s.arguments[0].type in ["c", "s"] and s.arguments[1].name == room.name:
+            if s.name == "is__at" and s.arguments[0].type in ["c", "s"] and s.arguments[1].name == room.name:
                 objects_holder.append(s.arguments[0])
 
             # Look for containers and doors without a matching key.
-            if s.name == "at" and s.arguments[0].type in ["c", "d"] and s.arguments[1].name == room.name:
+            if s.name == "is__at" and s.arguments[0].type in ["c", "d"] and s.arguments[1].name == room.name:
                 obj_propositions = [p.name for p in self.facts if s.arguments[0].name in p.names]
-                if "match" not in obj_propositions and s.arguments[0] not in lockable_objects:
+                if "is__match" not in obj_propositions and s.arguments[0] not in lockable_objects:
                     lockable_objects.append(s.arguments[0])
 
-                    if "locked" in obj_propositions or "closed" in obj_propositions:
+                    if "is__locked" in obj_propositions or "is__closed" in obj_propositions:
                         locked_or_closed_objects.append(s.arguments[0])
 
         remaining_objects_id = list(range(len(objects)))
@@ -559,11 +561,11 @@ class World:
                 state.append(Proposition("at", [container, room]))
                 objects_holder.append(container)
 
-                container_state = rng.choice(["open", "closed", "locked"])
+                container_state = rng.choice(["is__open", "is__closed", "is__locked"])
                 state.append(Proposition(container_state, [container]))
 
                 lockable_objects.append(container)
-                if container_state in ["locked", "closed"]:
+                if container_state in ["is__locked", "is__closed"]:
                     locked_or_closed_objects.append(container)
 
             else:

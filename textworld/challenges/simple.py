@@ -29,7 +29,7 @@ import textworld
 from textworld.challenges import register
 
 from textworld import GameOptions
-from textworld.generator.game import Quest, Event
+from textworld.generator.game import Quest, EventCondition
 
 from textworld.utils import encode_seeds
 
@@ -257,28 +257,28 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         # 1. Opening the container.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("open", bedroom_key_holder)})
+                EventCondition(conditions={M.new_fact("open", bedroom_key_holder)})
             ])
         )
 
         # 2. Getting the key.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("in", bedroom_key, M.inventory)})
+                EventCondition(conditions={M.new_fact("in", bedroom_key, M.inventory)})
             ])
         )
 
         # 3. Unlocking the bedroom door.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("closed", bedroom_kitchen.door)})
+                EventCondition(conditions={M.new_fact("closed", bedroom_kitchen.door)})
             ])
         )
 
         # 4. Opening the bedroom door.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("open", bedroom_kitchen.door)})
+                EventCondition(conditions={M.new_fact("open", bedroom_kitchen.door)})
             ])
         )
 
@@ -286,7 +286,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         # Escaping out of the bedroom.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("at", M.player, kitchen)})
+                EventCondition(conditions={M.new_fact("at", M.player, kitchen)})
             ])
         )
 
@@ -295,7 +295,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         for door in doors_to_open:
             quests.append(
                 Quest(win_events=[
-                    Event(conditions={M.new_fact("open", door)})
+                    EventCondition(conditions={M.new_fact("open", door)})
                 ])
             )
 
@@ -304,7 +304,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         for room in rooms_to_visit:
             quests.append(
                 Quest(win_events=[
-                    Event(conditions={M.new_fact("at", M.player, room)})
+                    EventCondition(conditions={M.new_fact("at", M.player, room)})
                 ])
             )
 
@@ -312,7 +312,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         # Retrieving the food item.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("in", food, M.inventory)})
+                EventCondition(conditions={M.new_fact("in", food, M.inventory)})
             ])
         )
 
@@ -320,14 +320,14 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         # Putting the food on the stove.
         quests.append(
             Quest(win_events=[
-                Event(conditions={M.new_fact("on", food, stove)})
+                EventCondition(conditions={M.new_fact("on", food, stove)})
             ])
         )
 
     # 3. Determine the losing condition(s) of the game.
     quests.append(
         Quest(fail_events=[
-            Event(conditions={M.new_fact("eaten", food)})
+            EventCondition(conditions={M.new_fact("eaten", food)})
         ])
     )
 
