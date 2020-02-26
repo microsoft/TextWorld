@@ -21,7 +21,9 @@ References
    arXiv:1702.08360, 2017.
 """
 
+import os
 import argparse
+from os.path import join as pjoin
 from typing import Mapping, Optional
 
 import numpy as np
@@ -37,6 +39,9 @@ from textworld.generator.vtypes import get_new
 from textworld.utils import encode_seeds
 from textworld.generator.game import GameOptions
 from textworld.challenges import register
+
+
+KB_PATH = pjoin(os.path.dirname(__file__), "textworld_data")
 
 
 def build_argparser(parser=None):
@@ -84,6 +89,9 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
     """
     options = options or GameOptions()
 
+    # Load knowledge base specific to this challenge.
+    options.kb = KnowledgeBase.load(KB_PATH)
+
     level = settings["level"]
     if level < 1 or level > 30:
         raise ValueError("Expected level to be within [1-30].")
@@ -128,8 +136,6 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     Returns:
         Generated game.
     """
-    kb = KnowledgeBase.default()
-
     metadata = {}  # Collect infos for reproducibility.
     metadata["desc"] = "Treasure Hunter"
     metadata["mode"] = mode
@@ -168,18 +174,18 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     world.set_player_room(starting_room)
     # Add object the player has to pick up.
-    types_counts = kb.types.count(world.state)
-    obj_type = kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
+    types_counts = options.kb.types.count(world.state)
+    obj_type = options.kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
     var_id = get_new(obj_type, types_counts)
     right_obj = Variable(var_id, obj_type)
     world.add_fact(Proposition("in", [right_obj, world.inventory]))
 
     # Add containers and supporters to the world.
-    types_counts = kb.types.count(world.state)
+    types_counts = options.kb.types.count(world.state)
     objects = []
     distractor_types = uniquify(['c', 's']
-                                + kb.types.descendants('c')
-                                + kb.types.descendants('s'))
+                                + options.kb.types.descendants('c')
+                                + options.kb.types.descendants('s'))
     for i in range(n_distractors):
         obj_type = rng_objects.choice(distractor_types)
         var_id = get_new(obj_type, types_counts)  # This update the types_counts.
@@ -188,8 +194,8 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     world.populate_with(objects, rng=rng_objects)
 
     # Add object the player should not pick up.
-    types_counts = kb.types.count(world.state)
-    obj_type = kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
+    types_counts = options.kb.types.count(world.state)
+    obj_type = options.kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
     var_id = get_new(obj_type, types_counts)
     wrong_obj = Variable(var_id, obj_type)
     # Place it anywhere in the world.
@@ -197,7 +203,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Generate a quest that finishes by taking something (i.e. the right
     #  object since it's the only one in the inventory).
-    options.chaining.rules_per_depth = [kb.rules.get_matching("take.*")]
+    options.chaining.rules_per_depth = [options.kb.rules.get_matching("take.*")]
     options.chaining.backward = True
     options.chaining.rng = rng_quest
     # options.chaining.restricted_types = exceptions

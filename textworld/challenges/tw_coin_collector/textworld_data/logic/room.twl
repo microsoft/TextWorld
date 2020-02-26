@@ -1,0 +1,69 @@
+# room
+type r {
+    predicates {
+        at(P, r);
+        at(t, r);
+
+        north_of(r, r);
+        west_of(r, r);
+
+        free(r, r);
+
+        south_of(r, r') = north_of(r', r);
+        east_of(r, r') = west_of(r', r);
+    }
+
+    rules {
+        go/north :: at(P, r) & $north_of(r', r) & $free(r, r') & $free(r', r) -> at(P, r');
+        go/south :: at(P, r) & $south_of(r', r) & $free(r, r') & $free(r', r) -> at(P, r');
+        go/east  :: at(P, r) & $east_of(r', r) & $free(r, r') & $free(r', r) -> at(P, r');
+        go/west  :: at(P, r) & $west_of(r', r) & $free(r, r') & $free(r', r) -> at(P, r');
+    }
+
+    reverse_rules {
+        go/north :: go/south;
+        go/west :: go/east;
+    }
+
+    constraints {
+        r1 :: at(P, r) & at(P, r') -> fail();
+
+        # An exit direction can only lead to one room.
+        nav_rr1 :: north_of(r, r') & north_of(r'', r') -> fail();
+        nav_rr2 :: south_of(r, r') & south_of(r'', r') -> fail();
+        nav_rr3 :: east_of(r, r') & east_of(r'', r') -> fail();
+        nav_rr4 :: west_of(r, r') & west_of(r'', r') -> fail();
+
+        # Two rooms can only be connected once with each other.
+        nav_rrA :: north_of(r, r') & south_of(r, r') -> fail();
+        nav_rrB :: north_of(r, r') & west_of(r, r') -> fail();
+        nav_rrC :: north_of(r, r') & east_of(r, r') -> fail();
+        nav_rrD :: south_of(r, r') & west_of(r, r') -> fail();
+        nav_rrE :: south_of(r, r') & east_of(r, r') -> fail();
+        nav_rrF :: west_of(r, r')  & east_of(r, r') -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "room";
+        }
+
+        predicates {
+            at(P, r) :: "The player is in {r}";
+            at(t, r) :: "The {t} is in {r}";
+            free(r, r') :: "";  # No equivalent in Inform7.
+
+            north_of(r, r') :: "The {r} is mapped north of {r'}";
+            south_of(r, r') :: "The {r} is mapped south of {r'}";
+            east_of(r, r') :: "The {r} is mapped east of {r'}";
+            west_of(r, r') :: "The {r} is mapped west of {r'}";
+        }
+
+        commands {
+            go/north :: "go north" :: "going north";
+            go/south :: "go south" :: "going south";
+            go/east :: "go east" :: "going east";
+            go/west :: "go west" :: "going west";
+        }
+    }
+}

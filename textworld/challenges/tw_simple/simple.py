@@ -22,16 +22,23 @@ Here's the map of the house.
                Living Room       Garden
 
 """
+
+import os
 import argparse
+from os.path import join as pjoin
 from typing import Mapping, Optional
 
 import textworld
 from textworld.challenges import register
 
 from textworld import GameOptions
+from textworld.generator.data import KnowledgeBase
 from textworld.generator.game import Quest, Event
 
 from textworld.utils import encode_seeds
+
+
+KB_PATH = pjoin(os.path.dirname(__file__), "textworld_data")
 
 
 def build_argparser(parser=None):
@@ -49,7 +56,7 @@ def build_argparser(parser=None):
     return parser
 
 
-def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> textworld.Game:
+def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> textworld.Game:
     """ Make a simple game.
 
     Arguments:
@@ -71,6 +78,9 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
         * test : Whether this game should be drawn from the test
           distributions of games.
     """
+    # Load knowledge base specific to this challenge.
+    options.kb = KnowledgeBase.load(KB_PATH)
+
     metadata = {}  # Collect infos for reproducibility.
     metadata["desc"] = "Simple game"
     metadata["seeds"] = options.seeds
@@ -366,5 +376,5 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 # Register this simple game.
 register(name="tw-simple",
          desc="Generate simple challenge game",
-         make=make_game,
+         make=make,
          add_arguments=build_argparser)

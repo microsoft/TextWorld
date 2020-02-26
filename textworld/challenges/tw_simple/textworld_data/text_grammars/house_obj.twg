@@ -1,0 +1,301 @@
+#-------------------------
+#Object Names Grammar
+#-------------------------
+#all-purpose expandables
+ordinary_adj:ordinary;normal;typical;standard;usual
+adj_stripped:#simpleadj#
+simpleadj:good;bad;small;big;heavy;light;great;terrible;expensive;cheap
+number:0;1;2;3;4;5;6;7;8;9
+#Room Type
+#-------------------
+#list each type of room with a ; between each
+room_type:clean;cook;rest;work;storage
+#Player
+# These values are typically empty
+(P):#(P)_adj# | #(P)_noun#
+(P)_noun:None
+(P)_adj:None
+#Rooms:
+# Each roomType must have specific rooms
+#-------------------
+#Creating a room: first, take the name of the roomtype as listed under #room_type# (which we'll call X for now). create three symbols with this: X_(r), X_(r)_noun, and X_(r)_adj. X_(r) will always be composed of X_(r)_adj | x_(r)_noun. If you want to subdivide a roomtype into two or more variants, you can add _type1, _type2, etc at then end of the noun and adj symbols. make sure that these changes are also accounted for in the X_(r) token, see below for examples
+
+(r):#(r)_adj# | #(r)_noun#
+(r)_noun:washroom;bathroom;cupboard;pantry;basement;closet;kitchen;kitchenette
+(r)_adj:nondescript;plain
+clean_(r):#clean_(r)_adj_type_1# | #clean_(r)_noun_type_1#;#clean_(r)_adj_type_2# | #clean_(r)_noun_type_2#;#clean_(r)_adj_type_3# | #clean_(r)_noun_type_3# ; #clean_(r)_adj_type_4# | #clean_(r)_noun_type_4#
+#Cleaning Self
+clean_(r)_noun_type_1:washroom;bathroom;restroom
+clean_(r)_adj_type_1:spotless;clean;cramped
+#Cleaning stuff
+clean_(r)_noun_type_2:launderette;laundromat;laundry place
+clean_(r)_adj_type_2:spotless;steamy;misty;crowded;cramped;cheap
+#Arguably a room inside a room?
+clean_(r)_noun_type_3:shower
+clean_(r)_adj_type_3:spotless;steamy;misty;marbled
+#Just Saunas
+clean_(r)_noun_type_4:sauna;steam room
+clean_(r)_adj_type_4:spotless;steamy;misty;luxurious;damp
+storage_(r):#storage_(r)_adj# | #storage_(r)_noun#
+storage_(r)_noun:pantry;basement;closet;attic;garage;vault;cellar;spare room
+storage_(r)_adj:spacious;roomy;cramped;stuffed;messy;forgotten;ugly;gloomy
+cook_(r):#cook_(r)_adj# | #cook_(r)_noun#
+cook_(r)_noun:kitchen;kitchenette;canteen;cookery;scullery;cookhouse;dish-pit
+cook_(r)_adj:#hot-adj# hot;steamy;hot;sweaty;balmy
+rest_(r):#rest_(r)_adj_type_1# | #rest_(r)_noun_type_1#;#rest_(r)_adj_type_2# | #rest_(r)_noun_type_2#
+#sleep
+rest_(r)_noun_type_1:bedroom;bedchamber;chamber
+rest_(r)_adj_type_1:cozy;relaxing;pleasant;sleepy
+#fun with friends
+rest_(r)_noun_type_2:lounge;bar;parlor;salon;playroom;recreation zone
+rest_(r)_adj_type_2:fun;entertaining;exciting;well lit
+work_(r):#work_(r)_adj# | #work_(r)_noun#
+work_(r)_noun:office;studio;workshop;cubicle;study
+work_(r)_adj:silent;austere;serious;still
+
+hot-adj:super;unreasonably;absurdly;alarmingly;upsettingly
+#Containers
+# Each roomType must has specific containers
+#container descriptions work like room descriptions, except the (r) is a (c)
+#-------------------
+(c):#(c)_adj_noun#
+(c)_noun:chest;box;safe;locker
+(c)_adj:sturdy;nice;ugly
+(c)_adj_noun:#(c)_adj# | #(c)_noun#
+clean_(c):#clean_(c)_adj_type_1# | #clean_(c)_noun_type_1#;#clean_(c)_adj_type_2# | #clean_(c)_noun_type_2#
+#Type 1
+clean_(c)_noun_type_1:cabinet;basket;box;safe;trunk;case
+clean_(c)_adj_type_1:gross;stained;spotless;plain;
+#Type 2
+clean_(c)_noun_type_2:drawer;dresser;cabinet
+clean_(c)_adj_type_2:#wood_type#wood
+
+storage_(c):#storage_(c)_adj# | #storage_(c)_noun#
+storage_(c)_noun:toolbox;chest;safe;locker;trunk;coffer;cabinet;crate;case;suitcase;display
+storage_(c)_adj:rusty;neglected;brand new
+
+cook_(c):#cook_(c)_adj# | #cook_(c)_noun#
+cook_(c)_noun:fridge;refrigerator;freezer;chest;cabinet;case
+cook_(c)_adj:fancy;big;small
+
+rest_(c):#rest_(c)_adj# | #rest_(c)_noun#
+rest_(c)_noun:dresser;chest;basket;box;safe;locker;trunk;coffer;suitcase;portmanteau
+rest_(c)_adj:new;dusty;clean;amazing
+
+work_(c):#work_(c)_adj# | #work_(c)_noun#
+work_(c)_noun:cabinet;box;safe;locker;trunk;bureau;coffer;case;suitcase;toolbox;portmanteau;display
+work_(c)_adj:iron;rusty;ancient
+
+
+
+fruit:watermelon;melon;honeydew;strawberry;apple;pear;grape;kiwi;cantaloupe
+#Doors
+# Each roomType must has specific doors
+#-------------------
+#Etc Etc, but the (r) is now a (d), and you shouldn't create room specific types
+(d):#(d)_adj# | #(d)_noun#
+(d)_adj:#wood_type#;wooden;stone
+madeof:made of
+wood_type:oak;birch;maple;balsam;beech;mahogany;walnut;cedar;pine;
+(d)_noun:door;portal;gate;passageway;gateway;hatch
+#Supporters
+# Each roomType must has specific supporters
+#-------------------
+#Like containers, but with a (s)
+(s):#(s)_adj# | #(s)_noun#
+(s)_noun:shelf;table;pedestal;slab
+(s)_adj:#(o)_adj#
+clean_(s):#clean_(s)_adj# | #clean_(s)_noun#
+clean_(s)_noun:board;shelf;table;counter;rack;bench
+clean_(s)_adj:dusty;chipped;shiny
+storage_(s):#storage_(s)_adj# | #storage_(s)_noun#
+storage_(s)_noun:shelf;table;workbench;counter;rack;stand
+storage_(s)_adj:rusty;shoddy;splintery;rough
+cook_(s):#cook_(s)_adj# | #cook_(s)_noun#
+cook_(s)_noun:counter;board;shelf;table;rack;chair;plate;bowl;pan;platter;saucepan
+cook_(s)_adj:greasy;soaped down;filthy;messy
+rest_(s):#rest_(s)_adj# | #rest_(s)_noun#
+rest_(s)_noun:bed;couch;shelf;bookshelf;desk;bed stand;mantelpiece;mantle;bar;bench;stand;recliner
+rest_(s)_adj:comfy;warm;worn-out
+work_(s):#work_(s)_adj# | #work_(s)_noun#
+work_(s)_noun:stand;bookshelf;table;chair;shelf;desk;mantelpiece;mantle;stand;armchair
+work_(s)_adj:stern;solid;worn;gross
+
+# Objects
+# Each roomType must have specific objects
+#-------------------
+#(s) --> (o) Very useful to create multiple subtypes to avoid inappropriate or awkward adjective pairing
+(o):#(o)_adj# | #(o)_noun#
+(o)_noun:pencil;pen
+(o)_adj:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;simple;hefty;modest;austere
+#clean objects
+clean_(o):#clean_(o)_adj_type_1# | #clean_(o)_noun_type_1#;#clean_(o)_adj_type_2# | #clean_(o)_noun_type_2#;#clean_(o)_adj_type_3# | #clean_(o)_noun_type_3#;#bugobject#
+clean_(o)_noun:#clean_(o)_noun_type_1#;#clean_(o)_noun_type_2#;#clean_(o)_noun_type_3#
+clean_(o)_adj:#clean_(o)_adj_type_1#;#clean_(o)_adj_type_2#;#clean_(o)_adj_type_3#
+clean_(o)_adj_noun:#clean_(o)_adj_type_1# | #clean_(o)_noun_type_1#;#clean_(o)_adj_type_2# | #clean_(o)_noun_type_2#;#clean_(o)_adj_type_3# | #clean_(o)_noun_type_3#
+#appliances
+clean_(o)_noun_type_1:iron;mop;broom;vacuum
+clean_(o)_adj_type_1:new;old;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;decorated;austere
+#paperproducts
+clean_(o)_noun_type_2:paper towel;sponge
+clean_(o)_adj_type_2:new;old;used;dusty;torn;ripped;dirty;clean;large;small;fancy;plain;ornate;elegant;immaculate;simple;hefty;modest;decorated;austere;embroidered
+#non-disposable
+clean_(o)_noun_type_3:mat;towel;soap dispenser;mop;broom;shirt;sock;sponge
+clean_(o)_adj_type_3:new;old;used;dusty;clean;large;small;fancy;plain;dirty;elegant;tacky
+#storage objects
+storage_(o):#storage_(o)_adj_type_1# | #storage_(o)_noun_type_1#;#storage_(o)_adj_type_2# | #storage_(o)_noun_type_2#;#storage_(o)_adj_type_4# | #storage_(o)_noun_type_4#
+storage_(o)_noun:#storage_(o)_noun_type_1#;#storage_(o)_noun_type_2#;#storage_(o)_noun_type_4#
+storage_(o)_adj:#storage_(o)_adj_type_1#;#storage_(o)_adj_type_2#;#storage_(o)_adj_type_4#
+#clothing
+storage_(o)_noun_type_1:shirt;sock;shoe;glove;hat;scarf;cloak;top hat;pair of pants
+storage_(o)_adj_type_1:new;old;used;dusty;clean;large;small;fancy;plain;contemporary;modern;dirty;elegant;immaculate;simple;modest;gaudy;fashionable;tacky
+#appliances
+storage_(o)_noun_type_2:lightbulb;broom;cane;pair of headphones;lampshade;frisbee;golf #golf#
+storage_(o)_adj_type_2:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;modern;dirty;elegant;immaculate;simple;hefty;modest;off brand;useless;broken
+golf:club;tee;ball;
+#bugs
+bugobject:#storage_(o)_adj_type_4# | #storage_(o)_noun_type_4#
+storage_(o)_adj_type_4:wriggling;grotesque;repulsive;tiny
+storage_(o)_noun_type_4:worm;fly larva;bug;insect;nest of #bugs#;butterfly;shadfly
+bugs:bugs;insects;spiders;earwigs;beetles;grubs;ticks;kittens;puppies;shrimp;caterpillars;bats;toads;bunnies
+#cook objects
+cook_(o):#cook_(o)_adj_type_1# | #cook_(o)_noun_type_1#;#cook_(o)_adj_type_2# | #cook_(o)_noun_type_2#;#cook_(o)_adj_type_3# | #cook_(o)_noun_type_3#;#bugobject#
+#cook_(o)_adj_type_4# | #cook_(o)_noun_type_4#
+cook_(o)_noun:#cook_(o)_noun_type_1#;#cook_(o)_noun_type_2#;#cook_(o)_noun_type_3#
+#cook_(o)_noun_type_4#
+cook_(o)_adj:#cook_(o)_adj_type_1#;#cook_(o)_adj_type_2#;#cook_(o)_adj_type_3#
+#cook_(o)_adj_type_4#
+#utensil
+cook_(o)_noun_type_1:fork;knife;spoon;spork;teaspoon
+cook_(o)_adj_type_1:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;austere;plastic
+#cooking appliance
+cook_(o)_noun_type_2:napkin;whisk;ladle;blender;kettle;teapot
+cook_(o)_adj_type_2:new;old;used;dusty;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;austere;fancy;broken
+#vessel/plate
+cook_(o)_noun_type_3:mug;bowl;teacup;glass;coffee cup
+cook_(o)_adj_type_3:new;old;used;clean;large;small;fancy;plain;ornate;antique;contemporary;modern;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;chipped
+#rest objects
+rest_(o):#rest_(o)_adj_type_1# | #rest_(o)_noun_type_1#;#rest_(o)_adj_type_2# | #rest_(o)_noun_type_2#;#rest_(o)_adj_type_3# | #rest_(o)_noun_type_3#;#rest_(o)_adj_type_5# | #rest_(o)_noun_type_5#;#bugobject#
+rest_(o)_noun:#rest_(o)_noun_type_1#;#rest_(o)_noun_type_2#;#rest_(o)_noun_type_3#;#rest_(o)_noun_type_5#
+rest_(o)_adj:#rest_(o)_adj_type_1#;#rest_(o)_adj_type_2#;#rest_(o)_adj_type_3#;#rest_(o)_adj_type_5#
+#screen
+rest_(o)_noun_type_1:tv;laptop;tablet;monitor
+rest_(o)_adj_type_1:shiny;widescreen;shut off;flat-screen
+#electronic
+rest_(o)_noun_type_2:tv;controller;dvd;cd;lamp;laptop;synthesizer
+rest_(o)_adj_type_2:new;old;used;dusty;clean;large;small;fancy;plain;fancy
+#comfortable things
+rest_(o)_noun_type_3:pillow;blanket;plant;cushion
+rest_(o)_adj_type_3:cozy;comfy;comfortable;plush;frilly;nice;small;big;heavy;cute
+#weird book
+rest_(o)_adj_type_5:cool;gigantic;enormous;famous;old
+rest_(o)_noun_type_5:novel;book;manuscript;poem;textbook
+#work objects
+work_(o):#work_(o)_adj_type_1# | #work_(o)_noun_type_1#;#work_(o)_adj_type_2# | #work_(o)_noun_type_2#;#work_(o)_adj_type_3# | #work_(o)_noun_type_3#;#work_(o)_adj_type_4# | #work_(o)_noun_type_4#;#bugobject#
+work_(o)_noun:#work_(o)_noun_type_1#;#work_(o)_noun_type_2#;#work_(o)_noun_type_3#;#work_(o)_noun_type_4#
+work_(o)_adj:#work_(o)_adj_type_1#;#work_(o)_adj_type_2#;#work_(o)_adj_type_3#;#work_(o)_adj_type_4#
+#utensil
+work_(o)_noun_type_1:pen;pencil;staple;mug;disk;cd;book;backup calendar
+work_(o)_adj_type_1:new;old;used;dusty;clean;large;small;fancy;plain;ornate;dirty;elegant;immaculate;simple;hefty;modest;gaudy;decorated;austere
+#electronic
+work_(o)_noun_type_2:printer;mouse;keyboard;laptop;desktop computer;telephone
+work_(o)_adj_type_2:fancy;broken;operational;working
+#calendar
+work_(o)_noun_type_3:Cat Calendar;Comic Strip Calendar;Quote of the Day Calendar;Advent Calendar
+work_(o)_adj_type_3:heartwarming;hilarious;mind-expanding;out of date;typo-riddled
+#device for using another device
+work_(o)_noun_type_4:stapler;printer;mouse;keyboard;folder;binder
+work_(o)_adj_type_4:operational;broken;expensive;useless;outmoded
+
+
+
+
+# Food
+# Each roomType must have specific food
+#-------------------
+#The below should work as an expandable food pyramid. This can be made room specific.
+
+#Base food
+(f):#(f)_adj# | #(f)_noun#
+(f)_adj:#(f)_adj_good#;#(f)_adj_bad#;#(f)_adj_neutral#
+(f)_noun:#(f)_noun_fruit#;#(f)_noun_vegetable#;#(f)_noun_grain#;#(f)_noun_protein#;#(f)_noun_dairy#;#candy#
+(f)_noun_fruit:#fruit#;apple;banana;grape;coconut;pear;durian;#candy#;#berry#berry;berry
+(f)_noun_vegetable:broccoli;carrot;cucumber;onion;garlic clove;potato;cabbage;cauliflower;pizza;salad
+(f)_noun_grain:loaf of bread;sandwich
+(f)_noun_protein:;legume;cashew;peanut;burger
+(f)_noun_dairy:stick of butter;fondue
+(f)_adj_good:fresh;maturing;soft;chilled;organic
+(f)_adj_bad:aging;half-eaten;rotting
+(f)_adj_neutral:frozen;large;small;massive;tiny;hefty;sizable;dried;dry;pureed
+berry:straw;blue;rasp;black;elder;boysen;lingon;huckle;logan;cran;goji;goose
+
+#Clean food
+#----------
+
+clean_(f):#(f)#
+
+#Storage food
+#------------
+
+storage_(f):#(f)#
+
+#Cook food
+#---------
+
+cook_(f):#(f)#
+
+#Rest food
+#---------
+
+rest_(f):#(f)#
+
+#Work food
+#---------
+
+work_(f):#(f)#
+
+
+candy:chocolate bar;gummy bear;candy bar;licorice strip;cookie
+# Key
+# Each roomType must have specific keys
+#-------------------
+(k):#(k)_adj# | #(k)_noun#
+(k)_adj:iron;brass;metal;rusty;steel;iron;aluminum;copper
+(k)_noun:key;keycard;latchkey;passkey
+#Object Descriptor Functions
+#---------------------------
+(P)_desc:It's you.
+(c)_desc:The (name) looks strong, and impossible to #force_open#.
+force_open:break;crack;destroy
+(s)_desc:The (name) is #supp_stable#.
+supp_stable:stable;wobbly;unstable;balanced;durable;reliable;solid;undependable;solidly built;an unstable piece of #garbage#;shaky
+garbage:garbage;trash;junk
+(o)_desc:The (name) is #obj_what#.;The (name) #looks_seems# #out_in_place# here
+obj_what:unremarkable;clean;dirty;modern;antiquated;well-used;brand new;expensive looking;cheap looking
+looks_seems:looks;seems;appears;appears to be;would seem to be
+out_in_place:out of place;to fit in;well matched to everything else
+restaurant:Burger#place#
+place:town;village;hamlet;burg;ville;City
+(f)_desc:The (name) looks #food_what#.;that's a (name-adj) (name-n)!;You couldn't pay me to eat that (name-adj) thing.
+food_what:appetizing;delicious;tasty;appealing;delectable;heavenly;inviting;savory;tantalizing;tempting
+(k)_desc:The (name) is cold to the touch;The (name) is #key_weight#.;The metal of the (name) is #key_metal#.;The (name) looks useful
+key_weight:heavy;light;weighty;surprisingly heavy;heavier than it looks
+key_metal:antiqued;brushed;hammered;polished;satin;rusty
+(d)_desc:The (name) looks #door_what_is#.;it's a #door_what_is# (name-n);it is what it is, a (name)
+door_what_is:imposing;sturdy;well-built;durable;robust;rugged;hefty;commanding;grand;noble;ominous;towering;manageable;solid;stuffy
+#State descriptors
+#-----------------
+openable_desc:[if open]It is open.[else if closed]It is closed.[otherwise]It is locked.[end if];[if open]You can see inside it.[else if closed]You can't see inside it because the lid's in your way.[otherwise]There is a lock on it.[end if]
+on_desc:On the (name), is [a list of things on the (obj)].;You can see [list of things on the (obj)] on the (name);this (name) has the following upon it, [list of things on the (obj)];you gaze in terror at the [list of things on the (obj)] that lie upon this very (name)!; "now why" you think, "am I looking at [list of things on the (obj)] on this (name)?"
+#Key Match Adjectives
+#These adjectives CANNOT be used elsewhere!
+#----------------
+letter:A;B;C;D;E;F;G;H;I;J;K;L;M;N;O;P;Q;R;S;T;U;V;W;X;Y;Z
+clearancelevel:type #number#;type #letter#;#brand#;#brand#;#brand#;#shape#;#shape#;#shape#;#smell# scented;
+brand:#brandname# style;#brandname# limited edition;#brandname#
+brandname:Microsoft;American;Canadian;Henderson's;TextWorld
+shape:rectangular;cuboid;spherical;formless;non-euclidean
+colour:red;blue;chartreuse;purple;violet;orange;yellow;green;brown;teal;cyan
+smell:vanilla;lavender;cake;fudge;fresh laundry;soap
+(k<->d)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(d)_adj# | #clearancelevel# #(d)_noun#; #colour# | #(k)_noun# <-> #colour# | #(d)_noun#
+(k<->c)_match:#(k)_adj# | #clearancelevel# #(k)_noun# <-> #(c)_adj# | #clearancelevel# #(c)_noun#; #colour# | #(k)_noun# <-> #colour# | #(c)_noun#

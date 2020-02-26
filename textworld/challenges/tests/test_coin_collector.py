@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 import textworld
-from textworld.challenges.coin_collector import make
+from textworld.challenges import coin_collector
 
 
 def test_making_coin_collector():
@@ -18,7 +18,7 @@ def test_making_coin_collector():
         options = textworld.GameOptions()
         options.seeds = 1234
 
-        settings = {"level": level, "force_entity_numbering": True}
-        game = make(settings, options)
+        settings = {"level": level}
+        game = coin_collector.make(settings, options)
         assert len(game.quests[0].commands) == expected[level]["quest_length"]
         assert len(game.world.rooms) == expected[level]["nb_rooms"]

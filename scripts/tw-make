@@ -67,7 +67,17 @@ def parse_args():
     verbosity_group.add_argument("--silent", action="store_true")
     verbosity_group.add_argument("-v", "--verbose", action="store_true")
 
-    cfg_group = general_parser.add_argument_group('Grammar settings')
+    parser = argparse.ArgumentParser(parents=[general_parser])
+    subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
+
+    custom_parser = subparsers.add_parser("custom", parents=[general_parser],
+                                          help='Make a custom game.')
+    custom_parser.add_argument("--world-size", type=int, default=5, metavar="SIZE",
+                               help="Nb. of rooms in the world.")
+    custom_parser.add_argument("--nb-objects", type=int, default=10, metavar="NB",
+                               help="Minimum nb. of objects in the world.")
+
+    cfg_group = custom_parser.add_argument_group('Grammar settings')
     cfg_group.add_argument("--theme", default="house",
                            help="Theme to use for generating the text. Default: %(default)s")
     cfg_group.add_argument("--include-adj", action="store_true",
@@ -83,16 +93,6 @@ def parse_args():
     cfg_group.add_argument("--entity-numbering", action="store_true",
                            help="Append a number after an entity name if there is not enough"
                                 " variation for it (e.g. 'red apple 2').")
-
-    parser = argparse.ArgumentParser(parents=[general_parser])
-    subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
-
-    custom_parser = subparsers.add_parser("custom", parents=[general_parser],
-                                          help='Make a custom game.')
-    custom_parser.add_argument("--world-size", type=int, default=5, metavar="SIZE",
-                               help="Nb. of rooms in the world.")
-    custom_parser.add_argument("--nb-objects", type=int, default=10, metavar="NB",
-                               help="Minimum nb. of objects in the world.")
 
     quest_group = custom_parser.add_argument_group('Quest settings')
     quest_group.add_argument("--nb-parallel-quests", type=int, default=1,
@@ -156,13 +156,6 @@ if __name__ == "__main__":
     options.path = pjoin(os.path.abspath(dirname), basename)
     options.file_ext = "." + args.format
     options.force_recompile = args.force
-    options.grammar.theme = args.theme
-    options.grammar.include_adj = args.include_adj
-    options.grammar.only_last_action = args.only_last_action
-    options.grammar.blend_instructions = args.blend_instructions
-    options.grammar.blend_descriptions = args.blend_descriptions
-    options.grammar.ambiguous_instructions = args.ambiguous_instructions
-    options.grammar.allowed_variables_numbering = args.entity_numbering
 
     if args.list:
         exit_listing_challenges()
@@ -177,6 +170,14 @@ if __name__ == "__main__":
         options.chaining.max_breadth = args.quest_max_breadth
         options.chaining.max_depth = args.quest_max_depth
         options.chaining.max_length = args.quest_max_length
+
+        options.grammar.theme = args.theme
+        options.grammar.include_adj = args.include_adj
+        options.grammar.only_last_action = args.only_last_action
+        options.grammar.blend_instructions = args.blend_instructions
+        options.grammar.blend_descriptions = args.blend_descriptions
+        options.grammar.ambiguous_instructions = args.ambiguous_instructions
+        options.grammar.allowed_variables_numbering = args.entity_numbering
 
         if args.quest_length:
             options.chaining.min_length = args.quest_length

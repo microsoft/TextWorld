@@ -1,0 +1,451 @@
+#-------------------------
+#Room Descriptor Grammar
+#-------------------------
+
+# Inform7 snippets
+#-----------------
+#Shouldn't need to be messed with. These are shortcuts for when you need to use i7 code. Probably a bad idea to include symbols or tokens inside these
+i7_closed/open:[if (obj) is open]an open[otherwise]a closed[end if]
+i7_list_in:[a list of things in the (obj)]
+i7_list_on:[a list of things on the (obj)]
+i7_empty:[if (obj) contains nothing]an empty[otherwise]a[end if]
+inform7:[if (obj) is locked]a locked[else if (obj) is open]an open[otherwise]a closed[end if]
+inform7A:[if (obj) is locked]A locked[else if (obj) is open]An open[otherwise]A closed[end if]
+inform7noa:[if (obj) is locked]a locked[else if (obj) is open]an open[otherwise]a closed[end if]
+inform7noun:[if (obj) is locked]locked[else if (obj) is open]open[otherwise]closed[end if]
+inform7nounnoa:[if (obj) is locked]locked[else if (obj) is open]open[otherwise]closed[end if]
+
+#Room Intro#
+#----------
+#Text for introducing the room. ex: "Greetings, you are now in the hot kitchen"
+# dec:[if unvisited]#GREETING!# #dec_type##suffix_(r)#[otherwise]#revisit#[end if];[if unvisited]#dec_type##suffix_(r)#[otherwise]#revisit#[end if]
+dec:#dec_type##suffix_(r)#
+
+### First time in room ###
+dec_type:#reg-0#;#normal-0#;#difficult-0#;#moredifficult-0#;#playful-0#
+reg-0:#04#;#05#;#06#
+normal-0:#07#
+difficult-0:#016#
+moredifficult-0:#017#
+playful-0:#01#;#02#;#03#;#08#;#09#;#010#;#011#;#012#;#013#;#014#;#015#;#018#;#019#;#020#;#021#;#022#;#023#;#024#;#025#;#026#;#027#;#028#
+
+### Revisiting room ###
+revisit:You have re-entered the (name).;You re-enter the (name). You're so confused, you need to be reminded what is in the room, even though you were just here seconds ago.;What, you thought if you went somewhere and came back this place would stop being the (name)?;Ah, the (name). You have lots of great memories of this place. Fresh memories. You were just here a second ago.;Well here you are, back in the (name).;Just when you thought you'd never have to see the (name) again, you walk right back into it.;Welcome back to the (name).
+
+#Room Intro Templates
+#-------------------
+
+01:I am sorry to announce that you are now in the (name)
+02:Ah, the (name-n). This is some kind of (name-n), really great (name-adj) vibes in this place, a wonderful (name-adj) atmosphere. And now, well, you're in it
+03:Okay, so you're in a (name-n), cool, but is it (name-adj)? You better believe it is
+04:#dec_find-yourself# in a (name);#dec_guess-what# (name)
+05:Well, here we are in #dec_a_the# (name)
+06:You're now in #dec_a_the# (name)
+07:You've entered a (name);You've just #dec_walked_into# a (name)
+08:This might come as a shock to you, but you've just #dec_entered# a (name)
+09:I am #announce_mood# to announce that you are now in the (name)
+010:Ah, the (name-n). This is some kind of (name-n), really great (name-adj) vibes in this place, a wonderful (name-adj) atmosphere
+011:You have #dec_entered# the most (name-adj) of all possible (name-n)s
+012:Of every (name-n) you could have #dec_walked_into#, you had to #dec_walk_into# a (name-adj) one
+013:You have #dec_entered# a (name-n). Not the (name-n) you'd expect. No, this is a (name)
+014:You are in a (name-n). It seems to be pretty (name-adj) here
+015:You #dec_what# in a (name-adj) kind of place. That is to say, you're in a (name-n)
+016:#dec_find-yourself# in a (name-n). A (name-adj) one
+017:#dec_find-yourself# in a (name-n). A (name-adj) kind of place
+018:#017#
+019:You've #dec_entered# a (name-adj) room. Your mind races to think of what kind of room would be (name-adj). And then it hits you. Of course. You're in the (name)
+020:If you're wondering why everything seems so (name-adj) all of a sudden, it's because you've just #dec_walked_into# the (name)
+021:Fancy seeing you here. Here, by the way, being the (name);I never took you for the sort of person who would show up in a (name), but I guess I was wrong
+022:This is going to sound unbelievable, but you've just entered a (name);You're not going to believe this, but you've just entered a (name)
+023:You make a grand eccentric entrance into a (name);You make another one of your grand eccentric entrances into a (name)
+024:Look at you, bigshot, walking into a (name) like it isn't some huge deal
+025:Look around you. Take it all in. It's not every day someone gets to be in a (name)
+026:You've seen better (name-n)s, but at least this one seems pretty (name-adj);I just think it's awesome that you're in a (name) now;I just think it's great that you've just entered a (name)
+027:A #signquality# #sign# tells you that you are now in the (name);Look at that #sign#! What does it say? It says Welcome to the (name)? Well that's cool
+028:This just in- You, in the (name);Welcome to the (name);Wow! You're in a (name);Here we are in the (name);You've entered a (name);This (name-n) you have just entered is definitely (name-adj)
+#Expandables for Room Symbols
+#----------
+
+GREETING!:GREETING!;GREETINGS!;HELLO!;ALRIGHT THEN!
+dec_entered:entered;walked into;fallen into;moved into;stumbled into;come into
+dec_find-yourself:You #dec_what#
+dec_guess-what:#dec_well-guess#, you are in #dec_a_the# place we're calling #dec_a_the#
+dec_well-guess:Guess what;Well how about that;Well I'll be
+dec_what:are;find yourself;arrive
+dec_a_the:a;the
+dec_in_at:in;at
+dec_walk_into:walk into;show up in;saunter into;come round
+dec_walked_into:walked into;shown up in;sauntered into
+announce_mood:sorry;pleased;excited;stoked;so happy;honoured;required;obligated
+signquality:decrepit;rusty;laminated;crooked;well framed
+sign:sign;placard;notice;signboard;board
+#Description Separators
+#-------
+#Used to separate the description of different object types
+
+#First
+#first:First, you look for (next object type);First, you scan the room for (next object type);You first scan the room for (next object type)
+#Middle
+#middle:After that, you look for (next object type);Once you've ascertained the amount of (previous object type), you start looking for (next object type);
+#Last
+#last:and lastly, you check for (next object type)
+
+#Container Descriptions
+#----------------------
+#Rules for Container Descriptions
+#Good idea to subdivide these into difficulty levels
+#room_desc_(c): generates all container descriptions
+#containerdescription: contains all physical exterior descriptions of containers
+#room_desc_(c)_1_name: describes the container as an adj+noun
+#room_dec_(c)_1_noun: describes the container as a noun
+#room_desc_(c)_content: decides if we append a description of the container's contents depending on if the container is open or closed
+#opencontainer:what is appended if the container is open
+#room_desc_(c)_2_adj: adds an adjective and a list of contents (creates doubled adjectives?)
+#room_desc_(c)_2: list of contents without an adjective
+
+room_desc_(c):#containerdescription##room_desc_(c)_content#
+#special_container#.
+containerdescription:#room_desc_(c)_1_name#;#room_desc_(c)_1_noun#
+room_desc_(c)_content:[if (obj) is open and there is something in the (obj)] #opencontainer##suffix#[end if][if (obj) is open and the (obj) contains nothing] #emptyreaction#[end if]
+opencontainer:The (name) contains #i7_list_in#
+#room_desc_(c)_2_adj#;#room_desc_(c)_2#
+emptyreaction:The (name-n) is empty, what a horrible day!;The (name-n) is empty! What a waste of a day!;The (name-n) is empty! This is the worst thing that could possibly happen, ever!;Empty! What kind of nightmare TextWorld is this?;What a letdown! The (name-n) is empty!
+room_desc_(c)_1_name:#reg-a#;#normal-a#;#difficult-a#;#moredifficult-a#;#playful-a#
+
+reg-a:#a1#;#a2#
+normal-a:#a3#;#a4#;#a5#
+difficult-a:#a6#
+moredifficult-a:#reg-a#
+playful-a:#reg-a#
+
+room_desc_(c)_1_noun:#reg-b#;#normal-b#;#difficult-b#;#moredifficult-b#;#playful-b#
+
+reg-b:#b1#;#b2#
+normal-b:#b3#;#b4#;#b5#
+difficult-b:#reg-b#
+moredifficult-b:#reg-b#
+playful-b:#reg-b#
+
+room_desc_(c)_2_adj:#c1#;#c2#;#c3#;#c4#;#c5#;#c6#;#c7#;#c8#;#c9#
+
+room_desc_(c)_2:#d0#;#d1#;#d2#;#d3#;#d4#
+
+room_desc_(c)_multi_noun:#e1#
+room_desc_(c)_multi_open_noun:#f1#;#f2#;#f3#;#f4#;#f5#;#f6#
+
+room_desc_(c)_multi_adj:#g1#
+room_desc_(c)_multi_open_adj:#h1#;#h2#;#h3#;#h4#
+
+
+
+#Container Description Templates
+#-----------------------------
+
+# A #
+
+a1:#how_see# #inform7# (name).;#a6#
+a2:#how_see# #inform7# #name_var# #here_alt#.;#a6#
+a3:#inform7A# #name_var# is #here_alt#.;#a6#
+a4:#a1#;#a6#
+a5:#a2#;#a6#
+a6:#prefix# (name)#suffix#
+
+# B #
+
+b1:#how_see# #inform7# (name-n).;#b5#
+b2:#how_see# #inform7# (name-n) #here_alt#.;#b5#
+b3:#inform7A# (name-n) is #here_alt#.;#b5#
+b4:#b1#;#b5#
+b5:#prefix# (name-n)#suffix#
+
+# C #
+
+c1:#it_is# (name-adj), and #contains# #i7_list_in#.
+c2:#it_is# (name-adj). Also, there #listwithis# in it.
+c3:#c1#
+c4:#ContentsC-# [list of things in the (obj)].
+c5:there [is|are] [a list of things in the (obj)] in this silly (name-adj) thing.
+c6:#c9#
+c7:#c9#
+c8:Let's see what's inside - #i7_list_in#.
+c9:#it# #reminds_you# the containers #ofyouryouth#. Oh, how they also contained #i7_list_in#.
+
+# D #
+d0:the (name) contains #i7_list_in#.
+d1:It #contains# #i7_list_in#.;There is #i7_list_in# in it.
+d2:There #listwithis# #foundin# it.
+d3:You can see #i7_list_in# in the (name-n).
+d4:In it, you can see #i7_list_in#.
+
+# E #
+
+e1:[if (obj) is open]#room_desc_(c)_multi_open_noun#.[else if (obj) is locked]The (name-n) is locked.[otherwise]The (name-n) is closed.[end if]
+
+# F #
+
+f1:The (name-n) #contains# #i7_list_in#
+f2:There #listwithis# #foundin# the (name-n)
+f3:You can see #i7_list_in# in the (name-n)
+f4:#f5#;#f6#
+f5:#f6#
+f6:The (name-n) #reminds_you# the containers #ofyouryouth#. Oh, how they also contained #i7_list_in#
+
+# G #
+
+g1:[if (obj) is open]#room_desc_(c)_multi_open_adj#.[else if (obj) is locked]The (name-adj) one is locked.[otherwise]The (name-adj) one is closed.[end if]
+
+# H #
+
+h1:The (name-adj) one #contains# #i7_list_in#
+h2:There #i7_list_in# #foundin# the (name-adj) one
+h3:You can see #i7_list_in# in the (name)
+h4:In the (name-adj) one, you can see #i7_list_in#
+
+#Expandables for Container Symbols
+#---------------------------------
+
+it:It;Something about it
+reminds_you:reminds you of;looks like;floods your mind with memories of;is reminiscent of;is just like
+ofyouryouth:of your youth;that you knew in your youth;that you knew so long ago;that you knew so long ago, in your youth
+contains:contains;has;is filled with;reveals inside it;holds;shelters;offers you;reveals to you
+foundin:in;found in
+it_is:It is;You can see that it is;Upon examination, you see that it is
+name_var:(name);(name-n), which looks (name-adj),;(name-adj) looking (name-n)
+contained:contained;held;had;had in it;revealed;concealed;sheltered;offered you;revealed to you;guarded;protected
+inform7:[if (obj) is locked]a locked[else if (obj) is open]an opened[otherwise]a closed[end if]
+inform7noa:[if (obj) is locked]a locked[else if (obj) is open]an opened[otherwise]a closed[end if]
+inform7noun:[if (obj) is locked]locked[else if (obj) is open]opened[otherwise]closed[end if]
+inform7nounnoa:[if (obj) is locked]locked[else if (obj) is open]opened[otherwise]closed[end if]
+listwithis: [is-are a list of things in the (obj)]
+lookthere:Look over there;Wow! look at that
+ContentsC-:Contents-;Contained within-;Inside are the following-;Inventory is as follows-;Here's what's inside
+
+#Supporter Descriptions
+#----------------------
+#Similar to Container descriptions, but without open/close or lock/unlock
+#room_desc_(s): hub
+#room_desc_(s)_1_noun : description of supporter without adjective. Paired with--> room_desc_(s)_2_adj
+#room_desc_(s)_1_name : same as above, but with an adjective
+#room_desc_(s)_2_adj : adjective for supporter plus a list of things on it
+#room_desc_(s)_2:
+
+room_desc_(s):#room_desc_(s)_1_noun# #room_desc_(s)_2_adj#;#room_desc_(s)_1_name# #room_desc_(s)_2#
+
+room_desc_(s)_1_noun:#prefix# (name-n)#suffix_(s)_mid#
+
+room_desc_(s)_1_name:#prefix# (name)#suffix_(s)_mid#
+
+room_desc_(s)_2_adj:The (name-n) is (name-adj).[if there is something on the (obj)] On the (name) #how_see_u# #i7_list_on##suffix_(s)_end#[end if][if there is nothing on the (obj)] #emptysupporter##suffix_(s)_end_angry#[end if]
+#;The (name-n) is (name-adj) [if name has something on it] on the (name) #i7_list_on#[else if the (name) is empty]#emptysupporter#[end if]
+
+room_desc_(s)_2:[if there is something on the (obj)]On the (name) #how_see_u# #i7_list_on##suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter##suffix_(s)_end_angry#[end if];[if there is something on the (obj)]You see #i7_list_on# on the (name-n)#suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter##suffix_(s)_end_angry#[end if]
+#[if name has something on it] on the (name) #i7_list_on#[else if the (name) is empty]#emptysupporter#[end if]
+
+room_desc_(s)_multi_noun:[if there is something on the (obj)]On the (name-n), you see #i7_list_on##suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter_multi##suffix_(s)_end_angry#[end if]
+room_desc_(s)_multi_adj:[if there is something on the (obj)]On the (name-adj) one, you see #i7_list_on##suffix_(s)_end#[end if][if there is nothing on the (obj)]#emptysupporter_multi##suffix_(s)_end_angry#[end if]
+emptysupporter:But there isn't a thing on it;Unfortunately, there isn't a thing on it;But the thing is empty;But the thing is empty, unfortunately;But the thing hasn't got anything on it;But oh no! there's nothing on this piece of #trash#;The (name-n) appears to be empty;Looks like someone's already been here and taken everything off it, though;However, the (name-n), like an empty (name-n), has nothing on it;
+emptysupporter_multi:There isn't a thing on the (name-n);The (name-n) is empty;Look at the (name-n). There's nothing on this piece of #trash#;But the (name-n) hasn't got anything on it;What a letdown, there's nothing here;
+#Supporter Description Templates
+#-------------------------------
+
+
+
+#Expandables for Supporter Symbols
+#--------------------------------
+
+on_it:on it;lying on it;resting on it;upon it
+ContentsS-:Contents-;Upon it are displayed the following-;Upon it you may see the following-;Upon it lie the following-;Upon the (name-n) are displayed the following-;Upon the (name-n) you may see the following-;Upon the (name-n) lie the following-
+held:held;carried;had;presented;held up;was used to support
+trash:trash;garbage;junk
+#Group Descriptions
+#------------------
+room_desc_group:You can see (^) (val), (name), here#suffix-multi#;Your attention is drawn to (^) (val), (name)#suffix-multi#
+
+#Expandables for Group Description Symbols
+#--------------------------------
+
+this_the:this;the
+room:room;place;part of the game;zone;chamber;area;sector
+
+#Exit Descriptions
+#----------------
+
+#room_desc_(d): describes a single door in the room
+#room_desc_(dir): describes a single unblocked exit in the room
+#room_exit_desc: describes multiple unlocked exits in the room
+#room_desc_exits: possible unnecessary
+#room_desc_doors_closed: describes a group of closed doors in the room
+#room_desc_doors_open: describes a group of open doors in the room
+
+room_desc_(d):There is #i7_closed/open# (name) leading (dir).
+room_desc_(dir):There is an #unblocked# exit to the (dir).;There is an exit to the (dir). Don't worry, it is #unblocked#.;You need an #unblocked# exit? You should try going (dir).;You don't like doors? Why not try going (dir), that entranceway is #unblocked#.
+room_exit_desc:#easy1#.;#medium1#.;#hard1#.
+room_desc_exits:There [is an|are] #unblocked# [exit|exits] to the (dir).
+room_desc_doors_closed:#easy0a#.
+room_desc_doors_open:#easy0b#.
+#[if (name) is open]#room_desc_doors_open#[else if (name) is closed]#room_desc_doors_open#[end if]
+#room_(d)_exit_desc_alt:[If (name) is open]#easy2#[else if (name) closed] closed [end if];[If (name) is open]#medium2#[else if (name) is closed] closed [end if];[If (name) is open]#hard2#[else if (name) is closed] closed [end if]
+#room_(d)_exit_desc:[if (name) is open]#easy3#[else if (name) is closed] closed [end if];[If (name) is open]#medium3#[else if (name) is closed] closed [end if];[If (name) is open]#hard3#[else if (name) is closed]closed[end if]
+
+#Templates for Exit Descriptions
+
+# 0a #
+
+easy0a:There are (^) closed doors, (name-indefinite), here;Let's see how many closed doors there are. Looks like (^), (name-indefinite);There are (^) closed doors here, (name-indefinite);
+
+# 0b #
+
+easy0b:There are (^) open doors, (name-indefinite), here;Let's see how many open doors there are. Looks like (^), (name-indefinite)
+
+# 1 #
+
+easy1:There [is an|are] #unblocked# [exit|exits] to the (dir);There [is an|are] [exit|exits] to the (dir). And hey, don't worry, [they are|it's] #unblocked#
+medium1:[An exit|Exits] #unblocked# [lies|lie] to the (dir);You can go (dir) from here without having to deal with any doors
+hard1:it looks like you can exit to the (dir), if doors aren't really your #yourthing#;if you want to leave, and doors really aren't your #yourthing# you could try going (dir);If you're not really a door person, you could leave by the (dir);If you're not really a doors fan, you could leave by the (dir);not a fan of the doors? Why not go (dir);Hot tip- if you go (dir), you won't have to deal with any doors
+
+
+# 2 #
+
+easy2:#easy21#;#easy22#
+easy21:There [is a door|are doors], #looks# (name-adj), leading (dir);a (name) leads (dir)
+easy22:There is (name-indefinite) leading (dir)
+medium2:You #canshould# see [the door|a door] [at the|blocking the] (dir) [exit|exits]
+hard2:How do you get out? Well, there [is a door|are doors] to the (dir) of you
+
+# 3 #
+
+easy3:The [exit|exits] to the (dir) [is|are] going through (name)
+medium3:The (dir) [exit|exits] [has|have] (name-indefinite) blocking [it|them]
+hard3:The (dir) [exit|exits] [has|have] (name-n-indefinite) blocking [it|them]. the (name-n) [is|are] (name-adj)
+
+#Expandables for Exit Symbols
+#----------------------------
+yourthing:thing;bag;style;cup of tea
+door_what:leading;facing;heading
+unblocked:unblocked;unguarded
+
+#prefixes
+#-----------
+#To be affixed before object descriptions. Keep away from doors. Prefixes start with a uppercase letter and end with "a"
+prefix:You see a gleam over in a corner, where you can see a;What's that over there? It looks like it's a;You scan the room, seeing a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;You smell #smelltype# smell, and follow it to a;Were you looking for a (name-n)? Because look over there, it's a;You rest your hand against a wall, but you miss the wall and fall onto a;You scan the room for a (name-n), and you find a;You hear a noise behind you and spin around, but you can't see anything other than a;Look out! It's a- oh, never mind, it's just a;Look over there! a;Oh, great. Here's a;Hey, want to see a (name-n)? Look over there, a;If you haven't noticed it already, there seems to be something there by the wall, it's a;You bend down to tie your shoe. When you stand up, you notice a;Oh wow! Is that what I think it is? It is! It's a;You lean against the wall, inadvertently pressing a secret button. The wall opens up to reveal a;You see a;As if things weren't amazing enough already, you can even see a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a;#how_see# a
+prefix-multi:You see a gleam over in a corner, where you can see ;What's that over there? It looks like it's ;You scan the room, seeing ;#how_see# ;You bend down to tie your shoe. When you stand up, you notice ;You smell #smelltype# smell, and follow it to ;You can suddenly see ;
+prefix_(c):#prefix#
+prefix_(s):#prefix#
+
+#suffixes
+#-----------
+#To be affixed after object descriptions. Keep away from doors. Keep in mind a suffix is usually (but not always) followed by a prefix. Suffixes start with punctuation and end with a period (or exclamation/question mark).
+suffix_meta:. There's something about an object in a room that's just so... TextWorld.;. You can't really describe the (name-n) besides that it's (name-adj).;. Does this look like anything mentioned in the instructions?;. What a great pairing of adjectives and nouns!;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.;. Make a note of this, you might have to put stuff on or in it later on.
+suffix_fulfillment:. A (name-n)... Is that really what you were looking for?;. Is this it? Is this what you came to TextWorld to see? a (name-n)?;. Hmm. You always thought you'd be more excited to see a (name-n) in a room.;. Is this what you came to TextWorld for? This... (name-n)?;. You look around you, at all the containers and supporters, doors and objects, and you think to yourself. Why? Why Textworld?
+suffix_price_schtick:. You check the price tag #pricetagexplain#. #pricebad#?! That's ridiculous! #youknow# my #friendtype#, #myfriend#? I'm sure my friend could get you one of those for #pricegood#!;. You check the price tag #pricetagexplain#. #pricebad#?! That's ridiculous! #Iknow# #afriend# who could get you one of those for #pricegood#!;. You look at the price tag #pricetagexplain#. #pricebad#?! Where'd they buy this (name-n), #expensiveplace#?;. You check the price tag #pricetagexplain#. #pricegood#? What a deal! You'll have to ask where they got this!;. Wow, check out the price tag #pricetagexplain#! #pricebad#!;#emptymain#;#emptymainperiod#
+suffix_(r):. Okay, just remember what you're here to do, and everything will go great.;. You try to gain information on your surroundings by using a technique you call 'looking.';. You can barely contain your excitement.;. The room seems oddly familiar, as though it were only superficially different from the other rooms in the building.;. You decide to just list off a complete list of everything you see in the room, because hey, why not?;. I guess you better just go and list everything you see here.;. You start to take note of what's in the room.;. You decide to start listing off everything you see in the room, as if you were in a text adventure.;. The room is well lit.;. You begin to take stock of what's here.;. You begin to take stock of what's in the room.;. You begin looking for stuff.;. Let's see what's in here.;#emptymainperiod#;#emptymain#;#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#
+### Cut for length ###
+suffix:.;. You shudder, but continue examining the room.;. You wonder idly who left that here.;. Now why would someone leave that there?;. There's something strange about this being here, but you can't put your finger on it.;. There's something strange about this thing being here, but you don't have time to worry about that now.;. Huh, weird.;, so there's that.;!;. Hmmm... what else, what else?;. Wow, isn't TextWorld just the best?;. I mean, just wow! Isn't TextWorld just the best?;. You can't wait to tell the folks at home about this!;. Something scurries by right in the corner of your eye. Probably nothing.;. You idly wonder how they came up with the name TextWorld for this place. It's pretty fitting.;. Suddenly, you bump your head on the ceiling, but it's not such a bad bump that it's going to prevent you from looking at objects and even things.;. Now that's what I call TextWorld!;. Classic TextWorld.;. The light flickers for a second, but nothing else happens.;.;.;.;#emptymainperiod#;#emptymain#;#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty30#;#empty31#;#empty32#;#suffix_price_schtick#;#suffix_fulfillment#;#suffix_meta#
+
+###Multi suffixes need to be more flexible than normal ones###
+suffix-multi:.;. You shudder, but continue examining the room.;. You wonder idly who put this stuff here.;. There's something strange about this stuff being here, but you can't put your finger on it.;. There's something strange about this stuff being here, but you don't have time to worry about that now.;. Huh, weird.;, so there's that.;, so why not take a picture, it'll last longer!;. It doesn't get any more TextWorld than this!;#emptymainperiod#;#emptymain#;#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty36#;#empty37#;#empty38#;#empty39#;#empty40#;#empty41#;#empty42#;#empty43#;#empty44#;#empty45#;
+suffix_(s)_mid:.;. You shudder, but continue examining the (name-n).;. You wonder idly who left that here.;. Now why would someone leave that there?;#suffix_meta#;. Why don't you take a picture of it, it'll last longer!;!;. Wow, isn't TextWorld just the best?;. I guess it's true what they say, if you're looking for a (name-n), go to TextWorld.;. What a coincidence, weren't you just thinking about a (name-n)?;#emptymainperiod#;#emptymain#;#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty36#;#empty37#;#empty38#;#empty39#;#empty40#;
+suffix_(s)_end:.;. You shudder, but continue examining the room.;. There's something strange about this being here, but you can't put your finger on it.;. There's something strange about this thing being here, but you don't have time to worry about that now.;. Huh, weird.;, so there's that.;. Hmmm... what else, what else?;. I mean, just wow! Isn't TextWorld just the best?;. You can't wait to tell the folks at home about this!;. Something scurries by right in the corner of your eye. Probably nothing.;. You idly wonder how they came up with the name TextWorld for this place. It's pretty fitting.;. Suddenly, you bump your head on the ceiling, but it's not such a bad bump that it's going to prevent you from looking at objects and even things.;. Wow! Just like in the movies!;. It doesn't get more TextWorld than this!;. Now that's what I call TextWorld!;. Classic TextWorld.;#suffix#;#emptymainperiod#;#emptymain#;#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty36#;#empty37#;#empty38#;#empty39#;#empty40#;
+suffix_(s)_end_angry:. You move on, clearly #upsetwith# TextWorld.;. You move on, clearly #upsetwith# your TextWorld experience.;. Sometimes, just sometimes, TextWorld can just be the worst.;. What's the point of an empty (name-n)?;. Hopefully this doesn't make you too upset.;. You make a mental note to not get your hopes up the next time you see a (name-n) in a room.;. ;. Hopefully, this discovery doesn't ruin your TextWorld experience!;. You swear loudly.;. This always happens!;. This always happens, here in TextWorld!;. Silly (name-n), silly, empty, good for nothing (name-n).;. You think about smashing the (name-n) to bits, throwing the bits #intheblank#, etc, until you get bored.;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n)! oh well.;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;. Aw, and here you were, all excited for there to be things on it!;. Oh! Why couldn't there just be stuff on it?;. Hm. Oh well;. What, you think everything in TextWorld should have stuff on it?;. It would have been so cool if there was stuff on the (name-n).;#emptymainperiod#;#emptymain#;#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty36#;#empty37#;#empty38#;#empty39#;#empty40#;#empty41#;#empty42#;#empty43#;#empty44#;#empty45#;#empty46#;#empty47#;#empty48#;#empty49#;#empty50#;
+#fix expandables in
+#-----------
+smelltype:an #ansmell#;a #asmell#
+ansmell:interesting;awful;intriguing
+asmell:hideous;pungent;sickening;terrible;wretched;lovely;great;fine;
+
+upsetwith:upset with;angry about;infuriated by;depressed by;done caring about;upset by;furious with
+pricetagexplain:that's still affixed to the (name-n);that the (name-n)'s owner still hasn't taken off;that hangs off the (name-n);on the (name-n);glued to the (name-n)
+pricebad:#bignumber# dollars;#bignumber# bucks;#bignumber# big ones
+resourcenumber:10;15;20;25;30;35;40;45;50;55;60;65;70;75;80;85;90;95;100
+bignumber:Thirty;Forty;Fifty;Sixty;Seventy;Eighty;Ninety;A hundred;Two hundred;Three hundred
+Iknow:I know a;I got this;I have a;You know, I know a;You know, I got a;You know what, I've got a
+youknow:You know;Do you know;Did you ever meet;You ever meet
+afriend:person, they work out of #friendplace#,;person;friend;person who works for #friendcompany#;person, their #inlaw# works for #cooljob#,
+inlaw:uncle;aunt;sister-in-law;brother-in-law;cousin;other friend;buddy;pal;roommate;dad;mom;brother;sister;neighbour
+myfriend:they work for #friendcompany#
+cooljob:the store;#friendcompany#;the mayor;the president;the prime minister;the internet
+friendplace:the bank;the big city;city hall
+friendcompany:the government;the post office;the mayor;a company
+friendtype:buddy;pal;friend;good friend;
+pricefriend:half that much;half that;six bucks;practically nothing
+pricegood:#resourcenumber# bucks
+expensiveplace:some kind of expensive place;some kind of expensive store
+intheblank:in the dump;in a fire;into a pit;into the garbage
+#General Expandables
+#------------------
+
+canshould:can;should;should be able to;may
+looks:seems to be;looks;seems;appears
+here_alt:here;in the room;nearby;close by;in the corner;right there by you
+here_alt_u:Here;In the room;Nearby;Close by;In the corner;Right there by you
+how_see:You #you_what#;You can #you_what#
+how_see_u:you #you_what#;you can #you_what#
+there_what:is;seems to be
+you_what:see;make out
+
+
+emptymainperiod:#emptymain#
+emptymain:#empty1#;#empty2#;#empty3#;#empty4#;#empty5#;#empty6#;#empty7#;#empty8#;#empty9#;#empty10#;#empty11#;#empty12#;#empty13#;#empty14#;#empty15#;#empty16#;#empty17#;#empty18#;#empty19#;#empty20#;#empty21#;#empty22#;#empty23#;#empty24#;#empty25#;#empty26#;#empty27#;#empty28#;#empty29#;#empty30#;#empty31#;#empty32#;#empty33#;#empty34#;#empty35#;#empty36#;#empty37#;#empty38#;#empty39#;#empty40#;#empty41#;#empty42#;#empty43#;#empty44#;#empty45#;#empty46#;#empty47#;#empty48#;#empty49#;#empty50#;#empty51#;#empty52#;#empty53#;#empty54#;#empty55#;#empty56#;#empty57#;#empty58#;#empty59#;#empty60#;#empty61#;#empty62#;#empty63#
+empty1:.;
+empty2:.;
+empty3:.;
+empty4:.;
+empty5:.;
+empty6:.;
+empty7:.;
+empty8:.;
+empty9:.;
+empty10:.;
+empty11:.;
+empty12:.;
+empty13:.;
+empty14:.;
+empty15:.;
+empty16:.;
+empty17:.;
+empty18:.;
+empty19:.;
+empty20:.;
+empty21:.;
+empty22:.;
+empty23:.;
+empty24:.;
+empty25:.;
+empty26:.;
+empty27:.;
+empty28:.;
+empty29:.;
+empty30:.;
+empty31:.;
+empty32:.;
+empty33:.;
+empty34:.;
+empty35:.;
+empty36:.;
+empty37:.;
+empty38:.;
+empty39:.;
+empty40:.;
+empty41:.;
+empty42:.;
+empty43:.;
+empty44:.;
+empty45:.;
+empty46:.;
+empty47:.;
+empty48:.;
+empty49:.;
+empty50:.;
+empty51:.;
+empty52:.;
+empty53:.;
+empty54:.;
+empty55:.;
+empty56:.;
+empty57:.;
+empty58:.;
+empty59:.;
+empty60:.;
+empty61:.;
+empty62:.;
+empty63:.;

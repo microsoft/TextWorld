@@ -1,0 +1,21 @@
+# object
+type o : t {
+    constraints {
+        obj1 :: in(o, I) & in(o, c) -> fail();
+        obj2 :: in(o, I) & on(o, s) -> fail();
+        obj3 :: in(o, I) & at(o, r) -> fail();
+        obj4 :: in(o, c) & on(o, s) -> fail();
+        obj5 :: in(o, c) & at(o, r) -> fail();
+        obj6 :: on(o, s) & at(o, r) -> fail();
+        obj7 :: at(o, r) & at(o, r') -> fail();
+        obj8 :: in(o, c) & in(o, c') -> fail();
+        obj9 :: on(o, s) & on(o, s') -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "object-like";
+            definition :: "object-like is portable.";
+        }
+    }
+}

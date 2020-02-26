@@ -195,6 +195,9 @@ class VariableTypeTree:
 
     def descendants(self, vtype):
         """Given a variable type, return all possible descendants."""
+        if vtype not in self.variables_types:
+            return []
+
         descendants = []
         for child_type in self[vtype].children:
             descendants.append(child_type)
