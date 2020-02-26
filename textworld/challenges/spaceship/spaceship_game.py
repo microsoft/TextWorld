@@ -81,7 +81,8 @@ def make_game_medium(settings: Mapping[str, str], options: Optional[GameOptions]
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #                                    Create the Game Environment
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    gm = GameMaker(kb=kb, theme='spaceship')
+    gm = GameMaker(options=options)
+    # gm = GameMaker(kb=kb, theme='spaceship')
 
     # ===== Sleep Station Design =======================================================================================
     sleep_station = gm.new_room("Sleep Station")
