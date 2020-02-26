@@ -129,7 +129,9 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 
     from textworld.challenges.spaceship.maker import test_commands
     test_commands(gm, [
+        'open Blue box',
         'open Red box',
+        'look',
         'close Red box',
         # 'open Red box',
         # 'open Blue box',
@@ -179,7 +181,8 @@ def quest_design(game):
                                                        game._entities['r_0'],
                                                        game._entities['s_0'],
                                                        game._entities['c_0'],
-                                                       game._entities['cpu_0'])})
+                                                       game._entities['cpu_0'])},
+                            output_verb_tense_postcond={'closed': 'has been'})
     quests.append(Quest(win_events=[win_quest], fail_events=[], reward=1))
 
     # win_quest1 = EventCondition(conditions={game.new_fact("has_been__closed", game._entities['c_0'])})

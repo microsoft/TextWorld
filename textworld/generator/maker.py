@@ -714,7 +714,12 @@ class GameMaker:
                 precond = new_conditions(rule.preconditions, args)
                 postcond = new_conditions(rule.postconditions, args)
 
-                return Action(rule.name, precond, postcond)
+                action = Action(rule.name, precond, postcond)
+
+                if action.has_traceable():
+                    action.activate_traceable()
+
+                return action
 
         return None
 

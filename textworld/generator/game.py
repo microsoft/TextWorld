@@ -104,26 +104,23 @@ class PropositionControl:
     @classmethod
     def add_propositions(cls, props: Iterable[Proposition]) -> Iterable[Proposition]:
         for prop in props:
-            if not prop.name.startswith("is__"):
-                prop.activate[0] = True
-
-            if prop.verb == "has been":
-                prop.activate[1] = 1
+            if not prop.name.startswith("is__") and (prop.verb == "has been"):
+                prop.activate = 1
 
         return props
 
     @classmethod
     def set_activated(cls, prop: Proposition):
-        if prop.activate[0] and not prop.activate[1]:
-            prop.activate[1] = 1
+        if not prop.activate:
+            prop.activate = 1
 
     @classmethod
     def remove(cls, prop: Proposition, state: State):
-        if prop.name.startswith('is__'):
+        if not prop.name.startswith('was__'):
             return
 
-        if (prop.activate[0] and prop.activate[1]) and (prop in state.get_facts()):
-            if Proposition(prop.definition, prop.arguments) not in state.get_facts():
+        if prop.activate and (prop in state.facts):
+            if Proposition(prop.definition, prop.arguments) not in state.facts:
                 state.remove_fact(prop)
 
 
@@ -201,6 +198,11 @@ class EventCondition:
         event = PropositionControl(conditions, self.verb_tense)
         traceable = event.traceable_propositions
         condition = Action("trigger", preconditions=conditions, postconditions=list(conditions) + [event.addon])
+
+        # The corresponding traceable(s) should be active in state set to be considered for the event.
+        if condition.has_traceable():
+            condition.activate_traceable()
+
         return condition, traceable
 
     def __hash__(self) -> int:
@@ -980,6 +982,15 @@ class EventProgression:
 
         return compressed
 
+    def will_trigger(self, state: State, action: Action):
+        if isinstance(self.event, EventCondition):
+            triggered = self.event.is_triggering(state)
+
+        if isinstance(self.event, EventAction):
+            triggered = self.event.is_triggering(action)
+
+        return triggered
+
 
 class QuestProgression:
     """ QuestProgression keeps track of the completion of a quest.
@@ -1082,20 +1093,7 @@ class GameProgression:
     def valid_actions_gen(self):
         potential_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
                                                                    self.game.kb.types.constants_mapping))
-        a = []
-        for act in potential_actions:
-            k = []
-            for prop in [list(act.preconditions) + list(act.added)][0]:
-                if not prop.name.startswith('is__'):
-                    w = [p for p in self.state.get_facts() if not p.name.startswith('is__') and (p.name == prop.name)][0]
-                    k.append(w.activate[0] and (w.activate[1] == 1))
-                else:
-                    k.append(prop.activate[0] and (prop.activate[1] == 1))
-
-            if all(k):
-                a.append(act)
-
-        return a
+        return [act for act in potential_actions if act.is_valid()]
 
     @property
     def done(self) -> bool:
@@ -1160,14 +1158,19 @@ class GameProgression:
         # Discard all "trigger" actions.
         return tuple(a for a in master_quest_tree.flatten() if a.name != "trigger")
 
-    def add_traceables(self):
+    def add_traceables(self, action):
+        s = self.state.facts
         for quest_progression in self.quest_progressions:
-            if quest_progression.quest.reward >= 0:
+            if not quest_progression.completed and (quest_progression.quest.reward >= 0):
                 for win_event in quest_progression.win_events:
-                    if win_event.event.traceable:
-                        self.state.add_facts(PropositionControl.add_propositions(win_event.event.traceable))
+                    if win_event.event.traceable and not (win_event.event.traceable in s):
+                        if win_event.will_trigger(self.state, action):
+                            self.state.add_facts(PropositionControl.add_propositions(win_event.event.traceable))
 
     def traceable_manager(self):
+        if not self.state.has_traceable():
+            return
+
         for prop in self.state.get_facts():
             if not prop.name.startswith('is__'):
                 PropositionControl.set_activated(prop)
@@ -1179,9 +1182,9 @@ class GameProgression:
         Args:
             action: Action affecting the state of the game.
         """
-        # Update world facts.
-        self.state.apply(self.state.state_action_valisate(action))
-        self.add_traceables()
+        # Update world facts
+        self.state.apply(action)
+        self.add_traceables(action)
 
         # Update all quest progressions given the last action and new state.
         for quest_progression in self.quest_progressions:

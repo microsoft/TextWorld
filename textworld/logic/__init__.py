@@ -647,7 +647,8 @@ class Proposition(with_metaclass(PropositionTracker, object)):
 
     __slots__ = ("name", "arguments", "signature", "_hash", "verb", "definition", "activate")
 
-    def __init__(self, name: str, arguments: Iterable[Variable] = [], verb: str = None, definition: str = None):
+    def __init__(self, name: str, arguments: Iterable[Variable] = [], verb: str = None, definition: str = None,
+                 activate: int = 0):
         """
         Create a Proposition.
 
@@ -678,9 +679,9 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         self._hash = hash((self.name, self.arguments, self.verb, self.definition))
 
         if self.verb == 'is':
-            self.activate = [True, 1]
-        else:
-            self.activate = [False, 0]
+            activate = 1
+
+        self.activate = activate
 
     @property
     def names(self) -> Collection[str]:
@@ -704,7 +705,8 @@ class Proposition(with_metaclass(PropositionTracker, object)):
 
     def __eq__(self, other):
         if isinstance(other, Proposition):
-            return (self.name, self.arguments, self.verb, self.definition) == (other.name, other.arguments, other.verb, other.definition)
+            return (self.name, self.arguments, self.verb, self.definition, self.activate) == \
+                   (other.name, other.arguments, other.verb, other.definition, other.activate)
         else:
             return NotImplemented
 
@@ -734,7 +736,8 @@ class Proposition(with_metaclass(PropositionTracker, object)):
             "name": self.name,
             "arguments": [var.serialize() for var in self.arguments],
             "verb": self.verb,
-            "definition": self.definition
+            "definition": self.definition,
+            "activate": self.activate
         }
 
     @classmethod
@@ -743,7 +746,8 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         args = [Variable.deserialize(arg) for arg in data["arguments"]]
         verb = data["verb"]
         definition = data["definition"]
-        return cls(name, args, verb, definition)
+        activate = data["activate"]
+        return cls(name, args, verb, definition, activate)
 
 
 @total_ordering
@@ -1139,6 +1143,20 @@ class Action:
         mapping = mapping or {v.name: v.name for v in self.variables}
         return self.command_template.format(**mapping)
 
+    def has_traceable(self):
+        for prop in self.all_propositions:
+            if not prop.name.startswith('is__'):
+                return True
+        return False
+
+    def activate_traceable(self):
+        for prop in self.all_propositions:
+            if not prop.name.startswith('is__'):
+                prop.activate = 1
+
+    def is_valid(self):
+        return all([prop.activate == 1 for prop in self.all_propositions])
+
 
 class Rule:
     """
@@ -1278,7 +1296,8 @@ class Rule:
         pre_inst = [pred.instantiate(mapping) for pred in self.preconditions]
         post_inst = [pred.instantiate(mapping) for pred in self.postconditions]
         action = Action(self.name, pre_inst, post_inst)
-
+        if action.has_traceable():
+            action.activate_traceable()
         action.command_template = self._make_command_template(mapping)
         if self.reverse_rule:
             action.reverse_name = self.reverse_rule.name
@@ -1685,7 +1704,7 @@ class State:
             if not self.is_fact(prop):
                 return False
 
-            if not prop.activate[0] or not (prop.activate[1]):
+            if not prop.activate:
                 return False
 
         return True
@@ -1755,14 +1774,6 @@ class State:
             facts.update(action.postconditions)
 
         return True
-
-    def state_action_valisate(self, action: Action):
-        for prop in action.all_propositions:
-            if not prop.name.startswith('is__'):
-                w = [p for p in self.get_facts() if not p.name.startswith('is__') and (p.name == prop.name)][0]
-                prop.activate[0], prop.activate[1] = w.activate[0], w.activate[1]
-
-        return action
 
     def apply(self, action: Action) -> bool:
         """

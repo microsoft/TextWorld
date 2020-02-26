@@ -265,7 +265,7 @@ class NeuralAgent:
 
 def play(agent, path, max_step=50, nb_episodes=10, verbose=True):
     """
-        This code uses the cooking agent design in the spaceship game.
+        This code uses the agent design in the spaceship game.
 
         :param agent: the obj of NeuralAgent, a sample object for the agent
         :param path: The path to the game (envo model)
@@ -302,9 +302,13 @@ def play(agent, path, max_step=50, nb_episodes=10, verbose=True):
         nb_moves = 0
         while not done:
             command = agent.act(obs, score, done, infos)
+            print(command, "....", end="")
             obs, score, done, infos = env.step(command)
             nb_moves += 1
         agent.act(obs, score, done, infos)  # Let the agent know the game is done.
+        print(score)
+        print(obs)
+        print('-------------------------------------')
 
         if verbose:
             print(".", end="")

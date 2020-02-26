@@ -82,8 +82,8 @@ class NeuralAgent:
     GAMMA = 0.9
 
     def __init__(self) -> None:
-        self._initialized = False
-        self._epsiode_has_started = False
+        # self._initialized = False
+        # self._epsiode_has_started = False
         self.id2word = ["<PAD>", "<UNK>"]
         self.word2id = {w: i for i, w in enumerate(self.id2word)}
 
@@ -138,6 +138,7 @@ class NeuralAgent:
             self.transitions[-1][0] = reward  # Update reward information.
 
         self.stats["max"]["score"].append(score)
+
         if self.no_train_step % self.UPDATE_FREQUENCY == 0:
             # Update model
             returns, advantages = self._discount_rewards(values)
@@ -252,10 +253,12 @@ def play(agent, path, max_step=50, nb_episodes=10, verbose=True):
             print(os.path.basename(path), end="")
 
     # Collect some statistics: nb_steps, final reward.
-    avg_moves, avg_scores, avg_norm_scores, seed_h = [], [], [], None
+    avg_moves, avg_scores, avg_norm_scores, seed_h = [], [], [], 4567
     for no_episode in range(nb_episodes):
         obs, infos = env.reset()  # Start new episode.
-        seed_h = env.env.textworld_env._wrapped_env.seed(init_seed=seed_h)
+
+        env.env.textworld_env._wrapped_env.seed(seed=seed_h)
+        seed_h += 1
 
         score = 0
         done = False
@@ -288,7 +291,8 @@ print("Training")
 agent.train()  # Tell the agent it should update its parameters.
 
 starttime = time()
-play(agent, "./games/levelMedium.ulx", nb_episodes=500, verbose=False)  # Medium level game.
+print(os.path.realpath("./games/levelMedium.ulx"))
+play(agent, "./games/levelMedium.ulx", nb_episodes=25, verbose=False)  # Medium level game.
 print("Trained in {:.2f} secs".format(time() - starttime))
 
 print('==============   Time To Test   ============== ')
