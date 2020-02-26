@@ -118,7 +118,7 @@ class NeuralAgent:
 
     @property
     def infos_to_request(self) -> EnvInfos:
-        return EnvInfos(description=True, inventory=True, admissible_commands=True, has_won=True, has_lost=True)
+        return EnvInfos(description=True, inventory=True, admissible_commands=True, won=True, lost=True)
 
     def act(self, obs: str, score: int, done: bool, infos: Mapping[str, Any]) -> Optional[str]:
         # Build agent's observation: feedback + look + inventory.
@@ -142,9 +142,9 @@ class NeuralAgent:
         if self.transitions:
             reward = score - self.last_score  # Reward is the gain/loss in score.
             self.last_score = score
-            if infos["has_won"]:
+            if infos["won"]:
                 reward += 100
-            if infos["has_lost"]:
+            if infos["lost"]:
                 reward -= 100
 
             self.transitions[-1][0] = reward  # Update reward information.
@@ -280,7 +280,8 @@ def play(agent, path, max_step=50, nb_episodes=10, verbose=True):
     for no_episode in range(nb_episodes):
         obs, infos = env.reset()  # Start new episode.
 
-        env.env.textworld_env._wrapped_env.seed(seed=seed_h)
+        env.seed(seed=seed_h)
+        # env.env.textworld_env._wrapped_env.seed(seed=seed_h)
         seed_h += 1
 
         score = 0

@@ -161,6 +161,9 @@ class Inform7Data(textworld.core.Wrapper):
         self._gather_infos()
         return self.state
 
+    def seed(self, seed=None):
+        self._send('tw-set seed {}'.format(seed))
+
 
 class StateTracking(textworld.core.Wrapper):
     """
