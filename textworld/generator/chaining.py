@@ -100,6 +100,8 @@ class ChainingOptions:
             certain depths.
         restricted_types:
             A set of types that may not have new variables created.
+        allowed_types:
+            A set of types that are allowed to have new variables created.
     """
 
     def __init__(self):
@@ -117,6 +119,7 @@ class ChainingOptions:
         self.rng = None
         self.rules_per_depth = []
         self.restricted_types = frozenset()
+        self.allowed_types = None
 
     @property
     def logic(self) -> GameLogic:
@@ -179,8 +182,8 @@ class ChainingOptions:
         Returns:
             Whether that variable should be allowed to be created.
         """
-
-        return type not in self.restricted_types
+        allowed = type in self.allowed_types if self.allowed_types else True
+        return allowed and type not in self.restricted_types
 
     def copy(self) -> "ChainingOptions":
         return copy.copy(self)
