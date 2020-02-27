@@ -87,6 +87,9 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
         * Hard: adding locked doors and containers (necessary keys will in
           the inventory) that might need to be unlocked (and open) in order
           to find the object.
+
+        NB: A game may contain cycles in the map, in which case, there can be
+            multiple solutions to solve the game.
     """
     options = options or GameOptions()
 
@@ -155,11 +158,13 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
         door_states = None
         n_distractors = 0
     elif mode == "medium":
-        door_states = ["open", "closed"]
+        door_states = ["open"]
         n_distractors = 10
     elif mode == "hard":
-        door_states = ["open", "closed", "locked"]
+        door_states = ["open"]
         n_distractors = 20
+        options.chaining.create_variables = True
+        options.chaining.allowed_types = ["k"]
 
     # Generate map.
     map_ = textworld.generator.make_map(n_rooms=options.nb_rooms, rng=rng_map,
@@ -199,10 +204,10 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     # Generate a quest that finishes by taking something (i.e. the right
     #  object since it's the only one in the inventory).
     options.chaining.rules_per_depth = [options.kb.rules.get_matching("take.*")]
+    restricted_rules = options.kb.rules.get_matching("take.*", "go.*", "open.*", "unlock.*")
+    options.chaining.rules_per_depth += [restricted_rules] * (options.quest_length - 1)
     options.chaining.backward = True
     options.chaining.rng = rng_quest
-    # options.chaining.restricted_types = exceptions
-    # exceptions = ["r", "c", "s", "d"] if mode == "easy" else ["r"]
 
     # Randomly place the player.
     rooms = list(world.rooms)
