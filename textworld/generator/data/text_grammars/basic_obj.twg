@@ -68,12 +68,12 @@ X_(o)_adj_type_1:#adj_stripped#
 #Object Descriptor Functions
 #---------------------------
 (P)_desc:It's you.
-(c)_desc:It is what it is
-(s)_desc:It is what it is
-(o)_desc:It is what it is
-(f)_desc:It is what it is
-(k)_desc:It is what it is
-(d)_desc:It is what it is
+(c)_desc:It's a container.
+(s)_desc:It's a supporter.
+(o)_desc:It's an object.
+(f)_desc:It's food.
+(k)_desc:It's a key.
+(d)_desc:It's a door.
 #State descriptors
 #-----------------
 openable_desc:[if open]It is open.[else if locked]It is closed.[otherwise]It is locked.
