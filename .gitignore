@@ -24,5 +24,4 @@ tmp/*
 *.ipynb_checkpoints
 /dist
 /wheelhouse
-docs/build
-docs/src
+*.orig
