@@ -369,7 +369,7 @@ class World:
     def find_room_by_id(self, id: str) -> Optional[WorldRoom]:
         return self._entities.get(id)
 
-    def set_player_room(self, start_room: Union[None, WorldRoom, str] = None) -> None:
+    def set_player_room(self, start_room: Union[None, WorldRoom, str] = None) -> Proposition:
         if start_room is None:
             if len(self.rooms) == 0:
                 start_room = WorldRoom("r_0", "r")
@@ -383,7 +383,9 @@ class World:
         else:
             raise ValueError("Unknown room: {}".format(start_room))
 
-        self.add_fact(Proposition("at", [self.player, start_room]))
+        fact = Proposition("at", [self.player, start_room])
+        self.add_fact(fact)
+        return fact
 
     def populate_room(self, nb_objects: int, room: Variable,
                       rng: Optional[RandomState] = None,

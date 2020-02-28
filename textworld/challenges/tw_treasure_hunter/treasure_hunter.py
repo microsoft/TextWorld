@@ -10,8 +10,8 @@ Treasure Hunter
 
 
 In this type of game, the agent spawns in a randomly generated maze and
-must find a specific object mentioned in the objective displayed when the
-game stats. This is a text version of the task proposed in [Parisotto2017]_.
+must find a specific object which is mentioned in the objective displayed when
+game starts. This is a text version of the task proposed in [Parisotto2017]_.
 
 
 References
@@ -31,6 +31,7 @@ import numpy as np
 import textworld
 from textworld.utils import uniquify
 from textworld.logic import Variable, Proposition
+from textworld.generator import QuestGenerationError
 from textworld.generator import World
 from textworld.generator.game import Quest, Event
 from textworld.generator.data import KnowledgeBase
@@ -86,6 +87,9 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
         * Hard: adding locked doors and containers (necessary keys will in
           the inventory) that might need to be unlocked (and open) in order
           to find the object.
+
+        NB: A game may contain cycles in the map, in which case, there can be
+            multiple solutions to solve the game.
     """
     options = options or GameOptions()
 
@@ -154,11 +158,13 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
         door_states = None
         n_distractors = 0
     elif mode == "medium":
-        door_states = ["open", "closed"]
+        door_states = ["open"]
         n_distractors = 10
     elif mode == "hard":
-        door_states = ["open", "closed", "locked"]
+        door_states = ["open"]
         n_distractors = 20
+        options.chaining.create_variables = True
+        options.chaining.allowed_types = ["k"]
 
     # Generate map.
     map_ = textworld.generator.make_map(n_rooms=options.nb_rooms, rng=rng_map,
@@ -167,12 +173,6 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     world = World.from_map(map_)
 
-    # Randomly place the player.
-    starting_room = None
-    if len(world.rooms) > 1:
-        starting_room = rng_map.choice(world.rooms)
-
-    world.set_player_room(starting_room)
     # Add object the player has to pick up.
     types_counts = options.kb.types.count(world.state)
     obj_type = options.kb.types.sample(parent_type='o', rng=rng_objects, include_parent=True)
@@ -204,11 +204,28 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     # Generate a quest that finishes by taking something (i.e. the right
     #  object since it's the only one in the inventory).
     options.chaining.rules_per_depth = [options.kb.rules.get_matching("take.*")]
+    restricted_rules = options.kb.rules.get_matching("take.*", "go.*", "open.*", "unlock.*")
+    options.chaining.rules_per_depth += [restricted_rules] * (options.quest_length - 1)
     options.chaining.backward = True
     options.chaining.rng = rng_quest
-    # options.chaining.restricted_types = exceptions
-    # exceptions = ["r", "c", "s", "d"] if mode == "easy" else ["r"]
-    chain = textworld.generator.sample_quest(world.state, options.chaining)
+
+    # Randomly place the player.
+    rooms = list(world.rooms)
+    rng_map.shuffle(rooms)
+    chain = None
+    for starting_room in rooms:
+        player_fact = world.set_player_room(starting_room)
+
+        try:
+            chain = textworld.generator.sample_quest(world.state, options.chaining)
+            break
+        except QuestGenerationError:
+            world.state.remove_fact(player_fact)  # We'll try another starting location.
+
+    if chain is None:
+        msg = ("Current map configuration doesn't permit quest of length: {}."
+               "Try using a different value for the `--seed` argument.")
+        raise QuestGenerationError(msg.format(options.quest_length))
 
     # Add objects needed for the quest.
     world.state = chain.initial_state

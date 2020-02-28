@@ -9,6 +9,11 @@ from typing import Iterable, Optional, Sequence
 
 from textworld.generator.data import KnowledgeBase
 from textworld.logic import Action, GameLogic, Proposition, Rule, State, Variable
+from textworld.logic import Placeholder, Signature
+
+
+class QuestGenerationError(Exception):
+    pass
 
 
 class ChainNode:
@@ -96,6 +101,8 @@ class ChainingOptions:
             certain depths.
         restricted_types:
             A set of types that may not have new variables created.
+        allowed_types:
+            A set of types that are allowed to have new variables created.
     """
 
     def __init__(self):
@@ -113,6 +120,7 @@ class ChainingOptions:
         self.rng = None
         self.rules_per_depth = []
         self.restricted_types = frozenset()
+        self.allowed_types = None
 
     @property
     def logic(self) -> GameLogic:
@@ -175,8 +183,8 @@ class ChainingOptions:
         Returns:
             Whether that variable should be allowed to be created.
         """
-
-        return type not in self.restricted_types
+        allowed = type in self.allowed_types if self.allowed_types else True
+        return allowed and type not in self.restricted_types
 
     def copy(self) -> "ChainingOptions":
         return copy.copy(self)
@@ -250,6 +258,7 @@ class _Chainer:
         self.fixed_mapping = options.fixed_mapping
         self.rng = options.rng
         self.constraints = options.logic.constraints.values()
+        self._local_mapping_cache = {}
 
     def root(self) -> _Node:
         """Create the root node for chaining."""
@@ -327,6 +336,25 @@ class _Chainer:
                 used = sibling.used | {action}
                 yield _Node(node, parent, state, action, rules, used, node.breadth + 1)
 
+    def get_fixed_mapping(self, rule: Rule, at_p_r: Optional[Proposition]):
+        if at_p_r is None:
+            return self.fixed_mapping
+
+        if rule not in self._local_mapping_cache:
+            for prop in rule.preconditions:
+                if prop.signature == at_p_r.signature:
+                    self._local_mapping_cache[rule] = prop.parameters[-1]
+                    break
+            else:
+                self._local_mapping_cache[rule] = None
+
+        if self._local_mapping_cache[rule] is None:
+            return self.fixed_mapping
+
+        fixed_mapping = dict(self.fixed_mapping)
+        fixed_mapping[self._local_mapping_cache[rule]] = at_p_r.arguments[-1]
+        return fixed_mapping
+
     def all_assignments(self, node: _Node, rules: Iterable[Rule]) -> Iterable[_PartialAction]:
         """
         Compute all possible assignments for instantiating the given rules.
@@ -334,16 +362,30 @@ class _Chainer:
 
         state = node.state
 
+        at_p_r = None
+        r = Placeholder("r", "r")
+        if r not in self.fixed_mapping:
+            # To make chaining more efficient, we fix the mapping of `r` to the current room,
+            # i.e. at(P, r). This works since the player can only be at one place at a time.
+            signature = Signature("at", ["P", "r"])
+            facts = list(state.facts_with_signature(signature))
+            if len(facts) > 0:
+                assert len(facts) == 1, "There should only be one `at(P, r)` proposition."
+                at_p_r = facts[0]
+
         def allow_partial(ph):
             count = len(state.variables_of_type(ph.type))
             return self.options.check_new_variable(state, ph.type, count)
 
         assignments = []
         for rule in rules:
+            fixed_mapping = self.fixed_mapping.copy()
+
             if self.backward:
                 rule = rule.inverse()
 
-            for mapping in state.all_assignments(rule, self.fixed_mapping, self.create_variables, allow_partial):
+            fixed_mapping = self.get_fixed_mapping(rule, at_p_r)
+            for mapping in state.all_assignments(rule, fixed_mapping, self.create_variables, allow_partial):
                 assignments.append(_PartialAction(node, rule, mapping))
 
         # Keep everything in a deterministic order
@@ -542,9 +584,13 @@ def sample_quest(state: State, options: ChainingOptions) -> Optional[Chain]:
 
     Returns:
         A single possible quest.
+
+    Raises:
+        QuestGenerationError: No quest could be generated given the provided chaining options.
     """
 
     for chain in get_chains(state, options):
         return chain
 
-    return None
+    msg = ("No quest can be generated with the provided options:\n\n{}\n".format(options))
+    raise QuestGenerationError(msg)

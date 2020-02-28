@@ -598,7 +598,8 @@ class GameMaker:
         """
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "test_game.ulx"))
-            textworld.play(game_file)
+            agent = textworld.agents.HumanAgent(autocompletion=True)
+            textworld.play(game_file, agent=agent)
 
     def record_quest(self, ask_for_state: bool = False) -> Quest:
         """ Defines the game's quest by recording the commands.

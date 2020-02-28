@@ -1785,6 +1785,7 @@ class State:
                         seen_phs.add(ph)
                 new_phs_by_depth.append(new_phs)
 
+            # Placeholders uniquely found in postcondition are considered as free variables.
             free_vars = [ph for ph in rule.placeholders if ph not in seen_phs]
             new_phs_by_depth.append(free_vars)
 

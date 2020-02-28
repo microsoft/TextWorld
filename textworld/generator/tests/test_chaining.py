@@ -3,11 +3,13 @@
 
 
 from textworld.generator.data import KnowledgeBase
-from textworld.generator.chaining import ChainingOptions, get_chains
+from textworld.generator.chaining import ChainingOptions, QuestGenerationError
+from textworld.generator.chaining import get_chains, sample_quest
 from textworld.logic import GameLogic, Proposition, State, Variable
 
+import numpy.testing as npt
 
-# noinspection PyPep8Naming
+
 def build_state(locked_door=False):
     # Set up a world with two rooms and a few objecs.
     P = Variable("P")
@@ -69,6 +71,9 @@ def test_chaining():
     state = build_state(locked_door=True)
     chains = list(get_chains(state, options))
     assert len(chains) == 0
+
+    # Since there are no chains, trying to sample a quest will raise an error.
+    npt.assert_raises(QuestGenerationError, sample_quest, state, options)
 
     # The door is now closed instead of locked.
     state = build_state(locked_door=False)

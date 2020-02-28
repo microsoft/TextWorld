@@ -13,7 +13,7 @@ import numpy as np
 import textworld
 import textworld.challenges
 
-from textworld.generator import NoSuchQuestExistError
+from textworld.generator import QuestGenerationError
 from textworld.generator.text_grammar import MissingTextGrammar
 
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
         try:
             game_file, game = textworld.make(options)
-        except NoSuchQuestExistError:
+        except QuestGenerationError:
             msg = ("No quest can be generated with the provided options:\n"
                    "\n{}\n".format(options)
                    + "\nTry relaxing the quest generation constraints via"
