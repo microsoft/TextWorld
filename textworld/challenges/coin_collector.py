@@ -22,7 +22,7 @@ import textworld
 from textworld.generator.graph_networks import reverse_direction
 
 from textworld.utils import encode_seeds
-from textworld.generator.game import GameOptions, Quest, Event
+from textworld.generator.game import GameOptions, Quest, EventCondition
 from textworld.challenges import register
 
 
@@ -167,7 +167,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Generate the quest thats by collecting the coin.
     quest = Quest(win_events=[
-        Event(conditions={M.new_fact("in", coin, M.inventory)})
+        EventCondition(conditions={M.new_fact("in", coin, M.inventory)})
     ])
 
     M.quests = [quest]

@@ -554,7 +554,9 @@ SignatureTracker = memento_factory(
     lambda cls, args, kwargs: (
         cls,
         kwargs.get("name", args[0] if len(args) >= 1 else None),
-        tuple(kwargs.get("types", args[1] if len(args) == 2 else []))
+        tuple(kwargs.get("types", args[1] if len(args) >= 2 else [])),
+        kwargs.get("verb", args[2] if len(args) >= 3 else None),
+        kwargs.get("definition", args[3] if len(args) == 4 else None),
     )
 )
 
@@ -634,7 +636,11 @@ PropositionTracker = memento_factory(
     lambda cls, args, kwargs: (
         cls,
         kwargs.get("name", args[0] if len(args) >= 1 else None),
-        tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) == 2 else []))
+        tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) >= 2 else [])),
+        kwargs.get("verb", args[2] if len(args) >= 3 else None),
+        kwargs.get("definition", args[3] if len(args) >= 4 else None),
+        # kwargs.get("activate", 0)
+        kwargs.get("activate", args[4] if len(args) == 5 else 0)
     )
 )
 
@@ -1283,12 +1289,6 @@ class Rule:
         -------
         The instantiated Action with each Placeholder mapped to the corresponding Variable.
         """
-        for pred in self.preconditions:
-            if pred.signature == specials.keys():
-                pred.instantiate(mapping, specials[pred.signature])
-            else:
-                pred.instantiate(mapping)
-
         key = tuple(mapping[ph] for ph in self.placeholders)
         if key in self._cache:
             return self._cache[key]
@@ -2061,3 +2061,10 @@ class State:
             for fact in sorted(facts):
                 all_facts.append(fact)
         return all_facts
+
+    def has_traceable(self):
+        for prop in self.get_facts():
+            if not prop.name.startswith('is__'):
+                return True
+        return False
+

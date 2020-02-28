@@ -94,7 +94,7 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #                                    Create the Game Environment
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    gm = GameMaker(kb=kb, theme='spaceship')
+    gm = GameMaker(options=options)
 
     # ===== Sleep Station Design =======================================================================================
     test_room = gm.new_room("Test Room")

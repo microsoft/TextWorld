@@ -92,10 +92,12 @@ class PropositionControl:
         event = Proposition("event", arguments=variables)
 
         if self.verbs:
-            state_event = [Proposition(self.verbs[prop.definition].replace(' ', '_') + '__' + prop.definition,
+            state_event = [Proposition(name=self.verbs[prop.definition].replace(' ', '_') + '__' + prop.definition,
                                        arguments=prop.arguments, definition=prop.definition,
-                                       verb=self.verbs[prop.definition])
+                                       verb=self.verbs[prop.definition], activate=0)
                            for prop in self.propositions if prop.definition in self.verbs.keys()]
+            for p in state_event:
+                p.activate = 0
         else:
             state_event = []
 
@@ -122,6 +124,12 @@ class PropositionControl:
         if prop.activate and (prop in state.facts):
             if Proposition(prop.definition, prop.arguments) not in state.facts:
                 state.remove_fact(prop)
+
+    def has_traceable(self):
+        for prop in self.get_facts():
+            if not prop.name.startswith('is__'):
+                return True
+        return False
 
 
 class EventCondition:
@@ -152,8 +160,8 @@ class EventCondition:
         """
         self.actions = actions
         self.commands = commands
-	self.verb_tense = verb_tense
-	self.condition, self.traceable = self.set_conditions(conditions)        
+        self.verb_tense = output_verb_tense
+        self.condition, self.traceable = self.set_conditions(conditions)
 
     @property
     def actions(self) -> Iterable[Action]:
@@ -604,7 +612,7 @@ class Game:
                 mapping = {k: info.name for k, info in self._infos.items()}
                 commands = [a.format_command(mapping) for a in policy]
                 self.metadata["walkthrough"] = commands
-                self.objective = describe_event(Event(policy), self, self.grammar)
+                self.objective = describe_event(EventCondition(policy), self, self.grammar)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """

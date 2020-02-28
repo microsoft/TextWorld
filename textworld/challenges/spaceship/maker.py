@@ -10,6 +10,7 @@ from textworld.utils import make_temp_directory
 import textworld
 from textworld.generator.game import EventCondition, Quest, GameOptions
 from textworld.generator import World
+from textworld.core import EnvInfos
 
 
 g_rng.set_seed(20190826)
@@ -463,12 +464,18 @@ def test():
 
 
 def test_commands(game, arr):
+    # with make_temp_directory() as tmpdir:
+    #     game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
+    #     env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
+    #     state = env.reset()
+
     with make_temp_directory() as tmpdir:
         silent = False
         game_file = game.compile(pjoin(tmpdir, "test_game_1.ulx"))
-        env = start(game_file)
-        env.activate_state_tracking()
-        env.reset()
+        env = textworld.start(game_file, infos=EnvInfos(admissible_commands=True, intermediate_reward=True))
+        state = env.reset()
+        # env = start(game_file)
+        # env.reset()
 
         agent = textworld.agents.HumanAgent(autocompletion=True)
         agent.reset(env)
