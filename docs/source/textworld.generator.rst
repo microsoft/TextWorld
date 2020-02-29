@@ -21,11 +21,6 @@ textworld.generator
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: textworld.generator.user_query
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. automodule:: textworld.generator.vtypes
     :members:
     :undoc-members:
