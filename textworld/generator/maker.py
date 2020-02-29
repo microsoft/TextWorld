@@ -18,7 +18,6 @@ from textworld.utils import make_temp_directory
 from textworld.generator import Grammar
 from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
-from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
 from textworld.generator.game import GameOptions
@@ -601,16 +600,10 @@ class GameMaker:
             agent = textworld.agents.HumanAgent(autocompletion=True)
             textworld.play(game_file, agent=agent)
 
-    def record_quest(self, ask_for_state: bool = False) -> Quest:
+    def record_quest(self) -> Quest:
         """ Defines the game's quest by recording the commands.
 
         This launches a `textworld.play` session.
-
-        Args:
-            ask_for_state: If true, the user will be asked to specify
-                           which set of facts of the final state are
-                           should be true in order to consider the quest
-                           as completed.
 
         Returns:
             The resulting quest.
@@ -624,31 +617,20 @@ class GameMaker:
         # Skip "None" actions.
         actions = [action for action in recorder.actions if action is not None]
 
-        # Ask the user which quests have important state, if this is set
-        # (if not, we assume the last action contains all the relevant facts)
-        winning_facts = None
-        if ask_for_state and recorder.last_game_state is not None:
-            winning_facts = [user_query.query_for_important_facts(actions=recorder.actions,
-                                                                  facts=recorder.last_game_state.state.facts,
-                                                                  varinfos=self._working_game.infos)]
-
-        event = Event(actions=actions, conditions=winning_facts)
+        # Assume the last action contains all the relevant facts about the winning condition.
+        event = Event(actions=actions)
         self.quests.append(Quest(win_events=[event]))
         # Calling build will generate the description for the quest.
         self.build()
         return self.quests[-1]
 
-    def set_quest_from_commands(self, commands: List[str], ask_for_state: bool = False) -> Quest:
+    def set_quest_from_commands(self, commands: List[str]) -> Quest:
         """ Defines the game's quest using predefined text commands.
 
         This launches a `textworld.play` session.
 
         Args:
             commands: Text commands.
-            ask_for_state: If true, the user will be asked to specify
-                           which set of facts of the final state are
-                           should be true in order to consider the quest
-                           as completed.
 
         Returns:
             The resulting quest.
@@ -665,18 +647,11 @@ class GameMaker:
         # Skip "None" actions.
         actions = [action for action in recorder.actions if action is not None]
 
-        # Ask the user which quests have important state, if this is set
-        # (if not, we assume the last action contains all the relevant facts)
-        winning_facts = None
-        if ask_for_state and recorder.last_game_state is not None:
-            winning_facts = [user_query.query_for_important_facts(actions=recorder.actions,
-                                                                  facts=recorder.last_game_state.state.facts,
-                                                                  varinfos=self._working_game.infos)]
         if len(commands) != len(actions):
             unrecognized_commands = [c for c, a in zip(commands, recorder.actions) if a is None]
             raise QuestError("Some of the actions were unrecognized: {}".format(unrecognized_commands))
 
-        event = Event(actions=actions, conditions=winning_facts)
+        event = Event(actions=actions)
         self.quests = [Quest(win_events=[event])]
 
         # Calling build will generate the description for the quest.
