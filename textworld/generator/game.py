@@ -425,8 +425,6 @@ class Game:
             generate_text_from_grammar(self, self.grammar)
 
         for quest in self.quests:
-            # TODO: should have a generic way of generating text commands from actions
-            #       instead of relying on inform7 convention.
             for event in quest.win_events:
                 event.commands = _gen_commands(event.actions)
 
@@ -1114,7 +1112,7 @@ class GameOptions:
     @property
     def rngs(self) -> Dict[str, RandomState]:
         rngs = {}
-        for key, seed in self._seeds.items():
+        for key, seed in self.seeds.items():
             rngs[key] = RandomState(seed)
 
         return rngs

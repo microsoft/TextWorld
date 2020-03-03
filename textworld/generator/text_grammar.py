@@ -57,7 +57,7 @@ class GrammarOptions:
         #: str: Grammar theme's name. All `*.twg` files starting with that name will be loaded.
         self.theme = options.get("theme", "house")
         #: List[str]: List of names the text generation should not use.
-        self.names_to_exclude = options.get("names_to_exclude", [])
+        self.names_to_exclude = list(options.get("names_to_exclude", []))
         #: bool: Append numbers after an object name if there is not enough variation for it.
         self.allowed_variables_numbering = options.get("allowed_variables_numbering", False)
         #: bool: When True, #symbol# are force to be expanded to unique text.
@@ -94,6 +94,9 @@ class GrammarOptions:
                   `GrammarOptions` object.
         """
         return cls(data)
+
+    def copy(self) -> "GrammarOptions":
+        return GrammarOptions.deserialize(self.serialize())
 
     def __eq__(self, other) -> bool:
         return (isinstance(other, GrammarOptions)

@@ -134,7 +134,7 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
         state = chain.initial_state  # State might have changed, i.e. options.create_variable is True.
 
     if options.chaining.backward and hasattr(world, "state"):
-        world.state = state
+        world.state = state  # Quest(s) might have change the world state.
 
     quests = []
     actions = []
