@@ -16,6 +16,6 @@ if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     . ./venv/bin/activate
 fi
 
+pip install -r requirements-full.txt
 pip install .
-pip install .[vis]
 pip install nose coverage codecov

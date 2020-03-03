@@ -67,17 +67,6 @@ setup(
         'nose==1.3.7',
     ],
     extras_require={
-        'vis': [
-            'pybars3>=0.9.3',
-            'flask>=1.0.2',
-            'selenium>=3.12.0',
-            'greenlet==0.4.13',
-            'gevent==1.3.5',
-            'pillow>=5.1.0',
-            'plotly>=4.0.0',
-            'pydot>=1.2.4',
-            'psutil',
-            'matplotlib',
-        ],
+        'vis': open('requirements-vis.txt').readlines(),
     },
 )

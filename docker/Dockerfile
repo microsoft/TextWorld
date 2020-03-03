@@ -1,13 +1,29 @@
 FROM python:3-slim
 
-ENV WORLDSIZE=5
-ENV NBOBJECTS=10
-ENV QUESTLENGTH=5
-ENV SEED=1234
+# Get everything up-to-date
+RUN apt-get update
+RUN apt-get upgrade -qy
 
-RUN apt update && \
-  apt install -y build-essential libffi-dev python3-dev curl git && \
-  pip install textworld
+# Install system dependencies
+RUN apt-get install -qy \
+    build-essential \
+    chromium \
+    chromium-driver \
+    curl \
+    git \
+    libffi-dev \
+    python3-dev \
+    python3-pip \
+    wget \
+    graphviz
 
-ADD startup.sh /
-CMD ["/bin/sh", "startup.sh"]
+RUN pip install jupyter
+
+RUN git clone --single-branch --branch stable https://github.com/microsoft/TextWorld.git /TextWorld
+RUN pip install -r /TextWorld/requirements-full.txt
+RUN pip install /TextWorld[vis]
+
+# Environment variables
+ENV DISPLAY=:99
+
+CMD ["jupyter", "notebook", "/TextWorld/notebooks", "--ip", "0.0.0.0", "--allow-root"]

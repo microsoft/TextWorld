@@ -1,24 +1,32 @@
-# MS TextWorld Dockerfile
-Dockerfile for running MS Text World, the open-source engine for generating and simulating text games by Microsoft.
+# Docker for TextWorld
 
-For detailed information on this project see: https://github.com/microsoft/textworld
+Dockerfile for running TextWorld - a text-based game generator and extensible sandbox learning environment for training and testing reinforcement learning agents.
 
-Instructions:
+## Instructions
 
+```bash
+docker pull marccote19/textworld
+docker run -p 8888:8888 -it --rm marccote19/textworld
 ```
-docker pull berndverst/mstextworld
-docker run -it --rm berndverst/mstextworld
+
+Then, in your browser, navigate to the Jupyter notebook's link displayed in your terminal. The link should look like this
+
+```bash
+http://127.0.0.1:8888/?token=8d7aaa...e95
 ```
 
-### Customize a game 
+## Troubleshoot
 
-All values are integers:
-- $WORLDSIZE controls the number of rooms in the world
-- $NBCONTROLS controls the number of objects that can be interacted with (excluding doors)
-- $QUESTLENGTH controls the minimum number of commands that is required to type in order to win the game.
-- $SEED defines the seed for the random generated game
+### bind: address already in use
 
-Run with:
-`docker run -e SEED=$SEED-it -e WORLDSIZE=$WORLDSIZE -e NBCONTROLS=$NBCONTROLS -e QUESTLENGTH=$QUESTLENGTH --rm berndverst/mstextworld`
+Try changing the port number published on the host. For instance, to map container's port `8888` (Jupyter's default port) to `9999` on the host, use
 
-![TextWorld Image](https://github.com/berndverst/mstextworld/raw/master/textworldimage.png)
+```bash
+docker run -p 9999:8888 -it --rm marccote19/textworld
+```
+
+Then, make sure you modify the Jupyter notebook's link accordingly, i.e.
+
+```bash
+http://127.0.0.1:9999/?token=8d7aaa...e95
+```

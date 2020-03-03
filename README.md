@@ -1,11 +1,12 @@
 # TextWorld
+
 [![Build Status](https://travis-ci.org/Microsoft/TextWorld.svg?branch=master)](https://travis-ci.org/Microsoft/TextWorld) [![PyPI version](https://badge.fury.io/py/textworld.svg)](https://badge.fury.io/py/textworld) [![Documentation Status](https://readthedocs.org/projects/textworld/badge/?version=latest)](https://textworld.readthedocs.io/en/latest/?badge=latest) [![Join the chat at https://gitter.im/Microsoft/TextWorld](https://badges.gitter.im/Microsoft/TextWorld.svg)](https://gitter.im/Microsoft/TextWorld?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A text-based game generator and extensible sandbox learning environment for training and testing reinforcement learning (RL) agents. Also check out [aka.ms/textworld](https://aka.ms/textworld/) for more info about TextWorld and its creators. Have questions or feedback about TextWorld? Send them to textworld@microsoft.com or use the Gitter channel listed above.
 
 ## Installation
 
-TextWorld requires __Python 3__ and only supports __Linux__ and __macOS__ systems at the moment.
+TextWorld requires __Python 3__ and only supports __Linux__ and __macOS__ systems at the moment. For __Windows__ users, docker can be used as a workaround (see Docker section below).
 
 ### Requirements
 
@@ -42,6 +43,19 @@ If you have Chrome already installed you can use the following command to instal
     pip install chromedriver_installer
 
 Current visualization tools include: `take_screenshot`, `visualize` and `show_graph` from [`textworld.render`](https://textworld.readthedocs.io/en/latest/textworld.render.html).
+
+### Docker
+
+A docker container with the latest TextWorld release is available on [DockerHub](https://hub.docker.com/).
+
+    docker pull marccote19/textworld
+    docker run -p 8888:8888 -it --rm marccote19/textworld
+
+Then, in your browser, navigate to the Jupyter notebook's link displayed in your terminal. The link should look like this
+
+    http://127.0.0.1:8888/?token=8d7aaa...e95
+
+> **Note:** See [README.md](docker/README.md) in the docker folder for troubleshooting information.
 
 ## Usage
 
@@ -104,7 +118,6 @@ For more information about TextWorld, check the [documentation](https://aka.ms/t
 ## Visual Studio Code
 
 You can install the [textworld-vscode extension ](https://marketplace.visualstudio.com/items?itemName=textworld.textworld-vscode) that enables syntax highlighting for editing `.twl` and `.twg` TextWorld files.
-
 
 ## Notebooks
 
