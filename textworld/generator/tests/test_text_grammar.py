@@ -2,6 +2,7 @@
 # Licensed under the MIT license.
 
 
+import json
 import unittest
 
 from textworld.generator.text_grammar import Grammar
@@ -15,9 +16,10 @@ class ContainsEveryObjectContainer:
 
 class TestGrammarOptions(unittest.TestCase):
     def test_serialization(self):
-        options = GrammarOptions()
+        options = GrammarOptions(theme="dummy", include_adj=True, names_to_exclude=["name1", "name1", "name2"])
         data = options.serialize()
-        options2 = GrammarOptions.deserialize(data)
+        json_data = json.dumps(data)
+        options2 = GrammarOptions.deserialize(json.loads(json_data))
         assert options == options2
 
 

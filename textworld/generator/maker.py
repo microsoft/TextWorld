@@ -562,42 +562,56 @@ class GameMaker:
         self.paths.append(path)
         return path
 
-    def add_distractors(self, nb_distractors: int) -> None:
-        """ Adds a number of distractors - random objects.
+    def generate_distractors(self, nb_distractors: int) -> None:
+        """ Generates a number of distractors - random objects.
 
         Args:
-            nb_distractors: The number of distractors to add.
+            nb_distractors: The number of distractors to game will contain.
         """
         self._distractors_facts = []
         world = World.from_facts(self.facts)
         self._distractors_facts = world.populate(nb_distractors)
 
-    def add_random_quest(self, max_length: int) -> Quest:
-        """ Generates a random quest for the game.
+    def generate_random_quests(self, nb_quests=1, length: int = 1, breadth: int = 1) -> List[Quest]:
+        """ Generates random quests for the game.
 
-        Calling this method replaced all previous quests.
+        .. warning:: This method overrides any previous quests the game had.
 
         Args:
-            max_length: The maximum length of the quest to generate.
+            nb_quests: Number of parallel quests, i.e. not sharing a common goal.
+            length: Number of actions that need to be performed to complete the game.
+            breadth: Number of subquests per independent quest. It controls how nonlinear
+                     a quest can be (1: linear).
 
         Returns:
-            The generated quest.
+            The generated quests.
         """
+        options = self.options.copy()
+        options.nb_parallel_quests = nb_quests
+        options.quest_length = length
+        options.quest_breadth = breadth
+        options.chaining.rng = options.rngs['quest']
+
         world = World.from_facts(self.facts)
-        self.quests.append(textworld.generator.make_quest(world, max_length))
+        self.quests = textworld.generator.make_quest(world, options)
 
         # Calling build will generate the description for the quest.
         self.build()
-        return self.quests[-1]
+        return self.quests
 
-    def test(self) -> None:
+    def test(self, walkthrough: bool = False) -> None:
         """ Test the game being built.
 
         This launches a `textworld.play` session.
         """
+
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "test_game.ulx"))
+
             agent = textworld.agents.HumanAgent(autocompletion=True)
+            if walkthrough:
+                agent = textworld.agents.WalkthroughAgent()
+
             textworld.play(game_file, agent=agent)
 
     def record_quest(self) -> Quest:
@@ -773,12 +787,17 @@ class GameMaker:
         game = Game(world, quests=self.quests)
 
         # Keep names and descriptions that were manually provided.
+        used_names = set()
         for k, var_infos in game.infos.items():
             if k in self._entities:
                 game.infos[k] = self._entities[k].infos
+                used_names.add(game.infos[k].name)
 
         # Use text grammar to generate name and description.
-        grammar = Grammar(self.options.grammar, rng=np.random.RandomState(self.options.seeds["grammar"]))
+        options = self.options.grammar.copy()
+        options.names_to_exclude += list(used_names)
+
+        grammar = Grammar(options, rng=np.random.RandomState(self.options.seeds["grammar"]))
         game.change_grammar(grammar)
         game.metadata["desc"] = "Generated with textworld.GameMaker."
 
@@ -834,7 +853,6 @@ class GameMaker:
         :param filename: filename for screenshot
         """
         game = self.build(validate=False)
-        game.change_grammar(self.grammar)  # Generate missing object names.
         return visualize(game, interactive=interactive)
 
     def import_graph(self, G: nx.Graph) -> List[WorldRoom]:
