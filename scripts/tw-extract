@@ -6,6 +6,7 @@
 import os
 import re
 import sys
+import itertools
 import pprint
 import argparse
 
@@ -44,6 +45,20 @@ def parse_args():
     entities_parser.add_argument("--output", default="entities.txt",
                                  help="Output file containing all entity names (.txt). Default: %(default)s")
 
+    walkthrough_parser = subparsers.add_parser("walkthroughs", parents=[general_parser],
+                                               help='Extract walkthroughs.')
+    walkthrough_parser.add_argument("games", metavar="game", nargs="+",
+                                    help="List of TextWorld games (.ulx|.json).")
+    walkthrough_parser.add_argument("--output", default="walkthroughs.txt",
+                                    help="Output file containing all walkthroughs (.txt). Default: %(default)s")
+
+    commands_parser = subparsers.add_parser("commands", parents=[general_parser],
+                                            help='Extract all possible commands.')
+    commands_parser.add_argument("games", metavar="game", nargs="+",
+                                 help="List of TextWorld games (.ulx|.json).")
+    commands_parser.add_argument("--output", default="commands.txt",
+                                 help="Output file containing all commands (.txt). Default: %(default)s")
+
     return parser.parse_args(), parser
 
 
@@ -66,6 +81,8 @@ def main():
             game = Game.load(jsonfile)
             infos |= set(game.objects_names)
 
+        infos = sorted(infos)
+
     elif args.subcommand == "vocab":
         units = ["word", "words"]
         infos = extract_vocab_from_gamefiles(args.games)
@@ -79,7 +96,39 @@ def main():
             text = re.sub(r"[^a-z0-9\-_ ']", " ", text.lower())
             infos |= set(word.strip("-'_") for word in text.split())
 
-    infos = sorted(infos)
+        infos = sorted(infos)
+
+    elif args.subcommand == "walkthroughs":
+        units = ["walkthrough", "walkthroughs"]
+        games_iter = (Game.load(os.path.splitext(gamefile)[0] + ".json") for gamefile in args.games)
+        walkthroughs = [" > ".join(game.metadata.get("walkthrough", [])) for game in games_iter]
+        infos = walkthroughs
+
+    elif args.subcommand == "commands":
+        units = ["command", "commands"]
+        infos = set()
+        for gamefile in args.games:
+            game = Game.load(os.path.splitext(gamefile)[0] + ".json")
+
+            # Build objects_per_types mapping.
+            objects_per_type = {t: [] for t in game.objects_types}
+            for name, t in game.objects_names_and_types:
+                objects_per_type[t].append(name)
+
+            commands = []
+            regex = re.compile(r"{{({})}}".format("|".join(game.objects_types)))
+            for template in game.command_templates:
+                placeholders = regex.findall(template)
+
+                iter_candidates = itertools.product(*[objects_per_type[t] for t in placeholders])
+                for candidates in iter_candidates:
+                    commands.append(template)
+                    for placeholder, candidate in zip(placeholders, candidates):
+                        commands[-1] = commands[-1].replace("{" + placeholder + "}", candidate, 1)
+
+            infos |= set(commands)
+
+        infos = sorted(infos)
 
     unit = units[1] if len(infos) > 1 else units[0]
     if args.verbose:

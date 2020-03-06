@@ -3,57 +3,87 @@
 
 import re
 import os
+import glob
+import shutil
+import unittest
+import tempfile
 from os.path import join as pjoin
 from subprocess import check_output
 
 import textworld
-from textworld.utils import make_temp_directory
 
 
-def test_extract_vocab():
-    with make_temp_directory(prefix="test_extract_vocab") as tmpdir:
+class TestTwExtract(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmpdir = pjoin(tempfile.mkdtemp(prefix="test_tw_extract"), "")
         options = textworld.GameOptions()
-        options.path = tmpdir
+        options.path = cls.tmpdir
         options.nb_rooms = 5
         options.nb_objects = 10
         options.quest_length = 5
         options.quest_breadth = 2
         options.seeds = 1234
-        game_file1, _ = textworld.make(options)
+        cls.game_file1, cls.game1 = textworld.make(options)
         options.seeds = 12345
-        game_file2, _ = textworld.make(options)
+        options.file_ext = ".z8"
+        cls.game_file2, cls.game2 = textworld.make(options)
 
-        outfile = pjoin(tmpdir, "vocab.txt")
-        command = ["tw-extract", "vocab", game_file1, game_file2, "--output", outfile]
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmpdir)
+
+    def tearDown(self):
+        for f in glob.glob(pjoin(self.tmpdir, "*.txt")):
+            os.remove(f)
+
+    def test_extract_vocab(self):
+        outfile = pjoin(self.tmpdir, "vocab.txt")
+        command = ["tw-extract", "vocab", self.game_file1, self.game_file2, "--output", outfile]
         stdout = check_output(command).decode()
         assert os.path.isfile(outfile)
         nb_words = len(open(outfile).readlines())
         assert "Found {}".format(nb_words) in stdout
 
-
-def test_extract_vocab_theme():
-    with make_temp_directory(prefix="test_extract_vocab_theme") as tmpdir:
-        outfile = pjoin(tmpdir, "vocab.txt")
+    def test_extract_vocab_theme(self):
+        outfile = pjoin(self.tmpdir, "vocab.txt")
         command = ["tw-extract", "vocab", "--theme", "house", "--output", outfile]
         stdout = check_output(command).decode()
         assert os.path.isfile(outfile)
         assert int(re.findall(r"Found (\d+)", stdout)[0]) > 0
 
-
-def test_extract_entities():
-    with make_temp_directory(prefix="test_extract_entities") as tmpdir:
-        options = textworld.GameOptions()
-        options.path = tmpdir
-        options.nb_rooms = 5
-        options.nb_objects = 10
-        options.quest_length = 5
-        options.quest_breadth = 2
-        options.seeds = 1234
-        game_file, _ = textworld.make(options)
-
-        outfile = pjoin(tmpdir, "entities.txt")
-        command = ["tw-extract", "entities", game_file, "--output", outfile]
+    def test_extract_entities(self):
+        outfile = pjoin(self.tmpdir, "entities.txt")
+        command = ["tw-extract", "entities", self.game_file1, "--output", outfile]
         stdout = check_output(command).decode()
         assert os.path.isfile(outfile)
         nb_entities = len(open(outfile).readlines())
         assert "Found {}".format(nb_entities) in stdout
+
+    def test_extract_walkthroughs(self):
+        outfile = pjoin(self.tmpdir, "walkthroughs.txt")
+        command = ["tw-extract", "walkthroughs", self.game_file1, self.game_file2, "--output", outfile]
+        stdout = check_output(command).decode()
+        assert os.path.isfile(outfile)
+        walkthrough1 = " > ".join(self.game1.metadata["walkthrough"])
+        walkthrough2 = " > ".join(self.game2.metadata["walkthrough"])
+        walkthroughs = open(outfile).readlines()
+        assert len(walkthroughs) == 2
+        assert walkthrough1 == walkthroughs[0].strip()
+        assert walkthrough2 == walkthroughs[1].strip()
+        assert "Found {}".format(2) in stdout
+
+    def test_extract_commands(self):
+        outfile = pjoin(self.tmpdir, "commands.txt")
+        command = ["tw-extract", "commands", self.game_file1, self.game_file2, "--output", outfile]
+        stdout = check_output(command).decode()
+        assert os.path.isfile(outfile)
+        assert "Found" in stdout
+
+        content = open(outfile).read()
+        for name in self.game1.entity_names + self.game2.entity_names:
+            assert name in content
+
+        for verb in self.game1.verbs + self.game2.verbs:
+            assert verb in content
