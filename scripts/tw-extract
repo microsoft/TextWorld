@@ -20,10 +20,13 @@ def parse_args():
     general_parser = argparse.ArgumentParser(add_help=False)
 
     general_group = general_parser.add_argument_group('General settings')
-    general_group.add_argument("-v", "--verbose", action="store_true")
     general_group.add_argument("-f", "--force", action="store_true")
     general_group.add_argument("--merge", action="store_true",
                                help="Merge extracted information to existing output file.")
+
+    verbosity_group = general_group.add_mutually_exclusive_group()
+    verbosity_group.add_argument("-q", "--quiet", action="store_true")
+    verbosity_group.add_argument("-v", "--verbose", action="store_true")
 
     parser = argparse.ArgumentParser(parents=[general_parser], description=DESCRIPTION)
     subparsers = parser.add_subparsers(dest="subcommand",
@@ -100,8 +103,15 @@ def main():
 
     elif args.subcommand == "walkthroughs":
         units = ["walkthrough", "walkthroughs"]
-        games_iter = (Game.load(os.path.splitext(gamefile)[0] + ".json") for gamefile in args.games)
-        walkthroughs = [" > ".join(game.metadata.get("walkthrough", [])) for game in games_iter]
+        walkthroughs = []
+        for gamefile in args.games:
+            game = Game.load(os.path.splitext(gamefile)[0] + ".json")
+            if game.walkthrough:
+                walkthroughs.append(" > ".join(game.walkthrough))
+            else:
+                if not args.quiet:
+                    print("Walkthrough is missing for '{}'.".format(gamefile))
+
         infos = walkthroughs
 
     elif args.subcommand == "commands":

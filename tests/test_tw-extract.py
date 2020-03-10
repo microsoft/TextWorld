@@ -74,6 +74,18 @@ class TestTwExtract(unittest.TestCase):
         assert walkthrough2 == walkthroughs[1].strip()
         assert "Found {}".format(2) in stdout
 
+        # Simulate game without a walkthrough and the --force argument.
+        gamefile = pjoin(self.tmpdir, "game_walkthrough_missing.json")
+        game = self.game2.copy()
+        del game.metadata["walkthrough"]
+        game.save(gamefile)
+        command = ["tw-extract", "walkthroughs", gamefile, "--output", outfile, "--force"]
+        stdout = check_output(command).decode()
+        assert os.path.isfile(outfile)
+        walkthroughs = open(outfile).readlines()
+        assert len(walkthroughs) == 1
+        assert walkthrough2 == walkthroughs[0].strip()
+
     def test_extract_commands(self):
         outfile = pjoin(self.tmpdir, "commands.txt")
         command = ["tw-extract", "commands", self.game_file1, self.game_file2, "--output", outfile]

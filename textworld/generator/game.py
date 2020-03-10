@@ -577,6 +577,21 @@ class Game:
     def objective(self, value: str):
         self._objective = value
 
+    @property
+    def walkthrough(self) -> Optional[List[str]]:
+        walkthrough = self.metadata.get("walkthrough")
+        if walkthrough:
+            return walkthrough
+
+        # Check if we can derive a walkthrough from the quests.
+        policy = GameProgression(self).winning_policy
+        if policy:
+            mapping = {k: info.name for k, info in self._infos.items()}
+            walkthrough = [a.format_command(mapping) for a in policy]
+            self.metadata["walkthrough"] = walkthrough
+
+        return walkthrough
+
 
 class ActionDependencyTreeElement(DependencyTreeElement):
     """ Representation of an `Action` in the dependency tree.
