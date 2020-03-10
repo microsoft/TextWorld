@@ -370,6 +370,7 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
                        flags=options.grammar.uuid,
                        seeds=encode_seeds([options.seeds[k] for k in sorted(options.seeds)]))
     game.metadata["uuid"] = uuid
+    game.metadata["walkthrough"] = walkthrough
     return game
 
 
