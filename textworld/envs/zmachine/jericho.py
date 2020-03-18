@@ -54,7 +54,7 @@ class JerichoEnv(textworld.Environment):
             return  # No more information can be gathered.
 
         for attr in self.infos.basics:
-            self.state[attr] = getattr(self._jericho, "get_" + attr, lambda: None)()
+            self.state[attr] = getattr(self._jericho, "get_" + attr, lambda: self.state.get(attr))()
 
         for attr in self.infos.extras:
             self.state["extra.{}".format(attr)] = getattr(self._jericho, "get_" + attr, lambda: None)()
