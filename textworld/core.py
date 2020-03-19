@@ -19,7 +19,7 @@ class EnvInfos:
 
     """
 
-    __slots__ = ['description', 'inventory', 'location',
+    __slots__ = ['feedback', 'description', 'inventory', 'location',
                  'facts', 'last_action', 'last_command',
                  'game',
                  'won', 'lost',
@@ -30,6 +30,9 @@ class EnvInfos:
                  'extras']
 
     def __init__(self, **kwargs):
+        #: bool: Text observation produced by the game in response to previous command.
+        #:       This information changes from one step to another.
+        self.feedback = kwargs.get("feedback", False)
         #: bool: Text description of the current room, i.e. output of the
         #:       `look` command.
         #:       This information changes from one step to another.
