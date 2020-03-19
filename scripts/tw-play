@@ -11,8 +11,9 @@ import textworld
 import textworld.agents
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def build_parser():
+    description = "Play a TextWorld game (.z8 or .ulx)."
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument("game")
     parser.add_argument("--mode", default="human", metavar="MODE",
                         choices=["random", "human", "random-cmd", "walkthrough"],
@@ -29,11 +30,11 @@ def parse_args():
                         help="Verbose mode.")
     parser.add_argument("-vv", "--very-verbose", action="store_true",
                         help="Print debug information.")
-    return parser.parse_args()
+    return parser
 
 
 def main():
-    args = parse_args()
+    args = build_parser().parse_args()
     if args.very_verbose:
         args.verbose = args.very_verbose
 

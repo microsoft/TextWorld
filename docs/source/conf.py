@@ -50,6 +50,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
+    'sphinxarg.ext',
 ]
 
 # autosummary_generate = True
