@@ -15,7 +15,7 @@ from textworld.generator import Game
 from textworld.generator.text_grammar import Grammar, GrammarOptions
 
 
-def parse_args():
+def build_parser():
     DESCRIPTION = "Extract information from of a list of TextWorld games."
     general_parser = argparse.ArgumentParser(add_help=False)
 
@@ -62,11 +62,12 @@ def parse_args():
     commands_parser.add_argument("--output", default="commands.txt",
                                  help="Output file containing all commands (.txt). Default: %(default)s")
 
-    return parser.parse_args(), parser
+    return parser
 
 
 def main():
-    args, parser = parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
 
     if not args.subcommand:
         parser.error("A subcommand is required.")

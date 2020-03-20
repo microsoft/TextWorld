@@ -43,8 +43,9 @@ def _maybe_load_third_party_module():
         spec.loader.exec_module(module)
 
 
-def parse_args():
-    general_parser = argparse.ArgumentParser(add_help=False)
+def build_parser(default_parser_only=True):
+    description = "Make a TextWorld game (.z8 or .ulx)."
+    general_parser = argparse.ArgumentParser(add_help=False, description=description)
 
     general_group = general_parser.add_argument_group('General settings')
     general_group.add_argument("--output", default="./tw_games/", metavar="PATH",
@@ -137,12 +138,16 @@ def parse_args():
         add_challenge_arguments(challenge_parser)
         challenge_parsers.append(challenge_parser)
 
-    return parser.parse_args(), (parser, custom_parser, challenge_parsers)
+    if default_parser_only:
+        return parser
+
+    return parser, custom_parser, challenge_parsers
 
 
 if __name__ == "__main__":
     _maybe_load_third_party_module()
-    args, (parser, custom_parser, challenge_parsers) = parse_args()
+    parser, custom_parser, challenge_parsers = build_parser(default_parser_only=False)
+    args = parser.parse_args()
 
     if args.seed is None:
         args.seed = np.random.randint(65635)
