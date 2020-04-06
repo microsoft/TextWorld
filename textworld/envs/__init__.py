@@ -6,6 +6,7 @@ from textworld.envs.glulx.git_glulx import GitGlulxEnv
 from textworld.envs.zmachine.jericho import JerichoEnv
 from textworld.envs.tw import TextWorldEnv
 from textworld.envs.wrappers.tw_inform7 import TWInform7
+from textworld.envs.pddl import PddlEnv
 
 
 def _guess_backend(path):
@@ -14,6 +15,8 @@ def _guess_backend(path):
         return GitGlulxEnv
     elif re.search(r"\.z[1-8]", path):
         return JerichoEnv
+    elif path.endswith(".tw-pddl"):
+        return PddlEnv
 
     msg = "Unsupported game format: {}".format(path)
     raise ValueError(msg)

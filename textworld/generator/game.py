@@ -352,8 +352,11 @@ class EntityInfo:
     def __hash__(self) -> int:
         return hash(tuple(getattr(self, slot) for slot in self.__slots__))
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return "Info({}: {} | {})".format(self.name, self.adj, self.noun)
+
+    def __str__(self) -> str:
+        return self.name
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "EntityInfo":

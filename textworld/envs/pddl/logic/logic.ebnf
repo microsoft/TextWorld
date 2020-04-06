@@ -1,0 +1,25 @@
+@@grammar :: PddlLogic
+
+@@eol_comments :: /#.*?$/
+
+start = pddlDocument ;
+
+str = ?'"[^"]*"' ;
+
+strBlock = ?'"""(?:.|\n)*?"""' ;
+
+name = ?"[\w/-]+" ;
+
+template::ActionTemplateNode = "template" "::" template:str ";" ;
+
+feedback::ActionFeedbackNode = "feedback" "::" name:str ";" ;
+
+pddl::ActionPddlNode = "pddl" "::" code:strBlock ";" ;
+
+grammar::ActionGrammarNode = "grammar" "::" code:strBlock ";" ;
+
+actionType::ActionTypeNode = "action" name:name "{" {(template:template | feedback:feedback | pddl:pddl | grammar:grammar)}* "}" ;
+
+pddlDocument::PddlDocumentNode = parts:{(actionType | grammar)}* $ ;
+
+pddlStart = pddlDocument ;

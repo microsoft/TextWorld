@@ -72,6 +72,7 @@ setup(
     ],
     extras_require={
         'vis': open('requirements-vis.txt').readlines(),
+        'pddl': open('requirements-pddl.txt').readlines(),
         'full': open('requirements-full.txt').readlines(),
     },
 )
