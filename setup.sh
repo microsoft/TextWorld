@@ -21,9 +21,9 @@ cd textworld/thirdparty/
 if [ ! -e I7_6M62_Linux_all.tar.gz ]; then
     echo "Downloading Inform7 CLI"
     curl -LO http://inform7.com/apps/6M62/I7_6M62_Linux_all.tar.gz
-    if [ "${machine}" == 'Mac' ] && [ ! -e I7-6M62-OSX.dmg ]; then
+    if [ "${machine}" == 'Mac' ] && [ ! -e I7-6M62-OSX-Interim.dmg ]; then
         echo "Downloading Inform7 for Mac"
-        curl -LO http://inform7.com/apps/6M62/I7-6M62-OSX.dmg
+        curl -LO http://inform7.com/apps/6M62/I7-6M62-OSX-Interim.dmg
     fi
 fi
 if [ ! -d inform7-6M62 ]; then
@@ -41,7 +41,7 @@ fi
 # Mount DMG if we're using a Mac
 if [ "${machine}" == 'Mac' ] && [ -e inform7-6M62 ]; then
     echo "Mounting Inform for Mac"
-    hdiutil attach ./I7-6M62-OSX.dmg
+    hdiutil attach ./I7-6M62-OSX-Interim.dmg
 
     echo "Copying Mac compiled inform files"
     current_dir="$(pwd)"
