@@ -2,6 +2,12 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.1] - 2020-04-07
+
+### Fixed
+
+- Use Inform7 interim version for MacOS. [#231](https://github.com/microsoft/TextWorld/pull/231)
+
 ## [1.3.0] - 2020-03-19
 
 ### Breaking
