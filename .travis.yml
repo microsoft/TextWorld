@@ -23,8 +23,11 @@ matrix:
       python: "3.5"
     - os: linux
       python: "3.6"
-    - os: osx
+    - os: osx  # macOS 10.13
       language: generic
+    - os: osx  # macOS 10.14
+      language: generic
+      osx_image: xcode11.3
 
 install:
   - ./.travis/setup.sh
