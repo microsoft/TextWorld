@@ -23,9 +23,9 @@ class JerichoEnv(textworld.Environment):
         self._seed = -1
         self._jericho = None
         self.gamefile = None
+        self._reset = False
 
     def load(self, z_file: str) -> None:
-        self.close()
         self.gamefile = os.path.abspath(z_file)
         _, ext = os.path.splitext(os.path.basename(self.gamefile))
 
@@ -35,6 +35,12 @@ class JerichoEnv(textworld.Environment):
 
         if not os.path.isfile(self.gamefile):
             raise FileNotFoundError(self.gamefile)
+
+        if self._jericho is None:
+            # Start the game using Jericho.
+            self._jericho = jericho.FrotzEnv(self.gamefile, self._seed)
+        else:
+            self._jericho.load(self.gamefile)
 
     def __del__(self) -> None:
         self.close()
@@ -46,6 +52,9 @@ class JerichoEnv(textworld.Environment):
 
     def seed(self, seed=None):
         self._seed = seed
+        if self._jericho:
+            self._jericho.seed(self._seed)
+
         return self._seed
 
     def _gather_infos(self):
@@ -67,14 +76,13 @@ class JerichoEnv(textworld.Environment):
         self.state["location"] = self._jericho.get_player_location()
 
     def reset(self):
-        self.close()  # In case, it is running.
-
-        # Start the game using Jericho.
-        self._jericho = jericho.FrotzEnv(self.gamefile, self._seed)
+        if not self.game_running:
+            raise GameNotRunningError("Call env.load(gamefile) before env.reset().")
 
         self.state = GameState()
         self.state.raw, _ = self._jericho.reset()
         self._gather_infos()
+        self._reset = True
         return self.state
 
     def _send(self, command: str) -> str:
@@ -86,7 +94,7 @@ class JerichoEnv(textworld.Environment):
         return feedback
 
     def step(self, command):
-        if not self.game_running:
+        if not self.game_running or not self._reset:
             raise GameNotRunningError()
 
         self.state = GameState()
@@ -101,6 +109,7 @@ class JerichoEnv(textworld.Environment):
         if self.game_running:
             self._jericho.close()
             self._jericho = None
+            self._reset = False
 
     def copy(self) -> "JerichoEnv":
         """ Return a copy of this environment at the same state. """
