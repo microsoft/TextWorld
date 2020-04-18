@@ -256,9 +256,9 @@ class World:
             room = self._get_room(fact.arguments[0])
             room.add_related_fact(fact)
 
-            if fact.name.endswith("_of"):
+            if fact.definition.endswith("_of"):
                 # Handle room positioning facts.
-                exit = reverse_direction(fact.name.split("_of")[0])
+                exit = reverse_direction(fact.definition.split("_of")[0])
                 dest = self._get_room(fact.arguments[1])
                 dest.add_related_fact(fact)
                 assert exit not in room.exits
