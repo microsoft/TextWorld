@@ -7,12 +7,18 @@ type c : t {
         in(o, c);        
     }
 
-    rules {       
-        open/c    :: $at(P, r) & $at(s, r) & $on(c, s) & $was__open(c) & closed(c) -> open(c);
-        close/c   :: $at(P, r) & $at(s, r) & $on(c, s) & $was__open(c) & open(c) -> closed(c);
+    rules {     
+        # open/c    :: $at(P, r) & $at(s, r) & $on(c, s) & $was__open(c) & closed(c) -> open(c);
+        # close/c   :: $at(P, r) & $at(s, r) & $on(c, s) & $was__open(c) & open(c) -> closed(c);
+  
+        open/c    :: $at(P, r) & $at(s, r) & $on(c, s) & $has_been__read/e(cpu) & closed(c) -> open(c);
+        close/c   :: $at(P, r) & $at(s, r) & $on(c, s) & $has_been__read/e(cpu) & open(c) -> closed(c);
 
         open/c1   :: $at(P, r) & $at(s, r) & $on(c, s) & closed(c) -> open(c);
         close/c1  :: $at(P, r) & $at(s, r) & $on(c, s) & open(c) -> closed(c);
+
+        # open/c1   :: $at(P, r) & $at(s, r) & $on(c, s) & closed(c) -> open(c) & was__closed(c);
+        # close/c1  :: $at(P, r) & $at(s, r) & $on(c, s) & open(c) -> closed(c) & was__open(c);
     }
 
     reverse_rules {

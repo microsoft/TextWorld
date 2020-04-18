@@ -22,7 +22,7 @@ from textworld.generator import user_query
 from textworld.generator.vtypes import get_new
 from textworld.logic import State, Variable, Proposition, Action
 from textworld.generator.game import GameOptions
-from textworld.generator.game import Game, World, Quest, EventCondition, EntityInfo
+from textworld.generator.game import Game, World, Quest, EventAnd, EventOr, EventCondition, EventAction, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
@@ -74,6 +74,12 @@ class FailedConstraintsError(ValueError):
         """
         msg = "The following constraints have failed: "
         msg += ", ".join(set(action.name for action in failed_constraints))
+        super().__init__(msg)
+
+
+class UnderspecifiedEventError(NameError):
+    def __init__(self):
+        msg = "Either the actions or the conditions is required to create an event. Both cannot be provided."
         super().__init__(msg)
 
 
@@ -146,7 +152,7 @@ class WorldEntity:
             *entities: A list of entities as arguments to the new fact.
         """
         args = [entity.var for entity in entities]
-        self._facts.append(Proposition(name='is__'+name, arguments=args, verb='is', definition=name))
+        self._facts.append(Proposition(name='is__' + name, arguments=args))
 
     def remove_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
         args = [entity.var for entity in entities]
@@ -692,7 +698,7 @@ class GameMaker:
         args = [entity.var for entity in entities]
         return Proposition(name, args)
 
-    def new_rule_fact(self, name: str, *entities: List["WorldEntity"]) -> Union[None, Action]:
+    def new_action(self, name: str, *entities: List["WorldEntity"]) -> Union[None, Action]:
         """ Create new fact about a rule.
 
         Args:
@@ -704,7 +710,7 @@ class GameMaker:
             new_ph = []
             for pred in conditions:
                 new_var = [var for ph in pred.parameters for var in args if ph.type == var.type]
-                new_ph.append(Proposition(name=pred.name, arguments=new_var, verb=pred.verb, definition=pred.definition))
+                new_ph.append(Proposition(name=pred.name, arguments=new_var))
             return new_ph
 
         args = [entity.var for entity in entities]
@@ -722,6 +728,67 @@ class GameMaker:
                 return action
 
         return None
+
+    def new_event(self, action: Iterable[Action] = (), condition: Iterable[Proposition] = (),
+                  command: Iterable[str] = (), condition_verb_tense: dict = (), action_verb_tense: dict = ()):
+
+        if action and condition:
+            raise UnderspecifiedEventError
+
+        if action:
+            event = EventAction(actions=action, verb_tense=action_verb_tense, commands=command)
+
+        elif condition:
+            event = EventCondition(conditions=condition, verb_tense=condition_verb_tense, actions=action,
+                                   commands=command)
+
+        # return tuple(ev for ev in [event] if ev)
+        return event
+
+    def new_operation(self, operation={}):
+        def func(operator='or', events=[]):
+            if operator == 'or' and events:
+                return EventOr(events=events)
+            if operator == 'and' and events:
+                return EventAnd(events=events)
+            else:
+                raise
+
+        if not isinstance(operation, dict):
+            if len(operation) == 0:
+                return ()
+            else:
+                raise
+
+        y1 = []
+        for k, v in operation.items():
+            if isinstance(v, dict):
+                y1.append(self.new_operation(operation=v)[0])
+                y1 = [func(k, y1)]
+            else:
+                if isinstance(v, EventCondition) or isinstance(v, EventAction):
+                    y1.append(func(k, [v]))
+                else:
+                    if any((isinstance(it, dict) for it in v)):
+                        y2 = []
+                        for it in v:
+                            if isinstance(it, dict):
+                                y2.append(self.new_operation(operation=it)[0])
+                            else:
+                                y2.append(func(k, [it]))
+
+                        y1 = [func(k, y2)]
+                    else:
+                        y1.append(func(k, v))
+
+        return tuple(y1)
+
+    def new_quest(self, win_event=(), fail_event=(), reward=None, desc=None, commands=()) -> Quest:
+        return Quest(win_events=self.new_operation(operation=win_event),
+                     fail_events=self.new_operation(operation=fail_event),
+                     reward=reward,
+                     desc=desc,
+                     commands=commands)
 
     def new_event_using_commands(self, commands: List[str]) -> EventCondition:
         """ Creates a new event using predefined text commands.

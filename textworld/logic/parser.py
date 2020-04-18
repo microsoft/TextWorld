@@ -130,10 +130,10 @@ class GameLogicParser(Parser):
         if self.cst.count('__') == 0:
             self.last_node = 'is__' + self.cst
         self.name_last_node('name')
-        self._predVT_(self.ast['name'])
-        self.name_last_node('verb')
-        self._predDef_(self.ast['name'])
-        self.name_last_node('definition')
+        # self._predVT_(self.ast['name'])
+        # self.name_last_node('verb')
+        # self._predDef_(self.ast['name'])
+        # self.name_last_node('definition')
         self._token('(')
 
         def sep2():
@@ -145,7 +145,7 @@ class GameLogicParser(Parser):
         self._token(')')
 
         self.ast._define(
-            ['name', 'types', 'verb', 'definition'],
+            ['name', 'types'],
             []
         )
 
@@ -155,10 +155,10 @@ class GameLogicParser(Parser):
         if self.cst.count('__') == 0:
             self.last_node = 'is__' + self.cst
         self.name_last_node('name')
-        self._predVT_(self.ast['name'])
-        self.name_last_node('verb')
-        self._predDef_(self.ast['name'])
-        self.name_last_node('definition')
+        # self._predVT_(self.ast['name'])
+        # self.name_last_node('verb')
+        # self._predDef_(self.ast['name'])
+        # self.name_last_node('definition')
         self._token('(')
 
         def sep2():
@@ -170,7 +170,7 @@ class GameLogicParser(Parser):
         self._token(')')
 
         self.ast._define(
-            ['arguments', 'name', 'verb', 'definition'],
+            ['arguments', 'name'],
             []
         )
 
@@ -232,10 +232,10 @@ class GameLogicParser(Parser):
         if self.cst.count('__') == 0:
             self.last_node = 'is__' + self.cst
         self.name_last_node('name')
-        self._predVT_(self.ast['name'])
-        self.name_last_node('verb')
-        self._predDef_(self.ast['name'])
-        self.name_last_node('definition')
+        # self._predVT_(self.ast['name'])
+        # self.name_last_node('verb')
+        # self._predDef_(self.ast['name'])
+        # self.name_last_node('definition')
         self._token('(')
 
         def sep2():
@@ -247,7 +247,7 @@ class GameLogicParser(Parser):
         self._token(')')
 
         self.ast._define(
-            ['name', 'parameters', 'verb', 'definition'],
+            ['name', 'parameters'],
             []
         )
 

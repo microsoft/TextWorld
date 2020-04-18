@@ -42,7 +42,6 @@ type cpu : o {
 
             [Before checking email:
                 if a CPU-like (called pc) is read:
-                    Say "You've already read all today's emails.";
                     rule fails;
                 otherwise:
                     if a random chance of 3 in 4 succeeds:

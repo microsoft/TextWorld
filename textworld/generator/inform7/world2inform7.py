@@ -15,7 +15,7 @@ from pkg_resources import Requirement, resource_filename
 
 from textworld.utils import make_temp_directory, str2bool, chunk
 
-from textworld.generator.game import EventCondition, EventAction, Game
+from textworld.generator.game import EventCondition, EventAction, Event, EventAnd, EventOr, Game
 from textworld.generator.world import WorldRoom, WorldEntity
 from textworld.logic import Signature, Proposition, Action, Variable
 
@@ -346,6 +346,8 @@ class Inform7Game:
         objective = self.game.objective.replace("\n", "[line break]")
         maximum_score = 0
         wining = 0
+        quests_text, viewed_actions = [], {}
+        action_id = []
         for quest_id, quest in enumerate(self.game.quests):
             maximum_score += quest.reward
 
@@ -353,14 +355,14 @@ class Inform7Game:
             The quest{quest_id} completed is a truth state that varies.
             The quest{quest_id} completed is usually false.
             """)
-            source += quest_completed.format(quest_id=quest_id)
+            quest_ending = quest_completed.format(quest_id=quest_id)
 
-            for event_id, event in enumerate(quest.win_events):
+            for event_id, event in enumerate(quest.win_events_list):
                 commands = self.gen_commands_from_actions(event.actions)
                 event.commands = commands
 
                 walkthrough = '\nTest quest{}_{} with "{}"\n\n'.format(quest_id, event_id, " / ".join(commands))
-                source += walkthrough
+                quest_ending += walkthrough
 
             # Add winning and losing conditions for quest.
             quest_ending_conditions = textwrap.dedent("""\
@@ -368,73 +370,70 @@ class Inform7Game:
                 do nothing;""".format(quest_id=quest_id))
 
             fail_template = textwrap.dedent("""
-            else if {conditions}:
-                end the story; [Lost]""")
+            otherwise if {conditions}:
+                end the story; [Lost];""")
 
-            win_template_state = textwrap.dedent("""
-            else if {conditions}:
+            win_template = textwrap.dedent("""
+            otherwise if {conditions}:
                 increase the score by {reward}; [Quest completed]
-                Now the quest{quest_id} completed is true;""")
+                Now the quest{quest_id} completed is true;
+                {removed_conditions}""")
 
-            win_template_action = textwrap.dedent("""
-            else:
-                After {conditions}:
-                    increase the score by {reward}; [Quest completed]
-                    Now the quest{quest_id} completed is true;""")
+            otherwise_template = textwrap.dedent("""\
+            otherwise:
+                {removed_conditions}""")
 
-            win_template_state_action = textwrap.dedent("""
-                        else if {conditions}:
-                            After {actions}:
-                                increase the score by {reward}; [Quest completed]
-                                Now the quest{quest_id} completed is true;""")
-
+            conditions, removals = '', ''
+            cond_id = []
             for fail_event in quest.fail_events:
-                if isinstance(fail_event, EventCondition):
-                    param = fail_event.condition
-                if isinstance(fail_event, EventAction):
-                    param = fail_event.actions[0]
+                condition, removed_conditions, final_condition, _, _ = self.get_events(fail_event,
+                                                                                       textwrap.dedent(""""""),
+                                                                                       textwrap.dedent(""""""),
+                                                                                       action_id=action_id,
+                                                                                       cond_id=cond_id,
+                                                                                       quest_id=quest_id,
+                                                                                       rwd_conds=viewed_actions)
+                removals += (len(removals) > 0) * '    ' + '' + removed_conditions
+                quest_ending_conditions += fail_template.format(conditions=final_condition)
+                conditions += condition
 
-                conditions = self.gen_source_for_conditions(param.preconditions)
-                quest_ending_conditions += fail_template.format(conditions=conditions)
-
-            if len(quest.win_events) < 2:
-                for win_event in quest.win_events:
-                    if isinstance(win_event, EventCondition):
-                        conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
-                        quest_ending_conditions += win_template_state.format(conditions=conditions,
-                                                                             reward=quest.reward,
-                                                                             quest_id=quest_id)
-
-                    if isinstance(win_event, EventAction):
-                        conditions = self.gen_source_for_actions(win_event.actions)
-                        quest_ending_conditions += win_template_action.format(conditions=conditions,
-                                                                              reward=quest.reward,
-                                                                              quest_id=quest_id)
-                    wining += 1
-            else:
-                for win_event in quest.win_events:
-                    if isinstance(win_event, EventCondition):
-                        conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
-
-                    if isinstance(win_event, EventAction):
-                        actions = self.gen_source_for_actions(win_event.actions)
-
-                quest_ending_conditions += win_template_state_action.format(conditions=conditions,
-                                                                            actions=actions,
-                                                                            reward=quest.reward,
-                                                                            quest_id=quest_id)
                 wining += 1
 
-            quest_ending = """\
+            for win_event in quest.win_events:
+                condition, removed_conditions, final_condition, _, _ = self.get_events(win_event,
+                                                                                       textwrap.dedent(""""""),
+                                                                                       textwrap.dedent(""""""),
+                                                                                       action_id=action_id,
+                                                                                       cond_id=cond_id,
+                                                                                       quest_id=quest_id,
+                                                                                       rwd_conds=viewed_actions)
+                removals += (len(removals) > 0) * '    ' + '' + removed_conditions
+                quest_ending_conditions += win_template.format(reward=quest.reward, quest_id=quest_id,
+                                                               conditions=final_condition,
+                                                               removed_conditions=textwrap.indent(removals, ""))
+                conditions += condition
+
+                wining += 1
+
+            if removals:
+                quest_ending_conditions += otherwise_template.format(removed_conditions=textwrap.indent(removals, ""))
+
+            quest_condition_template = """\
             Every turn:\n{conditions}
 
             """.format(conditions=textwrap.indent(quest_ending_conditions, "                "))
-            source += textwrap.dedent(quest_ending)
+
+            quest_ending += textwrap.dedent(quest_condition_template)
+
+            source += textwrap.dedent(conditions)
+            source += textwrap.dedent('\n')
+            quests_text += [quest_ending]
+
+        source += textwrap.dedent('\n'.join(txt for txt in quests_text if txt))
 
         # Enable scoring is at least one quest has nonzero reward.
         if maximum_score >= 0:
             source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
-
 
         # Build test condition for winning the game.
         game_winning_test = "1 is 0 [always false]"
@@ -1032,6 +1031,175 @@ class Inform7Game:
                 break
 
         return source
+
+    def get_events(self, combined_events, txt, rmv, quest_id, rwd_conds, action_id=[],
+                   cond_id=[], check_vars=[]):
+
+        action_processing_template = textwrap.dedent("""
+        The action{action_id} check is a truth state that varies.
+        The action{action_id} check is usually false.
+        After {actions}:
+            Now the action{action_id} check is true.
+            """)
+
+        remove_action_processing_template = textwrap.dedent("""Now the action{action_id} check is false;
+        """)
+
+        combined_ac_processing_template = textwrap.dedent("""
+        The condition{cond_id} of quest{quest_id} check is a truth state that varies.
+        The condition{cond_id} of quest{quest_id} check is usually false.
+        Every turn:
+            if {conditions}:
+                Now the condition{cond_id} of quest{quest_id} check is true.
+                """)
+
+        remove_condition_processing_template = textwrap.dedent("""Now the condition{cond_id} of quest{quest_id} check is false;
+        """)
+
+        if isinstance(combined_events, EventCondition) or isinstance(combined_events, EventAction):
+            if isinstance(combined_events, EventCondition):
+                check_vars += [self.gen_source_for_conditions(combined_events.condition.preconditions)]
+                return [None] * 5
+
+            elif isinstance(combined_events, EventAction):
+                i7_ = self.gen_source_for_actions(combined_events.actions)
+                if not rwd_conds or i7_ not in rwd_conds.values():
+                    txt += [action_processing_template.format(action_id=len(action_id), actions=i7_)]
+                    rmv += [remove_action_processing_template.format(action_id=len(action_id))]
+                    temp = [self.gen_source_for_conditions([prop]) for prop in combined_events.actions[0].preconditions
+                            if prop.verb != 'is']
+                    if temp:
+                        temp = ' and ' + ' and '.join(t for t in temp)
+                    else:
+                        temp = ''
+                    check_vars += ['action{action_id} check is true'.format(action_id=len(action_id)) + temp]
+                    rwd_conds['action{action_id}'.format(action_id=len(action_id))] = i7_
+                    action_id += [1]
+                else:
+                    word = list(rwd_conds.keys())[list(rwd_conds.values()).index(i7_)]
+                    rmv += [remove_action_processing_template.format(action_id=word[6:])]
+                    temp = [self.gen_source_for_conditions([prop]) for prop in combined_events.actions[0].preconditions
+                            if prop.verb != 'is']
+                    check_vars += ['action{action_id} check is true'.format(action_id=word[6:]) + ' and ' +
+                                   ' and '.join(t for t in temp)]
+
+                return [None] * 5
+
+        act_type, _txt, _rmv, _check_vars, _cond_id = [], [], [], [], []
+        for event in combined_events.events:
+            st, rm, a3, a4, cond_type = self.get_events(event, _txt, _rmv, quest_id, rwd_conds, action_id, cond_id,
+                                                        check_vars=_check_vars)
+            act_type.append(isinstance(event, EventAction))
+
+            if st:
+                _txt += [st]
+                _rmv += [rm]
+                _check_vars.append('condition{cond_id} of quest{quest_id} check is true'.format(cond_id=len(cond_id)-1,
+                                                                                                quest_id=quest_id))
+                if cond_type:
+                    _cond_id += cond_type
+
+            if any(_cond_id):
+                _rmv += [remove_condition_processing_template.format(quest_id=quest_id, cond_id=len(cond_id) - 1)]
+
+        event_rule = isinstance(combined_events, EventAnd) * ' and ' + isinstance(combined_events, EventOr) * ' or '
+        condition_ = event_rule.join(cv for cv in _check_vars)
+        tp_txt = ''.join(tx for tx in _txt)
+        tp_txt += combined_ac_processing_template.format(quest_id=quest_id, cond_id=len(cond_id), conditions=condition_)
+        tp_rmv = '    '.join(ac for ac in _rmv if ac)
+        fin_cond = 'condition{cond_id} of quest{quest_id} check is true'.format(cond_id=len(cond_id), quest_id=quest_id)
+        cond_id += [1]
+        if any(act_type):
+            cond_type = [True]
+
+        return tp_txt, tp_rmv, fin_cond, [action_id, cond_id, rwd_conds], cond_type
+
+
+
+    # def get_events(self, combined_events, txt, rmv, quest_id, action_id=[], state_id=[], cond_id=[], check_vars=[], rwd_conds=[]):
+    #
+    #     remove_action_processing_template = textwrap.dedent("""if the action{action_id} check is true:
+    #     Now the action{action_id} check is false.
+    #     """)
+    #     remove_condition_processing_template = textwrap.dedent("""if the condition{cond_id} of quest{quest_id} check is true:
+    #     Now the condition{cond_id} of quest{quest_id} check is false.
+    #     """)
+    #     action_processing_template = textwrap.dedent("""
+    #     The action{action_id} check is a truth state that varies.
+    #     The action{action_id} check is usually false.
+    #     After {actions}:
+    #         Now the action{action_id} check is true.
+    #         """)
+    #     state_processing_template = textwrap.dedent("""
+    #     The state{state_id} of quest{quest_id} check is a truth state that varies.
+    #     The state{state_id} of quest{quest_id} check is usually false.
+    #     Every turn:
+    #         if {conditions}:
+    #             Now the state{state_id} of quest{quest_id} check is true.
+    #             """)
+    #     combined_ac_processing_template = textwrap.dedent("""
+    #     The condition{cond_id} of quest{quest_id} check is a truth state that varies.
+    #     The condition{cond_id} of quest{quest_id} check is usually false.
+    #     Every turn:
+    #         if {conditions}:
+    #             Now the condition{cond_id} of quest{quest_id} check is true.
+    #             """)
+    #
+    #     if isinstance(combined_events, EventCondition) or isinstance(combined_events, EventAction):
+    #         if isinstance(combined_events, EventCondition):
+    #             i7_ = self.gen_source_for_conditions(combined_events.condition.preconditions)
+    #             # txt += [i7_]
+    #             check_vars.append(i7_)
+    #             state_id += [1]
+    #             return [None] * 6
+    #
+    #         elif isinstance(combined_events, EventAction):
+    #             if not rwd_conds or 'action{action_id}'.format(action_id=len(action_id)) not in rwd_conds:
+    #                 i7_ = self.gen_source_for_actions(combined_events.actions)
+    #                 txt += [action_processing_template.format(quest_id=quest_id, action_id=len(action_id), actions=i7_)]
+    #                 rmv += [remove_action_processing_template.format(quest_id=quest_id, action_id=len(action_id))]
+    #                 check_vars.append('action{action_id} check is true'.format(action_id=len(action_id)))
+    #                 rwd_conds += {i7_: 'action{action_id}'.format(action_id=len(action_id))}
+    #                 action_id += [1]
+    #             else:
+    #                 rmv += [remove_action_processing_template.format(quest_id=quest_id, action_id=len(action_id))]
+    #                 check_vars.append('action{action_id} check is true'.format(action_id=len(action_id)))
+    #
+    #             return [None] * 6
+    #
+    #     # act_type = []
+    #     act_type, _txt, _rmv, _check_vars, _cond_id, _rwd_conds = [], [], [], [], [], []
+    #     # _cond_id, _rwd_conds = [], []
+    #     for event in combined_events.events:
+    #         st, rm, _, _, cond_type, rwd = self.get_events(event, _txt, _rmv, quest_id, action_id, state_id, cond_id,
+    #                                                        _check_vars, _rwd_conds)
+    #         act_type.append(isinstance(event, EventAction))
+    #
+    #         if st:
+    #             _txt += [st]
+    #             _rmv += [rm]
+    #             _check_vars.append('condition{cond_id} of quest{quest_id} check is true'.format(cond_id=len(cond_id)-1,
+    #                                                                                             quest_id=quest_id))
+    #             # _rwd_conds += rwd
+    #
+    #             if cond_type:
+    #                 _cond_id += cond_type
+    #
+    #         if any(_cond_id):
+    #             _rmv += [remove_condition_processing_template.format(quest_id=quest_id, cond_id=len(cond_id) - 1)]
+    #
+    #     event_rule = isinstance(combined_events, EventAnd) * ' and ' + isinstance(combined_events, EventOr) * ' or '
+    #     # _rwd_conds += _check_vars
+    #     condition_ = event_rule.join(cv for cv in _check_vars)
+    #     tp_txt = ''.join(tx for tx in _txt)
+    #     tp_txt += combined_ac_processing_template.format(quest_id=quest_id, cond_id=len(cond_id), conditions=condition_)
+    #     tp_rmv = '    '.join(ac for ac in _rmv if ac)
+    #     fin_cond = 'condition{cond_id} of quest{quest_id} check is true'.format(cond_id=len(cond_id), quest_id=quest_id)
+    #     cond_id += [1]
+    #     if any(act_type):
+    #         cond_type = [True]
+    #
+    #     return tp_txt, tp_rmv, fin_cond, [action_id, state_id, cond_id, _rwd_conds], cond_type, _rwd_conds
 
 
 def generate_inform7_source(game: Game, seed: int = 1234, use_i7_description: bool = False) -> str:

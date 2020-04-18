@@ -473,9 +473,7 @@ def test_commands(game, arr):
         silent = False
         game_file = game.compile(pjoin(tmpdir, "test_game_1.ulx"))
         env = textworld.start(game_file, infos=EnvInfos(admissible_commands=True, intermediate_reward=True))
-        state = env.reset()
-        # env = start(game_file)
-        # env.reset()
+        env.reset()
 
         agent = textworld.agents.HumanAgent(autocompletion=True)
         agent.reset(env)
