@@ -46,6 +46,45 @@ def get_failing_constraints(state, kb: Optional[KnowledgeBase] = None):
     return failed_constraints
 
 
+def new_operation(operation={}):
+    def func(operator='or', events=[]):
+        if operator == 'or' and events:
+            return EventOr(events=events)
+        if operator == 'and' and events:
+            return EventAnd(events=events)
+        else:
+            raise
+
+    if not isinstance(operation, dict):
+        if len(operation) == 0:
+            return ()
+        else:
+            operation = {'or': tuple(ev for ev in operation)}
+
+    y1 = []
+    for k, v in operation.items():
+        if isinstance(v, dict):
+            y1.append(new_operation(operation=v)[0])
+            y1 = [func(k, y1)]
+        else:
+            if isinstance(v, EventCondition) or isinstance(v, EventAction):
+                y1.append(func(k, [v]))
+            else:
+                if any((isinstance(it, dict) for it in v)):
+                    y2 = []
+                    for it in v:
+                        if isinstance(it, dict):
+                            y2.append(new_operation(operation=it)[0])
+                        else:
+                            y2.append(func(k, [it]))
+
+                    y1 = [func(k, y2)]
+                else:
+                    y1.append(func(k, v))
+
+    return tuple(y1)
+
+
 class MissingPlayerError(ValueError):
     pass
 
@@ -79,7 +118,7 @@ class FailedConstraintsError(ValueError):
 
 class UnderspecifiedEventError(NameError):
     def __init__(self):
-        msg = "Either the actions or the conditions is required to create an event. Both cannot be provided."
+        msg = "The event type should be specified. It can be either the action or  condition."
         super().__init__(msg)
 
 
@@ -643,7 +682,7 @@ class GameMaker:
         self.build()
         return self.quests[-1]
 
-    def set_quest_from_commands(self, commands: List[str], ask_for_state: bool = False) -> Quest:
+    def set_quest_from_commands(self, commands: List[str], event_style: str, ask_for_state: bool = False) -> Quest:
         """ Defines the game's quest using predefined text commands.
 
         This launches a `textworld.play` session.
@@ -672,7 +711,7 @@ class GameMaker:
 
         # Ask the user which quests have important state, if this is set
         # (if not, we assume the last action contains all the relevant facts)
-        winning_facts = None
+        winning_facts = ()
         if ask_for_state and recorder.last_game_state is not None:
             winning_facts = [user_query.query_for_important_facts(actions=recorder.actions,
                                                                   facts=recorder.last_game_state.state.facts,
@@ -681,8 +720,8 @@ class GameMaker:
             unrecognized_commands = [c for c, a in zip(commands, recorder.actions) if a is None]
             raise QuestError("Some of the actions were unrecognized: {}".format(unrecognized_commands))
 
-        event = EventCondition(actions=actions, conditions=winning_facts)
-        self.quests = [Quest(win_events=[event])]
+        event = self.new_event(action=actions, condition=winning_facts, command=commands, event_style=event_style)
+        self.quests = [self.new_quest(win_event=[event])]
 
         # Calling build will generate the description for the quest.
         self.build()
@@ -730,67 +769,26 @@ class GameMaker:
         return None
 
     def new_event(self, action: Iterable[Action] = (), condition: Iterable[Proposition] = (),
-                  command: Iterable[str] = (), condition_verb_tense: dict = (), action_verb_tense: dict = ()):
-
-        if action and condition:
-            raise UnderspecifiedEventError
-
-        if action:
-            event = EventAction(actions=action, verb_tense=action_verb_tense, commands=command)
-
-        elif condition:
+                  command: Iterable[str] = (), condition_verb_tense: dict = (), action_verb_tense: dict = (),
+                  event_style: str = 'condition'):
+        if event_style == 'condition':
             event = EventCondition(conditions=condition, verb_tense=condition_verb_tense, actions=action,
                                    commands=command)
-
-        # return tuple(ev for ev in [event] if ev)
-        return event
-
-    def new_operation(self, operation={}):
-        def func(operator='or', events=[]):
-            if operator == 'or' and events:
-                return EventOr(events=events)
-            if operator == 'and' and events:
-                return EventAnd(events=events)
-            else:
-                raise
-
-        if not isinstance(operation, dict):
-            if len(operation) == 0:
-                return ()
-            else:
-                raise
-
-        y1 = []
-        for k, v in operation.items():
-            if isinstance(v, dict):
-                y1.append(self.new_operation(operation=v)[0])
-                y1 = [func(k, y1)]
-            else:
-                if isinstance(v, EventCondition) or isinstance(v, EventAction):
-                    y1.append(func(k, [v]))
-                else:
-                    if any((isinstance(it, dict) for it in v)):
-                        y2 = []
-                        for it in v:
-                            if isinstance(it, dict):
-                                y2.append(self.new_operation(operation=it)[0])
-                            else:
-                                y2.append(func(k, [it]))
-
-                        y1 = [func(k, y2)]
-                    else:
-                        y1.append(func(k, v))
-
-        return tuple(y1)
+            return event
+        elif event_style == 'action':
+            event = EventAction(actions=action, verb_tense=action_verb_tense, commands=command)
+            return event
+        else:
+            raise UnderspecifiedEventError
 
     def new_quest(self, win_event=(), fail_event=(), reward=None, desc=None, commands=()) -> Quest:
-        return Quest(win_events=self.new_operation(operation=win_event),
-                     fail_events=self.new_operation(operation=fail_event),
+        return Quest(win_events=new_operation(operation=win_event),
+                     fail_events=new_operation(operation=fail_event),
                      reward=reward,
                      desc=desc,
                      commands=commands)
 
-    def new_event_using_commands(self, commands: List[str]) -> EventCondition:
+    def new_event_using_commands(self, commands: List[str], event_style: str) -> Union[EventCondition, EventAction]:
         """ Creates a new event using predefined text commands.
 
         This launches a `textworld.play` session to execute provided commands.
@@ -812,10 +810,10 @@ class GameMaker:
 
         # Skip "None" actions.
         actions, commands = zip(*[(a, c) for a, c in zip(recorder.actions, commands) if a is not None])
-        event = EventCondition(actions=actions, commands=commands)
+        event = self.new_event(action=actions, command=commands, event_style=event_style)
         return event
 
-    def new_quest_using_commands(self, commands: List[str]) -> Quest:
+    def new_quest_using_commands(self, commands: List[str], event_style: str) -> Quest:
         """ Creates a new quest using predefined text commands.
 
         This launches a `textworld.play` session to execute provided commands.
@@ -826,8 +824,8 @@ class GameMaker:
         Returns:
             The resulting quest.
         """
-        event = self.new_event_using_commands(commands)
-        return Quest(win_events=[event], commands=event.commands)
+        event = self.new_event_using_commands(commands, event_style=event_style)
+        return Quest(win_events=new_operation(operation=[event]), commands=event.commands)
 
     def set_walkthrough(self, commands: List[str]):
         with make_temp_directory() as tmpdir:

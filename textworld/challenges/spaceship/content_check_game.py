@@ -1,6 +1,5 @@
 import argparse
 import os
-import numpy as np
 
 from os.path import join as pjoin
 from typing import Mapping, Optional
@@ -11,7 +10,7 @@ from textworld import g_rng
 from textworld import GameMaker
 from textworld.challenges import register
 from textworld.generator.data import KnowledgeBase
-from textworld.generator.game import GameOptions, EventOr, EventAnd
+from textworld.generator.game import GameOptions
 
 
 g_rng.set_seed(20190826)
@@ -47,7 +46,6 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     kb = KnowledgeBase.load(target_dir=pjoin(os.path.dirname(__file__), 'textworld_data'))
     options = options or GameOptions()
     options.grammar.theme = 'spaceship'
-    # options.grammar.blend_instructions = True
     options.kb = kb
     options.seeds = g_rng.seed
 
@@ -131,19 +129,12 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
     from textworld.challenges.spaceship.maker import test_commands
     test_commands(gm, [
         'open Red box',
-        # 'look',
         'close Red box',
-        # 'examine Red box',
-        # 'open Red box',
         'open Blue box',
-
-        # 'look',
         'check laptop for email',
         'open Blue box',
         'open Red box',
         'close Red box',
-        # 'open Green box',
-        # 'open Red box',
     ])
 
     game.metadata = metadata
@@ -156,61 +147,20 @@ def make_game(settings: Mapping[str, str], options: Optional[GameOptions] = None
 def quest_design(game):
     quests = []
 
-    # win_quest1 = game.new_event(condition={game.new_fact("read/e", game._entities['cpu_0'])},
-    #                             condition_verb_tense={'read/e': 'has been'})
-    # win_quest2 = game.new_event(condition={game.new_fact("open", game._entities['c_2'])})
-    # win_quest3 = game.new_event(condition={game.new_fact("closed", game._entities['c_1'])})
-    # win_quest4 = game.new_event(action={game.new_action(game._kb.rules['open/c'],
-    #                                                     game._entities['P'],
-    #                                                     game._entities['r_0'],
-    #                                                     game._entities['s_0'],
-    #                                                     game._entities['c_1'],
-    #                                                     game._entities['cpu_0'])}, action_verb_tense={"open": "had been"})
-    # win_quest5 = game.new_event(action={game.new_action(game._kb.rules['close/c'],
-    #                                                     game._entities['P'],
-    #                                                     game._entities['r_0'],
-    #                                                     game._entities['s_0'],
-    #                                                     game._entities['c_0'],
-    #                                                     game._entities['cpu_0'])}, action_verb_tense={"open": "was"})
-    # win_quest6 = game.new_event(action={game.new_action(game._kb.rules['close/c'],
-    #                                                     game._entities['P'],
-    #                                                     game._entities['r_0'],
-    #                                                     game._entities['s_0'],
-    #                                                     game._entities['c_2'],
-    #                                                     game._entities['cpu_0'])}, action_verb_tense={"open": "was"})
-    #
-    # # quest = game.new_quest(win_event={'and': ({'or': ({'and': (win_quest5, {'or': (win_quest2, win_quest4)} )})},
-    # #                                           {'or': ({'or': (win_quest2, win_quest5)},
-    # #                                                   {'and': (win_quest3, win_quest6)})})
-    # #                                   })
-    # # quests.append(quest)
-    # quest = game.new_quest(win_event={'or': ({'and': (win_quest1, win_quest5)})},
-    #                        fail_event={'and': (win_quest6, {'or': (win_quest1, win_quest4)})},
-    #                        reward=3)
-    # quests.append(quest)
-    #
-    # quest = game.new_quest(win_event={'or': (win_quest3, win_quest4)},
-    #                        fail_event={'and': (win_quest6, {'or': (win_quest2, win_quest4)})},
-    #                        reward=2)
-    # quests.append(quest)
-    #
-    # #
-    # # quest = game.new_quest(win_event={'and': ({'or': win_quest4}, {'or': (win_quest1, {'and': (win_quest2, win_quest5)})})},
-    # #                        fail_event={'or': (win_quest6, {'or': (win_quest1, win_quest4)})},
-    # #                        reward=2)
-    # # quests.append(quest)
-
     for i in ['c_0', 'c_1', 'c_2', 'c_3']:
-        win_quest1 = game.new_event(condition={game.new_fact("unread/e", game._entities['cpu_0'])})
+        win_quest1 = game.new_event(condition={game.new_fact("unread/e", game._entities['cpu_0'])},
+                                    event_style='condition')
         win_quest2 = game.new_event(action={game.new_action(game._kb.rules['open/c1'],
                                                             game._entities['P'],
                                                             game._entities['r_0'],
                                                             game._entities['s_0'],
-                                                            game._entities[i])})
+                                                            game._entities[i])},
+                                    event_style='action')
         quests.append(game.new_quest(win_event={'and': (win_quest1, win_quest2)}, reward=-1))
 
     win_quest = game.new_event(condition={game.new_fact("read/e", game._entities['cpu_0'])},
-                               condition_verb_tense={'read/e': 'has been'})
+                               condition_verb_tense={'read/e': 'has been'},
+                               event_style='condition')
     quests.append(game.new_quest(win_event={'and': win_quest}, reward=0))
 
     win_quest = game.new_event(action={game.new_action(game._kb.rules['open/c'],
@@ -218,7 +168,8 @@ def quest_design(game):
                                                        game._entities['r_0'],
                                                        game._entities['s_0'],
                                                        game._entities['c_0'],
-                                                       game._entities['cpu_0'])})
+                                                       game._entities['cpu_0'])},
+                               event_style='action')
     quests.append(game.new_quest(win_event={'and': win_quest}, reward=5))
 
     game.quests = quests

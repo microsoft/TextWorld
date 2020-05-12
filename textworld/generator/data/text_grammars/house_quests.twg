@@ -1,0 +1,56 @@
+#-------------------------
+#Quests Grammar
+#-------------------------
+
+punishing_quest_none:#punishing_prologue_none# 
+punishing_prologue_none: in this quest, there are some activities that if you do them, you will be punished. You will find out what are those.;your activities matter in this quest, some of them will have punishment for you. Explore the environment.;your activities changes the state of the game. There is a state which is dangerous for you, you\'ll be charged if you get there.
+
+punishing_quest_one_task:#punishing_prologue# (combined_task)
+
+punishing_quest_tasks:#punishing_prologue# #AndOr# (list_of_combined_tasks)
+AndOr:complete any of the following tasks;do none of the following tasks;do any single of the following tasks; commit any of the following tasks
+
+punishing_prologue: your mission for this quest is not to; your task for this quest is not to; there is something I need you to be careful about it. Please never; your objective is not to; please hesitate to
+
+quest_none:#prologue_none# 
+prologue_none: there are some activities I need you to do for me in this quest. You will find out what are those.;your activities matter in this quest. Explore the environment.;your activities changes the state of the game. There is a state which is important to this quest.
+
+quest_one_task:#prologue# (combined_task)
+
+quest_and_tasks:#prologue# #And# (list_of_combined_tasks)
+And:complete all the following tasks;do every single of the following tasks; finish every single of the following tasks
+
+quest_or_tasks:#prologue# #Or# (list_of_combined_tasks)
+Or:complete any of the following tasks;do at least one of the following tasks; finish one or more of the following tasks
+
+prologue: your mission for this quest is to; your task for this quest is to; there is something I need you to do for me. Please ; your objective is to; please
+
+combined_one_task:#prologue_combined_one_task# (only_task)
+prologue_combined_one_task:there is only one event to do in this task;the only objective event here is;
+
+combined_and_tasks:#prologue_combined_and_tasks# (list_of_tasks)
+prologue_combined_and_tasks:make sure to complete all these events in this task;complete all the events for this task;do all these events; all these events need to be done in this task
+
+combined_or_tasks:#prologue_combined_or_tasks# (list_of_tasks)
+prologue_combined_or_tasks:make sure to complete any of these events in this task;complete at least one of the following events in this in this task;do minimum one of these events here; at least one of these events need to be done for this task
+
+combined_one_event:#prologue_combined_one_event# (only_event)
+prologue_combined_one_event:The event includes the following event;the objective of this event is given as follows
+
+combined_and_events:#prologue_combined_and_events# (list_of_events)
+prologue_combined_and_events:complete all these actions;do all these actions; all these actions need to be done
+
+combined_or_events:#prologue_combined_or_events# (list_of_events)
+prologue_combined_or_events:complete any of these actions;doing any of these actions is sufficient;Completing any from the following actions is okay
+
+event:(list_of_actions) 
+
+
+all_quests_non: #prologue_quests# #epilogue#
+
+all_quests: #prologue_quests# (quests_string) #epilogue#
+
+prologue_quests:#welcome#;Hey, thanks for coming over to the TextWorld today, there is something I need you to do for me.;Hey, thanks for coming over to TextWorld! Your activity matters here.
+epilogue:Once that's handled, you can stop!;You will know when you can stop!;And once you've done, you win!;You're the winner when all activities are taken!;Got that? Great!;Alright, thanks!
+welcome:Welcome to TextWorld;You are now playing a #exciting# #game# of TextWorld Spaceship;Welcome to another #exciting# #game# of TextWorld;It's time to explore the amazing world of TextWorld Galaxy;Get ready to pick stuff up and put it in places, because you've just entered TextWorld shuttle;I hope you're ready to go into rooms and interact with objects, because you've just entered TextWorld shuttle;Who's got a virtual machine and is about to play through an #exciting# round of TextWorld? You do;
+game:game;round;session;episode

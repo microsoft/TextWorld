@@ -42,7 +42,7 @@ class UnderspecifiedEventError(NameError):
 
 class UnderspecifiedEventActionError(NameError):
     def __init__(self):
-        msg = "No action is defined, action is required to create an event."
+        msg = "The EventAction includes ONLY one action."
         super().__init__(msg)
 
 
@@ -181,10 +181,6 @@ class Event:
         """
         return {"commands_Event": self.commands,
                 "actions_Event": [action.serialize() for action in self.actions]}
-        # data = {}
-        # data["commands"] = self.commands
-        # data["actions"] = [action.serialize() for action in self.actions]
-        # return data
 
     def copy(self) -> "Event":
         """ Copy this event. """
@@ -285,12 +281,6 @@ class EventCondition(Event):
                 "actions_EventCondition": [action.serialize() for action in self.actions],
                 "condition_EventCondition": self.condition.serialize(),
                 "verb_tense_EventCondition": self.verb_tense}
-        # data = {}
-        # data["commands"] = self.commands
-        # data["actions"] = [action.serialize() for action in self.actions]
-        # data["condition"] = self.condition.serialize()
-        # data["verb_tense"] = self.verb_tense
-        # return data
 
     def copy(self) -> "EventCondition":
         """ Copy this event. """
@@ -310,6 +300,9 @@ class EventAction(Event):
         """
         super(EventAction, self).__init__(actions, commands)
 
+        if self.is_valid():
+            raise UnderspecifiedEventActionError
+
         self.verb_tense = verb_tense
 
         self.traceable = self.set_actions()
@@ -328,7 +321,7 @@ class EventAction(Event):
         return [prop for ar in traceable for prop in ar]
 
     def is_valid(self):
-        return len(self.actions) != 0
+        return len(self.actions) != 1
 
     def is_triggering(self, state: Optional[State] = None, actions: Tuple[Action] = ()) -> bool:
         """ Check if this event would be triggered for a given action. """
@@ -376,10 +369,6 @@ class EventAction(Event):
                 "commands_EventAction": self.commands,
                 "verb_tense_EventAction": self.verb_tense,
                 }
-        # return {"actions": [action.serialize() for action in self.actions],
-        #         "commands": self.commands,
-        #         "verb_tense": self.verb_tense,
-        #         }
 
     def copy(self) -> "EventAction":
         """ Copy this event. """
@@ -387,7 +376,7 @@ class EventAction(Event):
 
 
 class EventOr:
-    def __init__(self, events=()):
+    def __init__(self, events: Tuple =()):
         self.events = events
         self._any_triggered = False
         self._any_untriggered = False
@@ -401,23 +390,14 @@ class EventOr:
         self._events = tuple(events)
 
     def are_triggering(self, state, action):
-        # status_i, status_t = [], []
         status = []
         for ev in self.events:
             if isinstance(ev, EventCondition) or isinstance(ev, EventAction):
                 status.append(ev.is_triggering(state, [action]))
-                # status_i.append(ev.is_triggering(state, action))
                 continue
             status.append(ev.are_triggering(state, action))
-            # status_t.append(ev.are_triggering(state, action))
 
         return any(status)
-        # status = []
-        # for ev in self.events:
-        #     if isinstance(ev, EventCondition) or isinstance(ev, EventAction):
-        #         status.append(ev.is_triggering(state, action))
-        # status
-        # return any(status)
 
     def are_events_triggered(self, state, action):
         return any((ev.is_triggering(state, action) for ev in self.events))
@@ -465,7 +445,7 @@ class EventOr:
 
 
 class EventAnd:
-    def __init__(self, events=()):
+    def __init__(self, events: Tuple = ()):
         self.events = events
         self._all_triggered = False
         self._all_untriggered = False
@@ -479,17 +459,12 @@ class EventAnd:
         self._events = tuple(events)
 
     def are_triggering(self, state, action):
-        # status_i, status_t = [], []
         status = []
         for ev in self.events:
             if isinstance(ev, EventCondition) or isinstance(ev, EventAction):
                 status.append(ev.is_triggering(state, [action]))
-                # status_i.append(ev.is_triggering(state, action))
                 continue
             status.append(ev.are_triggering(state, action))
-            # status_t.append(ev.are_triggering(state, action))
-        # status_i
-        # status_t
         return all(status)
 
     def are_events_triggered(self, state, action):
@@ -655,11 +630,11 @@ class Quest:
     def is_winning(self, state: Optional[State] = None, actions: Tuple[Action] = ()) -> bool:
         """ Check if this quest is winning in that particular state. """
 
-        return any(event.is_triggering(state, actions) for event in self.win_events)
+        return any(event.are_triggering(state, actions) for event in self.win_events)
 
     def is_failing(self, state: Optional[State] = None, actions: Tuple[Action] = ()) -> bool:
         """ Check if this quest is failing in that particular state. """
-        return any(event.is_triggering(state, actions) for event in self.fail_events)
+        return any(event.are_triggering(state, actions) for event in self.fail_events)
 
     def __hash__(self) -> int:
         return hash((self.win_events, self.fail_events, self.reward, self.desc, self.commands))
@@ -716,154 +691,6 @@ class Quest:
     def copy(self) -> "Quest":
         """ Copy this quest. """
         return self.deserialize(self.serialize())
-
-# class Quest:
-#     """ Quest representation in TextWorld.
-#
-#     A quest is defined by a mutually exclusive set of winning events and
-#     a mutually exclusive set of failing events.
-#
-#     Attributes:
-#         win_events: Mutually exclusive set of winning events. That is,
-#                     only one such event needs to be triggered in order
-#                     to complete this quest.
-#         fail_events: Mutually exclusive set of failing events. That is,
-#                      only one such event needs to be triggered in order
-#                      to fail this quest.
-#         reward: Reward given for completing this quest.
-#         desc: A text description of the quest.
-#         commands: List of text commands leading to this quest completion.
-#     """
-#
-#     def __init__(self,
-#                  win_events: Iterable[Union[Event, EventCondition, EventAction]] = (),
-#                  fail_events: Iterable[Union[Event, EventCondition, EventAction]] = (),
-#                  reward: Optional[int] = None,
-#                  desc: Optional[str] = None,
-#                  commands: Iterable[str] = ()) -> None:
-#         r"""
-#         Args:
-#             win_events: Mutually exclusive set of winning events. That is,
-#                         only one such event needs to be triggered in order
-#                         to complete this quest.
-#             fail_events: Mutually exclusive set of failing events. That is,
-#                          only one such event needs to be triggered in order
-#                          to fail this quest.
-#             reward: Reward given for completing this quest. By default,
-#                     reward is set to 1 if there is at least one winning events
-#                     otherwise it is set to 0.
-#             desc: A text description of the quest.
-#             commands: List of text commands leading to this quest completion.
-#         """
-#         self.win_events = tuple(win_events)
-#         self.fail_events = tuple(fail_events)
-#         self.desc = desc
-#         self.commands = tuple(commands)
-#
-#         # Unless explicitly provided, reward is set to 1 if there is at least
-#         # one winning events otherwise it is set to 0.
-#         self.reward = int(len(win_events) > 0) if reward is None else reward
-#
-#         if len(self.win_events) == 0 and len(self.fail_events) == 0:
-#             raise UnderspecifiedQuestError()
-#
-#     @property
-#     def win_events(self) -> Iterable[Union[Event, EventCondition, EventAction]]:
-#         return self._win_events
-#
-#     @win_events.setter
-#     def win_events(self, events: Iterable[Union[Event, EventCondition, EventAction]]) -> None:
-#         self._win_events = tuple(events)
-#
-#     @property
-#     def fail_events(self) -> Iterable[Union[Event, EventCondition, EventAction]]:
-#         return self._fail_events
-#
-#     @fail_events.setter
-#     def fail_events(self, events: Iterable[Union[Event, EventCondition, EventAction]]) -> None:
-#         self._fail_events = tuple(events)
-#
-#     @property
-#     def commands(self) -> Iterable[str]:
-#         return self._commands
-#
-#     @commands.setter
-#     def commands(self, commands: Iterable[str]) -> None:
-#         self._commands = tuple(commands)
-#
-#     def is_winning(self, state: Optional[State] = None, actions: Tuple[Action] = ()) -> bool:
-#         """ Check if this quest is winning in that particular state. """
-#
-#         return any(event.is_triggering(state, actions) for event in self.win_events)
-#
-#     def is_failing(self, state: Optional[State] = None, actions: Tuple[Action] = ()) -> bool:
-#         """ Check if this quest is failing in that particular state. """
-#         return any(event.is_triggering(state, actions) for event in self.fail_events)
-#
-#     def __hash__(self) -> int:
-#         return hash((self.win_events, self.fail_events, self.reward, self.desc, self.commands))
-#
-#     def __eq__(self, other: Any) -> bool:
-#         return (isinstance(other, Quest)
-#                 and self.win_events == other.win_events
-#                 and self.fail_events == other.fail_events
-#                 and self.reward == other.reward
-#                 and self.desc == other.desc
-#                 and self.commands == other.commands)
-#
-#     @classmethod
-#     def deserialize(cls, data: Mapping) -> "Quest":
-#         """ Creates a `Quest` from serialized data.
-#
-#         Args:
-#             data: Serialized data with the needed information to build a
-#                   `Quest` object.
-#         """
-#
-#         win_events = []
-#         for d in data["win_events"]:
-#             if "action_verb_tense" in d.keys():
-#                 win_events.append(Event.deserialize(d))
-#
-#             elif "output_verb_tense" in d.keys() and "commands" in d.keys():
-#                 win_events.append(EventCondition.deserialize(d))
-#
-#             else:
-#                 win_events.append(EventAction.deserialize(d))
-#
-#         fail_events = []
-#         for d in data["fail_events"]:
-#             if "action_verb_tense" in d.keys():
-#                 fail_events.append(Event.deserialize(d))
-#
-#             elif "output_verb_tense" in d.keys() and "commands" in d.keys():
-#                 fail_events.append(EventCondition.deserialize(d))
-#
-#             else:
-#                 fail_events.append(EventAction.deserialize(d))
-#
-#         commands = data.get("commands", [])
-#         reward = data["reward"]
-#         desc = data["desc"]
-#         return cls(win_events, fail_events, reward, desc, commands)
-#
-#     def serialize(self) -> Mapping:
-#         """ Serialize this quest.
-#
-#         Results:
-#             Quest's data serialized to be JSON compatible
-#         """
-#         data = {}
-#         data["desc"] = self.desc
-#         data["reward"] = self.reward
-#         data["commands"] = self.commands
-#         data["win_events"] = [event.serialize() for event in self.win_events]
-#         data["fail_events"] = [event.serialize() for event in self.fail_events]
-#         return data
-#
-#     def copy(self) -> "Quest":
-#         """ Copy this quest. """
-#         return self.deserialize(self.serialize())
 
 
 class EntityInfo:
@@ -948,13 +775,10 @@ class Game:
         self.quests = tuple(quests)
         self.metadata = {}
         self._objective = None
-        # self.objective
         self._infos = self._build_infos()
         self.kb = world.kb
 
         self.change_grammar(grammar)
-
-
 
     @property
     def infos(self) -> Dict[str, EntityInfo]:
@@ -1002,33 +826,12 @@ class Game:
 
         # Check if we can derive a global winning policy from the quests.
         if self.grammar:
-            from textworld.generator.text_generation import describe_event
             policy = GameProgression(self).winning_policy
             if policy:
                 mapping = {k: info.name for k, info in self._infos.items()}
                 commands = [a.format_command(mapping) for a in policy]
                 self.metadata["walkthrough"] = commands
-                self.objective = describe_event(EventCondition(policy), self, self.grammar)
-
-    def command_generator(self, events, _gen_commands):
-        for event in events:
-            events.commands = _gen_commands(events.actions)
-
-    # def command_generator(self, events, _gen_commands, quest):
-    #     if isinstance(events, EventCondition) or isinstance(events, EventAction):
-    #         events.commands = _gen_commands(events.actions)
-    #         # quest.append(events.actions)
-    #         quest.append(events)
-    #         return
-    #
-    #     act = []
-    #     for event in events.events:
-    #         out = self.command_generator(event, _gen_commands, act)
-    #         if out:
-    #             for a in out:
-    #                 quest.append(a)
-    #
-    #     return (len(act) > 0 and len(act) > len(quest)) * act or (len(quest) > 0 and len(quest) > len(act)) * quest
+                # self.objective = describe_event(EventCondition(actions=policy), self, self.grammar)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
@@ -1292,7 +1095,7 @@ class EventProgression:
     relevant actions to be performed.
     """
 
-    def __init__(self, event: Union[Event, EventCondition, EventAction], kb: KnowledgeBase) -> None:
+    def __init__(self, event: Union[EventAnd, EventOr], kb: KnowledgeBase) -> None:
         """
         Args:
             quest: The quest to keep track of its completion.
@@ -1304,33 +1107,39 @@ class EventProgression:
         self._policy = ()
 
         # Build a tree representation of the quest.
-        self._tree = ActionDependencyTree(kb=self._kb,
-                                          element_type=ActionDependencyTreeElement)
+        self._tree = ActionDependencyTree(kb=self._kb, element_type=ActionDependencyTreeElement)
 
-        self.tree_policy(event)
-        # if not isinstance(event, EventAction) and not isinstance(event, Event):
-        #     if len(event.actions) > 0:
-        #         self._tree.push(event.condition)
-        #
-        #         for action in event.actions[::-1]:
-        #             self._tree.push(action)
-        #
-        #         self._policy = event.actions + (event.condition,)
+        action_list, _ = self.tree_policy(event)
+        for action in action_list:
+            self._tree.push(action)
+        self._policy = [a for a in action_list[::-1]]
 
     def tree_policy(self, event):
+
         if isinstance(event, EventCondition) or isinstance(event, EventAction):
-            if isinstance(event, EventCondition):
-                if len(event.actions) > 0:
-                    self._tree.push(event.condition)
+            if isinstance(event, EventCondition) and len(event.actions) > 0:
+                return [event.condition] + [action for action in event.actions[::-1]], 1
+            elif isinstance(event, EventAction) and len(event.actions) > 0:
+                return [action for action in event.actions[::-1]], 0
+            else:
+                return [], 1
 
-                    for action in event.actions[::-1]:
-                        self._tree.push(action)
-
-                    self._policy = event.actions + (event.condition,)
-            return
-
+        _actions, _ev_type = [], []
         for ev in event.events:
-            self.tree_policy(ev)
+            a, b = self.tree_policy(ev)
+            _actions.append(a)
+            _ev_type.append(b)
+
+        if isinstance(event, EventAnd):
+            act_list = [a for act in [x for _, x in sorted(zip(_ev_type, _actions))] for a in act]
+        elif isinstance(event, EventOr):
+            _actions = [x for x in _actions if len(x) > 0]
+            if _actions:
+                act_list = min(_actions, key=lambda act: len(act))
+            else:
+                act_list = []
+
+        return act_list, 0
 
     @property
     def triggering_policy(self) -> List[Action]:
@@ -1405,16 +1214,24 @@ class EventProgression:
                             self._tree.push(action)
 
                         return shorter_policy
-
             return None
 
         compressed = False
-        policy = _find_shorter_policy(self._policy)
-        while policy is not None:
-            compressed = True
-            self._policy = policy
-            policy = _find_shorter_policy(policy)
-
+        if [True for act in self._policy if act.name == 'trigger']:
+            policy = _find_shorter_policy(self._policy)
+            while policy is not None:
+                compressed = True
+                self._policy = policy
+                policy = _find_shorter_policy(policy)
+        else:
+            policy = _find_shorter_policy(self._policy)
+            if len(self._policy) > 0 and policy is None:
+                compressed = True
+            elif len(self._policy) > 0 and len(self._policy) > len(policy):
+                while policy is not None:
+                    compressed = True
+                    self._policy = policy
+                    policy = _find_shorter_policy(policy)
         return compressed
 
     def will_trigger(self, state: State, action: Tuple[Action]):
@@ -1441,6 +1258,7 @@ class QuestProgression:
 
     @property
     def _tree(self) -> Optional[List[ActionDependencyTree]]:
+
         events = [event for event in self.win_events if len(event.triggering_policy) > 0]
         if len(events) == 0:
             return None
@@ -1582,6 +1400,12 @@ class GameProgression:
         master_quest_tree = ActionDependencyTree(kb=self.game.kb,
                                                  element_type=ActionDependencyTreeElement,
                                                  trees=trees)
+        actions = tuple(a for a in master_quest_tree.flatten() if a.name != "trigger")
+        for action in actions:
+            if not action.command_template:
+                m = {c: d for c in self.game.kb.rules[action.name].placeholders for d in action.variables if c.type == d.type}
+                substitutions = {ph.name: "{{{}}}".format(var.name) for ph, var in m.items()}
+                action.command_template = self.game.kb.rules[action.name].command_template.format(**substitutions)
 
         # Discard all "trigger" actions.
         return tuple(a for a in master_quest_tree.flatten() if a.name != "trigger")
@@ -1597,7 +1421,6 @@ class GameProgression:
         return any(trc_exist)
 
     def add_traceables(self, action):
-        s = self.state.facts
         trace = []
         for quest_progression in self.quest_progressions:
             if quest_progression.quest.reward >= 0:
@@ -1645,7 +1468,6 @@ class GameProgression:
         # Get valid actions.
         self._valid_actions = list(self.state.all_applicable_actions(self.game.kb.rules.values(),
                                                                      self.game.kb.types.constants_mapping))
-        x = 0
 
 
 class GameOptions:

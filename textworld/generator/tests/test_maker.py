@@ -113,8 +113,8 @@ def test_making_a_small_game(play_the_game=False):
     path = M.connect(R1.east, R2.west)  # Undirected path
 
     # Add a closed door between R1 and R2.
-    door = M.new_door(path, name='glass door')
-    door.add_property("locked")
+    door = M.new_door(path, name="glass door")
+    M.add_fact("locked", door)
 
     # Put a matching key for the door on R1's floor.
     key = M.new(type='k', name='rusty key')
@@ -148,7 +148,7 @@ def test_record_quest_from_commands(play_the_game=False):
     M = GameMaker()
 
     # The goal
-    commands = ["go east", "insert ball into chest"]
+    commands = ["open wooden door", "go east", "insert ball into chest"]
 
     # Create a 'bedroom' room.
     R1 = M.new_room("bedroom")
@@ -156,8 +156,8 @@ def test_record_quest_from_commands(play_the_game=False):
     M.set_player(R1)
 
     path = M.connect(R1.east, R2.west)
-    path.door = M.new(type='d', name='wooden door')
-    path.door.add_property("open")
+    door_a = M.new_door(path, name="wooden door")
+    M.add_fact("closed", door_a)
 
     ball = M.new(type='o', name='ball')
     M.inventory.add(ball)
@@ -167,7 +167,7 @@ def test_record_quest_from_commands(play_the_game=False):
     chest.add_property("open")
     R2.add(chest)
 
-    M.set_quest_from_commands(commands)
+    M.set_quest_from_commands(commands, event_style='condition')
     game = M.build()
 
     with make_temp_directory(prefix="test_record_quest_from_commands") as tmpdir:

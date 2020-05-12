@@ -2053,3 +2053,7 @@ class State:
                 return True
         return False
 
+    @property
+    def logic(self):
+        return self._logic
+
