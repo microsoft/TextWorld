@@ -57,15 +57,14 @@ def test_blend_instructions(verbose=False):
     M.set_player(r1)
 
     path = M.connect(r1.north, r2.south)
-    path.door = M.new(type="d", name="door")
-    M.add_fact("locked", path.door)
+    door_a = M.new_door(path, name="wooden door")
+    M.add_fact("locked", door_a)
     key = M.new(type="k", name="key")
     M.add_fact("match", key, path.door)
     r1.add(key)
 
     quest = M.set_quest_from_commands(["take key", "unlock door with key", "open door", "go north",
-                                       "close door", "lock door with key", "drop key"])
-
+                                       "close door", "lock door with key", "drop key"], event_style='condition')
     game = M.build()
 
     grammar1 = textworld.generator.make_grammar({"blend_instructions": False},
