@@ -15,15 +15,21 @@ placed at the other end. There is no other objects present in the world
 other than the coin to collect.
 """
 
+import os
 import argparse
+from os.path import join as pjoin
 from typing import Mapping, Optional, Any
 
 import textworld
 from textworld.generator.graph_networks import reverse_direction
 
 from textworld.utils import encode_seeds
-from textworld.generator.game import GameOptions, Quest, EventCondition
+from textworld.generator.data import KnowledgeBase
+from textworld.generator.game import GameOptions, Quest, Event
 from textworld.challenges import register
+
+
+KB_PATH = pjoin(os.path.dirname(__file__), "textworld_data")
 
 
 def build_argparser(parser=None):
@@ -32,9 +38,6 @@ def build_argparser(parser=None):
     group = parser.add_argument_group('Coin Collector game settings')
     group.add_argument("--level", required=True, type=int,
                        help="The difficulty level. Must be between 1 and 300 (included).")
-
-    group.add_argument("--force-entity-numbering", required=True, action="store_true",
-                       help="This will set `--entity-numbering` to be True which is required for this challenge.")
 
     return parser
 
@@ -49,7 +52,7 @@ def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> 
             :py:class:`textworld.GameOptions <textworld.generator.game.GameOptions>`
             for the list of available options).
 
-            .. warning:: This challenge requires `options.grammar.allowed_variables_numbering` to be `True`.
+            .. warning:: This challenge enforces `options.grammar.allowed_variables_numbering` to be `True`.
 
     Returns:
         Generated game.
@@ -68,9 +71,11 @@ def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> 
     """
     options = options or GameOptions()
 
+    # Load knowledge base specific to this challenge.
+    options.kb = KnowledgeBase.load(KB_PATH)
+
     # Needed for games with a lot of rooms.
-    options.grammar.allowed_variables_numbering = settings["force_entity_numbering"]
-    assert options.grammar.allowed_variables_numbering
+    options.grammar.allowed_variables_numbering = True
 
     level = settings["level"]
     if level < 1 or level > 300:
@@ -167,7 +172,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
 
     # Generate the quest thats by collecting the coin.
     quest = Quest(win_events=[
-        EventCondition(conditions={M.new_fact("in", coin, M.inventory)})
+        Event(conditions={M.new_fact("in", coin, M.inventory)})
     ])
 
     M.quests = [quest]

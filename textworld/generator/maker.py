@@ -19,9 +19,9 @@ from textworld.generator import Grammar
 from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
-from textworld.logic import State, Variable, Proposition, Action
+from textworld.logic import State, Variable, Proposition, Action, Placeholder
 from textworld.generator.game import GameOptions
-from textworld.generator.game import Game, World, Quest, EventAnd, EventOr, EventCondition, EventAction, EntityInfo
+from textworld.generator.game import Game, World, Quest, EventAnd, EventCondition, EventAction, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
@@ -29,7 +29,7 @@ from textworld.envs.wrappers import Recorder
 
 def get_failing_constraints(state, kb: Optional[KnowledgeBase] = None):
     kb = kb or KnowledgeBase.default()
-    fail = Proposition("is__fail", [])
+    fail = Proposition("fail", [])
 
     failed_constraints = []
     constraints = state.all_applicable_actions(kb.constraints.values())
@@ -43,45 +43,6 @@ def get_failing_constraints(state, kb: Optional[KnowledgeBase] = None):
                 failed_constraints.append(constraint)
 
     return failed_constraints
-
-
-def new_operation(operation={}):
-    def func(operator='or', events=[]):
-        if operator == 'or' and events:
-            return EventOr(events=events)
-        if operator == 'and' and events:
-            return EventAnd(events=events)
-        else:
-            raise
-
-    if not isinstance(operation, dict):
-        if len(operation) == 0:
-            return ()
-        else:
-            operation = {'or': tuple(ev for ev in operation)}
-
-    y1 = []
-    for k, v in operation.items():
-        if isinstance(v, dict):
-            y1.append(new_operation(operation=v)[0])
-            y1 = [func(k, y1)]
-        else:
-            if isinstance(v, EventCondition) or isinstance(v, EventAction):
-                y1.append(func(k, [v]))
-            else:
-                if any((isinstance(it, dict) for it in v)):
-                    y2 = []
-                    for it in v:
-                        if isinstance(it, dict):
-                            y2.append(new_operation(operation=it)[0])
-                        else:
-                            y2.append(func(k, [it]))
-
-                    y1 = [func(k, y2)]
-                else:
-                    y1.append(func(k, v))
-
-    return tuple(y1)
 
 
 class MissingPlayerError(ValueError):
@@ -190,7 +151,7 @@ class WorldEntity:
             *entities: A list of entities as arguments to the new fact.
         """
         args = [entity.var for entity in entities]
-        self._facts.append(Proposition(name='is__' + name, arguments=args))
+        self._facts.append(Proposition(name, args))
 
     def remove_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
         args = [entity.var for entity in entities]
@@ -710,8 +671,8 @@ class GameMaker:
             unrecognized_commands = [c for c, a in zip(commands, recorder.actions) if a is None]
             raise QuestError("Some of the actions were unrecognized: {}".format(unrecognized_commands))
 
-        event = self.new_event(action=actions, condition=winning_facts, command=commands, event_style=event_style)
-        self.quests = [self.new_quest(win_event=[event])]
+        event = EventCondition(actions=actions, commands=commands)
+        self.quests = [Quest(win_event=event, commands=commands)]
 
         # Calling build will generate the description for the quest.
         self.build()
@@ -734,51 +695,21 @@ class GameMaker:
             name: The name of the rule which can be used for the new rule fact as well.
             *entities: A list of entities as arguments to the new rule fact.
         """
+        if name not in self._kb.rules:
+            raise ValueError("Can't find action: '{}'".format(name))
 
-        def new_conditions(conditions, args):
-            new_ph = []
-            for pred in conditions:
-                new_var = [var for ph in pred.parameters for var in args if ph.type == var.type]
-                new_ph.append(Proposition(name=pred.name, arguments=new_var))
-            return new_ph
+        rule = self._kb.rules[name]
+        mapping = {Placeholder(entity.type): Placeholder(entity.id, entity.type) for entity in entities}
+        return rule.substitute(mapping)
 
-        args = [entity.var for entity in entities]
-
-        for rule in self._kb.rules.values():
-            if rule.name == name.name:
-                precond = new_conditions(rule.preconditions, args)
-                postcond = new_conditions(rule.postconditions, args)
-
-                action = Action(rule.name, precond, postcond)
-
-                if action.has_traceable():
-                    action.activate_traceable()
-
-                return action
-
-        return None
-
-    def new_event(self, action: Iterable[Action] = (), condition: Iterable[Proposition] = (),
-                  command: Iterable[str] = (), condition_verb_tense: dict = (), action_verb_tense: dict = (),
-                  event_style: str = 'condition'):
-        if event_style == 'condition':
-            event = EventCondition(conditions=condition, verb_tense=condition_verb_tense, actions=action,
-                                   commands=command)
-            return event
-        elif event_style == 'action':
-            event = EventAction(actions=action, verb_tense=action_verb_tense, commands=command)
-            return event
-        else:
-            raise UnderspecifiedEventError
-
-    def new_quest(self, win_event=(), fail_event=(), reward=None, desc=None, commands=()) -> Quest:
-        return Quest(win_events=new_operation(operation=win_event),
-                     fail_events=new_operation(operation=fail_event),
+    def new_quest(self, win_event=None, fail_event=None, reward=None, desc=None, commands=()) -> Quest:
+        return Quest(win_event=win_event,
+                     fail_event=fail_event,
                      reward=reward,
                      desc=desc,
                      commands=commands)
 
-    def new_event_using_commands(self, commands: List[str], event_style: str) -> Union[EventCondition, EventAction]:
+    def new_event_using_commands(self, commands: List[str]) -> Union[EventCondition, EventAction]:
         """ Creates a new event using predefined text commands.
 
         This launches a `textworld.play` session to execute provided commands.
@@ -800,10 +731,10 @@ class GameMaker:
 
         # Skip "None" actions.
         actions, commands = zip(*[(a, c) for a, c in zip(recorder.actions, commands) if a is not None])
-        event = self.new_event(action=actions, command=commands, event_style=event_style)
+        event = EventCondition(actions=actions, commands=commands)
         return event
 
-    def new_quest_using_commands(self, commands: List[str], event_style: str) -> Quest:
+    def new_quest_using_commands(self, commands: List[str]) -> Quest:
         """ Creates a new quest using predefined text commands.
 
         This launches a `textworld.play` session to execute provided commands.
@@ -814,38 +745,75 @@ class GameMaker:
         Returns:
             The resulting quest.
         """
-        event = self.new_event_using_commands(commands, event_style=event_style)
-        return Quest(win_events=new_operation(operation=[event]), commands=event.commands)
+        event = self.new_event_using_commands(commands)
+        return Quest(win_event=event, commands=event.commands)
 
-    def set_walkthrough(self, commands: List[str]):
+    def set_walkthrough(self, *walkthroughs: List[str]):
+        # Assuming quest.events return a list of EventAnd.
+        events = {event: event.copy() for quest in self.quests for event in quest.events}
+
+        actions = []
+        cmds_performed = []
+
+        def _callback(event):
+            if not isinstance(event, EventAnd):
+                return
+
+            if event not in events:
+                assert False
+
+            if event not in events or events[event].commands:
+                return
+
+            events[event].commands = list(cmds_performed)
+
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
             env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
+
+            for walkthrough in walkthroughs:
+                state = env.reset()
+                state._game_progression.callback = _callback
+
+                done = False
+                for i, cmd in enumerate(walkthrough):
+                    if done:
+                        msg = "Game has ended before finishing playing all commands."
+                        raise ValueError(msg)
+
+                    cmds_performed.append(cmd)
+                    state, score, done = env.step(cmd)
+                    actions.append(state._last_action)
+
+                for k, v in events.items():
+                    if v.commands and not k.actions:
+                        k.commands = v.commands
+                        k.actions = list(actions[:len(v.commands)])
+
+                actions.clear()
+                cmds_performed.clear()
+
+        for quest in self.quests:
+            if quest.win_event:
+                quest.commands = quest.win_event.commands
+
+    def get_action_from_commands(self, commands: List[str]):
+        with make_temp_directory() as tmpdir:
+            game_file = self.compile(pjoin(tmpdir, "get_actions.ulx"))
+            env = textworld.start(game_file, infos=EnvInfos(last_action=True))
             state = env.reset()
 
-            events = {event: event.copy() for quest in self.quests for event in quest.win_events}
-            event_progressions = [ep for qp in state._game_progression.quest_progressions for ep in qp.win_events]
-
-            done = False
             actions = []
+            done = False
             for i, cmd in enumerate(commands):
                 if done:
                     msg = "Game has ended before finishing playing all commands."
                     raise ValueError(msg)
 
-                events_triggered = [ep.triggered for ep in event_progressions]
-
                 state, score, done = env.step(cmd)
                 actions.append(state._last_action)
 
-                for was_triggered, ep in zip(events_triggered, event_progressions):
-                    if not was_triggered and ep.triggered:
-                        events[ep.event].actions = list(actions)
-                        events[ep.event].commands = commands[:i + 1]
-
-        for k, v in events.items():
-            k.actions = v.actions
-            k.commands = v.commands
+        return actions
 
     def validate(self) -> bool:
         """ Check if the world is valid and can be compiled.

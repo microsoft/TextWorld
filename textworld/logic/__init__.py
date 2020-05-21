@@ -63,24 +63,6 @@ def _check_type_conflict(name, old_type, new_type):
         raise ValueError("Conflicting types for `{}`: have `{}` and `{}`.".format(name, old_type, new_type))
 
 
-class UnderspecifiedSignatureError(NameError):
-    def __init__(self):
-        msg = "The verb and definition of the signature either should both be None or both take values."
-        super().__init__(msg)
-
-
-class UnderspecifiedPredicateError(NameError):
-    def __init__(self):
-        msg = "The verb and definition of the predicate either should both be None or both take values."
-        super().__init__(msg)
-
-
-class UnderspecifiedPropositionError(NameError):
-    def __init__(self):
-        msg = "The verb and definition of the proposition either should both be None or both take values."
-        super().__init__(msg)
-
-
 class _ModelConverter(NodeWalker):
     """
     Converts TatSu model objects to our types.
@@ -555,9 +537,6 @@ SignatureTracker = memento_factory(
         cls,
         kwargs.get("name", args[0] if len(args) >= 1 else None),
         tuple(kwargs.get("types", args[1] if len(args) == 2 else []))
-        # tuple(kwargs.get("types", args[1] if len(args) >= 2 else [])),
-        # kwargs.get("verb", args[2] if len(args) >= 3 else None),
-        # kwargs.get("definition", args[3] if len(args) == 4 else None),
     )
 )
 
@@ -568,7 +547,7 @@ class Signature(with_metaclass(SignatureTracker, object)):
     The type signature of a Predicate or Proposition.
     """
 
-    __slots__ = ("name", "types", "_hash", "verb", "definition")
+    __slots__ = ("name", "types", "_hash")
 
     def __init__(self, name: str, types: Iterable[str]):
         """
@@ -582,19 +561,8 @@ class Signature(with_metaclass(SignatureTracker, object)):
             The types of the parameters to the proposition/predicate.
         """
 
-        if name.count('__') == 0:
-            self.verb = "is"
-            self.definition = name
-            self.name = "is__" + name
-        else:
-            self.verb = name[:name.find('__')]
-            self.definition = name[name.find('__') + 2:]
-            self.name = name
-
-        # self.name = name
+        self.name = name
         self.types = tuple(types)
-        # self.verb = verb
-        # self.definition = definition
         self._hash = hash((self.name, self.types))
 
     def __str__(self):
@@ -636,11 +604,7 @@ PropositionTracker = memento_factory(
     lambda cls, args, kwargs: (
         cls,
         kwargs.get("name", args[0] if len(args) >= 1 else None),
-        tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) == 2 else [])),
-        # tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) >= 2 else [])),
-        # kwargs.get("verb", args[2] if len(args) >= 3 else None),
-        # kwargs.get("definition", args[3] if len(args) >= 4 else None),
-        # kwargs.get("activate", args[4] if len(args) == 5 else 0)
+        tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) == 2 else []))
     )
 )
 
@@ -651,7 +615,7 @@ class Proposition(with_metaclass(PropositionTracker, object)):
     An instantiated Predicate, with concrete variables for each placeholder.
     """
 
-    __slots__ = ("name", "arguments", "signature", "_hash", "verb", "definition", "activate")
+    __slots__ = ("name", "arguments", "signature", "_hash")
 
     def __init__(self, name: str, arguments: Iterable[Variable] = []):
         """
@@ -665,26 +629,10 @@ class Proposition(with_metaclass(PropositionTracker, object)):
             The variables this proposition is applied to.
         """
 
-        if name.count('__') == 0:
-            self.verb = "is"
-            self.definition = name
-            self.name = "is__" + name
-        else:
-            self.verb = name[:name.find('__')].replace('_', ' ')
-            self.definition = name[name.find('__') + 2:]
-            self.name = name
-
-        # self.name = name
+        self.name = name
         self.arguments = tuple(arguments)
-        # self.verb = verb
-        # self.definition = definition
         self.signature = Signature(name, [var.type for var in self.arguments])
         self._hash = hash((self.name, self.arguments))
-
-        # if self.verb == 'is':
-        #     activate = 1
-        #
-        # self.activate = activate
 
     @property
     def names(self) -> Collection[str]:
@@ -708,7 +656,7 @@ class Proposition(with_metaclass(PropositionTracker, object)):
 
     def __eq__(self, other):
         if isinstance(other, Proposition):
-            return (self.name, self.arguments) == (other.name, other.arguments)
+            return self.name == other.name and self.arguments == other.arguments
         else:
             return NotImplemented
 
@@ -737,17 +685,12 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         return {
             "name": self.name,
             "arguments": [var.serialize() for var in self.arguments],
-            # "verb": self.verb,
-            # "definition": self.definition,
         }
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Proposition":
         name = data["name"]
         args = [Variable.deserialize(arg) for arg in data["arguments"]]
-        # verb = data["verb"]
-        # definition = data["definition"]
-        # activate = data["activate"]
         return cls(name, args)
 
 
@@ -844,19 +787,8 @@ class Predicate:
             The symbolic arguments to this predicate.
         """
 
-        if name.count('__') == 0:
-            self.verb = "is"
-            self.definition = name
-            self.name = "is__" + name
-        else:
-            self.verb = name[:name.find('__')]
-            self.definition = name[name.find('__') + 2:]
-            self.name = name
-
-        # self.name = name
+        self.name = name
         self.parameters = tuple(parameters)
-        # self.verb = verb
-        # self.definition = definition
         self.signature = Signature(name, [ph.type for ph in self.parameters])
 
     @property
@@ -886,7 +818,7 @@ class Predicate:
             return NotImplemented
 
     def __hash__(self):
-        return hash((self.name, self.types))
+        return hash((self.name, self.parameters))
 
     def __lt__(self, other):
         if isinstance(other, Predicate):
@@ -910,17 +842,12 @@ class Predicate:
         return {
             "name": self.name,
             "parameters": [ph.serialize() for ph in self.parameters],
-            # "verb": self.verb,
-            # "definition": self.definition
         }
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Predicate":
         name = data["name"]
         params = [Placeholder.deserialize(ph) for ph in data["parameters"]]
-        # verb = data["verb"]
-        # definition = data["definition"]
-        # return cls(name, params, verb, definition)
         return cls(name, params)
 
     def substitute(self, mapping: Mapping[Placeholder, Placeholder]) -> "Predicate":
@@ -934,7 +861,6 @@ class Predicate:
         """
 
         params = [mapping.get(param, param) for param in self.parameters]
-        # return Predicate(self.name, params, self.verb, self.definition)
         return Predicate(self.name, params)
 
     def instantiate(self, mapping: Mapping[Placeholder, Variable]) -> Proposition:
@@ -952,8 +878,7 @@ class Predicate:
         """
 
         args = [mapping[param] for param in self.parameters]
-        # return Proposition(self.name, arguments=args, verb=self.verb, definition=self.definition)
-        return Proposition(self.name, arguments=args)
+        return Proposition(self.name, args)
 
     def match(self, proposition: Proposition) -> Optional[Mapping[Placeholder, Variable]]:
         """
@@ -1140,21 +1065,6 @@ class Action:
         mapping = mapping or {v.name: v.name for v in self.variables}
         return self.command_template.format(**mapping)
 
-    def has_traceable(self):
-        for prop in self.all_propositions:
-            if not prop.name.startswith('is__'):
-                return True
-        return False
-
-    def activate_traceable(self):
-        for prop in self.all_propositions:
-            if not prop.name.startswith('is__'):
-                prop.activate = 1
-
-    # def is_valid(self):
-    #     aa = self.all_propositions
-    #     return all([prop.activate == 1 for prop in self.all_propositions])
-
 
 class Rule:
     """
@@ -1281,6 +1191,7 @@ class Rule:
         -------
         The instantiated Action with each Placeholder mapped to the corresponding Variable.
         """
+
         key = tuple(mapping[ph] for ph in self.placeholders)
         if key in self._cache:
             return self._cache[key]
@@ -1288,8 +1199,7 @@ class Rule:
         pre_inst = [pred.instantiate(mapping) for pred in self.preconditions]
         post_inst = [pred.instantiate(mapping) for pred in self.postconditions]
         action = Action(self.name, pre_inst, post_inst)
-        if action.has_traceable():
-            action.activate_traceable()
+
         action.command_template = self._make_command_template(mapping)
         if self.reverse_rule:
             action.reverse_name = self.reverse_rule.name
@@ -1555,23 +1465,6 @@ class GameLogic:
                 result.append(pred)
         return result
 
-    def _predicate_diversity(self):
-        new_preds = []
-        for pred in self.predicates:
-            for v in ['was', 'has been', 'had been']:
-                new_preds.append(Signature(name=v.replace(' ', '_') + pred.name[pred.name.find('__'):], types=pred.types))
-        self.predicates.update(set(new_preds))
-
-    def _inform7_predicates_diversity(self):
-        new_preds = {}
-        for k, v in self.inform7.predicates.items():
-            for vt in ['was', 'has been', 'had been']:
-                new_preds[Signature(name=vt.replace(' ', '_') + k.name[k.name.find('__'):], types=k.types)] = \
-                    Inform7Predicate(predicate=Predicate(name=vt.replace(' ', '_') + v.predicate.name[v.predicate.name.find('__'):],
-                                                         parameters=v.predicate.parameters),
-                                     source=v.source.replace('is', vt))
-        self.inform7.predicates.update(new_preds)
-
     @classmethod
     @lru_cache(maxsize=128, typed=False)
     def parse(cls, document: str) -> "GameLogic":
@@ -1586,8 +1479,6 @@ class GameLogic:
         for path in paths:
             with open(path, "r") as f:
                 result._parse(f.read(), path=path)
-        result._predicate_diversity()
-        result._inform7_predicates_diversity()
         result._initialize()
         return result
 
@@ -1692,6 +1583,7 @@ class State:
         for prop in props:
             if not self.is_fact(prop):
                 return False
+
         return True
 
     @property
@@ -1893,6 +1785,7 @@ class State:
                         seen_phs.add(ph)
                 new_phs_by_depth.append(new_phs)
 
+            # Placeholders uniquely found in postcondition are considered as free variables.
             free_vars = [ph for ph in rule.placeholders if ph not in seen_phs]
             new_phs_by_depth.append(free_vars)
 
@@ -2036,24 +1929,3 @@ class State:
         lines.append("})")
 
         return "\n".join(lines)
-
-    def get_facts(self):
-        all_facts = []
-        for sig in sorted(self._facts.keys()):
-            facts = self._facts[sig]
-            if len(facts) == 0:
-                continue
-            for fact in sorted(facts):
-                all_facts.append(fact)
-        return all_facts
-
-    def has_traceable(self):
-        for prop in self.get_facts():
-            if not prop.name.startswith('is__'):
-                return True
-        return False
-
-    @property
-    def logic(self):
-        return self._logic
-

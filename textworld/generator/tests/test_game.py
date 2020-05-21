@@ -6,28 +6,27 @@ import unittest
 import textwrap
 from typing import Iterable
 
-import numpy.testing as npt
-
 import textworld
 from textworld import g_rng
 from textworld import GameMaker
+from textworld import testing
 
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import World
 from textworld.generator import make_small_map
-from textworld.generator.maker import new_operation
 
 from textworld.generator.chaining import ChainingOptions, sample_quest
-from textworld.logic import Action
-
+from textworld.logic import Action, State, Proposition, Rule
 from textworld.generator.game import GameOptions
 from textworld.generator.game import Quest, Game, Event, EventAction, EventCondition, EventOr, EventAnd
 from textworld.generator.game import QuestProgression, GameProgression, EventProgression
-from textworld.generator.game import UnderspecifiedEventError, UnderspecifiedQuestError
 from textworld.generator.game import ActionDependencyTree, ActionDependencyTreeElement
 from textworld.generator.inform7 import Inform7Game
 
 from textworld.logic import GameLogic
+
+
+DATA = testing.build_complex_test_game()
 
 
 def _find_action(command: str, actions: Iterable[Action], inform7: Inform7Game) -> None:
@@ -120,47 +119,32 @@ def test_variable_infos(verbose=False):
             assert var_infos.desc is not None
 
 
+class TestEvent(unittest.TestCase):
+
+    def test_init(self):
+        event = Event(conditions=[Proposition.parse("in(carrot: f, chest: c)")])
+        assert type(event) is EventCondition
+
+
 class TestEventCondition(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        M = GameMaker()
+        cls.condition = {Proposition.parse("in(carrot: f, chest: c)")}
+        cls.event = EventCondition(conditions=cls.condition)
 
-        # The goal
-        commands = ["take carrot", "insert carrot into chest"]
+    def test_is_triggering(self):
+        state = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, chest: c)"),
+            Proposition.parse("in(lettuce: f, chest: c)"),
+        ])
+        assert self.event.is_triggering(state=state)
 
-        R1 = M.new_room("room")
-        M.set_player(R1)
-
-        carrot = M.new(type='f', name='carrot')
-        R1.add(carrot)
-
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R1.add(chest)
-
-        cls.event = M.new_event_using_commands(commands, event_style='condition')
-        cls.actions = cls.event.actions
-        cls.traceable = cls.event.traceable
-        cls.conditions = {M.new_fact("in", carrot, chest)}
-
-    def test_init(self):
-        event = EventCondition(actions=self.actions)
-        assert event.actions == self.actions
-        assert event.condition == self.event.condition
-        assert event.traceable == self.traceable
-        assert event.condition.preconditions == self.actions[-1].postconditions
-        assert set(event.condition.preconditions).issuperset(self.conditions)
-
-        event = EventCondition(conditions=self.conditions)
-        assert len(event.actions) == 0
-        assert event.traceable == self.traceable
-        assert set(event.condition.preconditions) == set(self.conditions)
-
-        npt.assert_raises(UnderspecifiedEventError, EventCondition, actions=[])
-        npt.assert_raises(UnderspecifiedEventError, EventCondition, actions=[], conditions=[])
-        npt.assert_raises(UnderspecifiedEventError, EventCondition, conditions=[])
+        state = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, I: I)"),
+            Proposition.parse("in(lettuce: f, chest: c)"),
+        ])
+        assert not self.event.is_triggering(state=state)
 
     def test_serialization(self):
         data = self.event.serialize()
@@ -177,32 +161,22 @@ class TestEventAction(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        M = GameMaker()
+        cls.rule = Rule.parse("close :: $at(P, r) & $at(chest: c, r) & open(chest: c) -> closed(chest: c)")
+        cls.action = Action.parse("close :: $at(P, room: r) & $at(chest: c, room: r) & open(chest: c) -> closed(chest: c)")
+        cls.event = EventAction(action=cls.rule)
 
-        # The goal
-        commands = ["take carrot"]
+    def test_is_triggering(self):
+        # State should be ignored in a EventAction.
+        state = State(KnowledgeBase.default().logic, [
+            Proposition.parse("open(chest: c)"),
+        ])
+        assert self.event.is_triggering(state=state, action=self.action)
 
-        R1 = M.new_room("room")
-        M.set_player(R1)
-
-        carrot = M.new(type='f', name='carrot')
-        R1.add(carrot)
-
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R1.add(chest)
-
-        cls.event = M.new_event_using_commands(commands, event_style='action')
-        cls.actions = cls.event.actions
-        cls.traceable = cls.event.traceable
-
-    def test_init(self):
-        event = EventAction(actions=self.actions)
-        assert event.actions == self.actions
-        assert event.traceable == self.traceable
-
-        npt.assert_raises(UnderspecifiedEventError, EventCondition, actions=[])
+        state = State(KnowledgeBase.default().logic, [
+            Proposition.parse("closed(chest: c)"),
+        ])
+        action = Action.parse("close :: open(fridge: c) -> closed(fridge: c)")
+        assert not self.event.is_triggering(state=state, action=action)
 
     def test_serialization(self):
         data = self.event.serialize()
@@ -219,174 +193,162 @@ class TestEventOr(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.event_A_condition = {Proposition.parse("in(carrot: f, chest: c)")}
+        cls.event_A = EventCondition(conditions=cls.event_A_condition)
 
-        M = GameMaker()
+        cls.event_B_action = Rule.parse("close :: open(chest: c) -> closed(chest: c)")
+        cls.event_B = EventAction(action=cls.event_B_action)
 
-        # The goal
-        commands = ["take lime juice", "insert lime juice into chest",  "take carrot"]
+        cls.event_A_or_B = EventOr(events=(cls.event_A, cls.event_B))
 
-        R1 = M.new_room("room")
-        M.set_player(R1)
+    def test_is_triggering(self):
+        open_chest = Action.parse("open :: closed(chest: c) -> open(chest: c)")
+        close_chest = Action.parse("close :: open(chest: c) -> closed(chest: c)")
+        carrot_in_chest = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, chest: c)"),
+        ])
+        carrot_in_inventory = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, I: I)"),
+        ])
 
-        lime = M.new(type='f', name='lime juice')
-        R1.add(lime)
+        # A | B
+        assert self.event_A.is_triggering(state=carrot_in_chest, action=close_chest)
+        assert self.event_B.is_triggering(state=carrot_in_chest, action=close_chest)
+        assert self.event_A_or_B.is_triggering(state=carrot_in_chest, action=close_chest)
 
-        carrot = M.new(type='f', name='carrot')
-        R1.add(carrot)
+        # !A | !B
+        assert not self.event_A.is_triggering(state=carrot_in_inventory, action=open_chest)
+        assert not self.event_B.is_triggering(state=carrot_in_inventory, action=open_chest)
+        assert not self.event_A_or_B.is_triggering(state=carrot_in_inventory, action=open_chest)
 
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R1.add(chest)
+        # !A | B
+        assert not self.event_A.is_triggering(state=carrot_in_inventory, action=close_chest)
+        assert self.event_B.is_triggering(state=carrot_in_inventory, action=close_chest)
+        assert self.event_A_or_B.is_triggering(state=carrot_in_inventory, action=close_chest)
 
-        cls.first_event = M.new_event_using_commands(commands[:-1], event_style='condition')
-        cls.first_event_actions = cls.first_event.actions
-        cls.first_event_traceable = cls.first_event.traceable
-        cls.first_event_conditions = {M.new_fact("in", lime, chest)}
-
-        cls.second_event = M.new_event_using_commands([commands[-1]], event_style='action')
-        cls.second_event_actions = cls.second_event.actions
-        cls.second_event_traceable = cls.second_event.traceable
-
-        cls.event = EventOr(events=(cls.first_event, cls.second_event))
-        cls.events = cls.event.events
-
-    def test_init(self):
-        first_event = EventCondition(actions=self.first_event_actions)
-        second_event = EventAction(actions=self.second_event_actions)
-        event = EventOr(events=(first_event, second_event))
-
-        assert event.events[0].actions == self.first_event_actions
-        assert event.events[0].condition == self.first_event.condition
-        assert event.events[0].traceable == self.first_event_traceable
-        assert event.events[0].condition.preconditions == self.first_event_actions[-1].postconditions
-        assert set(event.events[0].condition.preconditions).issuperset(self.first_event_conditions)
-        assert event.events[1].actions == self.second_event_actions
-        assert event.events[1].traceable == self.second_event_traceable
+        # A | !B
+        assert self.event_A.is_triggering(state=carrot_in_chest, action=open_chest)
+        assert not self.event_B.is_triggering(state=carrot_in_chest, action=open_chest)
+        assert self.event_A_or_B.is_triggering(state=carrot_in_chest, action=open_chest)
 
     def test_serialization(self):
-        data = self.event.serialize()
+        data = self.event_A_or_B.serialize()
         event = EventOr.deserialize(data)
-        assert event == self.event
+        assert event == self.event_A_or_B
 
     def test_copy(self):
-        event = self.event.copy()
-        assert event == self.event
-        assert id(event) != id(self.event)
+        event = self.event_A_or_B.copy()
+        assert event == self.event_A_or_B
+        assert id(event) != id(self.event_A_or_B)
 
 
 class TestEventAnd(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.event_A_condition = {Proposition.parse("in(carrot: f, chest: c)")}
+        cls.event_A = EventCondition(conditions=cls.event_A_condition)
 
-        M = GameMaker()
+        cls.event_B_action = Rule.parse("close :: open(chest: c) -> closed(chest: c)")
+        cls.event_B = EventAction(action=cls.event_B_action)
 
-        # The goal
-        commands = ["take lime juice", "insert lime juice into chest",  "take carrot"]
+        cls.event_A_and_B = EventAnd(events=(cls.event_A, cls.event_B))
 
-        R1 = M.new_room("room")
-        M.set_player(R1)
+    def test_is_triggering(self):
+        open_chest = Action.parse("open :: closed(chest: c) -> open(chest: c)")
+        close_chest = Action.parse("close :: open(chest: c) -> closed(chest: c)")
+        carrot_in_chest = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, chest: c)"),
+        ])
+        carrot_in_inventory = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, I: I)"),
+        ])
 
-        lime = M.new(type='f', name='lime juice')
-        R1.add(lime)
+        # A & B
+        assert self.event_A.is_triggering(state=carrot_in_chest, action=close_chest)
+        assert self.event_B.is_triggering(state=carrot_in_chest, action=close_chest)
+        assert self.event_A_and_B.is_triggering(state=carrot_in_chest, action=close_chest)
 
-        carrot = M.new(type='f', name='carrot')
-        R1.add(carrot)
+        # !A & !B
+        assert not self.event_A.is_triggering(state=carrot_in_inventory, action=open_chest)
+        assert not self.event_B.is_triggering(state=carrot_in_inventory, action=open_chest)
+        assert not self.event_A_and_B.is_triggering(state=carrot_in_inventory, action=open_chest)
 
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R1.add(chest)
+        # !A & B
+        assert not self.event_A.is_triggering(state=carrot_in_inventory, action=close_chest)
+        assert self.event_B.is_triggering(state=carrot_in_inventory, action=close_chest)
+        assert not self.event_A_and_B.is_triggering(state=carrot_in_inventory, action=close_chest)
 
-        cls.first_event = M.new_event_using_commands(commands[:-1], event_style='condition')
-        cls.first_event_actions = cls.first_event.actions
-        cls.first_event_traceable = cls.first_event.traceable
-        cls.first_event_conditions = {M.new_fact("in", lime, chest)}
-
-        cls.second_event = M.new_event_using_commands([commands[-1]], event_style='action')
-        cls.second_event_actions = cls.second_event.actions
-        cls.second_event_traceable = cls.second_event.traceable
-
-        cls.event = EventAnd(events=(cls.first_event, cls.second_event))
-        cls.events = cls.event.events
-
-    def test_init(self):
-        first_event = EventCondition(actions=self.first_event_actions)
-        second_event = EventAction(actions=self.second_event_actions)
-        event = EventAnd(events=(first_event, second_event))
-
-        assert event.events[0].actions == self.first_event_actions
-        assert event.events[0].condition == self.first_event.condition
-        assert event.events[0].traceable == self.first_event_traceable
-        assert event.events[0].condition.preconditions == self.first_event_actions[-1].postconditions
-        assert set(event.events[0].condition.preconditions).issuperset(self.first_event_conditions)
-        assert event.events[1].actions == self.second_event_actions
-        assert event.events[1].traceable == self.second_event_traceable
+        # A & !B
+        assert self.event_A.is_triggering(state=carrot_in_chest, action=open_chest)
+        assert not self.event_B.is_triggering(state=carrot_in_chest, action=open_chest)
+        assert not self.event_A_and_B.is_triggering(state=carrot_in_chest, action=open_chest)
 
     def test_serialization(self):
-        data = self.event.serialize()
+        data = self.event_A_and_B.serialize()
         event = EventAnd.deserialize(data)
-        assert event == self.event
+        assert event == self.event_A_and_B
 
     def test_copy(self):
-        event = self.event.copy()
-        assert event == self.event
-        assert id(event) != id(self.event)
+        event = self.event_A_and_B.copy()
+        assert event == self.event_A_and_B
+        assert id(event) != id(self.event_A_and_B)
 
 
 class TestQuest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        M = GameMaker()
+        cls.carrot_in_chest = {Proposition.parse("in(carrot: f, chest: c)")}
+        cls.event_carrot_in_chest = EventCondition(conditions=cls.carrot_in_chest)
 
-        # The goal
-        commands = ["open wooden door", "go east", "insert carrot into chest"]
+        cls.close_chest = Rule.parse("close :: open(chest: c) -> closed(chest: c)")
+        cls.event_close_chest = EventAction(action=cls.close_chest)
 
-        # Create a 'bedroom' room.
-        R1 = M.new_room("bedroom")
-        R2 = M.new_room("kitchen")
-        M.set_player(R1)
+        cls.event_closing_chest_with_carrot = EventAnd(events=(cls.event_carrot_in_chest, cls.event_close_chest))
 
-        path = M.connect(R1.east, R2.west)
-        door_a = M.new_door(path, name="wooden door")
-        M.add_fact("closed", door_a)
+        cls.carrot_in_inventory = {Proposition.parse("in(carrot: f, I: I)")}
+        cls.event_carrot_in_inventory = EventCondition(conditions=cls.carrot_in_inventory)
 
-        carrot = M.new(type='f', name='carrot')
-        M.inventory.add(carrot)
+        cls.event_closing_chest_without_carrot = EventAnd(events=(cls.event_carrot_in_inventory, cls.event_close_chest))
 
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R2.add(chest)
+        cls.eat_carrot = Rule.parse("eat :: in(carrot: f, I: I) -> consumed(carrot: f)")
+        cls.event_eat_carrot = EventAction(action=cls.eat_carrot)
 
-        cls.eventA = M.new_event_using_commands(commands, event_style='condition')
-        cls.eventB = M.new_event(condition={M.new_fact("at", carrot, R1), M.new_fact("closed", path.door)},
-                                 event_style='condition')
-        cls.eventC = M.new_event(condition={M.new_fact("eaten", carrot)}, event_style='condition')
-        cls.eventD = M.new_event(condition={M.new_fact("closed", chest), M.new_fact("closed", path.door)},
-                                 event_style='condition')
-        cls.quest = M.new_quest(win_event={'or': (cls.eventA, cls.eventB)},
-                                fail_event={'or': (cls.eventC, cls.eventD)}, reward=2)
-        M.quests = [cls.quest]
-        cls.game = M.build()
-        cls.inform7 = Inform7Game(cls.game)
+        cls.event_closing_chest_whithout_carrot_or_eating_carrot = \
+            EventOr(events=(cls.event_closing_chest_without_carrot, cls.event_eat_carrot))
 
-    def test_init(self):
-        npt.assert_raises(UnderspecifiedQuestError, Quest)
+        cls.quest = Quest(win_event=cls.event_closing_chest_with_carrot,
+                          fail_event=cls.event_closing_chest_whithout_carrot_or_eating_carrot)
 
-        quest = Quest(win_events=new_operation(operation={'and': (self.eventA, self.eventB)}))
-        assert len(quest.fail_events) == 0
+    def test_backward_compatiblity(self):
+        # Backward compatibility tests.
+        quest = Quest(win_events=[self.event_closing_chest_with_carrot],
+                      fail_events=[self.event_closing_chest_without_carrot, self.event_eat_carrot])
+        assert quest == self.quest
 
-        quest = Quest(fail_events=new_operation(operation={'or': (self.eventC, self.eventD)}))
-        assert len(quest.win_events) == 0
+        quest = Quest([self.event_closing_chest_with_carrot],
+                      [self.event_closing_chest_without_carrot, self.event_eat_carrot])
+        assert quest == self.quest
 
-        quest = Quest(win_events=new_operation(operation={'and': (self.eventA, self.eventB)}),
-                      fail_events=new_operation(operation={'or': (self.eventC, self.eventD)}))
+    def test_is_winning_or_failing(self):
+        close_chest = Action.parse("close :: open(chest: c) -> closed(chest: c)")
+        eat_carrot = Action.parse("eat :: in(carrot: f, I: I) -> consumed(carrot: f)")
+        carrot_in_chest = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, chest: c)"),
+        ])
+        carrot_in_inventory = State(KnowledgeBase.default().logic, [
+            Proposition.parse("in(carrot: f, I: I)"),
+        ])
 
-        assert len(quest.win_events) > 0
-        assert len(quest.fail_events) > 0
+        assert self.quest.is_winning(state=carrot_in_chest, action=close_chest)
+        assert not self.quest.is_failing(state=carrot_in_chest, action=close_chest)
+        assert self.quest.is_failing(state=carrot_in_inventory, action=close_chest)
+        assert not self.quest.is_winning(state=carrot_in_inventory, action=close_chest)
+        assert self.quest.is_failing(state=carrot_in_inventory, action=eat_carrot)
+        assert not self.quest.is_winning(state=carrot_in_inventory, action=eat_carrot)
+        assert self.quest.is_failing(state=carrot_in_chest, action=eat_carrot)
+        assert not self.quest.is_winning(state=carrot_in_chest, action=eat_carrot)
 
     def test_serialization(self):
         data = self.quest.serialize()
@@ -435,7 +397,7 @@ class TestQuest(unittest.TestCase):
                 actions = chain.actions
                 assert len(actions) == max_depth, rule.name
 
-                quest = Quest(win_events=new_operation(operation={'and': (EventCondition(actions=actions))}))
+                quest = Quest(win_event=EventCondition(actions=actions))
                 tmp_world = World.from_facts(chain.initial_state.facts)
 
                 state = tmp_world.state
@@ -446,7 +408,7 @@ class TestQuest(unittest.TestCase):
                 assert quest.is_winning(state)
 
                 # Build the quest by only providing the winning conditions.
-                quest = Quest(win_events=new_operation(operation={'and': (EventCondition(conditions=actions[-1].postconditions))}))
+                quest = Quest(win_event=EventCondition(conditions=actions[-1].postconditions))
                 tmp_world = World.from_facts(chain.initial_state.facts)
 
                 state = tmp_world.state
@@ -456,86 +418,6 @@ class TestQuest(unittest.TestCase):
 
                 assert quest.is_winning(state)
 
-    def test_win_actions(self):
-        state = self.game.world.state.copy()
-        for action in self.quest.win_events_list[0].actions:
-            assert not self.quest.is_winning(state)
-            state.apply(action)
-
-        assert self.quest.is_winning(state)
-
-        # Test alternative way of winning,
-        # i.e. dropping the carrot and closing the door.
-        state = self.game.world.state.copy()
-        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
-                                                    self.game.kb.types.constants_mapping))
-
-        drop_carrot = _find_action("drop carrot", actions, self.inform7)
-        open_door = _find_action("open wooden door", actions, self.inform7)
-
-        state = self.game.world.state.copy()
-        assert state.apply(drop_carrot)
-        assert self.quest.is_winning(state)
-        assert state.apply(open_door)
-        assert not self.quest.is_winning(state)
-
-        # Or the other way around.
-        state = self.game.world.state.copy()
-        assert state.apply(open_door)
-        assert not self.quest.is_winning(state)
-        assert state.apply(drop_carrot)
-        assert not self.quest.is_winning(state)
-
-    def test_fail_actions(self):
-        state = self.game.world.state.copy()
-        assert not self.quest.is_failing(state)
-
-        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
-                                                    self.game.kb.types.constants_mapping))
-        eat_carrot = _find_action("eat carrot", actions, self.inform7)
-        open_door = _find_action("open wooden door", actions, self.inform7)
-        state.apply(open_door)
-        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
-                                                    self.game.kb.types.constants_mapping))
-
-        for action in actions:
-            state = self.game.world.state.copy()
-            state.apply(action)
-            # Only the `eat carrot` should fail.
-            assert self.quest.is_failing(state) == (action == eat_carrot)
-
-        state = self.game.world.state.copy()
-        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
-                                                    self.game.kb.types.constants_mapping))
-        open_door = _find_action("open wooden door", actions, self.inform7)
-        state.apply(open_door)
-        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
-                                                    self.game.kb.types.constants_mapping))
-        go_east = _find_action("go east", actions, self.inform7)
-        state.apply(go_east)  # Move to the kitchen.
-        actions = list(state.all_applicable_actions(self.game.kb.rules.values(),
-                                                    self.game.kb.types.constants_mapping))
-        close_door = _find_action("close wooden door", actions, self.inform7)
-        close_chest = _find_action("close chest", actions, self.inform7)
-
-        # Only closing the door doesn't fail the quest.
-        state_ = state.apply_on_copy(close_door)
-        assert not self.quest.is_failing(state_)
-
-        # Only closing the chest doesn't fail the quest.
-        state_ = state.apply_on_copy(close_chest)
-        assert not self.quest.is_failing(state_)
-
-        # Closing the chest, then the door should fail the quest.
-        state_ = state.apply_on_copy(close_chest)
-        state_.apply(close_door)
-        assert self.quest.is_failing(state_)
-
-        # Closing the door, then the chest should fail the quest.
-        state_ = state.apply_on_copy(close_door)
-        state_.apply(close_chest)
-        assert self.quest.is_failing(state_)
-
 
 class TestGame(unittest.TestCase):
 
@@ -544,7 +426,7 @@ class TestGame(unittest.TestCase):
         M = GameMaker()
 
         # The goal
-        commands = ["open wooden door", "go east", "insert carrot into chest"]
+        commands = ["go east", "insert carrot into chest"]
 
         # Create a 'bedroom' room.
         R1 = M.new_room("bedroom")
@@ -552,8 +434,8 @@ class TestGame(unittest.TestCase):
         M.set_player(R1)
 
         path = M.connect(R1.east, R2.west)
-        door_a = M.new_door(path, name="wooden door")
-        M.add_fact("closed", door_a)
+        path.door = M.new(type='d', name='wooden door')
+        path.door.add_property("open")
 
         carrot = M.new(type='f', name='carrot')
         M.inventory.add(carrot)
@@ -563,8 +445,9 @@ class TestGame(unittest.TestCase):
         chest.add_property("open")
         R2.add(chest)
 
-        M.set_quest_from_commands(commands, event_style='condition')
+        M.set_quest_from_commands(commands)
         cls.game = M.build()
+        cls.walkthrough = commands
 
     def test_directions_names(self):
         expected = set(["north", "south", "east", "west"])
@@ -587,6 +470,9 @@ class TestGame(unittest.TestCase):
                           "lock", "unlock", "go", "eat", "look",
                           "inventory", "examine"}
         assert set(self.game.verbs) == expected_verbs
+
+    def test_walkthrough(self):
+        assert self.game.walkthrough == self.walkthrough
 
     def test_command_templates(self):
         expected_templates = {
@@ -617,36 +503,36 @@ class TestEventProgression(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        M = GameMaker()
-
-        # The goal
-        commands = ["take carrot", "insert carrot into chest"]
-
-        R1 = M.new_room("room")
-        M.set_player(R1)
-
-        carrot = M.new(type='f', name='carrot')
-        R1.add(carrot)
-
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R1.add(chest)
-
-        cls.event = new_operation([M.new_event_using_commands(commands, event_style='condition')])
-        cls.actions = cls.event[0].events[0].actions
-        cls.conditions = {M.new_fact("in", carrot, chest)}
-        cls.game = M.build()
-        commands = ["take carrot", "eat carrot"]
-        cls.eating_carrot = new_operation([M.new_event_using_commands(commands, event_style='condition')])
+        cls.game = DATA["game"]
+        cls.win_event = DATA["quest"].win_event
+        cls.eating_carrot = DATA["eating_carrot"]
+        cls.onion_eaten = DATA["onion_eaten"]
 
     def test_triggering_policy(self):
-        event = EventProgression(self.event[0], KnowledgeBase.default())
+        event = EventProgression(self.win_event, KnowledgeBase.default())
 
         state = self.game.world.state.copy()
-        expected_actions = self.event[0].events[0].actions
+        for action in event.triggering_policy:
+            assert not event.done
+            assert not event.triggered
+            assert not event.untriggerable
+            state.apply(action)
+            event.update(action=action, state=state)
+
+        assert event.triggering_policy == ()
+        assert event.done
+        assert event.triggered
+        assert not event.untriggerable
+
+        event = EventProgression(self.win_event, KnowledgeBase.default())
+        state = self.game.world.state.copy()
+
+        expected_actions = self.eating_carrot.actions
         for i, action in enumerate(expected_actions):
-            assert event.triggering_policy == expected_actions[i:]
+            state.apply(action)
+            event.update(action=action, state=state)
+
+        for action in event.triggering_policy:
             assert not event.done
             assert not event.triggered
             assert not event.untriggerable
@@ -659,10 +545,18 @@ class TestEventProgression(unittest.TestCase):
         assert not event.untriggerable
 
     def test_untriggerable(self):
-        event = EventProgression(self.event[0], KnowledgeBase.default())
+        event = EventProgression(self.win_event, KnowledgeBase.default())
 
         state = self.game.world.state.copy()
-        for action in self.eating_carrot[0].events[0].actions:
+        for action in self.eating_carrot.actions:
+            assert event.triggering_policy != ()
+            assert not event.done
+            assert not event.triggered
+            assert not event.untriggerable
+            state.apply(action)
+            event.update(action=action, state=state)
+
+        for action in self.onion_eaten.actions:
             assert event.triggering_policy != ()
             assert not event.done
             assert not event.triggered
@@ -680,84 +574,71 @@ class TestQuestProgression(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        M = GameMaker()
+        cls.game = DATA["game"]
+        cls.quest = DATA["quest"]
+        cls.eating_carrot = DATA["eating_carrot"]
+        cls.onion_eaten = DATA["onion_eaten"]
+        cls.closing_chest_without_carrot = DATA["closing_chest_without_carrot"]
 
-        room = M.new_room("room")
-        M.set_player(room)
-
-        carrot = M.new(type='f', name='carrot')
-        lettuce = M.new(type='f', name='lettuce')
-        room.add(carrot)
-        room.add(lettuce)
-
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        room.add(chest)
-
-        # The goals
-        commands = ["take carrot", "insert carrot into chest"]
-        cls.eventA = M.new_event_using_commands(commands, event_style='condition')
-
-        commands = ["take lettuce", "insert lettuce into chest", "close chest"]
-        event = M.new_event_using_commands(commands, event_style='condition')
-        cls.eventB = EventCondition(actions=event.actions,
-                                    conditions={M.new_fact("in", lettuce, chest), M.new_fact("closed", chest)})
-
-        cls.fail_eventA = EventCondition(conditions={M.new_fact("eaten", carrot)})
-        cls.fail_eventB = EventCondition(conditions={M.new_fact("eaten", lettuce)})
-
-        cls.quest = M.new_quest(win_event={'or': (cls.eventA, cls.eventB)},
-                                fail_event={'or': (cls.fail_eventA, cls.fail_eventB)}, reward=2)
-
-        commands = ["take carrot", "eat carrot"]
-        cls.eating_carrot = M.new_event_using_commands(commands, event_style='condition')
-        commands = ["take lettuce", "eat lettuce"]
-        cls.eating_lettuce = M.new_event_using_commands(commands, event_style='condition')
-
-        M.quests = [cls.quest]
-        cls.game = M.build()
-
-    def _apply_actions_to_quest(self, actions, quest):
-        state = self.game.world.state.copy()
+    def _apply_actions_to_quest(self, actions, quest, state=None):
+        state = state or self.game.world.state.copy()
         for action in actions:
             assert not quest.done
             state.apply(action)
             quest.update(action, state)
 
-        assert quest.done
-        return quest
+        return state
 
     def test_completed(self):
         quest = QuestProgression(self.quest, KnowledgeBase.default())
-        quest = self._apply_actions_to_quest(self.eventA.actions, quest)
-        assert quest.completed
-        assert not quest.failed
+        self._apply_actions_to_quest(self.quest.win_event.events[0].actions, quest)
+        assert quest.done
+        assert quest.completed and not quest.failed
         assert quest.winning_policy is None
 
         # Alternative winning strategy.
         quest = QuestProgression(self.quest, KnowledgeBase.default())
-        quest = self._apply_actions_to_quest(self.eventB.actions, quest)
-        assert quest.completed
-        assert not quest.failed
+        self._apply_actions_to_quest(self.quest.win_event.events[1].actions, quest)
+        assert quest.done
+        assert quest.completed and not quest.failed
+        assert quest.winning_policy is None
+
+        # Alternative winning strategy but with carrot in inventory.
+        quest = QuestProgression(self.quest, KnowledgeBase.default())
+        state = self._apply_actions_to_quest(self.eating_carrot.actions[:1], quest)  # Take carrot.
+        self._apply_actions_to_quest(self.quest.win_event.events[1].actions, quest, state)
+        assert quest.done
+        assert quest.completed and not quest.failed
         assert quest.winning_policy is None
 
     def test_failed(self):
+        # onion_eaten -> eating_carrot != eating_carrot -> onion_eaten
+        # Eating the carrot *after* eating the onion causes the game to be lost.
         quest = QuestProgression(self.quest, KnowledgeBase.default())
-        quest = self._apply_actions_to_quest(self.eating_carrot.actions, quest)
-        assert not quest.completed
-        assert quest.failed
+        state = self._apply_actions_to_quest(self.onion_eaten.actions, quest)
+        self._apply_actions_to_quest(self.eating_carrot.actions, quest, state)
+        assert quest.done
+        assert not quest.completed and quest.failed
         assert quest.winning_policy is None
 
+        # Eating the carrot *before* eating the onion does not lose the game,
+        # but the game becomes unfinishable.
         quest = QuestProgression(self.quest, KnowledgeBase.default())
-        quest = self._apply_actions_to_quest(self.eating_lettuce.actions, quest)
-        assert not quest.completed
-        assert quest.failed
+        state = self._apply_actions_to_quest(self.eating_carrot.actions, quest)
+        self._apply_actions_to_quest(self.onion_eaten.actions, quest, state)
+        assert quest.done and quest.unfinishable
+        assert not quest.completed and not quest.failed
+
+        quest = QuestProgression(self.quest, KnowledgeBase.default())
+        self._apply_actions_to_quest(self.closing_chest_without_carrot.actions, quest)
+        assert quest.done
+        assert not quest.completed and quest.failed
         assert quest.winning_policy is None
 
     def test_winning_policy(self):
         kb = KnowledgeBase.default()
         quest = QuestProgression(self.quest, kb)
-        quest = self._apply_actions_to_quest(quest.winning_policy, quest)
+        self._apply_actions_to_quest(quest.winning_policy, quest)
         assert quest.completed
         assert not quest.failed
         assert quest.winning_policy is None
@@ -765,13 +646,15 @@ class TestQuestProgression(unittest.TestCase):
         # Winning policy should be the shortest one leading to a winning event.
         state = self.game.world.state.copy()
         quest = QuestProgression(self.quest, KnowledgeBase.default())
-        for i, action in enumerate(self.eventB.actions):
+        for i, action in enumerate(self.quest.win_event.events[1].actions):
             if i < 2:
-                assert quest.winning_policy == self.eventA.actions
-            # else:
-            #     # After taking the lettuce and putting it in the chest,
-            #     # QuestB becomes the shortest one to complete.
-            #     assert quest.winning_policy == self.eventB.actions[i:]
+                assert set(quest.winning_policy).issubset(set(self.quest.win_event.events[0].actions))
+                assert not set(quest.winning_policy).issubset(set(self.quest.win_event.events[1].actions))
+            else:
+                # After opening the chest and taking the onion,
+                # the alternative winning event becomes the shortest one to complete.
+                assert quest.winning_policy == self.quest.win_event.events[1].actions[i:]
+
             assert not quest.done
             state.apply(action)
             quest.update(action, state)
@@ -786,134 +669,54 @@ class TestGameProgression(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        M = GameMaker()
-
-        # Create a 'bedroom' room.
-        R1 = M.new_room("bedroom")
-        R2 = M.new_room("kitchen")
-        M.set_player(R2)
-
-        path = M.connect(R1.east, R2.west)
-        door_a = M.new_door(path, name="wooden door")
-        M.add_fact("closed", door_a)
-
-        carrot = M.new(type='f', name='carrot')
-        lettuce = M.new(type='f', name='lettuce')
-        R1.add(carrot)
-        R1.add(lettuce)
-
-        tomato = M.new(type='f', name='tomato')
-        pepper = M.new(type='f', name='pepper')
-        M.inventory.add(tomato)
-        M.inventory.add(pepper)
-
-        # Add a closed chest in R2.
-        chest = M.new(type='c', name='chest')
-        chest.add_property("open")
-        R2.add(chest)
-
-        # The goals
-        commands = ["open wooden door", "go west", "take carrot", "go east", "drop carrot"]
-        cls.eventA = M.new_event_using_commands(commands, event_style='condition')
-
-        commands = ["open wooden door", "go west", "take lettuce", "go east", "insert lettuce into chest"]
-        cls.eventB = M.new_event_using_commands(commands, event_style='condition')
-
-        commands = ["drop pepper"]
-        cls.eventC = M.new_event_using_commands(commands, event_style='condition')
-
-        cls.losing_eventA = EventCondition(conditions={M.new_fact("eaten", carrot)})
-        cls.losing_eventB = EventCondition(conditions={M.new_fact("eaten", lettuce)})
-
-        cls.questA = M.new_quest(win_event=[cls.eventA], fail_event=[cls.losing_eventA])
-        cls.questB = M.new_quest(win_event=[cls.eventB], fail_event=[cls.losing_eventB])
-        cls.questC = M.new_quest(win_event=[cls.eventC], fail_event=[])
-        cls.questD = M.new_quest(win_event=[], fail_event=[cls.losing_eventA, cls.losing_eventB])
-
-        commands = ["open wooden door", "go west", "take carrot", "eat carrot"]
-        cls.eating_carrot = M.new_event_using_commands(commands, event_style='condition')
-        commands = ["open wooden door", "go west", "take lettuce", "eat lettuce"]
-        cls.eating_lettuce = M.new_event_using_commands(commands, event_style='condition')
-        commands = ["eat tomato"]
-        cls.eating_tomato = M.new_event_using_commands(commands, event_style='condition')
-        commands = ["eat pepper"]
-        cls.eating_pepper = M.new_event_using_commands(commands, event_style='condition')
-
-        M.quests = [cls.questA, cls.questB, cls.questC]
-        cls.game = M.build()
+        cls.game = DATA["game"]
+        cls.quest1 = DATA["quest1"]
+        cls.quest2 = DATA["quest2"]
+        cls.eating_carrot = DATA["eating_carrot"]
+        cls.onion_eaten = DATA["onion_eaten"]
+        cls.knife_on_counter = DATA["knife_on_counter"]
 
     def test_completed(self):
         game = GameProgression(self.game)
-        for action in self.eventA.actions + self.eventC.actions:
-            assert not game.done
-            game.update(action)
-
-        assert not game.done
-        remaining_actions = self.eventB.actions[1:]  # skipping "open door".
-        assert game.winning_policy == remaining_actions
-
-        for action in self.eventB.actions:
+        for action in self.quest1.win_event.events[0].actions + self.quest2.win_event.events[0].actions:
             assert not game.done
             game.update(action)
 
         assert game.done
-        assert game.completed
-        assert not game.failed
+        assert game.completed and not game.failed
+        assert game.winning_policy is None
+
+        # Alternative quest1 solution
+        game = GameProgression(self.game)
+        for action in self.quest1.win_event.events[1].actions + self.quest2.win_event.events[0].actions:
+            assert not game.done
+            game.update(action)
+
+        assert game.done
+        assert game.completed and not game.failed
         assert game.winning_policy is None
 
     def test_failed(self):
         game = GameProgression(self.game)
-        action = self.eating_tomato.actions[0]
-        game.update(action)
+
+        # Completing quest2 but failing quest 1.
+        for action in self.knife_on_counter.actions:
+            game.update(action)
+
+        assert not game.quest_progressions[0].done
+        assert game.quest_progressions[1].done
+        assert game.quest_progressions[1].completed
         assert not game.done
-        assert not game.completed
-        assert not game.failed
+        assert not game.completed and not game.failed
         assert game.winning_policy is not None
 
-        game = GameProgression(self.game)
-        action = self.eating_pepper.actions[0]
-        game.update(action)
-        assert not game.completed
-        assert game.failed
-        assert game.done
-        assert game.winning_policy is None
-
-        game = GameProgression(self.game)
-        for action in self.eating_carrot.actions:
-            assert not game.done
+        for action in self.onion_eaten.actions + self.eating_carrot.actions:
             game.update(action)
 
         assert game.done
-        assert not game.completed
-        assert game.failed
-        assert game.winning_policy is None
-
-        game = GameProgression(self.game)
-        for action in self.eating_lettuce.actions:
-            assert not game.done
-            game.update(action)
-
-        assert game.done
-        assert not game.completed
-        assert game.failed
-        assert game.winning_policy is None
-
-        # Completing QuestA but failing quest B.
-        game = GameProgression(self.game)
-        for action in self.eventA.actions:
-            assert not game.done
-            game.update(action)
-
-        assert not game.done
-
-        game = GameProgression(self.game)
-        for action in self.eating_lettuce.actions:
-            assert not game.done
-            game.update(action)
-
-        assert game.done
-        assert not game.completed
-        assert game.failed
+        assert game.quest_progressions[0].done
+        assert game.quest_progressions[0].failed
+        assert not game.completed and game.failed
         assert game.winning_policy is None
 
     def test_winning_policy(self):
@@ -944,8 +747,8 @@ class TestGameProgression(unittest.TestCase):
         R4 = M.new_room("r4")
         M.set_player(R1)
 
-        M.connect(R0.south, R1.north)
-        M.connect(R1.east, R2.west)
+        M.connect(R0.south, R1.north),
+        M.connect(R1.east, R2.west),
         M.connect(R3.east, R4.west)
         M.connect(R1.south, R3.north)
         M.connect(R2.south, R4.north)
@@ -957,7 +760,8 @@ class TestGameProgression(unittest.TestCase):
         R2.add(apple)
 
         commands = ["go north", "take carrot"]
-        M.set_quest_from_commands(commands, event_style='condition')
+        M.set_quest_from_commands(commands)
+        M.set_walkthrough(commands)  # TODO: redundant!
         game = M.build()
         inform7 = Inform7Game(game)
         game_progression = GameProgression(game)
@@ -981,7 +785,8 @@ class TestGameProgression(unittest.TestCase):
         # Quest where player's has to pick up the carrot first.
         commands = ["go east", "take apple", "go west", "go north", "drop apple"]
 
-        M.set_quest_from_commands(commands, event_style='condition')
+        M.set_quest_from_commands(commands)
+        M.set_walkthrough(commands)  # TODO: redundant!
         game = M.build()
         game_progression = GameProgression(game)
 
@@ -1016,8 +821,8 @@ class TestGameProgression(unittest.TestCase):
         M.set_player(R2)
 
         path = M.connect(R1.east, R2.west)
-        door_a = M.new_door(path, name="wooden door")
-        M.add_fact("closed", door_a)
+        path.door = M.new(type='d', name='wooden door')
+        path.door.add_property("closed")
 
         carrot = M.new(type='f', name='carrot')
         lettuce = M.new(type='f', name='lettuce')
@@ -1028,18 +833,19 @@ class TestGameProgression(unittest.TestCase):
         chest.add_property("open")
         R2.add(chest)
 
-        quest1 = M.new_quest_using_commands(commands[0], event_style='condition')
+        quest1 = M.new_quest_using_commands(commands[0])
         quest1.desc = "Fetch the carrot and drop it on the kitchen's ground."
-        quest2 = M.new_quest_using_commands(commands[0] + commands[1], event_style='condition')
+        quest2 = M.new_quest_using_commands(commands[0] + commands[1])
         quest2.desc = "Fetch the lettuce and drop it on the kitchen's ground."
-        quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2], event_style='condition')
+        # quest3 = M.new_quest_using_commands(commands[0] + commands[1] + commands[2])
         winning_facts = [M.new_fact("in", lettuce, chest),
                          M.new_fact("in", carrot, chest),
                          M.new_fact("closed", chest)]
-        quest3.win_events[0].events[0].set_conditions(winning_facts)
+        quest3 = Quest(win_event=EventCondition(winning_facts))
         quest3.desc = "Put the lettuce and the carrot into the chest before closing it."
 
         M.quests = [quest1, quest2, quest3]
+        M.set_walkthrough(commands[0] + commands[1] + commands[2])
         assert len(M.quests) == len(commands)
         game = M.build()
 

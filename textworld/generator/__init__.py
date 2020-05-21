@@ -17,7 +17,9 @@ from textworld.logic import State
 from textworld.generator.chaining import ChainingOptions, QuestGenerationError
 from textworld.generator.chaining import sample_quest
 from textworld.generator.world import World
-from textworld.generator.game import Game, Quest, Event, GameOptions
+from textworld.generator.game import Game, Quest, GameOptions
+from textworld.generator.game import EventCondition, EventAction, EventAnd, EventOr
+from textworld.generator.game import Event  # For backward compatibility
 from textworld.generator.graph_networks import create_map, create_small_map
 from textworld.generator.text_generation import generate_text_from_grammar
 
@@ -142,19 +144,18 @@ def make_quest(world: Union[World, State], options: Optional[GameOptions] = None
         for i in range(1, len(chain.nodes)):
             actions.append(chain.actions[i - 1])
             if chain.nodes[i].breadth != chain.nodes[i - 1].breadth:
-                event = Event(actions)
-                quests.append(Quest(win_events=[event]))
+                quests.append(Quest(win_event=EventCondition(actions=actions)))
 
         actions.append(chain.actions[-1])
-        event = Event(actions)
-        quests.append(Quest(win_events=[event]))
+        quests.append(Quest(win_event=EventCondition(actions=actions)))
 
     return quests
 
 
-def make_grammar(options: Mapping = {}, rng: Optional[RandomState] = None) -> Grammar:
+def make_grammar(options: Mapping = {}, rng: Optional[RandomState] = None,
+                 kb: Optional[KnowledgeBase] = None) -> Grammar:
     rng = g_rng.next() if rng is None else rng
-    grammar = Grammar(options, rng)
+    grammar = Grammar(options, rng, kb)
     grammar.check()
     return grammar
 

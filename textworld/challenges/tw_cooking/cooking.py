@@ -928,7 +928,7 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
     start_room = rng_map.choice(M.rooms)
     M.set_player(start_room)
 
-    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
+    M.grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar, kb=options.kb)
 
     # Remove every food preparation with grilled, if there is no BBQ.
     if M.find_by_name("BBQ") is None:

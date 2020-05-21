@@ -178,10 +178,7 @@ class VariableTypeTree:
     def __getitem__(self, vtype):
         """ Get VariableType object from its type string. """
         vtype = vtype.rstrip("'")
-        if vtype in self.variables_types.keys():
-            return self.variables_types[vtype]
-        else:
-            return None
+        return self.variables_types[vtype]
 
     def __contains__(self, vtype):
         vtype = vtype.rstrip("'")
@@ -202,10 +199,9 @@ class VariableTypeTree:
             return []
 
         descendants = []
-        if self[vtype]:
-            for child_type in self[vtype].children:
-                descendants.append(child_type)
-                descendants += self.descendants(child_type)
+        for child_type in self[vtype].children:
+            descendants.append(child_type)
+            descendants += self.descendants(child_type)
 
         return descendants
 
