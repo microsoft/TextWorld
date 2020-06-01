@@ -22,6 +22,9 @@ class CountOrderedDict(OrderedDict):
 
 
 def assign_new_matching_names(obj1_infos, obj2_infos, grammar, exclude):
+    if obj1_infos.name is not None or obj2_infos.name is not None:
+        return False  # One of the objects has already a name assigned to it.
+
     tag = "#({}<->{})_match#".format(obj1_infos.type, obj2_infos.type)
     if not grammar.has_tag(tag):
         return False
