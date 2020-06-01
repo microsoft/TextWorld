@@ -75,11 +75,11 @@ def test_multi_closure():
     pairs = list(hier.multi_ancestors((d, d)))
 
     expected = {
-                (b, d), (c, d), (d, b), (d, c),
-        (a, d), (b, b), (b, c), (c, b), (c, c), (d, a),
+                (b, d), (c, d), (d, b), (d, c),  # noqa: E126
+        (a, d), (b, b), (b, c), (c, b), (c, c), (d, a),  # noqa: E131
                 (a, b), (a, c), (b, a), (c, a),
-                            (a, a),
-    }  # noqa: E131
+                            (a, a),  # noqa: E131
+    }
 
     assert len(pairs) == len(expected)
     assert set(pairs) == expected
@@ -87,11 +87,11 @@ def test_multi_closure():
     pairs = list(hier.multi_descendants((a, a)))
 
     expected = {
-                (a, b), (a, c), (b, a), (c, a),
-        (a, d), (b, b), (b, c), (c, b), (c, c), (d, a),
+                (a, b), (a, c), (b, a), (c, a),  # noqa: E126
+        (a, d), (b, b), (b, c), (c, b), (c, c), (d, a),  # noqa: E131
                 (b, d), (c, d), (d, b), (d, c),
-                            (d, d),
-    }  # noqa: E131
+                            (d, d),  # noqa: E131
+    }
 
     assert len(pairs) == len(expected)
     assert set(pairs) == expected
