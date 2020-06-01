@@ -2,6 +2,12 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.2] - 2020-06-01
+
+### Fixed
+
+- Prevent overwriting the name of matching entities (e.g. container-key). [#237](https://github.com/microsoft/TextWorld/pull/237)
+
 ## [1.3.1] - 2020-04-07
 
 ### Fixed
