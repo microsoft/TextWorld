@@ -180,6 +180,24 @@ def test_record_quest_from_commands(play_the_game=False):
             textworld.play(game_file, agent=agent, silent=True)
 
 
+def test_manually_defined_objective():
+    M = GameMaker()
+
+    # Create a 'bedroom' room.
+    R1 = M.new_room("bedroom")
+    M.set_player(R1)
+
+    game = M.build()
+    game.objective = "There's nothing much to do in here."
+
+    with make_temp_directory(prefix="test_manually_defined_objective") as tmpdir:
+        game_file = M.compile(tmpdir)
+
+        env = textworld.start(game_file, infos=textworld.EnvInfos(objective=True))
+        state = env.reset()
+        assert state["objective"] == "There's nothing much to do in here."
+
+
 if __name__ == "__main__":
     # test_making_a_small_game(play_the_game=True)
     test_record_quest_from_commands(play_the_game=True)

@@ -786,6 +786,10 @@ class GameMaker:
         world = World.from_facts(self.facts, kb=self._kb)
         game = Game(world, quests=self.quests)
 
+        # Keep same objectiveif one was provided/generated.
+        if self._game and self._game._objective:
+            game._objective = self._game._objective
+
         # Keep names and descriptions that were manually provided.
         used_names = set()
         for k, var_infos in game.infos.items():
