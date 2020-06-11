@@ -83,5 +83,24 @@ def test_blend_instructions(verbose=False):
     assert len(quest1.desc) > len(quest2.desc)
 
 
+def test_do_not_overwrite_entity_desc(verbose=False):
+    # Make generation throughout the framework reproducible.
+    g_rng.set_seed(1234)
+
+    M = textworld.GameMaker()
+    r1 = M.new_room()
+    M.set_player(r1)
+
+    key = M.new(type="k", name="key", desc="This is a skeleton key.")
+    r1.add(key)
+
+    quest = M.set_quest_from_commands(["take key"])
+    quest.desc = "Find a valuable object."
+
+    M.build()
+    assert key.infos.desc == "This is a skeleton key."
+    assert quest.desc == "Find a valuable object."
+
+
 if __name__ == "__main__":
     test_blend_instructions(verbose=True)

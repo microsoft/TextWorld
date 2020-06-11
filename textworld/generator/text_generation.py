@@ -138,7 +138,8 @@ def generate_text_from_grammar(game, grammar: Grammar):
 
     # Generate the instructions.
     for quest in game.quests:
-        quest.desc = assign_description_to_quest(quest, game, grammar)
+        if quest.desc is None:
+            quest.desc = assign_description_to_quest(quest, game, grammar)
 
     return game
 
