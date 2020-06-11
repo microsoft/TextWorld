@@ -701,6 +701,12 @@ class ActionDependencyTree(DependencyTree):
             yield leaf.action
             _, last_reverse_action = tree.remove(leaf.action)
 
+            # Prune empty roots
+            for root in list(tree.roots):
+                if len(root.children) == 0:
+                    yield root.element.action
+                    tree.remove(root.element.action)
+
     def copy(self) -> "ActionDependencyTree":
         tree = super().copy()
         tree._kb = self._kb
