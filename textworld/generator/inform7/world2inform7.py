@@ -523,8 +523,19 @@ class Inform7Game:
         source += textwrap.dedent("""\
         Printing the content of the inventory is an activity.
         Rule for printing the content of the inventory:
-            say "Inventory:[line break]";
-            list the contents of the player, with newlines, indented, giving inventory information, including all contents, with extra indentation.
+            say "You are carrying: ";
+            list the contents of the player, as a sentence, giving inventory information, including all contents;
+            say ".".
+
+        """)  # noqa: E501
+
+        # Useful for listing inventory contents with their properties.
+        source += textwrap.dedent("""\
+        The print standard inventory rule is not listed in any rulebook.
+        Carry out taking inventory (this is the new print inventory rule):
+            say "You are carrying: ";
+            list the contents of the player, as a sentence, giving inventory information, including all contents;
+            say ".".
 
         """)  # noqa: E501
 
