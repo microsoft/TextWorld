@@ -12,10 +12,6 @@ from textworld.core import GameState
 from textworld.core import GameNotRunningError
 
 
-class JerichoUnsupportedGameWarning(UserWarning):
-    pass
-
-
 class JerichoEnv(textworld.Environment):
 
     def __init__(self, *args, **kwargs):
@@ -129,4 +125,4 @@ class JerichoEnv(textworld.Environment):
 
 
 # By default disable the warning about unsupported games.
-warnings.simplefilter("ignore", JerichoUnsupportedGameWarning)
+warnings.simplefilter("ignore", jericho.UnsupportedGameWarning)
