@@ -154,6 +154,36 @@ class TestInform7Data(unittest.TestCase):
             assert done
             assert game_state.lost
 
+    def test_copy(self):
+        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
+
+        # Copy before env.reset.
+        env = self.env_z8.copy()
+        assert env.state == self.env_z8.state
+        assert env.infos == self.env_z8.infos
+        assert env._tracked_infos == self.env_z8._tracked_infos
+        assert env._prev_state == self.env_z8._prev_state
+
+        # Copy after env.reset.
+        self.env_z8.reset()
+        env = self.env_z8.copy()
+        assert sorted(env.state.items()) == sorted(self.env_z8.state.items())
+        assert env.infos == self.env_z8.infos
+        assert env._tracked_infos == self.env_z8._tracked_infos
+        assert env._prev_state == self.env_z8._prev_state
+
+        # Check copy after a few env.step.
+        game_state, _, _ = self.env_z8.step("go east")
+        assert env.state == self.env_z8._prev_state
+
+        env = self.env_z8.copy()
+        assert env._prev_state is not None
+        prev_state = env._prev_state.copy()
+
+        # Check the copied env didn't change after calling env.step.
+        game_state, _, done = self.env_z8.step("eat carrot")
+        assert env._prev_state == prev_state
+
 
 class TestTWInform7(unittest.TestCase):
 
@@ -228,6 +258,20 @@ class TestGameData(unittest.TestCase):
 
                 env = TWInform7(env_class())
                 npt.assert_raises(MissingGameInfosError, env.load, gamefile)
+
+    def test_copy(self):
+        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
+
+        # Copy before env.reset.
+        env = self.env_z8.copy()
+        assert env._gamefile == self.env_z8._gamefile
+        assert env._game == self.env_z8._game
+
+        # Copy after env.reset.
+        self.env_z8.reset()
+        env = self.env_z8.copy()
+        assert env._gamefile == self.env_z8._gamefile
+        assert id(env._game) == id(self.env_z8._game)  # Reference
 
 
 class TestStateTracking(unittest.TestCase):
@@ -356,3 +400,45 @@ class TestStateTracking(unittest.TestCase):
 
                 env = TWInform7(env_class())
                 npt.assert_raises(MissingGameInfosError, env.load, gamefile)
+
+    def test_copy(self):
+        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
+
+        # Copy before env.reset.
+        env = self.env_z8.copy()
+        assert env._gamefile == self.env_z8._gamefile
+        assert env._game == self.env_z8._game
+        assert env._inform7 == self.env_z8._inform7
+        assert env._last_action == self.env_z8._last_action
+        assert env._previous_winning_policy == self.env_z8._previous_winning_policy
+        assert env._current_winning_policy == self.env_z8._current_winning_policy
+        assert env._moves == self.env_z8._moves
+        assert env._game_progression == self.env_z8._game_progression
+
+        # Copy after env.reset.
+        self.env_z8.reset()
+        env = self.env_z8.copy()
+        assert env._gamefile == self.env_z8._gamefile
+        assert id(env._game) == id(self.env_z8._game)  # Reference
+        assert id(env._inform7) == id(self.env_z8._inform7)  # Reference
+        assert env._last_action == self.env_z8._last_action
+        assert env._previous_winning_policy == self.env_z8._previous_winning_policy
+        assert tuple(env._current_winning_policy) == tuple(self.env_z8._current_winning_policy)
+        assert env._moves == self.env_z8._moves
+        assert id(env._game_progression) != id(self.env_z8._game_progression)
+        assert env._game_progression.state == self.env_z8._game_progression.state
+
+        # Keep a copy of some information for later use.
+        current_winning_policy = list(env._current_winning_policy)
+        game_progression = env._game_progression.copy()
+
+        # Check copy after a few env.step.
+        game_state, _, _ = self.env_z8.step("go east")
+        assert env._game_progression.state != self.env_z8._game_progression.state
+        game_state, _, done = self.env_z8.step("drop carrot")
+        assert env._game_progression.state != self.env_z8._game_progression.state
+
+        # Check the copied env didn't change after calling env.step.
+        assert tuple(env._current_winning_policy) == tuple(current_winning_policy)
+        assert tuple(env._current_winning_policy) != tuple(self.env_z8._current_winning_policy)
+        assert env._game_progression.state == game_progression.state

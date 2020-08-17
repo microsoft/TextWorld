@@ -53,3 +53,9 @@ class Filter(Wrapper):
         ob = game_state.feedback
         infos = self._get_requested_infos(game_state)
         return ob, infos
+
+    def copy(self) -> "Filter":
+        env = Filter()
+        env._wrapped_env = self._wrapped_env.copy()
+        env.infos = self.infos
+        return env

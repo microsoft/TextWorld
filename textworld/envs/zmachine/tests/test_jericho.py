@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from os.path import join as pjoin
 
+import numpy as np
 import numpy.testing as npt
 
 import textworld
@@ -159,3 +160,58 @@ class TestJerichoEnv(unittest.TestCase):
         assert "The End" in game_state.feedback
         assert game_state.won is None
         assert game_state.lost is None
+
+    def test_copy(self):
+        def assert_jericho_state_equals(s1, s2):
+            assert np.all(s1[0] == s2[0])
+            assert np.all(s1[1] == s2[1])
+            assert s1[2] == s2[2]
+            assert s1[3] == s2[3]
+            assert s1[4] == s2[4]
+            assert s1[5] == s2[5]
+            assert s1[6] == s2[6]
+            assert s1[7] == s2[7]
+            assert len(s1) == 8
+
+        env = JerichoEnv(self.infos)
+
+        # Copy before env.reset.
+        bkp = env.copy()
+        assert bkp.gamefile == env.gamefile
+        assert bkp._seed == env._seed
+        assert bkp._jericho == env._jericho
+        assert bkp.state == env.state
+        assert bkp.infos == env.infos
+
+        # Copy after env.reset.
+        env.load(self.game_file)
+        game_state = env.reset()
+        bkp = env.copy()
+        assert bkp.gamefile == env.gamefile
+        assert bkp.infos == env.infos
+        assert bkp._seed == env._seed
+        assert bkp._jericho != env._jericho  # Not the same object.
+        assert_jericho_state_equals(bkp._jericho.get_state(),
+                                    env._jericho.get_state())  # But same state.
+        assert bkp.state == env.state
+
+        # Keep a copy of some information for later use.
+        jericho_id = id(bkp._jericho)
+        jericho_state = bkp._jericho.get_state()
+        state = bkp.state.copy()
+
+        # Check copy after a few env.step.
+        walkthrough = self.game.metadata["walkthrough"]
+        for command in walkthrough[:len(walkthrough) // 2]:
+            game_state, score, done = env.step(command)
+
+        # Check the copied env didn't change after calling env.step.
+        assert id(bkp._jericho) == jericho_id
+        assert_jericho_state_equals(bkp._jericho.get_state(), jericho_state)
+        assert bkp.state == state
+
+        bkp = env.copy()
+        assert bkp._jericho != env._jericho  # Not the same object.
+        assert_jericho_state_equals(bkp._jericho.get_state(),
+                                    env._jericho.get_state())  # But same state.
+        assert bkp.state == env.state

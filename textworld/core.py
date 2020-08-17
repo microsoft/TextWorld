@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-
+from copy import deepcopy
 from typing import Optional, Any, List, Tuple, Iterable
 
 import sys
@@ -109,6 +109,12 @@ class EnvInfos:
     def __len__(self) -> int:
         return len(self.basics) + len(self.extras)
 
+    def __eq__(self, other):
+        return self.basics == other.basics and self.extras == other.extras
+
+    def copy(self):
+        return EnvInfos(**{slot: True for slot in self.basics}, extras=list(self.extras))
+
 
 class GameState(dict):
     def __getattr__(self, attr):
@@ -116,6 +122,14 @@ class GameState(dict):
 
     def __setattr__(self, attr, value):
         return self.__setitem__(attr, value)
+
+    def copy(self) -> "GameState":
+        """ Returns a deepcopy of this game state. """
+        state = GameState(self)
+        for key in self:
+            state[key] = deepcopy(self[key])
+
+        return state
 
 
 class Environment:
@@ -234,6 +248,14 @@ class Environment:
         """ Ends the game. """
         pass
 
+    def copy(self) -> "Environment":
+        """ Return a copy of this environment at the same state.
+
+        Returns:
+            A copy of this environment at the same state.
+        """
+        raise NotImplementedError()
+
     @property
     def display_command_during_render(self) -> bool:
         """ Enables/disables displaying the command when rendering. """
@@ -321,6 +343,9 @@ class Wrapper:
     def close(self) -> None:
         if self._wrapped_env:
             self._wrapped_env.close()
+
+    def copy(self) -> "Wrapper":
+        raise NotImplementedError()
 
     @property
     def display_command_during_render(self) -> bool:
