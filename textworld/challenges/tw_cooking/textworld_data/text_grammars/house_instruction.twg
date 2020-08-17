@@ -1,0 +1,158 @@
+#-------------------------
+#Instructions Grammar
+#-------------------------
+obj_types:(o|k|f)
+obj_types_no_key:(o|f)
+on_types:(c|s)
+lock_types:(c|d)
+eat_types:(f)
+close_open_types:(d|c)
+lock_type_var:#lock_types#;#lock_types# #in_the_(r)#
+(s)_var:(s);(s) #in_the_(r)#
+(c)_var:(c);(c) #in_the_(r)#
+on_var:#on_types#;#on_types# #in_the_(r)#
+in_the_(r):in the (r);within the (r);inside the (r)
+make_syn_u:Make sure;Assure;Make it so;Doublecheck;Look and see;Make absolutely sure
+make_syn_v:make sure;assure;make it so;doublecheck;look and see;make absolutely sure
+by_the_syn:with the
+init_syn:in it;inside;placed inside
+into_syn:into;inside
+#actions
+##actions should start with a verb (ie:ensure, make sure, etc (these could probably just be a tag))
+examine:#examine_synonym# the #obj_types#
+examine_synonym:examine;study;look carefully at
+dice:dice the #obj_types#
+chop:chop the #obj_types#
+slice:slice the #obj_types#
+cook:cook the #obj_types#
+take:#take_synonym_1# the #obj_types# in the (r).;#take_synonym_1# the #obj_types# from the (r).;#take_synonym_1# the #obj_types# that's in the (r).
+take_synonym_1:take;retrieve;recover;pick up
+take/s:#take_synonym_1# the #obj_types# from the #on_var#.
+take/c:#take_synonym_1# the #obj_types# from the #on_var#.
+take:#pick-up_synonym_1# the #obj_types# from the floor of the (r).
+pick-up_synonym_1:pick-up;retrieve;recover;pick up;lift
+pick-up_synonym_v:Pick-up;Retrieve;Recover;Pick up;Lift
+insert:#insert_syn_1# the #obj_types# #into_syn# the #(c)_var#.;you can #insert_syn_1# the #obj_types# #into_syn# the #(c)_var#.
+insert_syn_u:Insert;Put;Place;Deposit
+insert_syn_1:insert;put;place;deposit
+insert_syn_v:inserted;put;placed;deposited
+begood:good;great;fantastic;a great idea
+put:#put_syn_v# the #obj_types# on the #(s)_var#.
+put_syn_u:Put;Place;Sit;Rest
+put_syn_v:put;place;sit;rest
+on_it_syn:on it;upon it
+drop:#drop_syn_v# the #obj_types# on the floor of the (r).
+drop_syn_u:Place
+drop_syn_v:place;drop;ditch;throw;toss;deposit
+eat:#eat_syn_1# the #eat_var#.
+eat_syn_u:Eat;
+eat_syn_1:eat;
+eat_syn_v:eaten;
+open:open the #lock_type_var#.;ensure that the #lock_type_var# is open.;#make_syn_v# that the #lock_type_var# is #open_syn#.
+open_syn:opened;open;wide open;ajar
+close:close the #lock_type_var#.;#make_syn_v# that the #lock_type_var# is #closed_syn#.
+closed_syn:closed;shut
+eat_var:#eat_types#;#eat_types#
+on_var:#on_types#;#on_types# #in_the_(r)#
+unlock:#unlock_key#;#unlock_no_key#
+unlock_key:unlock the #lock_type_var# #by_the_syn# (k).;check that the #lock_type_var# is unlocked #by_the_syn# (k).;#make_syn_v# that the #lock_type_var# is unlocked #by_the_syn# (k).;Insert the (k) into the #lock_type_var#'s lock to unlock it.
+unlock_no_key:unlock the #lock_type_var#.;#make_syn_v# that the #lock_type_var# is unlocked.
+lock:#lock_key#;#lock_no_key#
+lock_key:lock the #lock_type_var# #by_the_syn# (k).;#make_syn_v# that the #lock_type_var# is locked #by_the_syn# (k).;#insert_syn_u# the (k) into the #lock_type_var# to lock it.
+lock_no_key:lock the #lock_type_var#.;#make_syn_v# the #lock_type_var# is locked.;#make_syn_v# that the #lock_type_var# is locked.
+go/north:#go_syn_l# north.;#tryto# #go_syn_l# north.
+go/south:#go_syn_l# south.;#tryto# #go_syn_l# south.
+go/east:#go_syn_l# east.;#tryto# #go_syn_l# east.
+go/west:#go_syn_l# west.;#tryto# #go_syn_l# west.
+go/north/d:#go_syn_l# through the north (d).;#tryto# #go_syn_l# through the north (d).
+go/south/d:#go_syn_l# through the south (d).;#tryto# #go_syn_l# through the south (d).
+go/east/d:#go_syn_l# through the east (d).;#tryto# #go_syn_l# through the east (d).
+go/west/d:#go_syn_l# through the west (d).;#tryto# #go_syn_l# through the west (d).
+go_syn_u:Go;Head;Venture;Travel;Move;Go to the;Take a trip
+go_syn_l:go;head;venture;travel;move;go to the;take a trip
+go_syn_v:visited;travelled;moved;ventured;gone
+tryto:try to;make an effort to;make an attempt to;attempt to
+wait:Wait.
+#action expandables
+#---------------
+
+
+#Compound Command Description Functions
+#----------------
+ig_unlock_open:open the locked #lock_types# using the (k).;unlock and open the #lock_types#.;unlock and open the #lock_types# using the (k).;open the #lock_types# using the (k).
+ig_unlock_open_take:open the locked #lock_types# using the (k) and take the #obj_types_no_key#.;unlock the #lock_types# and take the #obj_types_no_key#.;unlock the #lock_types# using the (k), and take the #obj_types_no_key#.;take the #obj_types_no_key# from within the locked #lock_types#.
+ig_open_take:take the #obj_types# from the (c).;open the (c) and take the #obj_types#.;from in the closed (c), take the #obj_types#.
+ig_take/c_unlock:take the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
+ig_take/s_unlock:take the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
+ig_take_unlock:#pick-up_synonym_v# the (k) and use it to unlock the #lock_types#.;unlock the #lock_types#, with the (k).;
+ig_open_insert:open the (c) and place the #obj_types# in it.;put the #obj_types# in the closed (c).;
+ig_insert_close:place the #obj_types# in the (c) and close it.;close (c) after placing the #obj_types# in it.
+ig_close_lock:close the #lock_types# and lock it.;close the #lock_types# and lock it with the (k).
+#Flavour Text
+#----------------
+quest:#prologue# (list_of_actions) #epilogue#
+quest_one_action:#prologue_one_action# (action)
+prologue:#welcome#! Here is your task for today. #newsentence#;#welcome#! Here is how to play! #newsentence#;#welcome#! #newsentence#;Hey, thanks for coming over to the TextWorld today, there is something I need you to do for me. #newsentence#
+prologue_one_action:#welcome#! Your task for today is to;#welcome#!;Your objective is to;Hey, thanks for coming over to TextWorld! Please
+newsentence:First off,;First of all,;First stop,;First step,;Your first objective is to;First thing I need you to do is to;First off, if it's not too much trouble, I need you to;First of all, you could, like,;First, it would be #begood# if you could
+action_separator: Then, ; Next, ; Following that, ; If you can #do# that, ; Once you #do# that, ; That done, ; With that over with, ; With that accomplished, ; With that done, ; Okay, and then, ; And then, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+epilogue:Once that's all handled, you can stop!;And once you've done that, you win!;And if you do that, you're the winner!;That's it!;Got that? Good!;Alright, thanks!;And that's it, another successful game of TextWorld!
+do:manage;do;accomplish;get around to doing;finish;succeed at;get through with
+welcome:Welcome to TextWorld;You are now playing a #exciting# #game# of TextWorld;Welcome to another #exciting# #game# of TextWorld;It's time to explore the amazing world of TextWorld;Get ready to pick stuff up and put it in places, because you've just entered TextWorld;I hope your ready to go into rooms and interact with objects, because you've just entered TextWorld;Who's got a virtual machine and is about to play through an #exciting# round of TextWorld? You do;Hello and welcome to the amazing #textualworld# that is TextWorld!;
+exciting:exciting;fast paced;life changing;profound
+game:game;round;session;episode;installment
+textualworld:textual world;world of text;text based world;text world
+##Action separators
+##Need at least 5 for each action type
+action_separator_take: #afterhave# #havetaken# the #obj_types#, ; #after# #taking# the #obj_types#, ; With the #obj_types#, ; If you can get your hands on the #obj_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_take/s: #afterhave# #havetaken# the #obj_types#, ; #after# #taking# the #obj_types#, ; With the #obj_types#, ; If you can get your hands on the #obj_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_take/c: #afterhave# #havetaken# the #obj_types#, ; #after# #taking# the #obj_types#, ; With the #obj_types#, ; If you can get your hands on the #obj_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_eat: #afterhave# #ate# the #eat_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_insert: #afterhave# #inserted# the #obj_types# into the (c), ; #after# #inserting# the #obj_types# into the (c), ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_put: #afterhave# #put_v# the #obj_types# on the (s), ; #after# #putting# the #obj_types# on the (s), ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_open: #afterhave# #opened# the #close_open_types#, ; #after# #opening# the #close_open_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_unlock: #afterhave# #unlocked# the #lock_types#, ; #after# #unlocking# the #lock_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_lock: #afterhave# #locked# the #lock_types#, ; #after# #locking# the #lock_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_seperator_go: #afterhave# #gone# (dir), ; #after# #getting# (dir), ; once you're (dir), ; once you're in the (dir), ; If you can manage to go (dir), ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_seperator_go/south: #afterhave# gone south, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_seperator_go/north: #afterhave# gone north, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_seperator_go/east: #afterhave# gone east, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_seperator_go/west: #afterhave# gone west, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_close: #afterhave# #closed# the #close_open_types#, ; #after# #closing# the #close_open_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+action_separator_drop: #afterhave# #dropped# #obj_types#, ; #after# #dropping# #obj_types#, ;#emptyinstruction1#;#emptyinstruction2#;#emptyinstruction3#;#emptyinstruction4#;#emptyinstruction5#;#emptyinstruction6#;#emptyinstruction7#;#emptyinstruction8#;#emptyinstruction9#;#emptyinstruction10#
+#Separator Symbols
+afterhave:After you have;Having;Once you have;If you have
+havetaken:taken;got;picked up
+havepicked-up:taken;got;picked up
+after:After;
+taking:taking;getting;picking up;stealing
+picking-up:taking;getting;picking up;stealing
+ate:ate;consumed
+inserted:inserted;put in
+inserting:inserting;putting in
+put_v:put;place;set;set down
+putting:putting;placing;setting;setting down
+opening:opening;pulling open
+opened:opened;pulled open
+unlocked:unlocked
+unlocking:unlocking
+locked:locked
+locking:locking
+gone:gone;gotten
+getting:going;getting
+closed:closed;shut
+closing:closing;shutting
+dropped:dropped;ditched;tossed;left behind
+dropping:dropping;leaving behind
+
+emptyinstruction1: And then, ;
+emptyinstruction2: Then, ;
+emptyinstruction3: After that, ;
+emptyinstruction4: And then, ;
+emptyinstruction5: After that, ;
+emptyinstruction6: Then, ;
+emptyinstruction7: And then, ;
+emptyinstruction8: After that, ;
+emptyinstruction9: And then, ;
+emptyinstruction10: Then, ;
+

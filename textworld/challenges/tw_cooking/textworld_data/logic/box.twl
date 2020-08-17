@@ -1,0 +1,30 @@
+## box: i.e. portable container
+#type box : c, o {
+#
+#    predicates {
+#
+#        reachable_box_I(P, I, box) = in(box, I);
+#        reachable_box_r(P, r, box) = at(P, r) & at(box, r);
+#        reachable_box_s(P, r, s, box) = at(P, r) & at(s, r) & on(box, s);
+#        reachable_box_c(P, r, c, box) = at(P, r) & at(c, r) & open(c) & in(box, c);
+#    }
+#
+#    rules {
+#        insert/box :: $reachable_box_I(P, I, box) & $open(box) & in(o, I) -> in(o, box);
+#        insert/box/s :: $reachable_box_s(P, r, s, box) & in(o, I) -> in(o, box);
+#        insert/box/c :: $reachable_box_c(P, r, c, box) & in(o, I) -> in(o, box);
+#    }
+#
+#    inform7 {
+#        type {
+#            kind :: "box-like";
+#            definition :: "box-like is a kind of container. box-like is portable.";
+#        }
+#
+#        commands {
+#            insert/box :: "insert {o} into {box}" :: "inserting the {o} into the {box}";
+#            insert/box/s :: "insert {o} into {box}" :: "inserting the {o} into the {box}";
+#            insert/box/c :: "insert {o} into {box}" :: "inserting the {o} into the {box}";
+#        }
+#    }
+#}

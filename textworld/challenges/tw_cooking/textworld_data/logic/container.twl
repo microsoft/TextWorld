@@ -1,0 +1,52 @@
+# container
+type c : t {
+    predicates {
+        open(c);
+        closed(c);
+        locked(c);
+
+        in(o, c);
+    }
+
+    rules {
+        lock/c   :: $at(P, r) & $at(c, r) & $in(k, I) & $match(k, c) & closed(c) -> locked(c);
+        unlock/c :: $at(P, r) & $at(c, r) & $in(k, I) & $match(k, c) & locked(c) -> closed(c);
+
+        open/c  :: $at(P, r) & $at(c, r) & closed(c) -> open(c);
+        close/c :: $at(P, r) & $at(c, r) & open(c) -> closed(c);
+    }
+
+    reverse_rules {
+        lock/c :: unlock/c;
+        open/c :: close/c;
+    }
+
+    constraints {
+        c1 :: open(c)   & closed(c) -> fail();
+        c2 :: open(c)   & locked(c) -> fail();
+        c3 :: closed(c) & locked(c) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "container";
+            definition :: "containers are openable, lockable and fixed in place. containers are usually closed.";
+        }
+
+        predicates {
+            open(c) :: "The {c} is open";
+            closed(c) :: "The {c} is closed";
+            locked(c) :: "The {c} is locked";
+
+            in(o, c) :: "The {o} is in the {c}";
+        }
+
+        commands {
+            open/c :: "open {c}" :: "opening the {c}";
+            close/c :: "close {c}" :: "closing the {c}";
+
+            lock/c :: "lock {c} with {k}" :: "locking the {c} with the {k}";
+            unlock/c :: "unlock {c} with {k}" :: "unlocking the {c} with the {k}";
+        }
+    }
+}
