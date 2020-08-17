@@ -1,5 +1,5 @@
 # Main dependencies
-numpy>=1.13.1
+numpy>=1.14.5
 tqdm>=4.17.1
 cffi>=1.0.0
 networkx>=2
