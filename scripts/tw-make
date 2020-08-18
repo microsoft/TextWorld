@@ -20,7 +20,7 @@ from textworld.generator.text_grammar import MissingTextGrammar
 def exit_listing_challenges(challenge=None):
     msg = ""
     if challenge is not None:
-        msg += "Unknown challenge: {}\n\n".format(args.challenge)
+        msg += "Unknown challenge: {}\n\n".format(challenge)
 
     msg += "Available challenges:\n  "
     msg += "\n  ".join(sorted(textworld.challenges.CHALLENGES))
@@ -46,37 +46,18 @@ def _maybe_load_third_party_module():
 def build_parser(default_parser_only=True):
     description = "Make a TextWorld game (.z8 or .ulx)."
     general_parser = argparse.ArgumentParser(add_help=False, description=description)
-
-    general_group = general_parser.add_argument_group('General settings')
-    general_group.add_argument("--output", default="./tw_games/", metavar="PATH",
-                               help="Path where to save the generated game. If it points to a folder,"
-                                    " the game's UUID will be used as the filename.")
-    general_group.add_argument('--seed', type=int)
-    general_group.add_argument('--format', choices=["ulx", "z8"], default="ulx",
-                               help="Which format to use when compiling the game. Default: %(default)s")
-    general_group.add_argument("--overview", action="store_true",
-                               help="Display an overview of the generated game.")
-    general_group.add_argument("--save-overview", action="store_true",
-                               help="Save the overview image of the generated game alongside the game as a PNG file.")
-    general_group.add_argument("--third-party", metavar="PATH",
-                               help="Load third-party module. Useful to register new custom challenges on-the-fly.")
-    general_group.add_argument("-f", "--force", action="store_true")
-    general_group.add_argument("--list", action="store_true",
-                               help="List available challenges.")
-
-    verbosity_group = general_group.add_mutually_exclusive_group()
-    verbosity_group.add_argument("--silent", action="store_true")
-    verbosity_group.add_argument("-v", "--verbose", action="store_true")
+    general_parser.add_argument("--third-party", metavar="PATH",
+                                help="Load an external python file. Useful to register custom challenges on-the-fly.")
 
     parser = argparse.ArgumentParser(parents=[general_parser])
-    subparsers = parser.add_subparsers(dest="subcommand", help='Kind of game to make.')
+    subparsers = parser.add_subparsers(dest="subcommand", title='Types of game to create')
 
-    custom_parser = subparsers.add_parser("custom", parents=[general_parser],
-                                          help='Make a custom game.')
-    custom_parser.add_argument("--world-size", type=int, default=5, metavar="SIZE",
-                               help="Nb. of rooms in the world.")
-    custom_parser.add_argument("--nb-objects", type=int, default=10, metavar="NB",
-                               help="Minimum nb. of objects in the world.")
+    custom_parser = subparsers.add_parser("custom", help='Make a custom game.')
+    group = custom_parser.add_argument_group('Custom game settings')
+    group.add_argument("--world-size", type=int, default=5, metavar="SIZE",
+                       help="Nb. of rooms in the world.")
+    group.add_argument("--nb-objects", type=int, default=10, metavar="NB",
+                       help="Minimum nb. of objects in the world.")
 
     cfg_group = custom_parser.add_argument_group('Grammar settings')
     cfg_group.add_argument("--theme", default="house",
@@ -131,11 +112,31 @@ def build_parser(default_parser_only=True):
                                            " This setting is ignored if --quest-length is provided."
                                            " Default: %(default)s.")
 
+    def _add_general_settings(parser):
+        general_group = parser.add_argument_group('General settings')
+        general_group.add_argument("--output", default="./tw_games/", metavar="PATH",
+                                   help="Path where to save the generated game. If it points to a folder,"
+                                        " the game's UUID will be used as the filename.")
+        general_group.add_argument('--seed', type=int)
+        general_group.add_argument('--format', choices=["ulx", "z8"], default="ulx",
+                                   help="Which format to use when compiling the game. Default: %(default)s")
+        general_group.add_argument("--overview", action="store_true",
+                                   help="Display an overview of the generated game.")
+        general_group.add_argument("--save-overview", action="store_true",
+                                   help="Save the overview image of the generated game alongside the game as a PNG file.")
+        general_group.add_argument("-f", "--force", action="store_true")
+
+        verbosity_group = general_group.add_mutually_exclusive_group()
+        verbosity_group.add_argument("--silent", action="store_true")
+        verbosity_group.add_argument("-v", "--verbose", action="store_true")
+
+    _add_general_settings(custom_parser)
+
     challenge_parsers = []
     for challenge_name, (desc, _, add_challenge_arguments) in textworld.challenges.CHALLENGES.items():
-        challenge_parser = subparsers.add_parser(challenge_name, parents=[general_parser],
-                                                 help=desc)
+        challenge_parser = subparsers.add_parser(challenge_name, help=desc)
         add_challenge_arguments(challenge_parser)
+        _add_general_settings(challenge_parser)
         challenge_parsers.append(challenge_parser)
 
     if default_parser_only:
@@ -161,9 +162,6 @@ if __name__ == "__main__":
     options.path = pjoin(os.path.abspath(dirname), basename)
     options.file_ext = "." + args.format
     options.force_recompile = args.force
-
-    if args.list:
-        exit_listing_challenges()
 
     if args.subcommand == "custom":
         options.nb_rooms = args.world_size

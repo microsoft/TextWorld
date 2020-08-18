@@ -17,7 +17,7 @@ def test_making_a_custom_game():
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games")
         game_file = pjoin(output_folder, "game_1234.ulx")
-        command = ["tw-make", "custom", "--seed", "1234", "--output", game_file]
+        command = ["tw-make", "custom", "--seed", "1234", "--output", game_file, "--silent"]
         assert check_call(command) == 0
 
         assert os.path.isdir(output_folder)
@@ -30,7 +30,7 @@ def test_making_a_custom_game():
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games")
         game_file = pjoin(output_folder, "game_1234")  # Default extension is .ulx
-        command = ["tw-make", "custom", "--seed", "1234", "--output", game_file]
+        command = ["tw-make", "custom", "--seed", "1234", "--output", game_file, "--silent"]
         assert check_call(command) == 0
 
         assert os.path.isdir(output_folder)
@@ -42,7 +42,7 @@ def test_making_a_custom_game():
 
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games", "")
-        command = ["tw-make", "custom", "--seed", "1234", "--output", output_folder]
+        command = ["tw-make", "custom", "--seed", "1234", "--output", output_folder, "--silent"]
         assert check_call(command) == 0
 
         assert os.path.isdir(output_folder)
@@ -54,7 +54,7 @@ def test_making_a_custom_game():
 
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games")
-        command = ["tw-make", "custom", "--seed", "1234", "--output", output_folder]
+        command = ["tw-make", "custom", "--seed", "1234", "--output", output_folder, "--silent"]
         assert check_call(command) == 0
 
         assert os.path.isfile(output_folder + ".ulx")
@@ -69,6 +69,7 @@ def test_making_challenge_game():
         "tw-treasure_hunter": ["--level", "5"],
         "tw-coin_collector": ["--level", "5"],
         "tw-simple": ["--rewards", "dense", "--goal", "brief"],
+        "tw-cooking": ["--recipe", "2", "--take", "1", "--cook", "--split", "valid"],
     }
     with make_temp_directory(prefix="test_tw-challenge") as tmpdir:
         for challenge in textworld.challenges.CHALLENGES:
@@ -90,7 +91,7 @@ def test_making_a_game_using_basic_theme():
         with make_temp_directory(prefix="test_tw-make") as tmpdir:
             output_folder = pjoin(tmpdir, "gen_games")
             game_file = pjoin(output_folder, "game_1234.ulx")
-            command = ["tw-make", "custom", "--theme", "basic", "--seed", str(i), "--output", game_file, "-v"]
+            command = ["tw-make", "custom", "--theme", "basic", "--seed", str(i), "--output", game_file, "--silent"]
             assert check_call(command) == 0
 
             # Solve the game using WalkthroughAgent.
@@ -140,7 +141,8 @@ def test_third_party():
 
         output_folder = pjoin(tmpdir, "gen_games")
         game_file = pjoin(output_folder, "game_1234.ulx")
-        command = ["tw-make", "--third-party", challenge_py, "my-challenge", "--seed", "1234", "--output", game_file]
+        command = ["tw-make", "--third-party", challenge_py, "my-challenge", "--seed", "1234",
+                   "--output", game_file, "--silent"]
         try:
             check_call(command)
         except CalledProcessError as e:

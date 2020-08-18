@@ -1,0 +1,136 @@
+type ingredient : t {
+    predicates {
+        base(f, ingredient);
+
+        raw(ingredient);
+        roasted(ingredient);
+        fried(ingredient);
+        # cooked(ingredient);
+
+        uncut(ingredient);
+        chopped(ingredient);
+        sliced(ingredient);
+        diced(ingredient);
+    }
+
+    inform7 {
+        predicates {
+            #base(f, ingredient) :: "When play begins, the base of {ingredient} is {f}";
+            base(f, ingredient) :: "The base of {ingredient} is {f}";
+
+            raw(ingredient) :: "The {ingredient} is raw";
+            # cooked(ingredient) :: "The base of {ingredient} is cooked";
+            fried(ingredient) :: "The {ingredient} is fried";
+            grilled(ingredient) :: "The {ingredient} is grilled";
+            roasted(ingredient) :: "The {ingredient} is roasted";
+
+            uncut(ingredient) :: "The {ingredient} is uncut";
+            sliced(ingredient) :: "The {ingredient} is sliced";
+            chopped(ingredient) :: "The {ingredient} is chopped";
+            diced(ingredient) :: "The {ingredient} is diced";
+        }
+
+        type {
+            kind :: "ingredient-like";
+            definition :: "ingredient-like has a thing called base. ingredient-like has a type of cooking. ingredient-like has a type of cutting.";
+        }
+    }
+}
+
+# meal
+type meal : f {
+    inform7 {
+        type {
+            kind :: "meal-like";
+        }
+    }
+}
+
+type RECIPE {
+    predicates {
+        ingredient_1(f);
+        ingredient_2(f);
+        ingredient_3(f);
+        ingredient_4(f);
+        ingredient_5(f);
+        used(f);
+        cooking_location(r, RECIPE);
+        in(ingredient, RECIPE);
+        out(meal, RECIPE);
+        player_in_cooking_location(P, r) = at(P, r) & cooking_location(r, RECIPE);
+    }
+
+    rules {
+        make/recipe/1 :: $player_in_cooking_location(P, r) & in(f, I) & $ingredient_1(f) & $out(meal, RECIPE) -> in(meal, I) & edible(meal) & used(f) & raw(meal);
+        make/recipe/2 :: $player_in_cooking_location(P, r) & in(f, I) & $ingredient_1(f) & in(f', I) & $ingredient_2(f') & $out(meal, RECIPE) & $used(slot) & used(slot') -> in(meal, I) & free(slot') & edible(meal) & used(f) & used(f') & raw(meal);
+        make/recipe/3 :: $player_in_cooking_location(P, r) & in(f, I) & $ingredient_1(f) & in(f', I) & $ingredient_2(f') & in(f'', I) & $ingredient_3(f'') & $out(meal, RECIPE) & $used(slot) & used(slot') & used(slot'') -> in(meal, I) & free(slot') & free(slot'') & edible(meal) & used(f) & used(f') & used(f'') & raw(meal);
+        make/recipe/4 :: $player_in_cooking_location(P, r) & in(f, I) & $ingredient_1(f) & in(f', I) & $ingredient_2(f') & in(f'', I) & $ingredient_3(f'') & in(f''', I) & $ingredient_4(f''') & $out(meal, RECIPE) & $used(slot) & used(slot') & used(slot'') & used(slot'') -> in(meal, I) & free(slot') & free(slot'') & free(slot''') & edible(meal) & used(f) & used(f') & used(f'') & used(f''') & raw(meal);
+        make/recipe/5 :: $player_in_cooking_location(P, r) & in(f, I) & $ingredient_1(f) & in(f', I) & $ingredient_2(f') & in(f'', I) & $ingredient_3(f'') & in(f''', I) & $ingredient_4(f''') & in(f'''', I) & $ingredient_5(f'''') & $out(meal, RECIPE) & $used(slot) & used(slot') & used(slot'') & used(slot''') & used(slot'''') -> in(meal, I) & free(slot') & free(slot'') & free(slot''') & free(slot'''') & edible(meal) & used(f) & used(f') & used(f'') & used(f''') & used(f'''') & raw(meal);
+    }
+
+    inform7 {
+        predicates {
+            ingredient_1(f) :: "";  # No equivalent in Inform7.
+            ingredient_2(f) :: "";  # No equivalent in Inform7.
+            ingredient_3(f) :: "";  # No equivalent in Inform7.
+            ingredient_4(f) :: "";  # No equivalent in Inform7.
+            ingredient_5(f) :: "";  # No equivalent in Inform7.
+            cooking_location(r, RECIPE) :: "The cooking location of the {RECIPE} is the {r}.";
+            in(ingredient, RECIPE) :: "When play begins, add {ingredient} to the ingredients of the {RECIPE}";
+            out(meal, RECIPE) :: "The meal of the {RECIPE} is the {meal}.";
+        }
+
+        type {
+            kind :: "recipe-like";
+            definition :: "A recipe-like is a kind of thing. A recipe-like has a list of ingredient-like called ingredients. A recipe-like has a thing called meal. A recipe-like has a room called cooking location.";
+        }
+
+        commands {
+            make/recipe/1 :: "prepare meal" :: "preparing meal";
+            make/recipe/2 :: "prepare meal" :: "preparing meal";
+            make/recipe/3 :: "prepare meal" :: "preparing meal";
+            make/recipe/4 :: "prepare meal" :: "preparing meal";
+            make/recipe/5 :: "prepare meal" :: "preparing meal";
+        }
+
+        code :: """
+            [Ingredient]
+            Rule for printing the name of an ingredient-like (called I):
+                if type of cutting of I is not uncut:
+                    say  "[type of cutting of I] ";
+                if type of cooking of I is not raw:
+                    say  "[type of cooking of I] ";
+                say  "[base of I]";
+
+            [Preparing a meal]
+            Preparing meal is an action applying to nothing.
+            Before preparing meal:
+                if location is not the cooking location of the recipe:
+                    say "Can only prepare meal in the [cooking location of the recipe].";
+                    rule fails;
+                Repeat with ingredient running through the ingredients of the recipe:
+                    let F be the base of the ingredient;
+                    if player does not carry the F:
+                        [say "The recipe requires [a ingredient].";]
+                        say "You still miss something.";
+                        rule fails;
+                    if type of cooking of F is not type of cooking of ingredient:
+                        [say "The recipe requires [a ingredient].";]
+                        say "Something still needs to be cooked.";
+                        rule fails;
+                    if type of cutting of F is not type of cutting of ingredient:
+                        [say "The recipe requires [a ingredient].";]
+                        say "Something still needs to be cut.";
+                        rule fails;
+
+            Carry out preparing meal:
+                say "Adding the meal to your inventory.";
+                Repeat with ingredient running through the ingredients of recipe:
+                    now the base of the ingredient is nowhere;
+                now the player carries the meal of the recipe;
+                set pronouns from the meal of the recipe.
+
+            Understand "prepare meal" as preparing meal.
+        """;
+    }
+}

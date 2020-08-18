@@ -1,0 +1,64 @@
+# door
+type d : t {
+    predicates {
+        open(d);
+        closed(d);
+        locked(d);
+
+        link(r, d, r);
+    }
+
+    rules {
+        lock/d   :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & $in(k, I) & $match(k, d) & closed(d) -> locked(d);
+        unlock/d :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & $in(k, I) & $match(k, d) & locked(d) -> closed(d);
+
+        open/d   :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & closed(d) -> open(d) & free(r, r') & free(r', r);
+        close/d  :: $at(P, r) & $link(r, d, r') & $link(r', d, r) & open(d) & free(r, r') & free(r', r) -> closed(d);
+    }
+
+    reverse_rules {
+        lock/d :: unlock/d;
+        open/d :: close/d;
+    }
+
+    constraints {
+        d1 :: open(d)   & closed(d) -> fail();
+        d2 :: open(d)   & locked(d) -> fail();
+        d3 :: closed(d) & locked(d) -> fail();
+
+        # A door can't be used to link more than two rooms.
+        link1 :: link(r, d, r') & link(r, d, r'') -> fail();
+        link2 :: link(r, d, r') & link(r'', d, r''') -> fail();
+
+        # There's already a door linking two rooms.
+        link3 :: link(r, d, r') & link(r, d', r') -> fail();
+
+        # There cannot be more than four doors in a room.
+        dr2 :: link(r, d1: d, r1: r) & link(r, d2: d, r2: r) & link(r, d3: d, r3: r) & link(r, d4: d, r4: r) & link(r, d5: d, r5: r) -> fail();
+
+        free1 :: link(r, d, r') & free(r, r') & closed(d) -> fail();
+        free2 :: link(r, d, r') & free(r, r') & locked(d) -> fail();
+    }
+
+    inform7 {
+        type {
+            kind :: "door";
+            definition :: "door is openable and lockable.";
+        }
+
+        predicates {
+            open(d) :: "The {d} is open";
+            closed(d) :: "The {d} is closed";
+            locked(d) :: "The {d} is locked";
+            link(r, d, r') :: "";  # No equivalent in Inform7.
+        }
+
+        commands {
+            open/d :: "open {d}" :: "opening {d}";
+            close/d :: "close {d}" :: "closing {d}";
+
+            unlock/d :: "unlock {d} with {k}" :: "unlocking {d} with the {k}";
+            lock/d :: "lock {d} with {k}" :: "locking {d} with the {k}";
+        }
+    }
+}

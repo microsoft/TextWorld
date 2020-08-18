@@ -1,0 +1,67 @@
+# Inventory
+type slot {
+    predicates {
+        free(slot);
+        used(slot);
+    }
+    inform7 {
+        type {
+            kind :: "thing";
+            definition :: "";
+        }
+        predicates {
+            free(slot) :: "When play begins, increase the carrying capacity of the player by 1.";
+            used(slot) :: "When play begins, increase the carrying capacity of the player by 1.";
+        }
+    }
+}
+
+type I {
+    predicates {
+        in(o, I);
+    }
+
+    rules {
+        take :: $at(P, r) & at(o, r) & free(slot) -> in(o, I) & used(slot);
+        drop :: $at(P, r) & in(o, I) & used(slot) -> at(o, r) & free(slot);
+
+        take/c :: $at(P, r) & $at(c, r) & $open(c) & in(o, c) & free(slot) -> in(o, I) & used(slot);
+        insert :: $at(P, r) & $at(c, r) & $open(c) & in(o, I) & used(slot) -> in(o, c) & free(slot);
+
+        take/s :: $at(P, r) & $at(s, r) & on(o, s) & free(slot) -> in(o, I) & used(slot);
+        put    :: $at(P, r) & $at(s, r) & in(o, I) & used(slot) -> on(o, s) & free(slot);
+
+        examine/I :: at(o, I) -> at(o, I);
+        examine/s :: at(P, r) & $at(s, r) & $on(o, s) -> at(P, r);
+        examine/c :: at(P, r) & $at(c, r) & $open(c) & $in(o, c) -> at(P, r);
+    }
+
+    reverse_rules {
+        take :: drop;
+        take/c :: insert;
+        take/s :: put;
+    }
+
+    inform7 {
+        predicates {
+            in(o, I) :: "The player carries the {o}";
+        }
+
+        commands {
+            take :: "take {o}" :: "taking the {o}";
+            drop :: "drop {o}" :: "dropping the {o}";
+
+            take/c :: "take {o} from {c}" :: "removing the {o} from the {c}";
+            insert :: "insert {o} into {c}" :: "inserting the {o} into the {c}";
+
+            take/s :: "take {o} from {s}" :: "removing the {o} from the {s}";
+            put :: "put {o} on {s}" :: "putting the {o} on the {s}";
+
+            inventory :: "inventory" :: "taking inventory";
+
+            examine/I :: "examine {o}" :: "examining the {o}";
+            examine/s :: "examine {o}" :: "examining the {o}";
+            examine/c :: "examine {o}" :: "examining the {o}";
+        }
+    }
+}

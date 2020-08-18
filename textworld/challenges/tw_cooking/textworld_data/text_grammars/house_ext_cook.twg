@@ -1,0 +1,37 @@
+# New instructions
+cook:cook the #obj_types#.
+
+# New descriptions
+
+#on cookers
+
+(stove):#(stove)_adj_1# | #(stove)_noun_1#;#(stove)_adj_2# | #(stove)_noun_2#
+
+(stove)_noun_1:stove;burner;stove top;range
+(stove)_adj_1:electric;gas;#cookgenadj#
+
+(stove)_noun_2:barbecue;barbeque;BBQ;barbecue pit;barbeque pit;grill
+(stove)_adj_2:propane fueled;#cookgenadj#
+
+
+
+#in cookers
+
+(oven):#(oven)_adj_1# | #(oven)_noun_1#;#(oven)_adj_1# | #(oven)_noun_1#;#(oven)_adj_2# | #(oven)_noun_2#;#(oven)_adj_3# | #(oven)_noun_3#;#(oven)_adj_4# | #(oven)_noun_4#
+
+(oven)_noun_1:oven;microwave
+(oven)_adj_1:#(o)_adj#;stainless steel;shiny;off brand;#cookgenadj#
+
+
+(oven)_noun_2:toaster;toaster oven
+(oven)_adj_2:two slice;four slice;crusty;ancient;#cookgenadj#
+
+(oven)_noun_3:slow cooker;rice cooker
+(oven)_adj_3:high speed;electric;no name brand;#cookgenadj#
+
+(oven)_noun_4:fryer;deep fryer
+(oven)_adj_4:#hot-adj# hot;#cookgenadj#
+
+
+#general adj for cookers#
+cookgenadj:store brand;no name brand;stainless steel;fancy;rustic;modern;smart;high tech;name brand

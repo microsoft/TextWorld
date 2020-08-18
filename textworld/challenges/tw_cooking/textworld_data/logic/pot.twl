@@ -1,0 +1,11 @@
+## pot
+#type pot : box {
+#
+#    inform7 {
+#        type {
+#            kind :: "pot-like";
+#            definition :: "pot-like is a kind of box-like.";
+#        }
+#
+#    }
+#}

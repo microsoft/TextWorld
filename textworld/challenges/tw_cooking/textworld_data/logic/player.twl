@@ -1,0 +1,9 @@
+# Player
+type P {
+    inform7 {
+        code :: """
+            The carrying capacity of the player is 0.
+        """;
+    }
+
+}
