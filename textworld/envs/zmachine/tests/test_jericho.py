@@ -22,6 +22,18 @@ from textworld.utils import make_temp_directory
 from textworld.envs.zmachine.jericho import JerichoEnv
 
 
+def assert_jericho_state_equals(s1, s2):
+    assert np.all(s1[0] == s2[0])
+    assert np.all(s1[1] == s2[1])
+    assert s1[2] == s2[2]
+    assert s1[3] == s2[3]
+    assert s1[4] == s2[4]
+    assert s1[5] == s2[5]
+    assert s1[6] == s2[6]
+    assert s1[7] == s2[7]
+    assert len(s1) == 8
+
+
 class TestJerichoEnv(unittest.TestCase):
 
     @classmethod
@@ -162,17 +174,6 @@ class TestJerichoEnv(unittest.TestCase):
         assert game_state.lost is None
 
     def test_copy(self):
-        def assert_jericho_state_equals(s1, s2):
-            assert np.all(s1[0] == s2[0])
-            assert np.all(s1[1] == s2[1])
-            assert s1[2] == s2[2]
-            assert s1[3] == s2[3]
-            assert s1[4] == s2[4]
-            assert s1[5] == s2[5]
-            assert s1[6] == s2[6]
-            assert s1[7] == s2[7]
-            assert len(s1) == 8
-
         env = JerichoEnv(self.infos)
 
         # Copy before env.reset.
@@ -215,3 +216,15 @@ class TestJerichoEnv(unittest.TestCase):
         assert_jericho_state_equals(bkp._jericho.get_state(),
                                     env._jericho.get_state())  # But same state.
         assert bkp.state == env.state
+
+    def test_load(self):
+        env = JerichoEnv(self.infos)
+
+        env.load(self.game_file)
+        env.reset()
+        jericho_ref = id(env._jericho)
+
+        env.load(self.game_file)
+        env.reset()
+        jericho_ref2 = id(env._jericho)
+        assert jericho_ref == jericho_ref2
