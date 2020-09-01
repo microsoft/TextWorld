@@ -237,6 +237,6 @@ static void check_rlimit(void) {
 }
 
 int init_glulx(struct sock_names* names) {
-    check_rlimit();
+    // check_rlimit();
     return init_mq(names);
 }
