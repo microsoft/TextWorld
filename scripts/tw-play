@@ -23,9 +23,6 @@ def build_parser():
                         help="Limit maximum number of steps.")
     parser.add_argument("--viewer", metavar="PORT", type=int, nargs="?", const=6070,
                         help="Start web viewer.")
-    parser.add_argument("--hints", action="store_true",
-                        help="Provide commands autocompletion and quest progression"
-                             " when --mode=human.")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Verbose mode.")
     parser.add_argument("-vv", "--very-verbose", action="store_true",
@@ -45,7 +42,7 @@ def main():
     elif args.mode == "random-cmd":
         agent = textworld.agents.RandomCommandAgent()
     elif args.mode == "human":
-        agent = textworld.agents.HumanAgent(autocompletion=args.hints, walkthrough=args.hints)
+        agent = textworld.agents.HumanAgent()
     elif args.mode == 'walkthrough':
         agent = textworld.agents.WalkthroughAgent()
 
