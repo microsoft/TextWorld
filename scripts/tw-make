@@ -118,7 +118,7 @@ def build_parser(default_parser_only=True):
                                    help="Path where to save the generated game. If it points to a folder,"
                                         " the game's UUID will be used as the filename.")
         general_group.add_argument('--seed', type=int)
-        general_group.add_argument('--format', choices=["ulx", "z8"], default="ulx",
+        general_group.add_argument('--format', choices=["ulx", "z8"], default="z8",
                                    help="Which format to use when compiling the game. Default: %(default)s")
         general_group.add_argument("--overview", action="store_true",
                                    help="Display an overview of the generated game.")
