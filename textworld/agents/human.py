@@ -24,7 +24,7 @@ except ImportError:
 
 
 class HumanAgent(Agent):
-    def __init__(self, autocompletion=False, walkthrough=False):
+    def __init__(self, autocompletion=True, walkthrough=True):
         self.autocompletion = autocompletion
         self.walkthrough = walkthrough
 
