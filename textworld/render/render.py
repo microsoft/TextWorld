@@ -420,6 +420,9 @@ def get_webdriver(path=None):
         options.add_argument("test-type")
         options.add_argument("no-sandbox")
         options.add_argument("disable-gpu")
+        options.add_argument("allow-insecure-localhost")
+        options.add_argument("allow-running-insecure-content")
+
         if path is not None:
             options.binary_location = path
 
@@ -446,7 +449,7 @@ def get_webdriver(path=None):
         'chromium-driver': chrome_driver
     }
 
-    for driver in driver_mapping.keys():
+    for driver in sorted(driver_mapping.keys()):
         found = which(driver)
         if found is not None:
             return driver_mapping.get(driver, None)(path)
