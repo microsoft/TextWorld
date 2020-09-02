@@ -187,6 +187,80 @@ class TestInform7Data(unittest.TestCase):
 
 class TestTWInform7(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        g_rng.set_seed(201809)
+        cls.tmpdir = tempfile.mkdtemp()
+        cls.options = textworld.GameOptions()
+        cls.options.path = pjoin(cls.tmpdir, "tw-game.ulx")
+        cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
+        cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
+        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.infos = EnvInfos(
+            inventory=True,
+            description=True,
+            score=True,
+            moves=True,
+            won=True,
+            lost=True,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmpdir)
+
+    def setUp(self):
+        self.env_z8 = TWInform7(JerichoEnv(self.infos))
+        self.env_z8.load(self.gamefile_z8)
+
+        self.env_ulx = TWInform7(GitGlulxEnv(self.infos))
+        self.env_ulx.load(self.gamefile_ulx)
+
+    def tearDown(self):
+        self.env_z8.close()
+        self.env_ulx.close()
+
+    def test_compatible(self):
+        assert TWInform7.compatible(self.gamefile_ulx)
+        assert TWInform7.compatible(self.gamefile_z8)
+
+        # To be compatible, a game needs the .json alongside its z8/ulx file.
+        gamefile_json = self.gamefile_z8.replace(".z8", ".json")
+        shutil.move(gamefile_json, gamefile_json + ".bkp")
+        assert not TWInform7.compatible(self.gamefile_ulx)
+        assert not TWInform7.compatible(self.gamefile_z8)
+        shutil.move(gamefile_json + ".bkp", gamefile_json)
+
+    def test_copy(self):
+        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
+
+        # Copy before env.reset.
+        env = self.env_z8.copy()
+        assert env.state == self.env_z8.state
+        assert env.infos == self.env_z8.infos
+        assert env._tracked_infos == self.env_z8._tracked_infos
+        assert env._prev_state == self.env_z8._prev_state
+
+        # Copy after env.reset.
+        self.env_z8.reset()
+        env = self.env_z8.copy()
+        assert sorted(env.state.items()) == sorted(self.env_z8.state.items())
+        assert env.infos == self.env_z8.infos
+        assert env._tracked_infos == self.env_z8._tracked_infos
+        assert env._prev_state == self.env_z8._prev_state
+
+        # Check copy after a few env.step.
+        game_state, _, _ = self.env_z8.step("go east")
+        assert env.state == self.env_z8._prev_state
+
+        env = self.env_z8.copy()
+        assert env._prev_state is not None
+        prev_state = env._prev_state.copy()
+
+        # Check the copied env didn't change after calling env.step.
+        game_state, _, done = self.env_z8.step("eat carrot")
+        assert env._prev_state == prev_state
+
     def test_no_quest_game(self):
         game_name = "tw-no_quest_game"
         with make_temp_directory(prefix=game_name) as tmpdir:
