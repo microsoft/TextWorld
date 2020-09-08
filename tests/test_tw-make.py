@@ -29,16 +29,16 @@ def test_making_a_custom_game():
 
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games")
-        game_file = pjoin(output_folder, "game_1234")  # Default extension is .ulx
+        game_file = pjoin(output_folder, "game_1234")  # Default extension is .z8
         command = ["tw-make", "custom", "--seed", "1234", "--output", game_file, "--silent"]
         assert check_call(command) == 0
 
         assert os.path.isdir(output_folder)
-        assert os.path.isfile(game_file + ".ulx")
+        assert os.path.isfile(game_file + ".z8")
 
         # Solve the game using WalkthroughAgent.
         agent = textworld.agents.WalkthroughAgent()
-        textworld.play(game_file + ".ulx", agent=agent, silent=True)
+        textworld.play(game_file + ".z8", agent=agent, silent=True)
 
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games", "")
@@ -46,7 +46,7 @@ def test_making_a_custom_game():
         assert check_call(command) == 0
 
         assert os.path.isdir(output_folder)
-        game_file = glob.glob(pjoin(output_folder, "*.ulx"))[0]
+        game_file = glob.glob(pjoin(output_folder, "*.z8"))[0]
 
         # Solve the game using WalkthroughAgent.
         agent = textworld.agents.WalkthroughAgent()
@@ -57,11 +57,11 @@ def test_making_a_custom_game():
         command = ["tw-make", "custom", "--seed", "1234", "--output", output_folder, "--silent"]
         assert check_call(command) == 0
 
-        assert os.path.isfile(output_folder + ".ulx")
+        assert os.path.isfile(output_folder + ".z8")
 
         # Solve the game using WalkthroughAgent.
         agent = textworld.agents.WalkthroughAgent()
-        textworld.play(output_folder + ".ulx", agent=agent, silent=True)
+        textworld.play(output_folder + ".z8", agent=agent, silent=True)
 
 
 def test_making_challenge_game():

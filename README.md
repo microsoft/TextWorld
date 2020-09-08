@@ -64,21 +64,21 @@ Then, in your browser, navigate to the Jupyter notebook's link displayed in your
 
 TextWorld provides an easy way of generating simple text-based games via the `tw-make` script. For instance,
 
-    tw-make custom --world-size 5 --nb-objects 10 --quest-length 5 --seed 1234 --output tw_games/custom_game.ulx
+    tw-make custom --world-size 5 --nb-objects 10 --quest-length 5 --seed 1234 --output tw_games/custom_game.z8
 
-where `custom` indicates we want to customize the game using the following options: `--world-size` controls the number of rooms in the world, `--nb-objects` controls the number of objects that can be interacted with (excluding doors) and `--quest-length` controls the minimum number of commands that is required to type in order to win the game. Once done, the game `custom_game.ulx` will be saved in the `tw_games/` folder.
+where `custom` indicates we want to customize the game using the following options: `--world-size` controls the number of rooms in the world, `--nb-objects` controls the number of objects that can be interacted with (excluding doors) and `--quest-length` controls the minimum number of commands that is required to type in order to win the game. Once done, the game `custom_game.z8` will be saved in the `tw_games/` folder.
 
 ### Playing a game (terminal)
 
 To play a game, one can use the `tw-play` script. For instance, the command to play the game generated in the previous section would be
 
-    tw-play tw_games/custom_game.ulx
+    tw-play tw_games/custom_game.z8
 
 > **Note:** Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported.
 
 To visualize the game state while playing, use the `--viewer [port]` option.
 
-    tw-play tw_games/custom_game.ulx --viewer
+    tw-play tw_games/custom_game.z8 --viewer
 
 A new browser tab should open and track your progress in the game.
 
@@ -91,7 +91,7 @@ import gym
 import textworld.gym
 
 # Register a text-based game as a new Gym's environment.
-env_id = textworld.gym.register_game("tw_games/custom_game.ulx",
+env_id = textworld.gym.register_game("tw_games/custom_game.z8",
                                      max_episode_steps=50)
 
 env = gym.make(env_id)  # Start the environment.

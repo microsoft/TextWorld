@@ -18,7 +18,7 @@ def test_check_generated_game():
             command = ["tw-make", "custom", "--seed", str(i), "--output", tmpdir]
             check_output(command).decode()
 
-        game_files = [pjoin(tmpdir, f) for f in os.listdir(tmpdir) if f.endswith(".ulx")]
+        game_files = [pjoin(tmpdir, f) for f in os.listdir(tmpdir) if f.endswith(".z8")]
         assert len(game_files) == NB_GAMES
         command = ["python", script] + game_files
         stdout = check_output(command).decode()
