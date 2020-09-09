@@ -106,6 +106,12 @@ class TWInform7(textworld.core.Wrapper):
         """ Check if path point to a TW Inform7 compatible game. """
         return os.path.isfile(os.path.splitext(path)[0] + ".json")
 
+    def copy(self) -> "TWInform7":
+        """ Returns a copy this wrapper. """
+        env = TWInform7()
+        env._wrapped_env = self._wrapped_env.copy()
+        return env
+
 
 class Inform7Data(textworld.core.Wrapper):
     """
