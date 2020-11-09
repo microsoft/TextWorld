@@ -2,6 +2,12 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.3] -
+
+### Fixed
+
+- Understand room's names as their room's id in the Inform7 code.
+
 ## [1.3.2] - 2020-06-01
 
 ### Fixed
