@@ -241,7 +241,7 @@ class Inform7Game:
         actions = sorted(actions, key=lambda a: len(a.preconditions), reverse=True)
         for action in actions:
             event = self.kb.inform7_events[action.name]
-            if event.format(**self._get_name_mapping(action)) == i7_event:
+            if event.format(**self._get_name_mapping(action)).lower() == i7_event.lower():
                 return action
 
         return None
