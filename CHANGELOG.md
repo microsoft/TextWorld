@@ -2,6 +2,17 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.3] - 2020-11-10
+
+### Fixed
+
+- Understand room's names as their room's id in the Inform7 code. [253](https://github.com/microsoft/TextWorld/pull/253)
+- Make Inform7 events detection case-insensitive. [253](https://github.com/microsoft/TextWorld/pull/253)
+
+## Removed
+
+- Remove Python 3.5 CI since it has now reached end-of-life. [253](https://github.com/microsoft/TextWorld/pull/253)
+
 ## [1.3.2] - 2020-06-01
 
 ### Fixed

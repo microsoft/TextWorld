@@ -168,6 +168,7 @@ class Inform7Game:
             if not self.use_i7_description:
                 # Describe the room.
                 room_desc = room_infos.desc
+                source += "Understand \"{}\" as {}.\n".format(room_name, room.id)
                 source += "The internal name of {} is \"{}\".\n".format(room.id, room_name)
                 source += "The printed name of {} is \"-= {} =-\".\n".format(room.id, str.title(room_name))
 
@@ -240,7 +241,7 @@ class Inform7Game:
         actions = sorted(actions, key=lambda a: len(a.preconditions), reverse=True)
         for action in actions:
             event = self.kb.inform7_events[action.name]
-            if event.format(**self._get_name_mapping(action)) == i7_event:
+            if event.format(**self._get_name_mapping(action)).lower() == i7_event.lower():
                 return action
 
         return None
