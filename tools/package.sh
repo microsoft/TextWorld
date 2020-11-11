@@ -29,3 +29,6 @@ python setup.py sdist
 mv /tmp/tw_release_bkp/I7* /tmp/tw_release_bkp/inform7-6M62 textworld/thirdparty/
 
 docker run --dns 1.1.1.1 --rm -v "$PWD":/usr/src/TextWorld quay.io/pypa/manylinux1_x86_64 /usr/src/TextWorld/tools/package-impl.sh
+
+echo -e "\e[33mTo upload, run the following:\e[0m"
+echo -e "\e[33mpython -m twine upload dist/textworld-`sed -r "s/[^']*'(.*)'/\1/" textworld/version.py`*\e[0m"
