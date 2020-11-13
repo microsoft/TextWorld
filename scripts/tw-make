@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
     if args.save_overview:
         image = textworld.render.visualize(game)
-        overview_file = game_file.replace(".ulx", ".png")
+        overview_file = game_file.replace("." + args.format, ".png")
         image.save(overview_file)
 
         if not args.silent:
