@@ -6,10 +6,12 @@ import io
 import sys
 import contextlib
 
+from typing import Tuple
+
 import numpy as np
 
 import textworld
-from textworld.generator.game import Event, Quest
+from textworld.generator.game import Event, Quest, Game
 from textworld.generator.game import GameOptions
 
 
@@ -25,7 +27,7 @@ def capture_stdout():
         sys.stdout = stdout_bak
 
 
-def _compile_test_game(game, options: GameOptions):
+def _compile_test_game(game, options: GameOptions) -> str:
     grammar_flags = {
         "theme": "house",
         "include_adj": False,
@@ -43,7 +45,7 @@ def _compile_test_game(game, options: GameOptions):
     return game_file
 
 
-def build_and_compile_no_quest_game(options: GameOptions):
+def build_and_compile_no_quest_game(options: GameOptions) -> Tuple[Game, str]:
     M = textworld.GameMaker()
 
     room = M.new_room()
@@ -56,7 +58,7 @@ def build_and_compile_no_quest_game(options: GameOptions):
     return game, game_file
 
 
-def build_and_compile_game(options: GameOptions):
+def build_game(options: GameOptions) -> Game:
     M = textworld.GameMaker()
 
     # Create a 'bedroom' room.
@@ -98,5 +100,10 @@ def build_and_compile_game(options: GameOptions):
     M.quests = [quest1, quest2]
     M.set_walkthrough(quest2_cmds)
     game = M.build()
+    return game
+
+
+def build_and_compile_game(options: GameOptions) -> Tuple[Game, str]:
+    game = build_game(options)
     game_file = _compile_test_game(game, options)
     return game, game_file
