@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+
+import os
+import argparse
+
+import textworld
+from textworld import EnvInfos
+from textworld.render import show_graph
+
+
+def build_parser():
+    description = "Display the graph representation of a game's initial state."
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("game",
+                        help="JSON file containing infos about the game.")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Verbose mode.")
+    return parser
+
+
+if __name__ == "__main__":
+    args = build_parser().parse_args()
+
+    gamefile = os.path.splitext(args.game)[0] + ".json"
+    env = textworld.start(gamefile, infos=EnvInfos(facts=True))
+    state = env.reset()
+
+    show_graph(state.facts, renderer="browser")

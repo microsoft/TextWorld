@@ -403,9 +403,9 @@ class Agent:
 class GameNotRunningError(RuntimeError):
     """ Error when game is not running (either has terminiated or crashed). """
 
-    def __init__(self):
-        msg = ("Game is not running at the moment. Reset the environment to"
-               " start a new game using `env.reset()`.")
+    def __init__(self, msg=""):
+        msg = msg or ("Game is not running at the moment. Reset the environment to"
+                      " start a new game using `env.reset()`.")
         super().__init__(msg)
 
 

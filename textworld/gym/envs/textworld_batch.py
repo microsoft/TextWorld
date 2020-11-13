@@ -45,7 +45,7 @@ class TextworldBatchGymEnv(gym.Env):
 
         Arguments:
             gamefiles:
-                Paths of every game composing the pool (`*.ulx|*.z[1-8]`).
+                Paths of every game composing the pool (`*.ulx|*.z[1-8]|*.json`).
             request_infos:
                 For customizing the information returned by this environment
                 (see
