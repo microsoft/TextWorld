@@ -3,7 +3,6 @@ numpy>=1.14.5
 tqdm>=4.17.1
 cffi>=1.0.0
 networkx>=2
-pyyaml>=3.12
 more_itertools
 tatsu>=4.3.0
 hashids>=1.2.0
