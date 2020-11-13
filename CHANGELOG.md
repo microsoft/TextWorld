@@ -2,6 +2,17 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.0] - 2020-11-13
+
+### Added
+
+- Add `TextWorldEnv` that support loading .json gamefile directly. [255](https://github.com/microsoft/TextWorld/pull/255)
+- Add `tw-view`, a script to visualize game's initial state as a graph. [255](https://github.com/microsoft/TextWorld/pull/255)
+
+### Fixed
+
+- `tw-make` was not using the right file format when saving the game. [255](https://github.com/microsoft/TextWorld/pull/255)
+
 ## [1.3.3] - 2020-11-10
 
 ### Fixed
