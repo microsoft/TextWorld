@@ -1,0 +1,52 @@
+# push button
+type b : t {
+    predicates {
+        pushed(b);
+        unpushed(b);
+
+        pair(b, d);
+
+        in(b, c);
+    }
+
+    inform7 {
+        type {
+            kind :: "button-like";
+            definition :: "A button-like can be either pushed or unpushed. A button-like is usually unpushed. A button-like is fixed in place.";
+        }
+
+        predicates {
+            pushed(b)   :: "The {b} is pushed";
+            unpushed(b) :: "The {b} is unpushed";
+
+            pair(b, d)  :: "The {b} pairs to {d}";
+
+            in(b, c)    :: "The {b} is in the {c}";
+        }
+
+        code :: """
+            connectivity relates a button-like to a door. The verb to pair to means the connectivity relation. 
+
+            Understand the command "push" as something new. 
+            Understand "push [something]" as _pushing. 
+            _pushing is an action applying to a thing.  
+
+            Carry out _pushing: 
+                if a button-like (called pb) pairs to door (called dr): 
+                    if dr is locked:
+                        Now the pb is pushed;                 
+                        Now dr is unlocked; 
+                        Now dr is open; 
+                    otherwise:
+                        Now the pb is unpushed;                 
+                        Now dr is locked.
+
+            Report _pushing: 
+                if a button-like (called pb) pairs to door (called dr): 
+                    if dr is unlocked:
+                        say "You push the [pb], and [dr] is now open.";
+                    otherwise:
+                        say "You push the [pb] again, and [dr] is now locked."                    
+        """;
+    }
+}
