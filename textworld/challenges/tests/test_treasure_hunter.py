@@ -13,5 +13,5 @@ def test_making_treasure_hunter_games():
 
         settings = {"level": level}
         game = treasure_hunter.make(settings, options)
-        assert len(game.quests[0].commands) == game.metadata["quest_length"], "Level {}".format(level)
+        assert len(game.walkthrough) == game.metadata["quest_length"], "Level {}".format(level)
         assert len(game.world.rooms) == game.metadata["world_size"], "Level {}".format(level)

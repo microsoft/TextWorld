@@ -15,9 +15,9 @@ from pkg_resources import Requirement, resource_filename
 
 from textworld.utils import make_temp_directory, str2bool, chunk
 
-from textworld.generator.game import Game
+from textworld.generator.game import EventCondition, EventAction, EventAnd, EventOr, Game
 from textworld.generator.world import WorldRoom, WorldEntity
-from textworld.logic import Signature, Proposition, Action, Variable
+from textworld.logic import Signature, Proposition, Action, Variable, Rule
 
 
 I7_DEFAULT_PATH = resource_filename(Requirement.parse('textworld'), 'textworld/thirdparty/inform7-6M62')
@@ -121,6 +121,27 @@ class Inform7Game:
 
         return " and ".join(i7_conds)
 
+    def gen_source_for_rule(self, rule: Rule) -> Optional[str]:
+        i7event = self.kb.inform7_events.get(rule.name)
+        if i7event is None:
+            msg = "Undefined Inform7's command: {}".format(rule.name)
+            warnings.warn(msg, TextworldInform7Warning)
+            return None
+
+        mapping = {ph.type: ph.name for ph in rule.placeholders}
+        return i7event.format(**mapping)
+
+    def gen_source_for_actions(self, acts: Iterable[Action]) -> str:
+        """Generate Inform 7 source for winning/losing actions."""
+
+        i7_acts = []
+        for act in acts:
+            i7_act = self.gen_source_for_rule(act)
+            if i7_act:
+                i7_acts.append(i7_act)
+
+        return " and ".join(i7_acts)
+
     def gen_source_for_objects(self, objects: Iterable[WorldEntity]) -> str:
         source = ""
         for obj in objects:
@@ -194,6 +215,10 @@ class Inform7Game:
     def _get_name_mapping(self, action):
         mapping = self.kb.rules[action.name].match(action)
         return {ph.name: self.entity_infos[var.name].name for ph, var in mapping.items()}
+
+    def _get_entities_mapping(self, action):
+        mapping = self.kb.rules[action.name].match(action)
+        return {ph.name: self.entity_infos[var.name].id for ph, var in mapping.items()}
 
     def gen_commands_from_actions(self, actions: Iterable[Action]) -> List[str]:
         commands = []
@@ -312,6 +337,9 @@ class Inform7Game:
 
         objective = self.game.objective.replace("\n", "[line break]")
         maximum_score = 0
+        wining = 0  # FIX typo
+        quests_text, viewed_actions = [], {}
+        action_id = []
         for quest_id, quest in enumerate(self.game.quests):
             maximum_score += quest.reward
 
@@ -319,14 +347,12 @@ class Inform7Game:
             The quest{quest_id} completed is a truth state that varies.
             The quest{quest_id} completed is usually false.
             """)
-            source += quest_completed.format(quest_id=quest_id)
+            quest_ending = quest_completed.format(quest_id=quest_id)
 
-            for event_id, event in enumerate(quest.win_events):
-                commands = self.gen_commands_from_actions(event.actions)
-                event.commands = commands
-
-                walkthrough = '\nTest quest{}_{} with "{}"\n\n'.format(quest_id, event_id, " / ".join(commands))
-                source += walkthrough
+            if quest.win_event:
+                commands = quest.win_event.commands or self.gen_commands_from_actions(quest.win_event.actions)
+                walkthrough = '\nTest quest{} with "{}"\n\n'.format(quest_id, " / ".join(commands))
+                quest_ending += walkthrough
 
             # Add winning and losing conditions for quest.
             quest_ending_conditions = textwrap.dedent("""\
@@ -334,38 +360,76 @@ class Inform7Game:
                 do nothing;""".format(quest_id=quest_id))
 
             fail_template = textwrap.dedent("""
-            else if {conditions}:
-                end the story; [Lost]""")
+            otherwise if {conditions}:
+                end the story; [Lost];""")
 
             win_template = textwrap.dedent("""
-            else if {conditions}:
+            otherwise if {conditions}:
                 increase the score by {reward}; [Quest completed]
-                Now the quest{quest_id} completed is true;""")
+                Now the quest{quest_id} completed is true;
+                {removed_conditions}""")
 
-            for fail_event in quest.fail_events:
-                conditions = self.gen_source_for_conditions(fail_event.condition.preconditions)
-                quest_ending_conditions += fail_template.format(conditions=conditions)
+            otherwise_template = textwrap.dedent("""\
+            otherwise:
+                {removed_conditions}""")
 
-            for win_event in quest.win_events:
-                conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
-                quest_ending_conditions += win_template.format(conditions=conditions,
-                                                               reward=quest.reward,
-                                                               quest_id=quest_id)
+            conditions, removals = '', ''
+            cond_id = []
+            if quest.fail_event:
+                condition, removed_conditions, final_condition, _, _ = self.get_events(quest.fail_event,
+                                                                                       textwrap.dedent(""""""),
+                                                                                       textwrap.dedent(""""""),
+                                                                                       action_id=action_id,
+                                                                                       cond_id=cond_id,
+                                                                                       quest_id=quest_id,
+                                                                                       rwd_conds=viewed_actions)
+                removals += (len(removals) > 0) * '    ' + '' + removed_conditions
+                quest_ending_conditions += fail_template.format(conditions=final_condition)
+                conditions += condition
 
-            quest_ending = """\
+                wining += 1
+
+            if quest.win_event:
+                condition, removed_conditions, final_condition, _, _ = self.get_events(quest.win_event,
+                                                                                       textwrap.dedent(""""""),
+                                                                                       textwrap.dedent(""""""),
+                                                                                       action_id=action_id,
+                                                                                       cond_id=cond_id,
+                                                                                       quest_id=quest_id,
+                                                                                       rwd_conds=viewed_actions)
+                removals += (len(removals) > 0) * '    ' + '' + removed_conditions
+                quest_ending_conditions += win_template.format(reward=quest.reward, quest_id=quest_id,
+                                                               conditions=final_condition,
+                                                               removed_conditions=textwrap.indent(removals, ""))
+                conditions += condition
+
+                wining += 1
+
+            if removals:
+                quest_ending_conditions += otherwise_template.format(removed_conditions=textwrap.indent(removals, ""))
+
+            quest_condition_template = """\
             Every turn:\n{conditions}
 
             """.format(conditions=textwrap.indent(quest_ending_conditions, "                "))
-            source += textwrap.dedent(quest_ending)
+
+            quest_ending += textwrap.dedent(quest_condition_template)
+
+            source += textwrap.dedent(conditions)
+            source += textwrap.dedent('\n')
+            quests_text += [quest_ending]
+
+        source += textwrap.dedent('\n'.join(txt for txt in quests_text if txt))
 
         # Enable scoring is at least one quest has nonzero reward.
-        if maximum_score != 0:
+        if maximum_score >= 0:
             source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
 
         # Build test condition for winning the game.
         game_winning_test = "1 is 0 [always false]"
-        if len(self.game.quests) > 0:
-            game_winning_test = "score is maximum score"
+        if wining > 0:
+            if maximum_score != 0:
+                game_winning_test = "score is at least maximum score"
 
         # Remove square bracket when printing score increases. Square brackets are conflicting with
         # Inform7's events parser in tw_inform7.py.
@@ -967,6 +1031,81 @@ class Inform7Game:
                 break
 
         return source
+
+    def get_events(self, combined_events, txt, rmv, quest_id, rwd_conds, action_id=[],
+                   cond_id=[], check_vars=[]):
+
+        action_processing_template = textwrap.dedent("""
+        The action{action_id} check is a truth state that varies.
+        The action{action_id} check is usually false.
+        After {actions}:
+            Now the action{action_id} check is true.
+            """)
+
+        remove_action_processing_template = textwrap.dedent("""Now the action{action_id} check is false;
+        """)
+
+        combined_ac_processing_template = textwrap.dedent("""
+        The condition{cond_id} of quest{quest_id} check is a truth state that varies.
+        The condition{cond_id} of quest{quest_id} check is usually false.
+        Every turn:
+            if {conditions}:
+                Now the condition{cond_id} of quest{quest_id} check is true.
+                """)
+
+        remove_condition_processing_template = textwrap.dedent("""Now the condition{cond_id} of quest{quest_id} check is false;
+        """)
+
+        if isinstance(combined_events, EventCondition) or isinstance(combined_events, EventAction):
+            if isinstance(combined_events, EventCondition):
+                check_vars += [self.gen_source_for_conditions(combined_events.condition.preconditions)]
+                return [None] * 5
+
+            elif isinstance(combined_events, EventAction):
+                i7_ = self.gen_source_for_actions([combined_events.action])
+                if not rwd_conds or i7_ not in rwd_conds.values():
+                    txt += [action_processing_template.format(action_id=len(action_id), actions=i7_)]
+                    rmv += [remove_action_processing_template.format(action_id=len(action_id))]
+                    temp = ''
+                    check_vars += ['action{action_id} check is true'.format(action_id=len(action_id)) + temp]
+                    rwd_conds['action{action_id}'.format(action_id=len(action_id))] = i7_
+                    action_id += [1]
+                else:
+                    word = list(rwd_conds.keys())[list(rwd_conds.values()).index(i7_)]
+                    rmv += [remove_action_processing_template.format(action_id=word[6:])]
+                    temp = ''
+                    check_vars += ['action{action_id} check is true'.format(action_id=word[6:]) + temp]
+
+                return [None] * 5
+
+        act_type, _txt, _rmv, _check_vars, _cond_id = [], [], [], [], []
+        for event in combined_events.events:
+            st, rm, a3, a4, cond_type = self.get_events(event, _txt, _rmv, quest_id, rwd_conds, action_id, cond_id,
+                                                        check_vars=_check_vars)
+            act_type.append(isinstance(event, EventAction))
+
+            if st:
+                _txt += [st]
+                _rmv += [rm]
+                template = 'condition{cond_id} of quest{quest_id} check is true'
+                _check_vars.append(template.format(cond_id=len(cond_id) - 1, quest_id=quest_id))
+                if cond_type:
+                    _cond_id += cond_type
+
+            if any(_cond_id):
+                _rmv += [remove_condition_processing_template.format(quest_id=quest_id, cond_id=len(cond_id) - 1)]
+
+        event_rule = isinstance(combined_events, EventAnd) * ' and ' + isinstance(combined_events, EventOr) * ' or '
+        condition_ = event_rule.join(cv for cv in _check_vars)
+        tp_txt = ''.join(tx for tx in _txt)
+        tp_txt += combined_ac_processing_template.format(quest_id=quest_id, cond_id=len(cond_id), conditions=condition_)
+        tp_rmv = '    '.join(ac for ac in _rmv if ac)
+        fin_cond = 'condition{cond_id} of quest{quest_id} check is true'.format(cond_id=len(cond_id), quest_id=quest_id)
+        cond_id += [1]
+        if any(act_type):
+            cond_type = [True]
+
+        return tp_txt, tp_rmv, fin_cond, [action_id, cond_id, rwd_conds], cond_type
 
 
 def generate_inform7_source(game: Game, seed: int = 1234, use_i7_description: bool = False) -> str:

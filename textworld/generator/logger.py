@@ -76,8 +76,8 @@ class GameLogger:
         # Collect distribution of commands leading to winning events.
         for quest in game.quests:
             self.quests.add(quest.desc)
-            for event in quest.win_events:
-                actions = event.actions
+            for events in quest.win_event:
+                actions = events.actions
                 update_bincount(self.dist_quest_length_count, len(actions))
 
                 for action in actions:

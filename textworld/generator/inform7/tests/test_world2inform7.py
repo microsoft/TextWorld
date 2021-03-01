@@ -104,9 +104,10 @@ def test_quest_winning_condition():
             assert not done
             assert not game_state.won
 
-            game_state, _, done = env.step(event.commands[0])
-            assert done
-            assert game_state.won
+            for cmd in game.walkthrough:
+                game_state, _, done = env.step(cmd)
+                assert done
+                assert game_state.won
 
 
 def test_quest_with_multiple_winning_and_losing_conditions():
