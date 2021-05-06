@@ -31,6 +31,8 @@ type I {
         take/s :: $at(P, r) & $at(s, r) & on(o, s) & free(slot) -> in(o, I) & used(slot);
         put    :: $at(P, r) & $at(s, r) & in(o, I) & used(slot) -> on(o, s) & free(slot);
 
+        inventory :: at(P, r) -> at(P, r);  # Nothing changes.
+
         examine/I :: at(o, I) -> at(o, I);
         examine/s :: at(P, r) & $at(s, r) & $on(o, s) -> at(P, r);
         examine/c :: at(P, r) & $at(c, r) & $open(c) & $in(o, c) -> at(P, r);
