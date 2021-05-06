@@ -2,6 +2,7 @@
 # Licensed under the MIT license.
 
 import textworld
+from textworld.utils import make_temp_directory
 from textworld.challenges import cooking
 
 
@@ -43,4 +44,24 @@ def test_making_cooking_games():
     assert [pred for pred in differing_facts if pred.name in POSITIONNING_FACTS] == []
 
     # TODO: Check the game can be completed by following the walkthrough.
-    # agent = WalkthroughAgent(commands=game.metadata["walkthrough"])
+
+    with make_temp_directory() as tmpdir:
+        options.path = tmpdir
+        game_file = textworld.generator.compile_game(game, options)
+
+        agent = textworld.agents.WalkthroughAgent()
+
+        env = textworld.start(game_file)
+        env.infos.admissible_commands = True
+        agent.reset(env)
+        game_state = env.reset()
+
+        reward = 0
+        done = False
+        while not done:
+            command = agent.act(game_state, reward, done)
+            assert command in game_state.admissible_commands, "Missing command {}".format(command)
+            game_state, reward, done = env.step(command)
+
+        assert done
+        assert game_state["won"]

@@ -1054,7 +1054,7 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
             ingredients.append((food, type_of_cooking, type_of_cutting))
 
     # Add necessary facts about the recipe.
-    for food, type_of_cooking, type_of_cutting in ingredients:
+    for i, (food, type_of_cooking, type_of_cutting) in enumerate(ingredients):
         ingredient = M.new(type="ingredient", name="")
         food.add_property("ingredient_{}".format(i + 1))
         M.add_fact("base", food, ingredient)
