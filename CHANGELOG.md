@@ -2,6 +2,12 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.1] - 2021-05-06
+
+### Fixed
+
+- `tw-cooking` games with `--recipe > 1` couldn't be solved using admissible commands. [259](https://github.com/microsoft/TextWorld/pull/259)
+
 ## [1.4.0] - 2020-11-13
 
 ### Added
