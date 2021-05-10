@@ -211,6 +211,15 @@ class TestJerichoEnv(unittest.TestCase):
         assert_jericho_state_equals(bkp._jericho.get_state(), jericho_state)
         assert bkp.state == state
 
+        # Bring the copied env up-to-date by issuing the same commands.
+        walkthrough = self.game.metadata["walkthrough"]
+        for command in walkthrough[:len(walkthrough) // 2]:
+            game_state, score, done = bkp.step(command)
+
+        # And compare the states.
+        assert_jericho_state_equals(bkp._jericho.get_state(),
+                                    env._jericho.get_state())
+
         bkp = env.copy()
         assert bkp._jericho != env._jericho  # Not the same object.
         assert_jericho_state_equals(bkp._jericho.get_state(),
