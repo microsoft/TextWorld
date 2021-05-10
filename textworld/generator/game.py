@@ -8,6 +8,7 @@ import textwrap
 
 from typing import List, Dict, Optional, Mapping, Any, Iterable, Union, Tuple
 from collections import OrderedDict
+from functools import partial
 
 from numpy.random import RandomState
 
@@ -416,7 +417,7 @@ class Game:
         """ Changes the grammar used and regenerate all text. """
 
         self.grammar = grammar
-        _gen_commands = gen_commands_from_actions
+        _gen_commands = partial(gen_commands_from_actions, kb=self.kb)
         if self.grammar:
             from textworld.generator.inform7 import Inform7Game
             from textworld.generator.text_generation import generate_text_from_grammar

@@ -91,8 +91,8 @@ def _to_regex_dict(rules):
 
 class KnowledgeBase:
     def __init__(self, logic: GameLogic, text_grammars_path: str):
-        self._target_dir = "embedded in game"
         self.logic = logic
+        self.logic_path = "embedded in game"
         self.text_grammars_path = text_grammars_path
 
         self.types = _to_type_tree(self.logic.types)
@@ -111,21 +111,41 @@ class KnowledgeBase:
         return KB
 
     @classmethod
-    def load(cls, target_dir: Optional[str] = None):
-        if target_dir is None:
-            if os.path.isdir("./textworld_data"):
-                target_dir = "./textworld_data"
-            else:
-                target_dir = BUILTIN_DATA_PATH
+    def load(cls,
+             target_dir: Optional[str] = None,
+             logic_path: Optional[str] = None, grammar_path: Optional[str] = None) -> "KnowledgeBase":
+        """ Build a KnowledgeBase from several files (logic and text grammar).
+
+        Args:
+            target_dir: Folder containing two subfolders: `logic` and `text_grammars`.
+                        If provided, both `logic_path` and `grammar_path` are ignored.
+            logic_path: Folder containing `*.twl` files that describe the logic of a game.
+            grammar_path: Folder containing `*.twg` files that describe the grammar used for text generation.
+
+        Returns:
+            KnowledgeBase object.
+        """
+        if target_dir:
+            logic_path = pjoin(target_dir, "logic")
+            grammar_path = pjoin(target_dir, "text_grammars")
+
+        if logic_path is None:
+            logic_path = pjoin(".", "textworld_data", "logic")  # Check within working dir.
+            if not os.path.isdir(logic_path):
+                logic_path = LOGIC_DATA_PATH  # Default to built-in data.
 
         # Load knowledge base related files.
-        paths = glob.glob(pjoin(target_dir, "logic", "*"))
+        paths = glob.glob(pjoin(logic_path, "*.twl"))
         logic = GameLogic.load(paths)
 
+        if grammar_path is None:
+            grammar_path = pjoin(".", "textworld_data", "text_grammars")  # Check within working dir.
+            if not os.path.isdir(grammar_path):
+                grammar_path = TEXT_GRAMMARS_PATH  # Default to built-in data.
+
         # Load text generation related files.
-        text_grammars_path = pjoin(target_dir, "text_grammars")
-        kb = cls(logic, text_grammars_path)
-        kb._target_dir = target_dir
+        kb = cls(logic, grammar_path)
+        kb.logic_path = logic_path
         return kb
 
     def get_reverse_action(self, action):
@@ -150,7 +170,8 @@ class KnowledgeBase:
 
     def __str__(self) -> str:
         infos = []
-        infos.append("path: {}".format(self._target_dir))
+        infos.append("logic_path: {}".format(self.logic_path))
+        infos.append("grammar_path: {}".format(self.text_grammars_path))
         infos.append("nb_rules: {}".format(len(self.logic.rules)))
         infos.append("nb_types: {}".format(len(self.logic.types)))
         return "\n".join(infos)
