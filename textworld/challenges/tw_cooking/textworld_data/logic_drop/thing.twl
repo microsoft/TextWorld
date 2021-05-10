@@ -1,0 +1,39 @@
+# thing
+type t {
+    predicates {
+        sharp(t);
+        cuttable(t);
+        cookable(t);
+        drinkable(t);
+    }
+
+    rules {
+        examine/t :: at(P, r) & $at(t, r) -> at(P, r);
+    }
+
+    inform7 {
+        type {
+            kind :: "thing";
+            definition :: "a thing can be drinkable. a thing is usually not drinkable. a thing can be cookable. a thing is usually not cookable. a thing can be damaged. a thing is usually not damaged. a thing can be sharp. a thing is usually not sharp. a thing can be cuttable. a thing is usually not cuttable. a thing can be a source of heat. Type of cooking is a kind of value. The type of cooking are raw, grilled, roasted and fried. a thing can be needs cooking. Type of cutting is a kind of value. The type of cutting are uncut, sliced, diced and chopped.";
+        }
+
+        predicates {
+            sharp(t) :: "The {t} is sharp";
+            cookable(t) :: "The {t} is cookable";
+            cuttable(t) :: "The {t} is cuttable";
+            drinkable(t) :: "The {t} is drinkable";
+        }
+
+        commands {
+            examine/t :: "examine {t}" :: "examining the {t}";
+        }
+    }
+}
+
+type object {
+    inform7 {
+        type {
+            kind :: "object";
+        }
+    }
+}

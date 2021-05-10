@@ -71,6 +71,9 @@ from textworld.challenges import register
 
 
 KB_PATH = pjoin(os.path.dirname(__file__), "textworld_data")
+KB_LOGIC_PATH = pjoin(KB_PATH, "logic")
+KB_LOGIC_DROP_PATH = pjoin(KB_PATH, "logic_drop")
+KB_GRAMMAR_PATH = pjoin(KB_PATH, "text_grammars")
 
 SKILLS = ["recipe", "take", "cook", "cut", "open", "drop", "go"]
 
@@ -849,7 +852,10 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
     options = options or GameOptions()
 
     # Load knowledge base specific to this challenge.
-    options.kb = KnowledgeBase.load(KB_PATH)
+    if settings.get("drop"):
+        options.kb = KnowledgeBase.load(logic_path=KB_LOGIC_DROP_PATH, grammar_path=KB_GRAMMAR_PATH)
+    else:
+        options.kb = KnowledgeBase.load(logic_path=KB_LOGIC_PATH, grammar_path=KB_GRAMMAR_PATH)
 
     rngs = options.rngs
     rng_map = rngs['map']
@@ -1254,15 +1260,16 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
     recipe = recipe.format(ingredients=recipe_ingredients, directions=recipe_directions)
     cookbook.infos.desc = cookbook_desc + recipe
 
-    # Limit capacity of the inventory.
-    for i in range(inventory_limit):
-        slot = M.new(type="slot", name="")
-        if i < len(M.inventory.content):
-            slot.add_property("used")
-        else:
-            slot.add_property("free")
+    if settings.get("drop"):
+        # Limit capacity of the inventory.
+        for i in range(inventory_limit):
+            slot = M.new(type="slot", name="")
+            if i < len(M.inventory.content):
+                slot.add_property("used")
+            else:
+                slot.add_property("free")
 
-        M.nowhere.append(slot)
+            M.nowhere.append(slot)
 
     # Sanity checks:
     for entity in M._entities.values():
@@ -1272,7 +1279,11 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
                     or entity.has_property("locked")):
                 raise ValueError("Forgot to add closed/locked/open property for '{}'.".format(entity.name))
 
-    # M.set_walkthrough(walkthrough)  # BUG: having several "slots" causes issues with dependency tree.
+    if not settings.get("drop"):
+        M.set_walkthrough(walkthrough)
+    else:
+        pass  # BUG: With `--drop` having several "slots" causes issues with dependency tree.
+
     game = M.build()
 
     # Collect infos about this game.

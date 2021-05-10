@@ -66,24 +66,26 @@ def test_making_a_custom_game():
 
 def test_making_challenge_game():
     settings = {
-        "tw-treasure_hunter": ["--level", "5"],
-        "tw-coin_collector": ["--level", "5"],
-        "tw-simple": ["--rewards", "dense", "--goal", "brief"],
-        "tw-cooking": ["--recipe", "2", "--take", "1", "--cook", "--split", "valid"],
+        "tw-treasure_hunter": [["--level", "5"]],
+        "tw-coin_collector": [["--level", "5"]],
+        "tw-simple": [["--rewards", "dense", "--goal", "brief"]],
+        "tw-cooking": [["--recipe", "2", "--take", "1", "--cook", "--split", "valid"],
+                       ["--recipe", "2", "--take", "1", "--cook", "--drop", "--split", "valid"]],
     }
     with make_temp_directory(prefix="test_tw-challenge") as tmpdir:
         for challenge in textworld.challenges.CHALLENGES:
-            output_folder = pjoin(tmpdir, "gen_games")
-            game_file = pjoin(output_folder, challenge + ".ulx")
-            command = ["tw-make", challenge, "--seed", "1234", "--output", game_file, "--silent"] + settings[challenge]
-            assert check_call(command) == 0
+            for i, params in enumerate(settings[challenge]):
+                output_folder = pjoin(tmpdir, "gen_games")
+                game_file = pjoin(output_folder, challenge + "_{}".format(i) + ".ulx")
+                command = ["tw-make", challenge, "--seed", "1234", "--output", game_file, "--silent"] + params
+                assert check_call(command) == 0
 
-            assert os.path.isdir(output_folder)
-            assert os.path.isfile(game_file)
+                assert os.path.isdir(output_folder)
+                assert os.path.isfile(game_file)
 
-            # Solve the game using WalkthroughAgent.
-            agent = textworld.agents.WalkthroughAgent()
-            textworld.play(game_file, agent=agent, silent=True)
+                # Solve the game using WalkthroughAgent.
+                agent = textworld.agents.WalkthroughAgent()
+                textworld.play(game_file, agent=agent, silent=True)
 
 
 def test_making_a_game_using_basic_theme():

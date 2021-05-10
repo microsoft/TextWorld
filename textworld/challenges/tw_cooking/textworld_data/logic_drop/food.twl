@@ -23,8 +23,8 @@ type f : o {
     }
 
     rules {
-        eat :: in(f, I) & edible(f) -> consumed(f);
-        drink :: in(f, I) & drinkable(f) -> consumed(f);
+        eat :: in(f, I) & edible(f) & used(slot) -> consumed(f) & free(slot);
+        drink :: in(f, I) & drinkable(f) & used(slot) -> consumed(f) & free(slot);
         slice :: $in(f, I) & $in(o, I) & $sharp(o) & uncut(f) -> sliced(f);
         dice :: $in(f, I) & $in(o, I) & $sharp(o) & uncut(f) -> diced(f);
         chop :: $in(f, I) & $in(o, I) & $sharp(o) & uncut(f) -> chopped(f);
