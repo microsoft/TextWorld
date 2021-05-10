@@ -23,6 +23,8 @@ def build_parser():
                         help="Limit maximum number of steps.")
     parser.add_argument("--viewer", metavar="PORT", type=int, nargs="?", const=6070,
                         help="Start web viewer.")
+    parser.add_argument("--hint", action="store_true",
+                        help="Display the oracle trajectory leading to winning the game.")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Verbose mode.")
     parser.add_argument("-vv", "--very-verbose", action="store_true",
@@ -42,7 +44,7 @@ def main():
     elif args.mode == "random-cmd":
         agent = textworld.agents.RandomCommandAgent()
     elif args.mode == "human":
-        agent = textworld.agents.HumanAgent()
+        agent = textworld.agents.HumanAgent(oracle=args.hint)
     elif args.mode == 'walkthrough':
         agent = textworld.agents.WalkthroughAgent()
 

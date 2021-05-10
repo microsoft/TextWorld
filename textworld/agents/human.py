@@ -24,9 +24,9 @@ except ImportError:
 
 
 class HumanAgent(Agent):
-    def __init__(self, autocompletion=True, walkthrough=True):
+    def __init__(self, autocompletion=True, oracle=False):
         self.autocompletion = autocompletion
-        self.walkthrough = walkthrough
+        self.oracle = oracle
 
         self._history = None
         if prompt_toolkit_available:
@@ -39,17 +39,19 @@ class HumanAgent(Agent):
         if self.autocompletion:
             env.infos.admissible_commands = True
 
-        if self.walkthrough:
+        if self.oracle:
             env.infos.policy_commands = True
+            env.infos.intermediate_reward = True
 
     def act(self, game_state, reward, done):
-        if (self.walkthrough and game_state.intermediate_reward and len(game_state.policy_commands) > 0 and not done):
-            text = '[{score:02.1%}|({intermediate_score}): {policy}]\n'.format(
+        if (self.oracle and game_state.policy_commands and not done):
+            text = '[{score}/{max_score}|({intermediate_score}): {policy}]\n'.format(
                 score=game_state.score,
+                max_score=game_state.max_score,
                 intermediate_score=game_state.intermediate_reward,
                 policy=" > ".join(game_state.policy_commands)
             )
-            print("Walkthrough: {}\n".format(text))
+            print("Oracle: {}\n".format(text))
 
         if prompt_toolkit_available:
             actions_completer = None
