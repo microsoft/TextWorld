@@ -1,20 +1,37 @@
 # Inventory
+type slot {
+    predicates {
+        free(slot);
+        used(slot);
+    }
+    inform7 {
+        type {
+            kind :: "thing";
+            definition :: "";
+        }
+        predicates {
+            free(slot) :: "When play begins, increase the carrying capacity of the player by 1.";
+            used(slot) :: "When play begins, increase the carrying capacity of the player by 1.";
+        }
+    }
+}
+
 type I {
     predicates {
         in(o, I);
     }
 
     rules {
-        inventory :: at(P, r) -> at(P, r);
+        inventory :: at(P, r) -> at(P, r);  # Nothing changes.
 
-        take :: $at(P, r) & at(o, r) -> in(o, I);
-        drop :: $at(P, r) & in(o, I) -> at(o, r);
+        take :: $at(P, r) & at(o, r) & free(slot) -> in(o, I) & used(slot);
+        drop :: $at(P, r) & in(o, I) & used(slot) -> at(o, r) & free(slot);
 
-        take/c :: $at(P, r) & $at(c, r) & $open(c) & in(o, c) -> in(o, I);
-        insert :: $at(P, r) & $at(c, r) & $open(c) & in(o, I) -> in(o, c);
+        take/c :: $at(P, r) & $at(c, r) & $open(c) & in(o, c) & free(slot) -> in(o, I) & used(slot);
+        insert :: $at(P, r) & $at(c, r) & $open(c) & in(o, I) & used(slot) -> in(o, c) & free(slot);
 
-        take/s :: $at(P, r) & $at(s, r) & on(o, s) -> in(o, I);
-        put    :: $at(P, r) & $at(s, r) & in(o, I) -> on(o, s);
+        take/s :: $at(P, r) & $at(s, r) & on(o, s) & free(slot) -> in(o, I) & used(slot);
+        put    :: $at(P, r) & $at(s, r) & in(o, I) & used(slot) -> on(o, s) & free(slot);
 
         examine/I :: at(o, I) -> at(o, I);
         examine/s :: at(P, r) & $at(s, r) & $on(o, s) -> at(P, r);

@@ -1,5 +1,6 @@
 # New instructions
 cook:cook the #obj_types#.
+make:make the meal.
 
 # New descriptions
 

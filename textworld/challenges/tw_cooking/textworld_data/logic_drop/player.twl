@@ -12,5 +12,9 @@ type P {
         commands {
             look :: "look" :: "looking";
         }
+
+        code :: """
+            The carrying capacity of the player is 0.
+        """;
     }
 }

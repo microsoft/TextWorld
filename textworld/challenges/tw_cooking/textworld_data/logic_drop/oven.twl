@@ -1,0 +1,42 @@
+# oven
+type oven : c {
+    rules {
+        cook/oven/burned :: $at(P, r) & $at(oven, r) & $in(f, I) & cooked(f) & edible(f) -> burned(f) & inedible(f);
+        cook/oven/cooked/raw :: $at(P, r) & $at(oven, r) & $in(f, I) & raw(f)            -> roasted(f) & cooked(f);
+        cook/oven/cooked/needs_cooking :: $at(P, r) & $at(oven, r) & $in(f, I) & needs_cooking(f) & inedible(f) -> roasted(f) & edible(f) & cooked(f);
+    }
+
+    inform7 {
+        type {
+            kind :: "oven-like";
+            definition :: "oven-like is a source of heat.";
+        }
+
+        commands {
+            cook/oven/cooked/raw           :: "cook {f} with {oven}" :: "cooking the {f} with the {oven}";
+            cook/oven/cooked/needs_cooking :: "cook {f} with {oven}" :: "cooking the {f} with the {oven}";
+            cook/oven/burned               :: "cook {f} with {oven}" :: "cooking the {f} with the {oven}";
+        }
+    }
+}
+
+type toaster : c {
+    rules {
+        cook/toaster/burned :: $at(P, r) & $at(toaster, r) & $in(f, I) & cooked(f) & edible(f) -> burned(f) & inedible(f);
+        cook/toaster/cooked/raw :: $at(P, r) & $at(toaster, r) & $in(f, I) & raw(f)            -> grilled(f) & cooked(f);
+        cook/toaster/cooked/needs_cooking :: $at(P, r) & $at(toaster, r) & $in(f, I) & needs_cooking(f) & inedible(f) -> grilled(f) & edible(f) & cooked(f);
+    }
+
+    inform7 {
+        type {
+            kind :: "toaster-like";
+            definition :: "toaster-like is a source of heat.";
+        }
+
+        commands {
+            cook/toaster/cooked/raw           :: "cook {f} with {toaster}" :: "cooking the {f} with the {toaster}";
+            cook/toaster/cooked/needs_cooking :: "cook {f} with {toaster}" :: "cooking the {f} with the {toaster}";
+            cook/toaster/burned               :: "cook {f} with {toaster}" :: "cooking the {f} with the {toaster}";
+        }
+    }
+}
