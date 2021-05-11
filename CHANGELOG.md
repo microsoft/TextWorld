@@ -2,6 +2,18 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.2] - 2021-05-11
+
+### Added
+
+- Use `--hint` to display expert policy when playing a game with `tw-play`. [265](https://github.com/microsoft/TextWorld/pull/265)
+- Support policy_commands for tw-cooking games with no `--drop`. [261](https://github.com/microsoft/TextWorld/pull/261)
+
+### Fixed
+
+- `JerichoEnv._reset` wasn't set properly in `JerichoEnv.copy()`. [263](https://github.com/microsoft/TextWorld/pull/263)
+- Use policy induced by the event dependency tree as `EventProgression`'s winning policy. [263](https://github.com/microsoft/TextWorld/pull/263)
+
 ## [1.4.1] - 2021-05-06
 
 ### Fixed
