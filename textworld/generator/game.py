@@ -8,6 +8,7 @@ import textwrap
 
 from typing import List, Dict, Optional, Mapping, Any, Iterable, Union, Tuple
 from collections import OrderedDict
+from functools import partial
 
 from numpy.random import RandomState
 
@@ -416,7 +417,7 @@ class Game:
         """ Changes the grammar used and regenerate all text. """
 
         self.grammar = grammar
-        _gen_commands = gen_commands_from_actions
+        _gen_commands = partial(gen_commands_from_actions, kb=self.kb)
         if self.grammar:
             from textworld.generator.inform7 import Inform7Game
             from textworld.generator.text_generation import generate_text_from_grammar
@@ -669,11 +670,11 @@ class ActionDependencyTree(DependencyTree):
     def remove(self, action: Action) -> Tuple[bool, Optional[Action]]:
         changed = super().remove(action)
 
-        if self.empty:
-            return changed, None
-
         # The last action might have impacted one of the subquests.
         reverse_action = self._kb.get_reverse_action(action)
+        if self.empty:
+            return changed, reverse_action
+
         if reverse_action is not None:
             changed = self.push(reverse_action)
         elif self.push(action.inverse()):
@@ -692,14 +693,15 @@ class ActionDependencyTree(DependencyTree):
         """
         tree = self.copy()  # Make a copy of the tree to work on.
         last_reverse_action = None
+        changed = False
         while len(tree.roots) > 0:
             # Use 'sort' to try leaves that doesn't affect the others first.
             for leaf in sorted(tree.leaves_elements):
-                if leaf.action != last_reverse_action:
+                if leaf.action != last_reverse_action or not changed:
                     break  # Choose an action that avoids cycles.
 
             yield leaf.action
-            _, last_reverse_action = tree.remove(leaf.action)
+            changed, last_reverse_action = tree.remove(leaf.action)
 
             # Prune empty roots
             for root in list(tree.roots):
@@ -829,7 +831,7 @@ class EventProgression:
             return None
 
         compressed = False
-        policy = _find_shorter_policy(self._policy)
+        policy = _find_shorter_policy(tuple(a for a in self._tree.flatten()))
         while policy is not None:
             compressed = True
             self._policy = policy

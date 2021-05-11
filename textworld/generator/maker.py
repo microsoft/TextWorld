@@ -801,7 +801,7 @@ class GameMaker:
         options = self.options.grammar.copy()
         options.names_to_exclude += list(used_names)
 
-        grammar = Grammar(options, rng=np.random.RandomState(self.options.seeds["grammar"]))
+        grammar = Grammar(options, rng=np.random.RandomState(self.options.seeds["grammar"]), kb=self.options.kb)
         game.change_grammar(grammar)
         game.metadata["desc"] = "Generated with textworld.GameMaker."
 

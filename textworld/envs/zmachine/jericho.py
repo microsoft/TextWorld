@@ -117,6 +117,7 @@ class JerichoEnv(textworld.Environment):
 
         if self._jericho:
             env._jericho = self._jericho.copy()
+            env._reset = True
 
         # Copy core Environment's attributes.
         env.state = self.state.copy()
