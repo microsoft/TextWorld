@@ -41,7 +41,7 @@ class CustomBuildPy(build_py):
 setup(
     name='textworld',
     version=open(os.path.join("textworld", "version.py")).read().split("=")[-1].strip("' \n"),
-    author='',
+    author='Microsoft Textworld',
     cmdclass={
         'build_py': CustomBuildPy,
         'install': CustomInstall,
@@ -59,7 +59,10 @@ setup(
     ],
     license='',
     zip_safe=False,
+    url="https://github.com/microsoft/TextWorld",
     description="Microsoft Textworld - A Text-based Learning Environment.",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     cffi_modules=["glk_build.py:ffibuilder"],
     setup_requires=['cffi>=1.0.0'],
     install_requires=open('requirements.txt').readlines(),
