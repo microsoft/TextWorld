@@ -24,6 +24,15 @@ TextWorld is a text-based learning environment for Reinforcement Learning agent.
 
 .. toctree::
    :maxdepth: 1
+   :caption: Challenges:
+
+   textworld.challenges.simple
+   textworld.challenges.coin_collector
+   textworld.challenges.cooking
+   textworld.challenges.treasure_hunter
+
+.. toctree::
+   :maxdepth: 1
    :caption: Package:
 
    textworld
