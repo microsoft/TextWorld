@@ -14,34 +14,6 @@ fetch the recipe's ingredients, process them accordingly, prepare the meal, and
 eat it. To control the game's difficulty, one can specify the amount of skills
 that are involved to solve it (see skills section below).
 
-Skills
-------
-    The required skills are:
-
-    * recipe{1,2,3} : Number of ingredients in the recipe.
-
-    The optional skills that can be combined are:
-
-    * take{1,2,3} : Number of ingredients to fetch. It must be less
-      or equal to the value of the `recipe` skill.
-    * open : Whether containers/doors need to be opened.
-    * cook : Whether some ingredients need to be cooked.
-    * cut : Whether some ingredients need to be cut.
-    * drop : Whether the player's inventory has limited capacity.
-    * go{1,6,9,12} : Number of locations in the game.
-
-
-Splits
-------
-    In addition to the skills, one can specify from which disjoint distribution
-    the game should be generated from:
-
-    * train : game use for training agent;
-    * valid : game may contain food items (adj-noun pairs) unseen within
-      the train split. It can also contain unseen food preparation;
-    * test : game may contain food items (adj-noun pairs) unseen within
-      the train split. It can also contain unseen food preparation.
-
 References
 ----------
 .. [1] https://aka.ms/ftwp
@@ -1317,7 +1289,7 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
 def build_argparser(parser=None):
     parser = parser or argparse.ArgumentParser()
 
-    group = parser.add_argument_group('First TextWorld Competition game settings')
+    group = parser.add_argument_group('The Cooking Game settings')
     group.add_argument("--recipe", type=int, default=1, metavar="INT",
                        help="Number of ingredients in the recipe. Default: %(default)s")
     group.add_argument("--take", type=int, default=0, metavar="INT",
@@ -1337,9 +1309,12 @@ def build_argparser(parser=None):
                        help="Random seed used for generating the recipe. Default: %(default)s")
 
     group.add_argument("--split", choices=["train", "valid", "test"],
-                       help="Control which foods can be used. Can either be"
-                            " 'train', 'valid', or 'test'."
-                            " Default: foods from all dataset splits can be used.")
+                       help="Specify the game distribution to use. Food items (adj-noun pairs) are split in three subsets."
+                            " Also, the way the training food items can be prepared is further divided in three subsets.\n\n"
+                            "* train: training food and their corresponding training preparations\n"
+                            "* valid: valid food + training food but with unseen valid preparations\n"
+                            "* test: test food + training food but with unseen test preparations\n\n"
+                            " Default: game is drawn from the joint distribution over train, valid, and test.")
 
     return parser
 

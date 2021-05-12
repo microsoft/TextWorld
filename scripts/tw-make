@@ -150,6 +150,10 @@ if __name__ == "__main__":
     parser, custom_parser, challenge_parsers = build_parser(default_parser_only=False)
     args = parser.parse_args()
 
+    if args.subcommand is None:
+        print("Need to specify which type of game to create (either 'custom' or a challenge).")
+        exit_listing_challenges(args.subcommand)
+
     if args.seed is None:
         args.seed = np.random.randint(65635)
 

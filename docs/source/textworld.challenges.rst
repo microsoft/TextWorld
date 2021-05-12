@@ -1,22 +1,10 @@
 textworld.challenges
 ====================
 
-.. automodule:: textworld.challenges
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. toctree::
+    :maxdepth: 1
 
-.. automodule:: textworld.challenges.coin_collector
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: textworld.challenges.treasure_hunter
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: textworld.challenges.simple
-    :members:
-    :undoc-members:
-    :show-inheritance:
+    textworld.challenges.simple
+    textworld.challenges.coin_collector
+    textworld.challenges.cooking
+    textworld.challenges.treasure_hunter
