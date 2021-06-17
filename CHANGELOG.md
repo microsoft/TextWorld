@@ -2,6 +2,16 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.3] - 2021-06-17
+
+### Added
+
+- List available challenges when tw-make is called with no argument. [267](https://github.com/microsoft/TextWorld/pull/267)
+
+### Fixed
+
+- Type inheritance for command templates in `tw-extract commands ...` was not properly handled. [269](https://github.com/microsoft/TextWorld/pull/269)
+
 ## [1.4.2] - 2021-05-11
 
 ### Added
