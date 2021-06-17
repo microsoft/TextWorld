@@ -125,6 +125,8 @@ def main():
             objects_per_type = {t: [] for t in game.objects_types}
             for name, t in game.objects_names_and_types:
                 objects_per_type[t].append(name)
+                for ancestor in game.kb.types.get_ancestors(t):
+                    objects_per_type[ancestor].append(name)
 
             commands = []
             regex = re.compile(r"{{({})}}".format("|".join(game.objects_types)))

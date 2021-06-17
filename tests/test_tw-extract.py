@@ -99,3 +99,7 @@ class TestTwExtract(unittest.TestCase):
 
         for verb in self.game1.verbs + self.game2.verbs:
             assert verb in content
+
+        # Check inheritance of command templates, e.g., 'examine {t}' -> ['examine {o}', 'examine {k}', 'examine {f}']
+        for obj_name in self.game1.objects_names:
+            assert "examine {}".format(obj_name) in content
