@@ -565,6 +565,11 @@ class Game:
         return [q.win_events for q in self.quests]
 
     @property
+    def fail_condition(self) -> List[Collection[Proposition]]:
+        """ All win conditions, one for each quest. """
+        return [q.fail_events for q in self.quests]
+
+    @property
     def objective(self) -> str:
         if self._objective is not None:
             return self._objective
