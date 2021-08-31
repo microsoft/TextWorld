@@ -560,13 +560,13 @@ class Game:
         return sorted(set(cmd.split()[0] for cmd in self.command_templates))
 
     @property
-    def win_condition(self) -> List[Collection[Proposition]]:
+    def win_conditions(self) -> List[Collection[Proposition]]:
         """ All win conditions, one for each quest. """
         return [q.win_events for q in self.quests]
 
     @property
-    def fail_condition(self) -> List[Collection[Proposition]]:
-        """ All win conditions, one for each quest. """
+    def fail_conditions(self) -> List[Collection[Proposition]]:
+        """ All fail conditions, one for each quest. """
         return [q.fail_events for q in self.quests]
 
     @property
