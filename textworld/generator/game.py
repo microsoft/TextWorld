@@ -562,7 +562,7 @@ class Game:
     @property
     def win_condition(self) -> List[Collection[Proposition]]:
         """ All win conditions, one for each quest. """
-        return [q.winning_conditions for q in self.quests]
+        return [q.win_events for q in self.quests]
 
     @property
     def objective(self) -> str:
