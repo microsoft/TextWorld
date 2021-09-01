@@ -294,6 +294,8 @@ class TestGameData(unittest.TestCase):
         cls.infos = EnvInfos(
             max_score=True,
             objective=True,
+            win_facts=True,
+            fail_facts=True,
         )
 
     @classmethod
@@ -322,6 +324,30 @@ class TestGameData(unittest.TestCase):
             assert initial_state.objective.strip() in initial_state.feedback
             game_state, _, _ = env.step("goal")
             assert game_state.feedback.strip() == initial_state.objective
+
+    def test_win_facts(self):
+        for env in [self.env_ulx, self.env_z8]:
+            initial_state = env.reset()
+            assert len(initial_state.win_facts) == len(self.game.quests)
+            for i, quest in enumerate(self.game.quests):
+                assert len(initial_state.win_facts[i]) == len(quest.win_events)
+                for j, event in enumerate(quest.win_events):
+                    assert len(initial_state.win_facts[i][j]) == len(event.condition.preconditions)
+
+            game_state, _, _ = env.step("look")
+            assert game_state.win_facts == initial_state.win_facts
+
+    def test_fail_facts(self):
+        for env in [self.env_ulx, self.env_z8]:
+            initial_state = env.reset()
+            assert len(initial_state.fail_facts) == len(self.game.quests)
+            for i, quest in enumerate(self.game.quests):
+                assert len(initial_state.fail_facts[i]) == len(quest.fail_events)
+                for j, event in enumerate(quest.fail_events):
+                    assert len(initial_state.fail_facts[i][j]) == len(event.condition.preconditions)
+
+            game_state, _, _ = env.step("look")
+            assert game_state.fail_facts == initial_state.fail_facts
 
     def test_missing_game_infos_file(self):
         with make_temp_directory() as tmpdir:

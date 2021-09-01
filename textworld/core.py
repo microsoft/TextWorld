@@ -20,7 +20,8 @@ class EnvInfos:
     """
 
     __slots__ = ['feedback', 'description', 'inventory', 'location',
-                 'facts', 'last_action', 'last_command',
+                 'facts', 'win_facts', 'fail_facts',
+                 'last_action', 'last_command',
                  'game',
                  'won', 'lost',
                  'score', 'moves', 'max_score', 'objective',
@@ -47,6 +48,12 @@ class EnvInfos:
         #: bool: All the facts that are currently true about the world.
         #:       This information changes from one step to another.
         self.facts = kwargs.get("facts", False)
+        #: bool: Mutually exclusive sets of winning facts for each quest.
+        #:       This information *doesn't* change from one step to another.
+        self.win_facts = kwargs.get("win_facts", False)
+        #: bool: Mutually exclusive sets of failing facts for each quest.
+        #:       This information *doesn't* change from one step to another.
+        self.fail_facts = kwargs.get("fail_facts", False)
         #: bool: The last action performed where `None` means it was not a valid action.
         #:       This information changes from one step to another.
         self.last_action = kwargs.get("last_action", False)
