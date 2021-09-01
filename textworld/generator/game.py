@@ -26,13 +26,6 @@ from textworld.generator.dependency_tree import DependencyTree
 from textworld.generator.dependency_tree import DependencyTreeElement
 
 
-try:
-    from typing import Collection
-except ImportError:
-    # Collection is new in Python 3.6 -- fall back on Iterable for 3.5
-    from typing import Iterable as Collection
-
-
 class UnderspecifiedEventError(NameError):
     def __init__(self):
         msg = "Either the actions or the conditions is needed to create an event."
