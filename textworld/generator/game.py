@@ -553,16 +553,6 @@ class Game:
         return sorted(set(cmd.split()[0] for cmd in self.command_templates))
 
     @property
-    def win_conditions(self) -> List[Tuple[Event]]:
-        """ All win conditions, one for each quest. """
-        return [q.win_events for q in self.quests]
-
-    @property
-    def fail_conditions(self) -> List[Tuple[Event]]:
-        """ All fail conditions, one for each quest. """
-        return [q.fail_events for q in self.quests]
-
-    @property
     def objective(self) -> str:
         if self._objective is not None:
             return self._objective
