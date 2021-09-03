@@ -2,6 +2,12 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.4] - 2021-09-02
+
+### Added
+
+- Add win_facts and fail_facts to EnvInfos. [274](https://github.com/microsoft/TextWorld/pull/274)
+
 ## [1.4.3] - 2021-06-17
 
 ### Added
