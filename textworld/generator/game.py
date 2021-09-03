@@ -26,13 +26,6 @@ from textworld.generator.dependency_tree import DependencyTree
 from textworld.generator.dependency_tree import DependencyTreeElement
 
 
-try:
-    from typing import Collection
-except ImportError:
-    # Collection is new in Python 3.6 -- fall back on Iterable for 3.5
-    from typing import Iterable as Collection
-
-
 class UnderspecifiedEventError(NameError):
     def __init__(self):
         msg = "Either the actions or the conditions is needed to create an event."
@@ -558,11 +551,6 @@ class Game:
         """ Verbs that should be recognized in this game. """
         # Retrieve commands templates for every rule.
         return sorted(set(cmd.split()[0] for cmd in self.command_templates))
-
-    @property
-    def win_condition(self) -> List[Collection[Proposition]]:
-        """ All win conditions, one for each quest. """
-        return [q.winning_conditions for q in self.quests]
 
     @property
     def objective(self) -> str:

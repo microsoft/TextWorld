@@ -172,9 +172,6 @@ class Inform7Data(textworld.core.Wrapper):
         self._gather_infos()
         return self.state
 
-    # def set_state(self, state):
-    #     self.state = state
-
     def copy(self) -> "Inform7Data":
         """ Returns a copy this wrapper. """
         env = Inform7Data()
@@ -346,6 +343,7 @@ class GameData(textworld.core.Wrapper):
         super().__init__(*args, **kwargs)
         self._gamefile = None
         self._game = None
+        self._inform7 = None
 
     def load(self, gamefile: str) -> None:
         self._gamefile = os.path.splitext(gamefile)[0] + ".json"
@@ -356,6 +354,7 @@ class GameData(textworld.core.Wrapper):
             self._game = self._wrapped_env._game
         except AttributeError:
             self._game = Game.load(self._gamefile)
+        self._inform7 = Inform7Game(self._game)
         self._wrapped_env.load(gamefile)
 
     def _gather_infos(self):
@@ -368,6 +367,15 @@ class GameData(textworld.core.Wrapper):
 
         for k, v in self._game.metadata.items():
             self.state["extra.{}".format(k)] = v
+
+        def _get_event_facts(event):
+            return tuple(map(self._inform7.get_human_readable_fact, event.condition.preconditions))
+
+        if self.infos.win_facts:
+            self.state["win_facts"] = [[_get_event_facts(e) for e in q.win_events] for q in self._game.quests]
+
+        if self.infos.fail_facts:
+            self.state["fail_facts"] = [[_get_event_facts(e) for e in q.fail_events] for q in self._game.quests]
 
     def reset(self):
         self.state = self._wrapped_env.reset()
@@ -386,5 +394,6 @@ class GameData(textworld.core.Wrapper):
 
         env._gamefile = self._gamefile
         env._game = self._game  # Reference
+        env._inform7 = self._inform7  # Reference
 
         return env
