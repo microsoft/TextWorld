@@ -69,7 +69,18 @@ class JerichoEnv(textworld.Environment):
         self.state["won"] = self._jericho.victory()
         self.state["lost"] = self._jericho.game_over()
         self.state["score"] = self._jericho.get_score()
+        self.state["moves"] = self._jericho.get_moves()
         self.state["location"] = self._jericho.get_player_location()
+
+        if self.infos.description:
+            bkp = self._jericho.get_state()
+            self.state["description"], _, _, _ = self._jericho.step("look")
+            self._jericho.set_state(bkp)
+
+        if self.infos.inventory:
+            bkp = self._jericho.get_state()
+            self.state["inventory"], _, _, _ = self._jericho.step("inventory")
+            self._jericho.set_state(bkp)
 
     def reset(self):
         if not self.game_running:
