@@ -23,15 +23,9 @@ from textworld.envs.zmachine.jericho import JerichoEnv
 
 
 def assert_jericho_state_equals(s1, s2):
-    assert np.all(s1[0] == s2[0])
-    assert np.all(s1[1] == s2[1])
-    assert s1[2] == s2[2]
-    assert s1[3] == s2[3]
-    assert s1[4] == s2[4]
-    assert s1[5] == s2[5]
-    assert s1[6] == s2[6]
-    assert s1[7] == s2[7]
-    assert len(s1) == 8
+    assert len(s1) == len(s2)
+    for e1, e2 in zip(s1, s2):
+        assert np.all(e1 == e2)
 
 
 class TestJerichoEnv(unittest.TestCase):
