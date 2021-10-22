@@ -6,7 +6,7 @@ set -e
 
 cd /usr/src/TextWorld
 
-for PYTHON in /opt/python/cp3[6-8]*/bin/python; do
+for PYTHON in /opt/python/cp3[6-10]*/bin/python; do
     $PYTHON setup.py bdist_wheel -d wheelhouse
 done
 
