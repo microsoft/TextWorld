@@ -31,7 +31,7 @@ fi
 
 python setup.py sdist
 
-docker run --dns 1.1.1.1 --rm -v "$PWD":/usr/src/TextWorld quay.io/pypa/manylinux1_x86_64 /usr/src/TextWorld/tools/package-impl.sh
+docker run --dns 1.1.1.1 --rm -v "$PWD":/usr/src/TextWorld quay.io/pypa/manylinux_2_24_x86_64 /usr/src/TextWorld/tools/package-impl.sh
 
 echo -e "\e[33mTo upload, run the following:\e[0m"
 echo -e "\e[33mpython -m twine upload dist/textworld-`sed -r "s/[^']*'(.*)'/\1/" textworld/version.py | head -n 1`*\e[0m"
