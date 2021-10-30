@@ -20,5 +20,5 @@ def test_making_coin_collector():
 
         settings = {"level": level}
         game = coin_collector.make(settings, options)
-        assert len(game.quests[0].commands) == expected[level]["quest_length"]
+        assert len(game.walkthrough) == expected[level]["quest_length"]
         assert len(game.world.rooms) == expected[level]["nb_rooms"]

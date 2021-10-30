@@ -16,6 +16,7 @@ from pkg_resources import Requirement, resource_filename
 from textworld.utils import make_temp_directory, str2bool, chunk
 
 from textworld.generator.game import Game
+from textworld.generator.game import EventCondition, EventAction
 from textworld.generator.world import WorldRoom, WorldEntity
 from textworld.logic import Signature, Proposition, Action, Variable
 
@@ -114,12 +115,21 @@ class Inform7Game:
             if i7_cond:
                 i7_conds.append(i7_cond)
 
-        # HACK: In Inform7 we have to mention a container/door is unlocked AND closed.
-        for cond in conds:
+            # HACK: In Inform7 we have to mention a container/door is unlocked AND closed.
             if cond.name == "closed":
                 i7_conds.append("the {} is unlocked".format(cond.arguments[0].name))
 
-        return " and ".join(i7_conds)
+        return i7_conds
+
+    def gen_source_for_event_action(self, event: EventAction) -> Optional[str]:
+        pt = self.kb.inform7_events[event.action.name]
+        if pt is None:
+            msg = "Undefined Inform7's action: {}".format(event.action.name)
+            warnings.warn(msg, TextworldInform7Warning)
+            return []
+
+        mapping = {ph.type: ph.name for ph in event.action.placeholders}
+        return [pt.format(**mapping)]
 
     def gen_source_for_objects(self, objects: Iterable[WorldEntity]) -> str:
         source = ""
@@ -321,11 +331,9 @@ class Inform7Game:
             """)
             source += quest_completed.format(quest_id=quest_id)
 
-            for event_id, event in enumerate(quest.win_events):
-                commands = self.gen_commands_from_actions(event.actions)
-                event.commands = commands
-
-                walkthrough = '\nTest quest{}_{} with "{}"\n\n'.format(quest_id, event_id, " / ".join(commands))
+            if quest.win_event:
+                commands = quest.win_event.commands or self.gen_commands_from_actions(quest.win_event.actions)
+                walkthrough = '\nTest quest{} with "{}"\n\n'.format(quest_id, " / ".join(commands))
                 source += walkthrough
 
             # Add winning and losing conditions for quest.
@@ -342,15 +350,35 @@ class Inform7Game:
                 increase the score by {reward}; [Quest completed]
                 Now the quest{quest_id} completed is true;""")
 
-            for fail_event in quest.fail_events:
-                conditions = self.gen_source_for_conditions(fail_event.condition.preconditions)
-                quest_ending_conditions += fail_template.format(conditions=conditions)
+            if quest.win_event:
+                # Assuming quest.win_event is in a DNF.
+                for events in quest.win_event:  # Loop over EventOr
+                    i7_conds = []
+                    for event in events:  # Loop over EventAnd
+                        if isinstance(event, EventCondition):
+                            i7_conds += self.gen_source_for_conditions(event.condition.preconditions)
+                        elif isinstance(event, EventAction):
+                            i7_conds += self.gen_source_for_event_action(event)
+                        else:
+                            raise NotImplementedError("Unknown event type: {!r}".format(event))
 
-            for win_event in quest.win_events:
-                conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
-                quest_ending_conditions += win_template.format(conditions=conditions,
-                                                               reward=quest.reward,
-                                                               quest_id=quest_id)
+                    quest_ending_conditions += win_template.format(conditions=" and ".join(i7_conds),
+                                                                   reward=quest.reward,
+                                                                   quest_id=quest_id)
+
+            if quest.fail_event:
+                # Assuming quest.fail_event is in a DNF.
+                for events in quest.fail_event:  # Loop over EventOr
+                    i7_conds = []
+                    for event in events:  # Loop over EventAnd
+                        if isinstance(event, EventCondition):
+                            i7_conds += self.gen_source_for_conditions(event.condition.preconditions)
+                        elif isinstance(event, EventAction):
+                            i7_conds += self.gen_source_for_event_action(event)
+                        else:
+                            raise NotImplementedError("Unknown event type: {!r}".format(event))
+
+                    quest_ending_conditions += fail_template.format(conditions=" and ".join(i7_conds))
 
             quest_ending = """\
             Every turn:\n{conditions}

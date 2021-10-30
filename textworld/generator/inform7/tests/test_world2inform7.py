@@ -3,9 +3,14 @@
 
 
 import itertools
+import unittest
+import shutil
+import tempfile
+from os.path import join as pjoin
 
 import textworld
 from textworld import g_rng
+from textworld import testing
 from textworld.utils import make_temp_directory
 
 from textworld.core import EnvInfos
@@ -104,9 +109,10 @@ def test_quest_winning_condition():
             assert not done
             assert not game_state.won
 
-            game_state, _, done = env.step(event.commands[0])
-            assert done
-            assert game_state.won
+            for cmd in game.walkthrough:
+                game_state, _, done = env.step(cmd)
+                assert done
+                assert game_state.won
 
 
 def test_quest_with_multiple_winning_and_losing_conditions():
@@ -479,3 +485,104 @@ def test_take_all_and_variants():
         assert "blue ball:" in game_state.feedback
         assert "red ball" in game_state.inventory
         assert "blue ball" in game_state.inventory
+
+
+class TestInform7Game(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.DATA = testing.build_complex_test_game()
+        cls.game = cls.DATA["game"]
+        cls.quest1 = cls.DATA["quest1"]
+        cls.quest2 = cls.DATA["quest2"]
+        cls.eating_carrot = cls.DATA["eating_carrot"]
+        cls.onion_eaten = cls.DATA["onion_eaten"]
+        cls.closing_chest_without_carrot = cls.DATA["closing_chest_without_carrot"]
+
+        cls.tmpdir = pjoin(tempfile.mkdtemp(prefix="test_inform7_game"), "")
+        options = textworld.GameOptions()
+        options.path = cls.tmpdir
+        options.seeds = 20210512
+        options.file_ext = ".z8"
+        cls.game_file = compile_game(cls.game, options)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmpdir)
+
+    def _apply_commands(self, env, commands, state=None):
+        state = state or env.reset()
+        for cmd in commands:
+            assert not state.done
+            state, _, done = env.step(cmd)
+
+        return state
+
+    def test_game_completion(self):
+        env = textworld.start(self.game_file)
+
+        # Do quest1.
+        state = self._apply_commands(env, self.quest1.win_event.events[0].commands)
+        assert state.score == self.quest1.reward
+        assert not state.done
+
+        # Then quest2.
+        state = self._apply_commands(env, self.quest2.win_event.events[0].commands, state)
+        assert state.score == state.max_score
+        assert state.done
+        assert state.won and not state.lost
+
+        # Alternative winning strategy for quest1.
+        state = self._apply_commands(env, self.quest1.win_event.events[1].commands)
+        assert state.score == self.quest1.reward
+        assert not state.done
+
+        state = self._apply_commands(env, self.quest2.win_event.events[0].commands, state)
+        assert state.score == state.max_score
+        assert state.done
+        assert state.won and not state.lost
+
+        # Start with quest2, then quest1.
+        state = self._apply_commands(env, self.quest2.win_event.events[0].commands)
+        assert state.score == self.quest2.reward
+        assert not state.done
+
+        state = self._apply_commands(env, self.quest1.win_event.events[0].commands, state)
+        assert state.score == state.max_score
+        assert state.done
+        assert state.won and not state.lost
+
+        # Closing the chest containing the onion while holding the carrot should not fail.
+        state = self._apply_commands(env, self.eating_carrot.commands[:1])  # Take carrot.
+        state = self._apply_commands(env, self.quest1.win_event.events[1].commands, state)
+        assert state.score == self.quest1.reward
+        assert not state.done
+
+    def test_game_failure(self):
+        env = textworld.start(self.game_file)
+
+        # onion_eaten -> eating_carrot != eating_carrot -> onion_eaten
+        # Eating the carrot *after* eating the onion causes the game to be lost.
+        state = self._apply_commands(env, self.onion_eaten.commands)
+        state = self._apply_commands(env, self.eating_carrot.commands, state)
+        assert state.done
+        assert not state.won and state.lost
+
+        # Eating the carrot *before* eating the onion does not lose the game,
+        # but the game becomes unfinishable.
+        state = self._apply_commands(env, self.eating_carrot.commands)
+        state = self._apply_commands(env, self.onion_eaten.commands, state)
+        assert not (state.done or state.won or state.lost)  # Couldn't detect game is unfinishable.
+
+        env_with_state_tracking = textworld.start(self.game_file, EnvInfos(policy_commands=True))
+        state = self._apply_commands(env_with_state_tracking, self.eating_carrot.commands)
+        state = self._apply_commands(env_with_state_tracking, self.onion_eaten.commands, state)
+        assert not (state.done or state.won or state.lost)  # Still won't tell the game is unfinishable.
+        assert state.policy_commands == []  # But there isn't no sequence of commands that can complete the game.
+
+        # Closing the chest *while* the carrot is in the inventory.
+        state = self._apply_commands(env, ["open chest", "close chest"])
+        assert not state.lost
+        state = self._apply_commands(env, self.closing_chest_without_carrot.commands, state)
+        assert state.done
+        assert not state.won and state.lost

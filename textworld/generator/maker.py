@@ -19,9 +19,9 @@ from textworld.generator import Grammar
 from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
 from textworld.generator.vtypes import get_new
-from textworld.logic import State, Variable, Proposition, Action
+from textworld.logic import State, Variable, Proposition, Action, Placeholder
 from textworld.generator.game import GameOptions
-from textworld.generator.game import Game, World, Quest, Event, EntityInfo
+from textworld.generator.game import Game, World, Quest, EventAnd, EventCondition, EventAction, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
 from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
@@ -73,6 +73,12 @@ class FailedConstraintsError(ValueError):
         """
         msg = "The following constraints have failed: "
         msg += ", ".join(set(action.name for action in failed_constraints))
+        super().__init__(msg)
+
+
+class UnderspecifiedEventError(NameError):
+    def __init__(self):
+        msg = "The event type should be specified. It can be either the action or  condition."
         super().__init__(msg)
 
 
@@ -632,7 +638,7 @@ class GameMaker:
         actions = [action for action in recorder.actions if action is not None]
 
         # Assume the last action contains all the relevant facts about the winning condition.
-        event = Event(actions=actions)
+        event = EventCondition(actions=actions)
         self.quests.append(Quest(win_events=[event]))
         # Calling build will generate the description for the quest.
         self.build()
@@ -665,14 +671,14 @@ class GameMaker:
             unrecognized_commands = [c for c, a in zip(commands, recorder.actions) if a is None]
             raise QuestError("Some of the actions were unrecognized: {}".format(unrecognized_commands))
 
-        event = Event(actions=actions)
-        self.quests = [Quest(win_events=[event])]
+        event = EventCondition(actions=actions, commands=commands)
+        self.quests = [Quest(win_event=event, commands=commands)]
 
         # Calling build will generate the description for the quest.
         self.build()
         return self.quests[-1]
 
-    def new_fact(self, name: str, *entities: List["WorldEntity"]) -> None:
+    def new_fact(self, name: str, *entities: List["WorldEntity"]) -> Proposition:
         """ Create new fact.
 
         Args:
@@ -682,7 +688,28 @@ class GameMaker:
         args = [entity.var for entity in entities]
         return Proposition(name, args)
 
-    def new_event_using_commands(self, commands: List[str]) -> Event:
+    def new_action(self, name: str, *entities: List["WorldEntity"]) -> Union[None, Action]:
+        """ Create new fact about a rule.
+
+        Args:
+            name: The name of the rule which can be used for the new rule fact as well.
+            *entities: A list of entities as arguments to the new rule fact.
+        """
+        if name not in self._kb.rules:
+            raise ValueError("Can't find action: '{}'".format(name))
+
+        rule = self._kb.rules[name]
+        mapping = {Placeholder(entity.type): Placeholder(entity.id, entity.type) for entity in entities}
+        return rule.substitute(mapping)
+
+    def new_quest(self, win_event=None, fail_event=None, reward=None, desc=None, commands=()) -> Quest:
+        return Quest(win_event=win_event,
+                     fail_event=fail_event,
+                     reward=reward,
+                     desc=desc,
+                     commands=commands)
+
+    def new_event_using_commands(self, commands: List[str]) -> Union[EventCondition, EventAction]:
         """ Creates a new event using predefined text commands.
 
         This launches a `textworld.play` session to execute provided commands.
@@ -704,7 +731,7 @@ class GameMaker:
 
         # Skip "None" actions.
         actions, commands = zip(*[(a, c) for a, c in zip(recorder.actions, commands) if a is not None])
-        event = Event(actions=actions, commands=commands)
+        event = EventCondition(actions=actions, commands=commands)
         return event
 
     def new_quest_using_commands(self, commands: List[str]) -> Quest:
@@ -719,37 +746,74 @@ class GameMaker:
             The resulting quest.
         """
         event = self.new_event_using_commands(commands)
-        return Quest(win_events=[event], commands=event.commands)
+        return Quest(win_event=event, commands=event.commands)
 
-    def set_walkthrough(self, commands: List[str]):
+    def set_walkthrough(self, *walkthroughs: List[str]):
+        # Assuming quest.events return a list of EventAnd.
+        events = {event: event.copy() for quest in self.quests for event in quest.events}
+
+        actions = []
+        cmds_performed = []
+
+        def _callback(event):
+            if not isinstance(event, EventAnd):
+                return
+
+            if event not in events:
+                assert False
+
+            if event not in events or events[event].commands:
+                return
+
+            events[event].commands = list(cmds_performed)
+
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
             env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
+
+            for walkthrough in walkthroughs:
+                state = env.reset()
+                state._game_progression.callback = _callback
+
+                done = False
+                for i, cmd in enumerate(walkthrough):
+                    if done:
+                        msg = "Game has ended before finishing playing all commands."
+                        raise ValueError(msg)
+
+                    cmds_performed.append(cmd)
+                    state, score, done = env.step(cmd)
+                    actions.append(state._last_action)
+
+                for k, v in events.items():
+                    if v.commands and not k.actions:
+                        k.commands = v.commands
+                        k.actions = list(actions[:len(v.commands)])
+
+                actions.clear()
+                cmds_performed.clear()
+
+        for quest in self.quests:
+            if quest.win_event:
+                quest.commands = quest.win_event.commands
+
+    def get_action_from_commands(self, commands: List[str]):
+        with make_temp_directory() as tmpdir:
+            game_file = self.compile(pjoin(tmpdir, "get_actions.ulx"))
+            env = textworld.start(game_file, infos=EnvInfos(last_action=True))
             state = env.reset()
 
-            events = {event: event.copy() for quest in self.quests for event in quest.win_events}
-            event_progressions = [ep for qp in state._game_progression.quest_progressions for ep in qp.win_events]
-
-            done = False
             actions = []
+            done = False
             for i, cmd in enumerate(commands):
                 if done:
                     msg = "Game has ended before finishing playing all commands."
                     raise ValueError(msg)
 
-                events_triggered = [ep.triggered for ep in event_progressions]
-
                 state, score, done = env.step(cmd)
                 actions.append(state._last_action)
 
-                for was_triggered, ep in zip(events_triggered, event_progressions):
-                    if not was_triggered and ep.triggered:
-                        events[ep.event].actions = list(actions)
-                        events[ep.event].commands = commands[:i + 1]
-
-        for k, v in events.items():
-            k.actions = v.actions
-            k.commands = v.commands
+        return actions
 
     def validate(self) -> bool:
         """ Check if the world is valid and can be compiled.
@@ -857,6 +921,7 @@ class GameMaker:
         :param filename: filename for screenshot
         """
         game = self.build(validate=False)
+        game.change_grammar(self.grammar)  # Generate missing object names.
         return visualize(game, interactive=interactive)
 
     def import_graph(self, G: nx.Graph) -> List[WorldRoom]:

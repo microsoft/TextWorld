@@ -5,7 +5,8 @@
 import re
 from collections import OrderedDict
 
-from textworld.generator.game import Quest, Event, Game
+from textworld.generator.game import Quest, Game
+from textworld.generator.game import AbstractEvent
 
 from textworld.generator.text_grammar import Grammar
 from textworld.generator.text_grammar import fix_determinant
@@ -381,15 +382,18 @@ def generate_instruction(action, grammar, game, counts):
 
 
 def assign_description_to_quest(quest: Quest, game: Game, grammar: Grammar):
+    if quest.win_event is None:
+        return ""
+
     event_descriptions = []
-    for event in quest.win_events:
+    for event in quest.win_event:
         event_descriptions += [describe_event(event, game, grammar)]
 
     quest_desc = " OR ".join(desc for desc in event_descriptions if desc)
     return quest_desc
 
 
-def describe_event(event: Event, game: Game, grammar: Grammar) -> str:
+def describe_event(event: AbstractEvent, game: Game, grammar: Grammar) -> str:
     """
     Assign a descripton to a quest.
     """

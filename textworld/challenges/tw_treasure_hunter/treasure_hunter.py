@@ -233,7 +233,7 @@ def make_game(mode: str, options: GameOptions) -> textworld.Game:
     quest = Quest(win_events=[event],
                   fail_events=[Event(conditions={Proposition("in", [wrong_obj, world.inventory])})])
 
-    grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar)
+    grammar = textworld.generator.make_grammar(options.grammar, rng=rng_grammar, kb=options.kb)
     game = textworld.generator.make_game_with(world, [quest], grammar)
     game.metadata.update(metadata)
     mode_choice = modes.index(mode)
