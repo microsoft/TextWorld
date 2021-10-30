@@ -1,0 +1,48 @@
+# text-Like
+type txt : o {
+    predicates {
+        read/t(txt);
+        unread/t(txt);
+    }
+
+    rules {
+        read/book    :: $at(P, r) & $in(txt, I) & unread/t(txt) -> read/t(txt);
+        examine/book :: at(P, r) & $in(txt, I) -> at(P, r);  # Nothing changes.
+    }
+    
+    reverse_rules {
+        examine/book :: examine/book;
+    }
+    
+    constraints {
+        txt1 :: read/t(txt) & unread/t(txt) -> fail();        
+    }
+
+    inform7 {
+        type {
+            kind :: "text-like";
+            definition :: "A text-like can be either read or unread. A text-like is usually unread.";
+        }
+
+        predicates {
+            read/t(txt)  :: "The {txt} is read";
+            unread/t(txt) :: "The {txt} is unread";
+        }
+
+        commands {            
+            read/book     :: "read the {txt}"    :: "_reading the {txt}";
+            examine/book  :: "examine {txt}"  :: "examining the {txt}";
+        }
+        
+        code :: """
+            Understand the command "read" as something new. 
+            Understand "read [something]" as _reading. 
+            _reading is an action applying to a thing. 
+        
+            Carry out _reading: 
+                if a text-like (called tx) is unread: 
+                    Say "You read the book and realized about that crucial hint.";
+                    Now the tx is read; 
+        """;
+    }
+}

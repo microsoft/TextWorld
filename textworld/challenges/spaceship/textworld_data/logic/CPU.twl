@@ -1,0 +1,53 @@
+# CPU-Like
+type cpu : o {
+    predicates {
+        read/e(cpu);
+        unread/e(cpu);
+    }
+
+    rules {
+        check/e1     :: $at(P, r) & $at(s, r) & $on(cpu, s) & unread/e(cpu) -> read/e(cpu);
+        check/e2     :: $at(P, r) & $in(cpu, I) & unread/e(cpu) -> read/e(cpu);
+    }
+
+    constraints {
+        cpu2 :: read/e(cpu) & unread/e(cpu) -> fail();        
+    }
+
+    inform7 {
+        type {
+            kind :: "CPU-like";
+            definition :: "A CPU-like can be either read or unread. A CPU-like is usually unread.";
+        }
+
+        predicates {
+            read/e(cpu)     :: "The {cpu} is read";
+            unread/e(cpu)   :: "The {cpu} is unread";
+        }
+
+        commands {            
+            check/e1     :: "check laptop for email"    :: "checking email";
+            check/e2     :: "check laptop for email"    :: "checking email";
+        }
+
+        code :: """
+            Understand the command "check" as something new. 
+            Understand "check laptop for email" as checking email. 
+            checking email is an action applying to nothing. 
+
+            Before checking email:
+                if a CPU-like (called pc) is read:
+                    Say "You've already read all today's emails.";
+                    rule fails;
+                otherwise:
+                    if a random chance of 3 in 4 succeeds:
+                        Say "No emails yet! Wait.";
+                        rule fails.
+
+            Carry out checking email: 
+                if a CPU-like (called pc) is unread: 
+                    Say "Email: Your mission is started. You should go and check outside of the spaceship.";
+                    Now the pc is read.
+        """;
+    }
+}

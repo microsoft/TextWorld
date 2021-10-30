@@ -312,6 +312,7 @@ class Inform7Game:
 
         objective = self.game.objective.replace("\n", "[line break]")
         maximum_score = 0
+        wining = 0
         for quest_id, quest in enumerate(self.game.quests):
             maximum_score += quest.reward
 
@@ -351,6 +352,7 @@ class Inform7Game:
                 quest_ending_conditions += win_template.format(conditions=conditions,
                                                                reward=quest.reward,
                                                                quest_id=quest_id)
+                wining += 1
 
             quest_ending = """\
             Every turn:\n{conditions}
@@ -359,13 +361,14 @@ class Inform7Game:
             source += textwrap.dedent(quest_ending)
 
         # Enable scoring is at least one quest has nonzero reward.
-        if maximum_score != 0:
+        if maximum_score >= 0:
             source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
 
         # Build test condition for winning the game.
         game_winning_test = "1 is 0 [always false]"
-        if len(self.game.quests) > 0:
-            game_winning_test = "score is maximum score"
+        if wining > 0:
+            if maximum_score != 0:
+                game_winning_test = "score is maximum score"
 
         # Remove square bracket when printing score increases. Square brackets are conflicting with
         # Inform7's events parser in tw_inform7.py.
