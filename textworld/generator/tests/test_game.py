@@ -6,6 +6,7 @@ import unittest
 import textwrap
 from typing import Iterable
 
+import numpy as np
 import numpy.testing as npt
 
 import textworld
@@ -934,6 +935,134 @@ class TestGameProgression(unittest.TestCase):
         action = game_progress.valid_actions[0]
         game_progress.update(action)
         assert not game_progress.done
+
+    def test_game_with_optional_and_repeatable_quests(self):
+        M = textworld.GameMaker()
+        museum = M.new_room("Museum")
+
+        weak_statue = M.new(type="o", name="ivory statue")
+        normal_statue = M.new(type="o", name="stone statue")
+        strong_statue = M.new(type="o", name="granite statue")
+
+        museum.add(weak_statue)
+        museum.add(normal_statue)
+        museum.add(strong_statue)
+
+        M.set_player(museum)
+
+        M.quests = [
+            Quest(
+                win_events=[
+                    Event(conditions=[M.new_fact('in', weak_statue, M.inventory)]),
+                ],
+                reward=-10,
+                optional=True,
+                repeatable=True
+            ),
+            Quest(
+                win_events=[
+                    Event(conditions=[M.new_fact('in', normal_statue, M.inventory)]),
+                ],
+                reward=3,
+                optional=True
+            ),
+            Quest(
+                win_events=[
+                    Event(conditions=[M.new_fact('in', strong_statue, M.inventory)]),
+                ],
+                reward=5,
+            )
+        ]
+        M.set_walkthrough(["take ivory", "take stone", "drop ivory", "take granite"])
+        game = M.build()
+
+        inform7 = Inform7Game(game)
+        game_progress = GameProgression(game)
+        assert len(game_progress.quest_progressions) == len(game.quests)
+
+        # Following the actions associated to the last quest actually corresponds
+        # to solving the whole game.
+        for action in game_progress.winning_policy:
+            assert not game_progress.done
+            game_progress.update(action)
+
+        assert game_progress.done
+        assert not game_progress.quest_progressions[0].completed  # Optional, negative quest.
+        assert not game_progress.quest_progressions[1].completed  # Optional, positive quest.
+        assert game_progress.quest_progressions[2].completed  # Mandatory quest.
+
+        # Solve the game while completing the optional quests.
+        game_progress = GameProgression(game)
+        for command in ["take ivory statue", "look", "take stone statue",
+                        "drop ivory statue", "take granite statue"]:
+            _apply_command(command, game_progress, inform7)
+
+        progressions = game_progress.quest_progressions
+        assert not progressions[0].done             # Repeatable quests can never be done.
+        assert progressions[0].nb_completions == 3  # They could have been completed a number of times, though.
+        assert progressions[1].done  # The nonrepeatable-optional quest can be done.
+        assert progressions[2].done
+
+        assert game.max_score == 8
+        assert game_progress.score == -22
+
+    def test_game_with_infinite_max_score(self):
+        M = textworld.GameMaker()
+        museum = M.new_room("Museum")
+
+        statue = M.new(type="o", name="golden statue")
+        pedestal = M.new(type="s", name="pedestal")
+
+        pedestal.add(statue)
+        museum.add(pedestal)
+
+        M.set_player(museum)
+
+        M.quests = [
+            Quest(
+                win_events=[
+                    Event(conditions=[M.new_fact('in', statue, M.inventory)]),
+                ],
+                reward=10,
+                optional=True,
+                repeatable=True
+            ),
+            Quest(
+                win_events=[
+                    Event(conditions=[M.new_fact('at', statue, museum)]),
+                ],
+                reward=0
+            )
+        ]
+        M.set_walkthrough(["take golden statue from pedestal", "look", "drop statue"])
+
+        game = M.build()
+        assert game.max_score == np.inf
+
+        inform7 = Inform7Game(game)
+        game_progress = GameProgression(game)
+        assert len(game_progress.quest_progressions) == len(game.quests)
+
+        # Following the actions associated to the last quest actually corresponds
+        # to solving the whole game.
+        for action in game_progress.winning_policy:
+            assert not game_progress.done
+            game_progress.update(action)
+
+        assert game_progress.done
+        assert not game_progress.quest_progressions[0].completed  # Repeatable quests can never be completed.
+        assert game_progress.quest_progressions[1].completed  # Mandatory quest.
+
+        # Solve the game while completing the optional quests.
+        game_progress = GameProgression(game)
+        for command in ["take golden statue from pedestal", "look", "look", "drop golden statue"]:
+            _apply_command(command, game_progress, inform7)
+
+        progressions = game_progress.quest_progressions
+        assert not progressions[0].done             # Repeatable quests can never be done.
+        assert progressions[0].nb_completions == 3  # They could have been completed a number of times, though.
+        assert progressions[1].done
+        assert game_progress.score == 30
 
 
 class TestActionDependencyTree(unittest.TestCase):

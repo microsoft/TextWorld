@@ -10,8 +10,9 @@ import subprocess
 import textwrap
 from os.path import join as pjoin
 from typing import Iterable, Optional, List
-
 from pkg_resources import Requirement, resource_filename
+
+import numpy as np
 
 from textworld.utils import make_temp_directory, str2bool, chunk
 
@@ -312,8 +313,18 @@ class Inform7Game:
 
         objective = self.game.objective.replace("\n", "[line break]")
         maximum_score = 0
+
+        game_winning_conditions = []
+        quest_completed_template = "quest{quest_id} completed is true"
+
         for quest_id, quest in enumerate(self.game.quests):
-            maximum_score += quest.reward
+            if not quest.optional and len(quest.win_events) > 0:
+                game_winning_conditions.append(quest_completed_template.format(quest_id=quest_id))
+
+            if not quest.optional or quest.reward > 0:
+                maximum_score += quest.reward
+                if quest.repeatable:
+                    maximum_score = np.inf
 
             quest_completed = textwrap.dedent("""\
             The quest{quest_id} completed is a truth state that varies.
@@ -340,17 +351,20 @@ class Inform7Game:
             win_template = textwrap.dedent("""
             else if {conditions}:
                 increase the score by {reward}; [Quest completed]
-                Now the quest{quest_id} completed is true;""")
+                if {completable}:
+                    Now the quest{quest_id} completed is true;""")
 
             for fail_event in quest.fail_events:
                 conditions = self.gen_source_for_conditions(fail_event.condition.preconditions)
                 quest_ending_conditions += fail_template.format(conditions=conditions)
 
+            completable = "1 is 0 [always false]" if quest.repeatable else "1 is 1 [always true]"
             for win_event in quest.win_events:
                 conditions = self.gen_source_for_conditions(win_event.condition.preconditions)
                 quest_ending_conditions += win_template.format(conditions=conditions,
                                                                reward=quest.reward,
-                                                               quest_id=quest_id)
+                                                               quest_id=quest_id,
+                                                               completable=completable)
 
             quest_ending = """\
             Every turn:\n{conditions}
@@ -358,14 +372,17 @@ class Inform7Game:
             """.format(conditions=textwrap.indent(quest_ending_conditions, "                "))
             source += textwrap.dedent(quest_ending)
 
-        # Enable scoring is at least one quest has nonzero reward.
-        if maximum_score != 0:
-            source += "Use scoring. The maximum score is {}.\n".format(maximum_score)
+        # Enable scoring and deal with unbounded maximum score.
+        source += "Use scoring."
+        if maximum_score < np.inf:
+            source += " The maximum score is {}.\n".format(maximum_score)
+        else:
+            source += " The maximum score is -32768.\n"  # Dummy value to represent infinity.
 
         # Build test condition for winning the game.
-        game_winning_test = "1 is 0 [always false]"
-        if len(self.game.quests) > 0:
-            game_winning_test = "score is maximum score"
+        game_winning_test = "1 is 0 [always false]"  # Default: unfinishable game.
+        if game_winning_conditions:
+            game_winning_test = " and ".join(game_winning_conditions)
 
         # Remove square bracket when printing score increases. Square brackets are conflicting with
         # Inform7's events parser in tw_inform7.py.
@@ -374,11 +391,14 @@ class Inform7Game:
         This is the simpler notify score changes rule:
             If the score is not the last notified score:
                 let V be the score - the last notified score;
-                say "Your score has just gone up by [V in words] ";
-                if V > 1:
-                    say "points.";
+                if V > 0:
+                    say "Your score has just gone up by [V in words] ";
                 else:
+                    say "Your score changed by [V in words] ";
+                if V >= -1 and V <= 1:
                     say "point.";
+                else:
+                    say "points.";
                 Now the last notified score is the score;
             if {game_winning_test}:
                 end the story finally; [Win]
@@ -462,9 +482,19 @@ class Inform7Game:
             else:
                 center "*** You lost! ***";
             say paragraph break;
-            say "You scored [score] out of a possible [maximum score], in [turn count] turn(s).";
+            if maximum score is -32768:
+                say "You scored a total of [score] point[s], in [turn count] turn[s].";
+            else:
+                say "You scored [score] out of a possible [maximum score], in [turn count] turn[s].";
             [wait for any key;
             stop game abruptly;]
+            rule succeeds.
+
+        Carry out requesting the score:
+            if maximum score is -32768:
+                say "You have so far scored [score] point[s], in [turn count] turn[s].";
+            else:
+                say "You have so far scored [score] out of a possible [maximum score], in [turn count] turn[s].";
             rule succeeds.
 
         """)
@@ -927,7 +957,10 @@ class Inform7Game:
         Reporting max score is an action applying to nothing.
         Carry out reporting max score:
             Decrease turn count by 1;  [Internal framework commands shouldn't count as a turn.]
-            say "[maximum score]".
+            if maximum score is -32768:
+                say "infinity";
+            else:
+                say "[maximum score]".
 
         Understand "tw-print max_score" as reporting max score.
 
