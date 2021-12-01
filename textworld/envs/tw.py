@@ -104,8 +104,7 @@ class TextWorldEnv(textworld.Environment):
     def reset(self):
         self._prev_state = None
         self.state = GameState()
-        track_quests = (self.infos.intermediate_reward or self.infos.policy_commands)
-        self._game_progression = GameProgression(self._game, track_quests=track_quests)
+        self._game_progression = GameProgression(self._game, track_quests=True)
         self._last_action = None
         self._previous_winning_policy = None
         self._current_winning_policy = self._game_progression.winning_policy
@@ -140,7 +139,7 @@ class TextWorldEnv(textworld.Environment):
             pass  # We assume nothing happened in the game.
 
         self._gather_infos()
-        self.state["score"] = self._game_progression
+        self.state["score"] = self._game_progression.score
         self.state["done"] = self.state["won"] or self.state["lost"]
         return self.state, self.state["score"], self.state["done"]
 

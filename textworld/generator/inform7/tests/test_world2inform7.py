@@ -4,6 +4,8 @@
 
 import itertools
 
+import numpy as np
+
 import textworld
 from textworld import g_rng
 from textworld.utils import make_temp_directory
@@ -479,3 +481,132 @@ def test_take_all_and_variants():
         assert "blue ball:" in game_state.feedback
         assert "red ball" in game_state.inventory
         assert "blue ball" in game_state.inventory
+
+
+def test_optional_and_repeatable_quests():
+    M = textworld.GameMaker()
+    museum = M.new_room("Museum")
+
+    weak_statue = M.new(type="o", name="ivory statue")
+    normal_statue = M.new(type="o", name="stone statue")
+    strong_statue = M.new(type="o", name="granite statue")
+
+    museum.add(weak_statue)
+    museum.add(normal_statue)
+    museum.add(strong_statue)
+
+    M.set_player(museum)
+
+    M.quests = [
+        Quest(
+            win_events=[
+                Event(conditions=[M.new_fact('in', weak_statue, M.inventory)]),
+            ],
+            reward=-10,
+            optional=True,
+            repeatable=True
+        ),
+        Quest(
+            win_events=[
+                Event(conditions=[M.new_fact('in', normal_statue, M.inventory)]),
+            ],
+            reward=3,
+            optional=True
+        ),
+        Quest(
+            win_events=[
+                Event(conditions=[M.new_fact('in', strong_statue, M.inventory)]),
+            ],
+            reward=5,
+        )
+    ]
+    M.set_walkthrough(["take ivory", "take stone", "drop ivory", "take granite"])
+
+    game = M.build()
+    game_name = "test_optional_and_repeatable_quests"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = _compile_game(game, path=tmpdir)
+        env = textworld.start(game_file)
+        state = env.reset()
+        state.max_score == 8  # 5 (main quest) + 3 (optional quest)
+
+        state, score, done = env.step("take ivory")
+        assert not done
+        assert score == -10
+
+        state, score, done = env.step("look")
+        assert score == -20
+
+        state, score, done = env.step("take stone")
+        assert not done
+        assert score == -27  # -10 + 3
+
+        state, score, done = env.step("drop ivory")
+        assert score == -27
+
+        state, score, done = env.step("take granite")
+        assert done
+        assert score == -22  # +5.
+        assert "-22 out of a possible 8" in state.feedback
+
+
+def test_game_with_infinite_max_score():
+    M = textworld.GameMaker()
+    museum = M.new_room("Museum")
+
+    statue = M.new(type="o", name="golden statue")
+    pedestal = M.new(type="s", name="pedestal")
+
+    pedestal.add(statue)
+    museum.add(pedestal)
+
+    M.set_player(museum)
+
+    M.quests = [
+        Quest(
+            win_events=[
+                Event(conditions=[M.new_fact('in', statue, M.inventory)]),
+            ],
+            reward=10,
+            optional=True,
+            repeatable=True
+        ),
+        Quest(
+            win_events=[
+                Event(conditions=[M.new_fact('at', statue, museum)]),
+            ],
+            reward=0
+        )
+    ]
+    M.set_walkthrough(["take statue from pedestal", "look", "drop statue"])
+
+    game = M.build()
+    game_name = "test_game_with_infinite_max_score"
+    with make_temp_directory(prefix=game_name) as tmpdir:
+        game_file = _compile_game(game, path=tmpdir)
+        env = textworld.start(game_file)
+        state = env.reset()
+        state.max_score == np.inf  # Score increases for each turn the player hold the statue.
+
+        state, score, done = env.step("look")
+        assert not done
+        assert score == 0
+
+        state, score, done = env.step("take statue")
+        assert score == 10
+
+        state, score, done = env.step("wait")
+        assert score == 20
+
+        state, score, done = env.step("score")
+        assert score == 20
+        assert "You have so far scored 20 points," in state.feedback
+
+        state, score, done = env.step("wait")
+        assert score == 30
+
+        state, score, done = env.step("drop statue")
+        assert done
+        assert score == 30
+
+        assert "a total of 30 points," in state.feedback

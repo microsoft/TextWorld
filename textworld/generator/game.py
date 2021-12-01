@@ -10,6 +10,7 @@ from typing import List, Dict, Optional, Mapping, Any, Iterable, Union, Tuple
 from collections import OrderedDict
 from functools import partial
 
+import numpy as np
 from numpy.random import RandomState
 
 from textworld import g_rng
@@ -186,6 +187,8 @@ class Quest:
         reward: Reward given for completing this quest.
         desc: A text description of the quest.
         commands: List of text commands leading to this quest completion.
+        optional: Whether this quest is optional or not to finish the game.
+        repeatable: Whether this quest can be completed more than once.
     """
 
     def __init__(self,
@@ -193,7 +196,9 @@ class Quest:
                  fail_events: Iterable[Event] = (),
                  reward: Optional[int] = None,
                  desc: Optional[str] = None,
-                 commands: Iterable[str] = ()) -> None:
+                 commands: Iterable[str] = (),
+                 optional: bool = False,
+                 repeatable: bool = False) -> None:
         r"""
         Args:
             win_events: Mutually exclusive set of winning events. That is,
@@ -207,11 +212,17 @@ class Quest:
                     otherwise it is set to 0.
             desc: A text description of the quest.
             commands: List of text commands leading to this quest completion.
+            optional: If True, this quest is optional to finish the game.
+            repeatable: If True, this quest can be completed more than once.
         """
         self.win_events = tuple(win_events)
         self.fail_events = tuple(fail_events)
         self.desc = desc
         self.commands = tuple(commands)
+        self.optional = optional
+        self.repeatable = repeatable
+        if self.repeatable:
+            assert self.optional  # Only optional quest can be repeatable.
 
         # Unless explicitly provided, reward is set to 1 if there is at least
         # one winning events otherwise it is set to 0.
@@ -254,7 +265,7 @@ class Quest:
 
     def __hash__(self) -> int:
         return hash((self.win_events, self.fail_events, self.reward,
-                     self.desc, self.commands))
+                     self.desc, self.commands, self.optional, self.repeatable))
 
     def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Quest)
@@ -262,7 +273,9 @@ class Quest:
                 and self.fail_events == other.fail_events
                 and self.reward == other.reward
                 and self.desc == other.desc
-                and self.commands == other.commands)
+                and self.commands == other.commands
+                and self.optional == other.optional
+                and self.repeatable == other.repeatable)
 
     @classmethod
     def deserialize(cls, data: Mapping) -> "Quest":
@@ -277,7 +290,9 @@ class Quest:
         commands = data.get("commands", [])
         reward = data["reward"]
         desc = data["desc"]
-        return cls(win_events, fail_events, reward, desc, commands)
+        optional = data.get("optional", False)
+        repeatable = data.get("repeatable", False)
+        return cls(win_events, fail_events, reward, desc, commands, optional, repeatable)
 
     def serialize(self) -> Mapping:
         """ Serialize this quest.
@@ -291,6 +306,8 @@ class Quest:
         data["commands"] = self.commands
         data["win_events"] = [event.serialize() for event in self.win_events]
         data["fail_events"] = [event.serialize() for event in self.fail_events]
+        data["optional"] = self.optional
+        data["repeatable"] = self.repeatable
         return data
 
     def copy(self) -> "Quest":
@@ -506,9 +523,12 @@ class Game:
         return hash(state)
 
     @property
-    def max_score(self) -> int:
+    def max_score(self) -> float:
         """ Sum of the reward of all quests. """
-        return sum(quest.reward for quest in self.quests)
+        if any(quest.repeatable and quest.reward > 0 for quest in self.quests):
+            return np.inf
+
+        return sum(quest.reward for quest in self.quests if not quest.optional or quest.reward > 0)
 
     @property
     def command_templates(self) -> List[str]:
@@ -842,6 +862,7 @@ class QuestProgression:
         """
         self.quest = quest
         self.kb = kb
+        self.nb_completions = 0
         self.win_events = [EventProgression(event, kb) for event in quest.win_events]
         self.fail_events = [EventProgression(event, kb) for event in quest.fail_events]
 
@@ -850,6 +871,7 @@ class QuestProgression:
         qp = QuestProgression(self.quest, self.kb)
         qp.win_events = [event_progression.copy() for event_progression in self.win_events]
         qp.fail_events = [event_progression.copy() for event_progression in self.fail_events]
+        qp.nb_completions = self.nb_completions
         return qp
 
     @property
@@ -911,6 +933,16 @@ class QuestProgression:
         for event in (self.win_events + self.fail_events):
             event.update(action, state)
 
+        if self.completed:
+            self.nb_completions += 1
+
+            # If repeatable quest is completed, reset its win_events' triggered state.
+            if self.quest.repeatable:
+                for event in self.win_events:
+                    event._triggered = False
+
+                assert not self.completed  # TODO make a unit test for this.
+
 
 class GameProgression:
     """ GameProgression keeps track of the progression of a game.
@@ -948,29 +980,29 @@ class GameProgression:
 
     @property
     def done(self) -> bool:
-        """ Whether all quests are completed or at least one has failed or is unfinishable. """
+        """ Whether all non-optional quests are completed or at least one has failed or is unfinishable. """
         return self.completed or self.failed
 
     @property
     def completed(self) -> bool:
-        """ Whether all quests are completed. """
+        """ Whether all non-optional quests are completed. """
         if not self.tracking_quests:
             return False  # There is nothing to be "completed".
 
-        return all(qp.completed for qp in self.quest_progressions if qp.completable)
+        return all(qp.completed for qp in self.quest_progressions if qp.completable and not qp.quest.optional)
 
     @property
     def failed(self) -> bool:
-        """ Whether at least one quest has failed or is unfinishable. """
+        """ Whether at least one non-optional quest has failed or is unfinishable. """
         if not self.tracking_quests:
             return False  # There is nothing to be "failed".
 
-        return any((qp.failed or qp.unfinishable) for qp in self.quest_progressions)
+        return any((qp.failed or qp.unfinishable) for qp in self.quest_progressions if not qp.quest.optional)
 
     @property
     def score(self) -> int:
         """ Sum of the reward of all completed quests. """
-        return sum(qp.quest.reward for qp in self.quest_progressions if qp.completed)
+        return sum(qp.quest.reward * qp.nb_completions for qp in self.quest_progressions)
 
     @property
     def tracking_quests(self) -> bool:
@@ -997,7 +1029,8 @@ class GameProgression:
             return None
 
         # Greedily build a new winning policy by merging all quest trees.
-        trees = [quest._tree for quest in self.quest_progressions if quest.completable and not quest.done]
+        trees = [quest._tree for quest in self.quest_progressions
+                 if quest.completable and not quest.done and not quest.quest.optional]
         if None in trees:
             # Some quests don't have triggering policy.
             return None
