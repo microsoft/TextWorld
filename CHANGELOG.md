@@ -2,6 +2,20 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.5.0] - 2021-12-01
+
+### Added
+
+- Add optional and repeatable quests. [288](https://github.com/microsoft/TextWorld/pull/288)
+
+## [1.4.5] - 2021-10-29
+
+### Fixed
+
+- Update notebooks. [285](https://github.com/microsoft/TextWorld/pull/285)
+- Fix Azure pipelines. [283](https://github.com/microsoft/TextWorld/pull/283)
+- Extract description and inventory from Jericho. [278](https://github.com/microsoft/TextWorld/pull/278)
+
 ## [1.4.4] - 2021-09-02
 
 ### Added
