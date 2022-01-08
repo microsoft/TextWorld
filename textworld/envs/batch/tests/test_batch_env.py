@@ -4,6 +4,8 @@ import textworld
 import textworld.gym
 from textworld import EnvInfos
 from textworld.utils import make_temp_directory
+from textworld.envs import JerichoEnv
+from textworld.envs.batch.batch_env import AsyncBatchEnv, SyncBatchEnv
 
 
 def test_batch_env():
@@ -33,3 +35,31 @@ def test_batch_env():
         # env.close()
         del env
         print("OKAY")
+
+
+def test_seed():
+    batch_size = 4
+    env_options = EnvInfos(inventory=True, description=True, admissible_commands=True)
+    env_fns = [lambda: JerichoEnv(env_options) for _ in range(batch_size)]
+
+    env = SyncBatchEnv(env_fns)
+    seeds = env.seed(1234)
+    for seed, env_ in zip(seeds, env.envs):
+        assert seed == env_._seed
+
+    env.seed(range(batch_size))
+    for seed, env_ in zip(range(batch_size), env.envs):
+        assert seed == env_._seed
+
+    env.close()
+
+    env = AsyncBatchEnv(env_fns)
+    seeds = env.seed(1234)
+    for seed, env_ in zip(seeds, env.envs):
+        assert seed == env_.get_sync("_seed")
+
+    env.seed(range(batch_size))
+    for seed, env_ in zip(range(batch_size), env.envs):
+        assert seed == env_.get_sync("_seed")
+
+    env.close()

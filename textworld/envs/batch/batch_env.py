@@ -116,9 +116,12 @@ class AsyncBatchEnv(Environment):
             env.result()
 
     def seed(self, seed=None):
-        # Use a different seed for each env to decorrelate batch examples.
-        rng = np.random.RandomState(seed)
-        seeds = list(rng.randint(65635, size=self.batch_size))
+        seeds = seed
+        if seeds is None or isinstance(seeds, int):
+            # Use a different seed for each env to decorrelate batch examples.
+            rng = np.random.RandomState(seeds)
+            seeds = list(rng.randint(65635, size=self.batch_size))
+
         for env, seed in zip(self.envs, seeds):
             env.call_sync("seed", seed)
 
@@ -209,9 +212,12 @@ class SyncBatchEnv(Environment):
             env.load(game_file)
 
     def seed(self, seed=None):
-        # Use a different seed for each env to decorrelate batch examples.
-        rng = np.random.RandomState(seed)
-        seeds = list(rng.randint(65635, size=self.batch_size))
+        seeds = seed
+        if seeds is None or isinstance(seeds, int):
+            # Use a different seed for each env to decorrelate batch examples.
+            rng = np.random.RandomState(seeds)
+            seeds = list(rng.randint(65635, size=self.batch_size))
+
         for env, seed in zip(self.envs, seeds):
             env.seed(seed)
 
