@@ -128,8 +128,8 @@ class TextworldBatchGymEnv(gym.Env):
         self.batch_env.load(gamefiles)
 
         self.last_commands = [None] * self.batch_size
-        self.ob, infos = self.batch_env.reset()
-        return self.ob, infos
+        self.obs, infos = self.batch_env.reset()
+        return self.obs, infos
 
     def skip(self, nb_games: int = 1) -> None:
         """ Skip games.
