@@ -2,6 +2,16 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.5.1] - 2022-01-09
+
+### Added
+
+- Allow to provide list of seeds in `AsyncBatchEnv` and `SyncBatchEnv`. [290](https://github.com/microsoft/TextWorld/pull/290)
+
+### Fixed
+
+- Typo in `TextworldBatchGymEnv.reset`: `self.ob` instead of `self.obs`. [291](https://github.com/microsoft/TextWorld/pull/291)
+
 ## [1.5.0] - 2021-12-01
 
 ### Added
