@@ -126,6 +126,7 @@ def generate_text_from_grammar(game, grammar: Grammar):
     # Assign name and description to objects.
     for obj in game.world.objects:
         if obj.type in ["I", "P"]:
+            obj.name = obj.type
             continue
 
         assign_name_to_object(obj, grammar, game.infos)
