@@ -1,3 +1,5 @@
+from functools import partial
+
 import gym
 
 import textworld
@@ -34,13 +36,12 @@ def test_batch_env():
         env.reset()
         # env.close()
         del env
-        print("OKAY")
 
 
 def test_seed():
     batch_size = 4
     env_options = EnvInfos(inventory=True, description=True, admissible_commands=True)
-    env_fns = [lambda: JerichoEnv(env_options) for _ in range(batch_size)]
+    env_fns = [partial(JerichoEnv, env_options) for _ in range(batch_size)]
 
     env = SyncBatchEnv(env_fns)
     seeds = env.seed(1234)

@@ -38,6 +38,8 @@ def _child(env_fn, parent_pipe, pipe):
                 result = getattr(obj, attrs[-1])
             elif command[0] == "hasattr":
                 result = hasattr(obj, attrs[-1])
+            elif command[0] == "close":
+                break
 
             pipe.send(result)
 
@@ -189,6 +191,9 @@ class AsyncBatchEnv(Environment):
         # Join
         for env in self.envs:
             env.result()
+
+    def __del__(self):
+        self.close()
 
 
 class SyncBatchEnv(Environment):
