@@ -191,6 +191,7 @@ class VisualizationService:
         thread = Thread(target=wait_task, name='waiting_on_parent_exit')
         thread.start()
 
+        self.parent_conn.recv()  # Wait until server is ready.
         print("Viewer started at http://localhost:{}.".format(self.port))
         if self.open_automatically:
             check_modules(["webbrowser"], missing_modules)
@@ -262,6 +263,7 @@ class Server:
         :param conn: child connection from multiprocessing.Pipe.
         :param results: thread-safe queue for results.
         """
+        conn.send("Ready!")  # Tell the main thread the server is ready.
         while True:
             game_state = conn.recv()
             results.put(game_state)
