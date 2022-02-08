@@ -2,6 +2,18 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.5.2] - 2022-02-08
+
+### Fixed
+
+- Use functools.partial instead of lambda functions. It's more multiprocessing friendly. [294](https://github.com/microsoft/TextWorld/pull/294)
+- Wait for visualization server to be ready before connecting with Selenium. [294](https://github.com/microsoft/TextWorld/pull/294)
+- Use constants' type as their name instead of `None`. [293](https://github.com/microsoft/TextWorld/pull/293)
+
+## Removed
+
+- Remove MacOS 10.14 CI. [294](https://github.com/microsoft/TextWorld/pull/294)
+
 ## [1.5.1] - 2022-01-09
 
 ### Added
