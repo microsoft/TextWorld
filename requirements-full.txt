@@ -18,7 +18,7 @@ gym>=0.10.11
 # For visualization
 pybars3>=0.9.3
 flask>=1.0.2
-selenium>=3.12.0
+selenium>=3.12.0,<4.3
 greenlet>=0.4.13
 gevent>=1.3.5
 pillow>=5.1.0
