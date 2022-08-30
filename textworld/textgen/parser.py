@@ -86,7 +86,7 @@ class TextGrammarParser(Parser):
 
     @tatsumasu()
     def _literal_(self):  # noqa
-        self._pattern('(([^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]*\\))+(?<!\\s))?')
+        self._pattern('(([^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]*\\))+(?<!\\s))')
 
     @tatsumasu('Literal')
     def _literalAlternative_(self):  # noqa
@@ -137,6 +137,8 @@ class TextGrammarParser(Parser):
                 self._match_()
             with self._option():
                 self._entity_()
+            with self._option():
+                self._void()
             self._error('no available options')
 
     @tatsumasu()
