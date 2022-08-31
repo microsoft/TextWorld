@@ -1,2 +1,2 @@
-__version__ = '1.5.2'
-__prerelease__ = '1.5.2rc1'
+__version__ = '1.5.3'
+__prerelease__ = '1.5.3rc1'

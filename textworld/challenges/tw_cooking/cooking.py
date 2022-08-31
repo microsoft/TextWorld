@@ -729,7 +729,7 @@ class RandomWalk:
         self.max_attempts = max_attempts
         self.neighbors = neighbors
         self.rng = rng or np.random.RandomState(1234)
-        self.grid = nx.grid_2d_graph(size[0], size[1], create_using=nx.OrderedGraph())
+        self.grid = nx.grid_2d_graph(size[0], size[1], create_using=nx.Graph())
         self.nb_attempts = 0
 
     def _walk(self, G, node, remaining):
@@ -773,7 +773,7 @@ class RandomWalk:
         self.rng.shuffle(nodes)
 
         for start in nodes:
-            G = nx.OrderedGraph()
+            G = nx.Graph()
             room = rooms[0][0]
             G.add_node(start, id="r_{}".format(len(G)), name=room, start=True)
 

@@ -7,7 +7,7 @@
 
 symbol = ?"[\w()/!<>-]+" ;
 
-literal = ?"(([^;|<>\n\[\]()]|\[[^\[\]]*\]|\([^()]*\))+(?<!\s))?" ;
+literal = ?"(([^;|<>\n\[\]()]|\[[^\[\]]*\]|\([^()]*\))+(?<!\s))" ;
 
 literalAlternative::Literal = value:literal ;
 
@@ -17,7 +17,7 @@ entity = adjectiveNoun | literalAlternative ;
 
 match::Match = lhs:entity "<->" rhs:entity ;
 
-alternative = match | entity;
+alternative = match | entity | ();
 
 alternatives = ";".{alternative}+ ;
 

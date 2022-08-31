@@ -10,6 +10,7 @@ from typing import List, Optional, Dict, Any, Tuple, Union
 import numpy as np
 import gym
 from gym.utils import colorize
+from gym.spaces import Space
 
 from textworld import EnvInfos
 from textworld.envs.wrappers import Filter, GenericEnvironment, Limit
@@ -86,8 +87,8 @@ class TextworldBatchGymEnv(gym.Env):
         BatchEnvType = AsyncBatchEnv if self.batch_size > 1 and asynchronous else SyncBatchEnv
         self.batch_env = BatchEnvType(env_fns, auto_reset)
 
-        self.action_space = action_space
-        self.observation_space = observation_space
+        self.action_space = action_space or Space()
+        self.observation_space = observation_space or Space()
 
     def seed(self, seed: Optional[int] = None) -> List[int]:
         """ Set the seed for this environment's random generator(s).

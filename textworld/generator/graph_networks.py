@@ -37,8 +37,8 @@ def gen_layout(rng, n_nodes=5, h=10, w=10):
     Generate a map with n_nodes rooms by
     picking a subgraph from a h,w grid.
     '''
-    G = nx.grid_2d_graph(h, w, create_using=nx.OrderedGraph())
-    new_G = nx.OrderedGraph()
+    G = nx.grid_2d_graph(h, w, create_using=nx.Graph())
+    new_G = nx.Graph()
     pos = (rng.randint(0, h - 1),
            rng.randint(0, w - 1))
     visited = set()
@@ -155,7 +155,7 @@ def create_map(rng, n_nodes, h, w, possible_door_states=["open", "closed", "lock
 def create_small_map(rng, n_rooms, possible_door_states=["open", "closed", "locked"]):
     G = nx.grid_2d_graph(3, 3)
 
-    G = nx.OrderedGraph()
+    G = nx.Graph()
     room0 = (0, 0)
     G.add_node(room0, name="r_0")
 
