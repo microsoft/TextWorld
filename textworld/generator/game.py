@@ -64,11 +64,6 @@ class Event:
 
     An event gets triggered when its set of conditions become all statisfied.
 
-    Attributes:
-        actions: Actions to be performed to trigger this event
-        commands: Human readable version of the actions.
-        condition: :py:class:`textworld.logic.Action` that can only be applied
-                    when all conditions are statisfied.
     """
 
     def __init__(self, actions: Iterable[Action] = (),
@@ -85,10 +80,14 @@ class Event:
         """
         self.actions = actions
         self.commands = commands
+
+        #: :py:class:`textworld.logic.Action`: Action that can only be applied
+        #:  when all conditions are statisfied.
         self.condition = self.set_conditions(conditions)
 
     @property
-    def actions(self) -> Iterable[Action]:
+    def actions(self) -> Tuple[Action]:
+        """ Actions to perform to trigger this event. """
         return self._actions
 
     @actions.setter
@@ -96,7 +95,8 @@ class Event:
         self._actions = tuple(actions)
 
     @property
-    def commands(self) -> Iterable[str]:
+    def commands(self) -> Tuple[str]:
+        """ Human readable version of the actions. """
         return self._commands
 
     @commands.setter
@@ -177,18 +177,6 @@ class Quest:
     A quest is defined by a mutually exclusive set of winning events and
     a mutually exclusive set of failing events.
 
-    Attributes:
-        win_events: Mutually exclusive set of winning events. That is,
-                    only one such event needs to be triggered in order
-                    to complete this quest.
-        fail_events: Mutually exclusive set of failing events. That is,
-                     only one such event needs to be triggered in order
-                     to fail this quest.
-        reward: Reward given for completing this quest.
-        desc: A text description of the quest.
-        commands: List of text commands leading to this quest completion.
-        optional: Whether this quest is optional or not to finish the game.
-        repeatable: Whether this quest can be completed more than once.
     """
 
     def __init__(self,
@@ -217,13 +205,18 @@ class Quest:
         """
         self.win_events = tuple(win_events)
         self.fail_events = tuple(fail_events)
+
+        #: str: A text description of the quest.
         self.desc = desc
         self.commands = tuple(commands)
+        #: bool: Whether this quest is optional or not to finish the game.
         self.optional = optional
+        #: bool: Whether this quest can be completed more than once.
         self.repeatable = repeatable
         if self.repeatable:
             assert self.optional  # Only optional quest can be repeatable.
 
+        #: int: Reward given for completing this quest.
         # Unless explicitly provided, reward is set to 1 if there is at least
         # one winning events otherwise it is set to 0.
         self.reward = int(len(win_events) > 0) if reward is None else reward
@@ -232,7 +225,11 @@ class Quest:
             raise UnderspecifiedQuestError()
 
     @property
-    def win_events(self) -> Iterable[Event]:
+    def win_events(self) -> Tuple[Event]:
+        """ Mutually exclusive set of winning events. That is,
+            only one such event needs to be triggered in order
+            to complete this quest.
+        """
         return self._win_events
 
     @win_events.setter
@@ -240,7 +237,11 @@ class Quest:
         self._win_events = tuple(events)
 
     @property
-    def fail_events(self) -> Iterable[Event]:
+    def fail_events(self) -> Tuple[Event]:
+        """ Mutually exclusive set of failing events. That is,
+            only one such event needs to be triggered in order
+            to fail this quest.
+        """
         return self._fail_events
 
     @fail_events.setter
@@ -249,6 +250,7 @@ class Quest:
 
     @property
     def commands(self) -> Iterable[str]:
+        """ List of text commands leading to this quest completion. """
         return self._commands
 
     @commands.setter
@@ -297,8 +299,8 @@ class Quest:
     def serialize(self) -> Mapping:
         """ Serialize this quest.
 
-        Results:
-            Quest's data serialized to be JSON compatible
+        Returns:
+            Quest's data serialized to be JSON compatible.
         """
         data = {}
         data["desc"] = self.desc
@@ -370,8 +372,8 @@ class EntityInfo:
     def serialize(self) -> Mapping:
         """ Serialize this object.
 
-        Results:
-            EntityInfo's data serialized to be JSON compatible
+        Returns:
+            EntityInfo's data serialized to be JSON compatible.
         """
         return {slot: getattr(self, slot) for slot in self.__slots__}
 
@@ -1071,11 +1073,6 @@ class GameOptions:
             Number of objects in the game.
         nb_parallel_quests (int):
             Number of parallel quests, i.e. not sharing a common goal.
-        quest_length (int):
-            Number of actions that need to be performed to complete the game.
-        quest_breadth (int):
-            Number of subquests per independent quest. It controls how nonlinear
-            a quest can be (1: linear).
         quest_depth (int):
             Number of actions that need to be performed to solve a subquest.
         path (str):
@@ -1086,27 +1083,6 @@ class GameOptions:
         file_ext (str):
             Type of the generated game file. Either .z8 (Z-Machine) or .ulx (Glulx).
             If `path` already has an extension, this is ignored.
-        seeds (Optional[Union[int, Dict]]):
-            Seeds for the different generation processes.
-
-               * If `None`, seeds will be sampled from
-                 :py:data:`textworld.g_rng <textworld.utils.g_rng>`.
-               * If `int`, it acts as a seed for a random generator that will be
-                 used to sample the other seeds.
-               * If dict, the following keys can be set:
-
-                 * `'map'`: control the map generation;
-                 * `'objects'`: control the type of objects and their
-                   location;
-                 * `'quest'`: control the quest generation;
-                 * `'grammar'`: control the text generation.
-
-                 For any key missing, a random number gets assigned (sampled
-                 from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
-        kb (KnowledgeBase):
-            The knowledge base containing the logic and the text grammars (see
-            :py:class:`textworld.generator.KnowledgeBase <textworld.generator.data.KnowledgeBase>`
-            for more information).
         chaining (ChainingOptions):
             For customizing the quest generation (see
             :py:class:`textworld.generator.ChainingOptions <textworld.generator.chaining.ChainingOptions>`
@@ -1132,6 +1108,7 @@ class GameOptions:
 
     @property
     def quest_length(self) -> int:
+        """ Number of actions that need to be performed to complete the game. """
         assert self.chaining.min_length == self.chaining.max_length
         return self.chaining.min_length
 
@@ -1143,6 +1120,9 @@ class GameOptions:
 
     @property
     def quest_breadth(self) -> int:
+        """ Number of subquests per independent quest. It controls how nonlinear
+            a quest can be (1 means linear).
+        """
         assert self.chaining.min_breadth == self.chaining.max_breadth
         return self.chaining.min_breadth
 
@@ -1153,6 +1133,23 @@ class GameOptions:
 
     @property
     def seeds(self):
+        """ Seeds for the different generation processes.
+
+               * If `None`, seeds will be sampled from
+                 :py:data:`textworld.g_rng <textworld.utils.g_rng>`.
+               * If `int`, it acts as a seed for a random generator that will be
+                 used to sample the other seeds.
+               * If dict, the following keys can be set:
+
+                 * `'map'`: control the map generation;
+                 * `'objects'`: control the type of objects and their
+                   location;
+                 * `'quest'`: control the quest generation;
+                 * `'grammar'`: control the text generation.
+
+                 For any key missing, a random number gets assigned (sampled
+                 from :py:data:`textworld.g_rng <textworld.utils.g_rng>`).
+        """
         if self._seeds is None:
             self.seeds = {}  # Generate seeds from g_rng.
 
@@ -1190,6 +1187,10 @@ class GameOptions:
 
     @property
     def kb(self) -> KnowledgeBase:
+        """ The knowledge base containing the logic and the text grammars (see
+            :py:class:`textworld.generator.KnowledgeBase <textworld.generator.data.KnowledgeBase>`
+            for more information).
+        """
         if self._kb is None:
             self.kb = KnowledgeBase.load()
 
