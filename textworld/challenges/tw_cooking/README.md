@@ -6,7 +6,7 @@
 
 The development branch of TextWorld can be installed using
 
-    pip install https://github.com/Microsoft/TextWorld/archive/master.zip
+    pip install https://github.com/Microsoft/TextWorld/archive/main.zip
 
 ## Usage
 
