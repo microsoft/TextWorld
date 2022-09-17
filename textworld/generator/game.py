@@ -1037,12 +1037,12 @@ class GameProgression:
             # Some quests don't have triggering policy.
             return None
 
-        master_quest_tree = ActionDependencyTree(kb=self.game.kb,
-                                                 element_type=ActionDependencyTreeElement,
-                                                 trees=trees)
+        main_quest_tree = ActionDependencyTree(kb=self.game.kb,
+                                               element_type=ActionDependencyTreeElement,
+                                               trees=trees)
 
         # Discard all "trigger" actions.
-        return tuple(a for a in master_quest_tree.flatten() if a.name != "trigger")
+        return tuple(a for a in main_quest_tree.flatten() if a.name != "trigger")
 
     def update(self, action: Action) -> None:
         """ Update the state of the game given the provided action.
