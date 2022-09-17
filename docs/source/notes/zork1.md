@@ -3,8 +3,9 @@ Some notes about Zork1.
 
 ## Stochasticity
 Zork1 has some stochasticity in it:
- - the thief will wander randomly in the dungeon stealing stuff.
- - when attacking someone, you can miss (to confirm)
+
+  - the thief will wander randomly in the dungeon stealing stuff.
+  - when attacking someone, you can miss (to confirm)
 
 ## Death
 It seems that when you died, you get to continue playing but you lose 10 points (I think it is always 10). However, on your third death, the game ends.

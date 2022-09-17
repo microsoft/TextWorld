@@ -89,13 +89,9 @@ class ChainingOptions:
             Whether to allow totally independent parallel chains.
         create_variables:
             Whether new variables may be created during chaining.
-        fixed_mapping:
-            A fixed mapping from placeholders to variables, for singletons.
         rng:
             If provided, randomize the order of the quests using this random
             number generator.
-        logic:
-            The rules of the game.
         rules_per_depth:
             A list of lists of rules for restricting the allowed actions at
             certain depths.
@@ -124,10 +120,12 @@ class ChainingOptions:
 
     @property
     def logic(self) -> GameLogic:
+        """ The rules of the game. """
         return self.kb.logic
 
     @property
     def fixed_mapping(self) -> GameLogic:
+        """ A fixed mapping from placeholders to variables, for singletons. """
         return self.kb.types.constants_mapping
 
     def get_rules(self, depth: int) -> Iterable[Rule]:
