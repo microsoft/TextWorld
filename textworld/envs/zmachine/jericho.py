@@ -83,7 +83,7 @@ class JerichoEnv(textworld.Environment):
             self._jericho.set_state(bkp)
          
         if self.infos.admissible_commands:
-            self.state['_valid_commands"] = self._jericho.get_valid_actions()
+            self.state["_valid_commands"] = self._jericho.get_valid_actions()
             self.state["admissible_commands"] = sorted(set(self.state["_valid_commands"]))
 
     def reset(self):
