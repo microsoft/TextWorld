@@ -81,6 +81,10 @@ class JerichoEnv(textworld.Environment):
             bkp = self._jericho.get_state()
             self.state["inventory"], _, _, _ = self._jericho.step("inventory")
             self._jericho.set_state(bkp)
+         
+        if self.infos.admissible_commands:
+            self.state['_valid_commands"] = self._jericho.get_valid_actions()
+            self.state["admissible_commands"] = sorted(set(self.state["_valid_commands"]))
 
     def reset(self):
         if not self.game_running:
