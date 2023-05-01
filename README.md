@@ -6,7 +6,7 @@ A text-based game generator and extensible sandbox learning environment for trai
 
 ## Installation
 
-TextWorld requires __Python 3.7+__ and only supports __Linux__ and __macOS__ systems at the moment. For __Windows__ users, docker can be used as a workaround (see Docker section below).
+TextWorld supports __Python 3.7/3.8/3.9__ for __Linux__ and __macOS__ systems only at the moment. For __Windows__ users, docker can be used as a workaround (see Docker section below).
 
 ### Requirements
 
