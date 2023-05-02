@@ -32,7 +32,15 @@ fi
 (
     echo "Installing Inform7 CLI"
     cd inform7-6M62/
-    ./install-inform7.sh --prefix $PWD
+    # Manually extract the files from the tarballs instead of calling install-inform7.sh.
+    # ./install-inform7.sh --prefix $PWD
+    tar xzf "inform7-common_6M62_all.tar.gz"
+    if [ "${machine}" != 'Mac' ]; then
+        ARCH=$(uname -m)
+        tar xzf "inform7-compilers_6M62_${ARCH}.tar.gz"
+        tar xzf "inform7-interpreters_6M62_${ARCH}.tar.gz"
+    fi
+
     cd ..
     rm -f inform7-6M62/share/inform7/Internal/I6T/Actions.i6t
     cp inform7/share/inform7/Internal/I6T/Actions.i6t inform7-6M62/share/inform7/Internal/I6T/Actions.i6t
@@ -46,9 +54,11 @@ if [ "${machine}" == 'Mac' ] && [ -e inform7-6M62 ]; then
     echo "Copying Mac compiled inform files"
     current_dir="$(pwd)"
     cd /Volumes/Inform/Inform.app/Contents/MacOS
+    mkdir -p "$current_dir/inform7-6M62/share/inform7/Compilers/"
+    mkdir -p "$current_dir/inform7-6M62/share/inform7/Interpreters/"
     cp cBlorb inform6 Inform intest ni "$current_dir/inform7-6M62/share/inform7/Compilers/"
-    cp ./git "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-git"
-    cp ./glulxe "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-glulxe"
+    cp ./git* "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-git"
+    cp ./glulxe* "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-glulxe"
 
     cd "$current_dir"
 
