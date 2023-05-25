@@ -2,8 +2,20 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
-## [1.5.2] - 2022-02-08
+## [1.5.3] - 2023-05-04
+### Fixed
+- Fix MacOS setup [311](https://github.com/microsoft/TextWorld/pull/311)
+- Fix jquery security issue [309](https://github.com/microsoft/TextWorld/pull/309)
 
+## [1.5.2] - 2022-09-16
+### Fixed
+- Fix security issue [301](https://github.com/microsoft/TextWorld/pull/301)
+- Fix requirements and Inform7 links [303](https://github.com/microsoft/TextWorld/pull/303)
+- Fix gym version [305](https://github.com/microsoft/TextWorld/pull/305)
+- Fix documentation [306](https://github.com/microsoft/TextWorld/pull/306)
+- Rename main branch and references to it [307](https://github.com/microsoft/TextWorld/pull/307)
+
+## [1.5.2] - 2022-09-16
 ### Fixed
 
 - Use functools.partial instead of lambda functions. It's more multiprocessing friendly. [294](https://github.com/microsoft/TextWorld/pull/294)
