@@ -1,6 +1,7 @@
 # Main dependencies
 numpy>=1.14.5
 tqdm>=4.17.1
+cffi>=1.0.0
 networkx>=2
 more_itertools
 tatsu>=4.3.0,<5
