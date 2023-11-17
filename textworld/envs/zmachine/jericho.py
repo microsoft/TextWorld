@@ -59,10 +59,10 @@ class JerichoEnv(textworld.Environment):
         if not self._jericho.is_fully_supported:
             return  # No more information can be gathered.
 
-        for attr in self.infos.basics:
+        for attr in self.request_infos.basics:
             self.state[attr] = getattr(self._jericho, "get_" + attr, lambda: self.state.get(attr))()
 
-        for attr in self.infos.extras:
+        for attr in self.request_infos.extras:
             self.state["extra.{}".format(attr)] = getattr(self._jericho, "get_" + attr, lambda: None)()
 
         # Deal with information that has different method name in Jericho.
@@ -72,17 +72,17 @@ class JerichoEnv(textworld.Environment):
         self.state["moves"] = self._jericho.get_moves()
         self.state["location"] = self._jericho.get_player_location()
 
-        if self.infos.description:
+        if self.request_infos.description:
             bkp = self._jericho.get_state()
             self.state["description"], _, _, _ = self._jericho.step("look")
             self._jericho.set_state(bkp)
 
-        if self.infos.inventory:
+        if self.request_infos.inventory:
             bkp = self._jericho.get_state()
             self.state["inventory"], _, _, _ = self._jericho.step("inventory")
             self._jericho.set_state(bkp)
 
-        if self.infos.admissible_commands:
+        if self.request_infos.admissible_commands:
             self.state["_valid_commands"] = self._jericho.get_valid_actions()
             self.state["admissible_commands"] = sorted(set(self.state["_valid_commands"]))
 
@@ -124,7 +124,7 @@ class JerichoEnv(textworld.Environment):
 
     def copy(self) -> "JerichoEnv":
         """ Return a copy of this environment at the same state. """
-        env = JerichoEnv(self.infos)
+        env = JerichoEnv(self.request_infos)
         env._seed = self._seed
 
         if self.gamefile:
@@ -136,7 +136,7 @@ class JerichoEnv(textworld.Environment):
 
         # Copy core Environment's attributes.
         env.state = self.state.copy()
-        env.infos = self.infos.copy()
+        env.request_infos = self.request_infos.copy()
         return env
 
 

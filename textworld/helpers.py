@@ -18,13 +18,13 @@ from textworld.agents import HumanAgent
 from textworld.generator import make_game, compile_game
 
 
-def start(path: str, infos: Optional[EnvInfos] = None,
+def start(path: str, request_infos: Optional[EnvInfos] = None,
           wrappers: List[callable] = []) -> Environment:
     """ Starts a TextWorld environment to play a game.
 
     Arguments:
         path: Path to the game file.
-        infos:
+        request_infos:
             For customizing the information returned by this environment
             (see
             :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
@@ -48,11 +48,11 @@ def start(path: str, infos: Optional[EnvInfos] = None,
         backend = "json"
 
     if backend == "zmachine":
-        env = JerichoEnv(infos)
+        env = JerichoEnv(request_infos)
     elif backend == "glulx":
-        env = GitGlulxEnv(infos)
+        env = GitGlulxEnv(request_infos)
     elif backend == "json":
-        env = TextWorldEnv(infos)
+        env = TextWorldEnv(request_infos)
     else:
         msg = "Unsupported backend: {}".format(backend)
         raise ValueError(msg)

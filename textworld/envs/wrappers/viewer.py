@@ -32,10 +32,10 @@ class HtmlViewer(Wrapper):
         self.open_automatically = open_automatically
 
         # Rendering requires some additional information.
-        self.infos.game = True
-        self.infos.facts = True
-        self.infos.inventory = True
-        self.infos.objective = True
+        self.request_infos.game = True
+        self.request_infos.facts = True
+        self.request_infos.inventory = True
+        self.request_infos.objective = True
 
     @property
     def port(self):

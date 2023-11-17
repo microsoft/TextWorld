@@ -26,7 +26,7 @@ if __name__ == "__main__":
     args = build_parser().parse_args()
 
     gamefile = os.path.splitext(args.game)[0] + ".json"
-    env = textworld.start(gamefile, infos=EnvInfos(facts=True))
+    env = textworld.start(gamefile, request_infos=EnvInfos(facts=True))
     state = env.reset()
 
     show_graph(state.facts, renderer="browser")

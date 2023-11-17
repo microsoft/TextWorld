@@ -37,32 +37,32 @@ class HumanAgent(Agent):
         env.display_command_during_render = False
 
         if self.autocompletion:
-            env.infos.admissible_commands = True
+            env.request_infos.admissible_commands = True
 
         if self.oracle:
-            env.infos.policy_commands = True
-            env.infos.intermediate_reward = True
+            env.request_infos.policy_commands = True
+            env.request_infos.intermediate_reward = True
 
     def act(self, game_state, reward, done):
-        if (self.oracle and game_state.policy_commands and not done):
+        if (self.oracle and game_state["policy_commands"] and not done):
             text = '[{score}/{max_score}|({intermediate_score}): {policy}]\n'.format(
-                score=game_state.score,
-                max_score=game_state.max_score,
-                intermediate_score=game_state.intermediate_reward,
-                policy=" > ".join(game_state.policy_commands)
+                score=game_state["score"],
+                max_score=game_state["max_score"],
+                intermediate_score=game_state["intermediate_reward"],
+                policy=" > ".join(game_state["policy_commands"])
             )
             print("Oracle: {}\n".format(text))
 
         if prompt_toolkit_available:
             actions_completer = None
-            if self.autocompletion and game_state.admissible_commands:
-                actions_completer = WordCompleter(game_state.admissible_commands,
+            if self.autocompletion and game_state["admissible_commands"]:
+                actions_completer = WordCompleter(game_state["admissible_commands"],
                                                   ignore_case=True, sentence=True)
             action = prompt('> ', completer=actions_completer,
                             history=self._history, enable_history_search=True)
         else:
-            if self.autocompletion and game_state.admissible_commands:
-                print("Available actions: {}\n".format(game_state.admissible_commands))
+            if self.autocompletion and game_state["admissible_commands"]:
+                print("Available actions: {}\n".format(game_state["admissible_commands"]))
 
             action = input('> ')
 

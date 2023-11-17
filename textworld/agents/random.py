@@ -35,7 +35,7 @@ class RandomCommandAgent(Agent):
         self.rng = np.random.RandomState(self.seed)
 
     def reset(self, env):
-        env.infos.admissible_commands = True
+        env.request_infos.admissible_commands = True
         env.display_command_during_render = True
 
     def act(self, game_state, reward, done):

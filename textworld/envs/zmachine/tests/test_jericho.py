@@ -38,7 +38,7 @@ class TestJerichoEnv(unittest.TestCase):
         cls.options = textworld.GameOptions()
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
         cls.game, cls.game_file = testing.build_and_compile_game(cls.options)
-        cls.infos = EnvInfos(
+        cls.request_infos = EnvInfos(
             max_score=True,
             score=True,
             won=True,
@@ -50,7 +50,7 @@ class TestJerichoEnv(unittest.TestCase):
         shutil.rmtree(cls.tmpdir)
 
     def setUp(self):
-        self.env = JerichoEnv(self.infos)
+        self.env = JerichoEnv(self.request_infos)
         self.env.load(self.game_file)
         self.game_state = self.env.reset()
 
@@ -90,7 +90,7 @@ class TestJerichoEnv(unittest.TestCase):
             options.path = pjoin(tmpdir, "tw-no_quest.z8")
             game_file = textworld.generator.compile_game(game, options)
 
-            env = JerichoEnv(self.infos)
+            env = JerichoEnv(self.request_infos)
             env.load(game_file)
             game_state = env.reset()
 
@@ -139,7 +139,7 @@ class TestJerichoEnv(unittest.TestCase):
         assert "> look" in text2
 
     def test_step(self):
-        env = JerichoEnv(self.infos)
+        env = JerichoEnv(self.request_infos)
         with pytest.raises(GameNotRunningError):
             env.step("look")
 
@@ -154,7 +154,7 @@ class TestJerichoEnv(unittest.TestCase):
         game_file = pjoin(self.tmpdir, "dummy.z8")
         shutil.copyfile(self.game_file, game_file)
 
-        env = JerichoEnv(self.infos)
+        env = JerichoEnv(self.request_infos)
 
         with pytest.warns(jericho.UnsupportedGameWarning):
             env.load(game_file)
@@ -174,7 +174,7 @@ class TestJerichoEnv(unittest.TestCase):
         assert game_state.lost is None
 
     def test_copy(self):
-        env = JerichoEnv(self.infos)
+        env = JerichoEnv(self.request_infos)
 
         # Copy before env.reset.
         bkp = env.copy()
@@ -182,14 +182,14 @@ class TestJerichoEnv(unittest.TestCase):
         assert bkp._seed == env._seed
         assert bkp._jericho == env._jericho
         assert bkp.state == env.state
-        assert bkp.infos == env.infos
+        assert bkp.request_infos == env.request_infos
 
         # Copy after env.reset.
         env.load(self.game_file)
         game_state = env.reset()
         bkp = env.copy()
         assert bkp.gamefile == env.gamefile
-        assert bkp.infos == env.infos
+        assert bkp.request_infos == env.request_infos
         assert bkp._seed == env._seed
         assert bkp._jericho != env._jericho  # Not the same object.
         assert_jericho_state_equals(bkp._jericho.get_state(),
@@ -227,7 +227,7 @@ class TestJerichoEnv(unittest.TestCase):
         assert bkp.state == env.state
 
     def test_load(self):
-        env = JerichoEnv(self.infos)
+        env = JerichoEnv(self.request_infos)
 
         env.load(self.game_file)
         env.reset()

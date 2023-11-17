@@ -15,7 +15,7 @@ class Recorder(Wrapper):
     def _wrap(self, env):
         super()._wrap(env)
         # Recording requires some additional information.
-        self.infos.last_action = True
+        self.request_infos.last_action = True
 
     def step(self, command: str) -> Tuple[GameState, float, bool]:
         res = super().step(command)

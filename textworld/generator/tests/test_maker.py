@@ -193,7 +193,7 @@ def test_manually_defined_objective():
     with make_temp_directory(prefix="test_manually_defined_objective") as tmpdir:
         game_file = M.compile(tmpdir)
 
-        env = textworld.start(game_file, infos=textworld.EnvInfos(objective=True))
+        env = textworld.start(game_file, request_infos=textworld.EnvInfos(objective=True))
         state = env.reset()
         assert state["objective"] == "There's nothing much to do in here."
 

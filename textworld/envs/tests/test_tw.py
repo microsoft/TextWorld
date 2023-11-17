@@ -28,7 +28,7 @@ class TestTextWorldEnv(unittest.TestCase):
 
         cls.game = testing.build_game(cls.options)
         cls.game.save(cls.gamefile)
-        cls.infos = EnvInfos(
+        cls.request_infos = EnvInfos(
             facts=True,
             policy_commands=True,
             admissible_commands=True,
@@ -40,7 +40,7 @@ class TestTextWorldEnv(unittest.TestCase):
         shutil.rmtree(cls.tmpdir)
 
     def setUp(self):
-        self.env = TextWorldEnv(self.infos)
+        self.env = TextWorldEnv(self.request_infos)
         self.env.load(self.gamefile)
 
     def test_feedback(self):

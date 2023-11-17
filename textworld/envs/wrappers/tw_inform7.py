@@ -159,10 +159,10 @@ class Inform7Data(textworld.core.Wrapper):
         self._prev_state = None
         self.state = self._wrapped_env.reset()
 
-        if self.infos.inventory:
+        if self.request_infos.inventory:
             self._track_info("inventory")
 
-        if self.infos.description:
+        if self.request_infos.description:
             self._track_info("description")
 
         # Always track moves and score.
@@ -199,11 +199,11 @@ class StateTracking(textworld.core.Wrapper):
 
     @property
     def tracking(self):
-        return (self.infos.intermediate_reward
-                or self.infos.policy_commands
-                or self.infos.admissible_commands
-                or self.infos.facts
-                or self.infos.last_action)
+        return (self.request_infos.intermediate_reward
+                or self.request_infos.policy_commands
+                or self.request_infos.admissible_commands
+                or self.request_infos.facts
+                or self.request_infos.last_action)
 
     def load(self, gamefile: str) -> None:
         self._wrapped_env.load(gamefile)
@@ -227,12 +227,12 @@ class StateTracking(textworld.core.Wrapper):
         self.state["lost"] = '*** You lost! ***' in self.state["feedback"]
 
         self.state["_winning_policy"] = self._current_winning_policy
-        if self.infos.policy_commands:
+        if self.request_infos.policy_commands:
             self.state["policy_commands"] = []
             if self._current_winning_policy is not None:
                 self.state["policy_commands"] = self._inform7.gen_commands_from_actions(self._current_winning_policy)
 
-        if self.infos.intermediate_reward:
+        if self.request_infos.intermediate_reward:
             self.state["intermediate_reward"] = 0
             if self.state["won"]:
                 # The last action led to winning the game.
@@ -249,21 +249,21 @@ class StateTracking(textworld.core.Wrapper):
                 diff = len(self._previous_winning_policy) - len(self._current_winning_policy)
                 self.state["intermediate_reward"] = int(diff > 0) - int(diff < 0)  # Sign function.
 
-        if self.infos.facts:
+        if self.request_infos.facts:
             self.state["facts"] = list(map(self._inform7.get_human_readable_fact, self.state["_facts"]))
 
         self.state["_last_action"] = self._last_action
-        if self.infos.last_action and self._last_action is not None:
+        if self.request_infos.last_action and self._last_action is not None:
             self.state["last_action"] = self._inform7.get_human_readable_action(self._last_action)
 
         self.state["_valid_actions"] = self._game_progression.valid_actions
-        if self.infos.admissible_commands:
+        if self.request_infos.admissible_commands:
             all_valid_commands = self._inform7.gen_commands_from_actions(self._game_progression.valid_actions)
             # To guarantee the order from one execution to another, we sort the commands.
             # Remove any potential duplicate commands (they would lead to the same result anyway).
             self.state["admissible_commands"] = sorted(set(all_valid_commands))
 
-        if self.infos.moves:
+        if self.request_infos.moves:
             self.state["moves"] = self._moves
 
     def _send(self, command: str) -> str:
@@ -276,7 +276,7 @@ class StateTracking(textworld.core.Wrapper):
             return self.state  # State tracking not needed.
 
         self._send('tw-trace-actions')  # Turn on print for Inform7 action events.
-        track_quests = (self.infos.intermediate_reward or self.infos.policy_commands)
+        track_quests = (self.request_infos.intermediate_reward or self.request_infos.policy_commands)
         self._game_progression = GameProgression(self._game, track_quests=track_quests)
         self._last_action = None
         self._previous_winning_policy = None
@@ -371,10 +371,10 @@ class GameData(textworld.core.Wrapper):
         def _get_event_facts(event):
             return tuple(map(self._inform7.get_human_readable_fact, event.condition.preconditions))
 
-        if self.infos.win_facts:
+        if self.request_infos.win_facts:
             self.state["win_facts"] = [[_get_event_facts(e) for e in q.win_events] for q in self._game.quests]
 
-        if self.infos.fail_facts:
+        if self.request_infos.fail_facts:
             self.state["fail_facts"] = [[_get_event_facts(e) for e in q.fail_events] for q in self._game.quests]
 
     def reset(self):

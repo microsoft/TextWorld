@@ -182,14 +182,14 @@ class Environment:
     You pick up the TextWorld style key from the ground.
     """
 
-    def __init__(self, infos: Optional[EnvInfos] = None) -> None:
+    def __init__(self, request_infos: Optional[EnvInfos] = None) -> None:
         """
         Arguments:
-            infos: Information to be included in the game state. By
-                       default, only the game's narrative is included.
+            request_infos: Information to be included in the game state. By
+                           default, only the game's narrative is included.
         """
         self.state = GameState()
-        self.infos = infos or EnvInfos()
+        self.request_infos = request_infos or EnvInfos()
 
     def load(self, path: str) -> None:
         """ Loads a new text-based game.
@@ -423,5 +423,5 @@ class EnvInfoMissingError(NameError):
 
     def __init__(self, requester, info):
         msg = ("The info '{info}' requested by `{requester}` is missing."
-               " Make sure it is enabled like so `Environment(infos=EnvInfos(`{info}`=True))`.")
+               " Make sure it is enabled like so `Environment(request_infos=EnvInfos(`{info}`=True))`.")
         super().__init__(msg.format(info=info, requester=requester))
