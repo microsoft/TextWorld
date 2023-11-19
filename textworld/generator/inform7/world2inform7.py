@@ -6,11 +6,11 @@ import re
 import os
 import shutil
 import warnings
+import importlib
 import subprocess
 import textwrap
 from os.path import join as pjoin
 from typing import Iterable, Optional, List
-from pkg_resources import Requirement, resource_filename
 
 import numpy as np
 
@@ -21,7 +21,7 @@ from textworld.generator.world import WorldRoom, WorldEntity
 from textworld.logic import Signature, Proposition, Action, Variable
 
 
-I7_DEFAULT_PATH = resource_filename(Requirement.parse('textworld'), 'textworld/thirdparty/inform7-6M62')
+I7_DEFAULT_PATH = pjoin(importlib.resources.files("textworld"), "thirdparty", "inform7-6M62")
 
 
 class TextworldInform7Warning(UserWarning):
