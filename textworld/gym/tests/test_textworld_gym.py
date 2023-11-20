@@ -6,6 +6,7 @@ import unittest
 from os.path import join as pjoin
 
 import gym
+import pytest
 
 import textworld
 import textworld.gym
@@ -13,6 +14,7 @@ from textworld import EnvInfos
 from textworld.utils import make_temp_directory
 
 
+@pytest.mark.filterwarnings("ignore::jericho.UnsupportedGameWarning")
 class TestGymIntegration(unittest.TestCase):
 
     @classmethod

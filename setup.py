@@ -66,9 +66,9 @@ setup(
     cffi_modules=["glk_build.py:ffibuilder"],
     setup_requires=['cffi>=1.0.0'],
     install_requires=open('requirements.txt').readlines(),
-    test_suite='nose.collector',
+    test_suite='pytest',
     tests_require=[
-        'nose==1.3.7',
+        'pytest',
     ],
     extras_require={
         'vis': open('requirements-vis.txt').readlines(),

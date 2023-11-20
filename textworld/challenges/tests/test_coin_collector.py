@@ -1,10 +1,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
+import pytest
+
 import textworld
 from textworld.challenges import coin_collector
 
 
+@pytest.mark.filterwarnings("ignore::textworld.GenerationWarning")
 def test_making_coin_collector():
     expected = {
         1: {"quest_length": 1, "nb_rooms": 1},
