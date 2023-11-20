@@ -1,9 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-
-from nose.tools import assert_raises
-
+import pytest
 from tatsu.exceptions import ParseError
 
 from textworld.logic import Action, Rule
@@ -52,11 +50,13 @@ def test_logic_parsing():
     assert Rule.parse("go :: at(P, r) & $link(r, d, r') & $unlocked(d) -> at(P, r')") == go
 
     # Make sure the types match in the whole expression
-    assert_raises(ValueError, Rule.parse, "take :: $at(P, r) & $in(c, r) & in(o: k, c) -> in(o, I)")
+    with pytest.raises(ValueError):
+        Rule.parse("take :: $at(P, r) & $in(c, r) & in(o: k, c) -> in(o, I)")
 
 
 def test_logic_parsing_eos():
-    assert_raises(ParseError, Predicate.parse, "at(P, r) & in(c, r)")
+    with pytest.raises(ParseError):
+        Predicate.parse("at(P, r) & in(c, r)")
 
 
 def test_state():
