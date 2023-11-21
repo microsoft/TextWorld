@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # CAVEAT UTILITOR
 #
@@ -10,15 +9,15 @@
 # Any changes you make to it will be overwritten the next time
 # the file is generated.
 
-
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import annotations
 
 import sys
 
 from tatsu.buffering import Buffer
 from tatsu.parsing import Parser
-from tatsu.parsing import tatsumasu, leftrec, nomemo
-from tatsu.parsing import leftrec, nomemo  # noqa
+from tatsu.parsing import tatsumasu
+from tatsu.parsing import leftrec, nomemo, isname # noqa
+from tatsu.infos import ParserConfig
 from tatsu.util import re, generic_main  # noqa
 
 
@@ -26,59 +25,43 @@ KEYWORDS = {}  # type: ignore
 
 
 class GameLogicBuffer(Buffer):
-    def __init__(
-        self,
-        text,
-        whitespace=None,
-        nameguard=None,
-        comments_re=None,
-        eol_comments_re='#.*$',
-        ignorecase=None,
-        namechars='',
-        **kwargs
-    ):
-        super(GameLogicBuffer, self).__init__(
-            text,
-            whitespace=whitespace,
-            nameguard=nameguard,
-            comments_re=comments_re,
-            eol_comments_re=eol_comments_re,
-            ignorecase=ignorecase,
-            namechars=namechars,
-            **kwargs
+    def __init__(self, text, /, config: ParserConfig = None, **settings):
+        config = ParserConfig.new(
+            config,
+            owner=self,
+            whitespace=None,
+            nameguard=None,
+            comments_re=None,
+            eol_comments_re='#.*?$',
+            ignorecase=False,
+            namechars='',
+            parseinfo=False,
         )
+        config = config.replace(**settings)
+        super().__init__(text, config=config)
 
 
 class GameLogicParser(Parser):
-    def __init__(
-        self,
-        whitespace=None,
-        nameguard=None,
-        comments_re=None,
-        eol_comments_re='#.*$',
-        ignorecase=None,
-        left_recursion=True,
-        parseinfo=True,
-        keywords=None,
-        namechars='',
-        buffer_class=GameLogicBuffer,
-        **kwargs
-    ):
-        if keywords is None:
-            keywords = KEYWORDS
-        super(GameLogicParser, self).__init__(
-            whitespace=whitespace,
-            nameguard=nameguard,
-            comments_re=comments_re,
-            eol_comments_re=eol_comments_re,
-            ignorecase=ignorecase,
-            left_recursion=left_recursion,
-            parseinfo=parseinfo,
-            keywords=keywords,
-            namechars=namechars,
-            buffer_class=buffer_class,
-            **kwargs
+    def __init__(self, /, config: ParserConfig = None, **settings):
+        config = ParserConfig.new(
+            config,
+            owner=self,
+            whitespace=None,
+            nameguard=None,
+            comments_re=None,
+            eol_comments_re='#.*?$',
+            ignorecase=False,
+            namechars='',
+            parseinfo=False,
+            keywords=KEYWORDS,
+            start='start',
         )
+        config = config.replace(**settings)
+        super().__init__(config=config)
+
+    @tatsumasu()
+    def _start_(self):  # noqa
+        self._document_()
 
     @tatsumasu()
     def _str_(self):  # noqa
@@ -86,7 +69,7 @@ class GameLogicParser(Parser):
 
     @tatsumasu()
     def _strBlock_(self):  # noqa
-        self._pattern('"""(.|\\n)*?"""')
+        self._pattern('"""(?:.|\\n)*?"""')
 
     @tatsumasu()
     def _name_(self):  # noqa
@@ -112,7 +95,13 @@ class GameLogicParser(Parser):
             self._token(':')
             self._name_()
             self.name_last_node('type')
-        self.ast._define(
+
+            self._define(
+                ['type'],
+                []
+            )
+
+        self._define(
             ['name', 'type'],
             []
         )
@@ -131,7 +120,8 @@ class GameLogicParser(Parser):
         self._gather(block2, sep2)
         self.name_last_node('types')
         self._token(')')
-        self.ast._define(
+
+        self._define(
             ['name', 'types'],
             []
         )
@@ -150,7 +140,8 @@ class GameLogicParser(Parser):
         self._gather(block2, sep2)
         self.name_last_node('arguments')
         self._token(')')
-        self.ast._define(
+
+        self._define(
             ['arguments', 'name'],
             []
         )
@@ -162,7 +153,8 @@ class GameLogicParser(Parser):
         self.name_last_node('preserve')
         self._proposition_()
         self.name_last_node('condition')
-        self.ast._define(
+
+        self._define(
             ['condition', 'preserve'],
             []
         )
@@ -189,7 +181,8 @@ class GameLogicParser(Parser):
             self._proposition_()
         self._positive_gather(block4, sep4)
         self.name_last_node('postconditions')
-        self.ast._define(
+
+        self._define(
             ['name', 'postconditions', 'preconditions'],
             []
         )
@@ -202,7 +195,13 @@ class GameLogicParser(Parser):
             self._token(':')
             self._name_()
             self.name_last_node('type')
-        self.ast._define(
+
+            self._define(
+                ['type'],
+                []
+            )
+
+        self._define(
             ['name', 'type'],
             []
         )
@@ -221,7 +220,8 @@ class GameLogicParser(Parser):
         self._gather(block2, sep2)
         self.name_last_node('parameters')
         self._token(')')
-        self.ast._define(
+
+        self._define(
             ['name', 'parameters'],
             []
         )
@@ -233,7 +233,8 @@ class GameLogicParser(Parser):
         self.name_last_node('preserve')
         self._predicate_()
         self.name_last_node('condition')
-        self.ast._define(
+
+        self._define(
             ['condition', 'preserve'],
             []
         )
@@ -260,7 +261,8 @@ class GameLogicParser(Parser):
             self._predicate_()
         self._positive_gather(block4, sep4)
         self.name_last_node('postconditions')
-        self.ast._define(
+
+        self._define(
             ['name', 'postconditions', 'preconditions'],
             []
         )
@@ -278,7 +280,8 @@ class GameLogicParser(Parser):
             self._predicate_()
         self._positive_gather(block2, sep2)
         self.name_last_node('rhs')
-        self.ast._define(
+
+        self._define(
             ['lhs', 'rhs'],
             []
         )
@@ -290,7 +293,11 @@ class GameLogicParser(Parser):
                 self._alias_()
             with self._option():
                 self._signature_()
-            self._error('no available options')
+            self._error(
+                'expecting one of: '
+                '<alias> <predName> <predicate>'
+                '<signature> [\\w/]+'
+            )
 
     @tatsumasu('ReverseRuleNode')
     def _reverseRule_(self):  # noqa
@@ -299,7 +306,8 @@ class GameLogicParser(Parser):
         self._token('::')
         self._ruleName_()
         self.name_last_node('rhs')
-        self.ast._define(
+
+        self._define(
             ['lhs', 'rhs'],
             []
         )
@@ -320,7 +328,8 @@ class GameLogicParser(Parser):
         self._predicateDecls_()
         self.name_last_node('predicates')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['predicates'],
             []
         )
@@ -341,7 +350,8 @@ class GameLogicParser(Parser):
         self._ruleDecls_()
         self.name_last_node('rules')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['rules'],
             []
         )
@@ -362,7 +372,8 @@ class GameLogicParser(Parser):
         self._reverseRuleDecls_()
         self.name_last_node('reverse_rules')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['reverse_rules'],
             []
         )
@@ -374,7 +385,8 @@ class GameLogicParser(Parser):
         self._ruleDecls_()
         self.name_last_node('constraints')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['constraints'],
             []
         )
@@ -394,8 +406,14 @@ class GameLogicParser(Parser):
             self._str_()
             self.name_last_node('definition')
             self._token(';')
+
+            self._define(
+                ['definition'],
+                []
+            )
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['definition', 'kind'],
             []
         )
@@ -408,7 +426,8 @@ class GameLogicParser(Parser):
         self._str_()
         self.name_last_node('source')
         self._token(';')
-        self.ast._define(
+
+        self._define(
             ['predicate', 'source'],
             []
         )
@@ -423,7 +442,8 @@ class GameLogicParser(Parser):
         self._closure(block1)
         self.name_last_node('predicates')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['predicates'],
             []
         )
@@ -439,7 +459,8 @@ class GameLogicParser(Parser):
         self._str_()
         self.name_last_node('event')
         self._token(';')
-        self.ast._define(
+
+        self._define(
             ['command', 'event', 'rule'],
             []
         )
@@ -454,7 +475,8 @@ class GameLogicParser(Parser):
         self._closure(block1)
         self.name_last_node('commands')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['commands'],
             []
         )
@@ -466,7 +488,8 @@ class GameLogicParser(Parser):
         self._strBlock_()
         self.name_last_node('code')
         self._token(';')
-        self.ast._define(
+
+        self._define(
             ['code'],
             []
         )
@@ -482,7 +505,12 @@ class GameLogicParser(Parser):
                 self._inform7Commands_()
             with self._option():
                 self._inform7Code_()
-            self._error('no available options')
+            self._error(
+                'expecting one of: '
+                "'code' 'commands' 'predicates' 'type'"
+                '<inform7Code> <inform7Commands>'
+                '<inform7Predicates> <inform7Type>'
+            )
 
     @tatsumasu('Inform7Node')
     def _inform7_(self):  # noqa
@@ -494,7 +522,8 @@ class GameLogicParser(Parser):
         self._closure(block1)
         self.name_last_node('parts')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['parts'],
             []
         )
@@ -512,7 +541,11 @@ class GameLogicParser(Parser):
                 self._constraints_()
             with self._option():
                 self._inform7_()
-            self._error('no available options')
+            self._error(
+                'expecting one of: '
+                "'constraints' 'inform7' 'predicates'"
+                "'reverse_rules' 'rules' <reverseRules>"
+            )
 
     @tatsumasu('TypeNode')
     def _type_(self):  # noqa
@@ -529,6 +562,11 @@ class GameLogicParser(Parser):
                 self._name_()
             self._positive_gather(block2, sep2)
             self.name_last_node('supertypes')
+
+            self._define(
+                ['supertypes'],
+                []
+            )
         self._token('{')
 
         def block4():
@@ -536,7 +574,8 @@ class GameLogicParser(Parser):
         self._closure(block4)
         self.name_last_node('parts')
         self._token('}')
-        self.ast._define(
+
+        self._define(
             ['name', 'parts', 'supertypes'],
             []
         )
@@ -549,14 +588,11 @@ class GameLogicParser(Parser):
         self._closure(block1)
         self.name_last_node('types')
         self._check_eof()
-        self.ast._define(
+
+        self._define(
             ['types'],
             []
         )
-
-    @tatsumasu()
-    def _start_(self):  # noqa
-        self._document_()
 
     @tatsumasu()
     def _onlyVariable_(self):  # noqa
@@ -601,7 +637,10 @@ class GameLogicParser(Parser):
         self._check_eof()
 
 
-class GameLogicSemantics(object):
+class GameLogicSemantics:
+    def start(self, ast):  # noqa
+        return ast
+
     def str(self, ast):  # noqa
         return ast
 
@@ -710,9 +749,6 @@ class GameLogicSemantics(object):
     def document(self, ast):  # noqa
         return ast
 
-    def start(self, ast):  # noqa
-        return ast
-
     def onlyVariable(self, ast):  # noqa
         return ast
 
@@ -735,16 +771,18 @@ class GameLogicSemantics(object):
         return ast
 
 
-def main(filename, start=None, **kwargs):
-    if start is None:
-        start = 'str'
+def main(filename, **kwargs):
     if not filename or filename == '-':
         text = sys.stdin.read()
     else:
         with open(filename) as f:
             text = f.read()
     parser = GameLogicParser()
-    return parser.parse(text, rule_name=start, filename=filename, **kwargs)
+    return parser.parse(
+        text,
+        filename=filename,
+        **kwargs
+    )
 
 
 if __name__ == '__main__':
@@ -752,9 +790,5 @@ if __name__ == '__main__':
     from tatsu.util import asjson
 
     ast = generic_main(main, GameLogicParser, name='GameLogic')
-    print('AST:')
-    print(ast)
-    print()
-    print('JSON:')
-    print(json.dumps(asjson(ast), indent=2))
-    print()
+    data = asjson(ast)
+    print(json.dumps(data, indent=2))

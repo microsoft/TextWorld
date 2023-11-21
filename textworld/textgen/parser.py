@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # CAVEAT UTILITOR
 #
@@ -10,15 +9,15 @@
 # Any changes you make to it will be overwritten the next time
 # the file is generated.
 
-
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import annotations
 
 import sys
 
 from tatsu.buffering import Buffer
 from tatsu.parsing import Parser
-from tatsu.parsing import tatsumasu, leftrec, nomemo
-from tatsu.parsing import leftrec, nomemo  # noqa
+from tatsu.parsing import tatsumasu
+from tatsu.parsing import leftrec, nomemo, isname # noqa
+from tatsu.infos import ParserConfig
 from tatsu.util import re, generic_main  # noqa
 
 
@@ -26,59 +25,43 @@ KEYWORDS = {}  # type: ignore
 
 
 class TextGrammarBuffer(Buffer):
-    def __init__(
-        self,
-        text,
-        whitespace=re.compile('[\\t ]+'),
-        nameguard=None,
-        comments_re=None,
-        eol_comments_re='^(#.*|\\s*)\\n',
-        ignorecase=None,
-        namechars='',
-        **kwargs
-    ):
-        super(TextGrammarBuffer, self).__init__(
-            text,
-            whitespace=whitespace,
-            nameguard=nameguard,
-            comments_re=comments_re,
-            eol_comments_re=eol_comments_re,
-            ignorecase=ignorecase,
-            namechars=namechars,
-            **kwargs
+    def __init__(self, text, /, config: ParserConfig = None, **settings):
+        config = ParserConfig.new(
+            config,
+            owner=self,
+            whitespace=re.compile('[\\t ]+'),
+            nameguard=None,
+            comments_re=None,
+            eol_comments_re='^(#.*|\\s*)\\n',
+            ignorecase=False,
+            namechars='',
+            parseinfo=False,
         )
+        config = config.replace(**settings)
+        super().__init__(text, config=config)
 
 
 class TextGrammarParser(Parser):
-    def __init__(
-        self,
-        whitespace=re.compile('[\\t ]+'),
-        nameguard=None,
-        comments_re=None,
-        eol_comments_re='^(#.*|\\s*)\\n',
-        ignorecase=None,
-        left_recursion=True,
-        parseinfo=True,
-        keywords=None,
-        namechars='',
-        buffer_class=TextGrammarBuffer,
-        **kwargs
-    ):
-        if keywords is None:
-            keywords = KEYWORDS
-        super(TextGrammarParser, self).__init__(
-            whitespace=whitespace,
-            nameguard=nameguard,
-            comments_re=comments_re,
-            eol_comments_re=eol_comments_re,
-            ignorecase=ignorecase,
-            left_recursion=left_recursion,
-            parseinfo=parseinfo,
-            keywords=keywords,
-            namechars=namechars,
-            buffer_class=buffer_class,
-            **kwargs
+    def __init__(self, /, config: ParserConfig = None, **settings):
+        config = ParserConfig.new(
+            config,
+            owner=self,
+            whitespace=re.compile('[\\t ]+'),
+            nameguard=None,
+            comments_re=None,
+            eol_comments_re='^(#.*|\\s*)\\n',
+            ignorecase=False,
+            namechars='',
+            parseinfo=False,
+            keywords=KEYWORDS,
+            start='start',
         )
+        config = config.replace(**settings)
+        super().__init__(config=config)
+
+    @tatsumasu()
+    def _start_(self):  # noqa
+        self._grammar_()
 
     @tatsumasu()
     def _symbol_(self):  # noqa
@@ -86,16 +69,12 @@ class TextGrammarParser(Parser):
 
     @tatsumasu()
     def _literal_(self):  # noqa
-        self._pattern('(([^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]*\\))+(?<!\\s))')
+        self._pattern('((?:[^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]*\\))+(?<!\\s))')
 
     @tatsumasu('Literal')
     def _literalAlternative_(self):  # noqa
         self._literal_()
         self.name_last_node('value')
-        self.ast._define(
-            ['value'],
-            []
-        )
 
     @tatsumasu('AdjectiveNoun')
     def _adjectiveNoun_(self):  # noqa
@@ -104,7 +83,8 @@ class TextGrammarParser(Parser):
         self._token('|')
         self._literal_()
         self.name_last_node('noun')
-        self.ast._define(
+
+        self._define(
             ['adjective', 'noun'],
             []
         )
@@ -116,7 +96,12 @@ class TextGrammarParser(Parser):
                 self._adjectiveNoun_()
             with self._option():
                 self._literalAlternative_()
-            self._error('no available options')
+            self._error(
+                'expecting one of: '
+                '((?:[^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]'
+                '*\\))+(?<!\\s)) <adjectiveNoun> <literal>'
+                '<literalAlternative>'
+            )
 
     @tatsumasu('Match')
     def _match_(self):  # noqa
@@ -125,7 +110,8 @@ class TextGrammarParser(Parser):
         self._token('<->')
         self._entity_()
         self.name_last_node('rhs')
-        self.ast._define(
+
+        self._define(
             ['lhs', 'rhs'],
             []
         )
@@ -139,7 +125,12 @@ class TextGrammarParser(Parser):
                 self._entity_()
             with self._option():
                 self._void()
-            self._error('no available options')
+            self._error(
+                'expecting one of: '
+                '((?:[^;|<>\\n\\[\\]()]|\\[[^\\[\\]]*\\]|\\([^()]'
+                '*\\))+(?<!\\s)) <adjectiveNoun> <entity>'
+                '<literal> <literalAlternative> <match>'
+            )
 
     @tatsumasu()
     def _alternatives_(self):  # noqa
@@ -164,8 +155,12 @@ class TextGrammarParser(Parser):
                     self._token('\n')
                 with self._option():
                     self._check_eof()
-                self._error('no available options')
-        self.ast._define(
+                self._error(
+                    'expecting one of: '
+                    "'\\n'"
+                )
+
+        self._define(
             ['alternatives', 'symbol'],
             []
         )
@@ -178,17 +173,17 @@ class TextGrammarParser(Parser):
         self._closure(block1)
         self.name_last_node('rules')
         self._check_eof()
-        self.ast._define(
+
+        self._define(
             ['rules'],
             []
         )
 
-    @tatsumasu()
-    def _start_(self):  # noqa
-        self._grammar_()
 
+class TextGrammarSemantics:
+    def start(self, ast):  # noqa
+        return ast
 
-class TextGrammarSemantics(object):
     def symbol(self, ast):  # noqa
         return ast
 
@@ -219,20 +214,19 @@ class TextGrammarSemantics(object):
     def grammar(self, ast):  # noqa
         return ast
 
-    def start(self, ast):  # noqa
-        return ast
 
-
-def main(filename, start=None, **kwargs):
-    if start is None:
-        start = 'symbol'
+def main(filename, **kwargs):
     if not filename or filename == '-':
         text = sys.stdin.read()
     else:
         with open(filename) as f:
             text = f.read()
     parser = TextGrammarParser()
-    return parser.parse(text, rule_name=start, filename=filename, **kwargs)
+    return parser.parse(
+        text,
+        filename=filename,
+        **kwargs
+    )
 
 
 if __name__ == '__main__':
@@ -240,9 +234,5 @@ if __name__ == '__main__':
     from tatsu.util import asjson
 
     ast = generic_main(main, TextGrammarParser, name='TextGrammar')
-    print('AST:')
-    print(ast)
-    print()
-    print('JSON:')
-    print(json.dumps(asjson(ast), indent=2))
-    print()
+    data = asjson(ast)
+    print(json.dumps(data, indent=2))

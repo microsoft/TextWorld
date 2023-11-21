@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # CAVEAT UTILITOR
 #
@@ -10,12 +9,16 @@
 # Any changes you make to it will be overwritten the next time
 # the file is generated.
 
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import annotations
+
+from typing import Any
+from dataclasses import dataclass
 
 from tatsu.objectmodel import Node
 from tatsu.semantics import ModelBuilderSemantics
 
 
+@dataclass(eq=False)
 class ModelBase(Node):
     pass
 
@@ -26,27 +29,32 @@ class TextGrammarModelBuilderSemantics(ModelBuilderSemantics):
             t for t in globals().values()
             if type(t) is type and issubclass(t, ModelBase)
         ] + (types or [])
-        super(TextGrammarModelBuilderSemantics, self).__init__(context=context, types=types)
+        super().__init__(context=context, types=types)
 
 
+@dataclass(eq=False)
 class Literal(ModelBase):
-    value = None
+    value: Any = None
 
 
+@dataclass(eq=False)
 class AdjectiveNoun(ModelBase):
-    adjective = None
-    noun = None
+    adjective: Any = None
+    noun: Any = None
 
 
+@dataclass(eq=False)
 class Match(ModelBase):
-    lhs = None
-    rhs = None
+    lhs: Any = None
+    rhs: Any = None
 
 
+@dataclass(eq=False)
 class ProductionRule(ModelBase):
-    alternatives = None
-    symbol = None
+    alternatives: Any = None
+    symbol: Any = None
 
 
+@dataclass(eq=False)
 class TextGrammar(ModelBase):
-    rules = None
+    rules: Any = None

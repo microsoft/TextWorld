@@ -1,11 +1,12 @@
 @@grammar :: GameLogic
 
-@@eol_comments :: ?"#.*$"
+@@eol_comments :: /#.*?$/
 
+start = document ;
 
 str = ?'"[^"]*"' ;
 
-strBlock = ?'"""(.|\n)*?"""' ;
+strBlock = ?'"""(?:.|\n)*?"""' ;
 
 name = ?"\w+" ;
 
@@ -89,8 +90,6 @@ type::TypeNode = "type" name:name [":" supertypes:",".{name}+] "{" parts:{typePa
 
 
 document::DocumentNode = types:{type}* $ ;
-
-start = document ;
 
 
 onlyVariable = @:variable $ ;

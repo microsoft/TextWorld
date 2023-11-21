@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # CAVEAT UTILITOR
 #
@@ -10,12 +9,16 @@
 # Any changes you make to it will be overwritten the next time
 # the file is generated.
 
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import annotations
+
+from typing import Any
+from dataclasses import dataclass
 
 from tatsu.objectmodel import Node
 from tatsu.semantics import ModelBuilderSemantics
 
 
+@dataclass(eq=False)
 class ModelBase(Node):
     pass
 
@@ -26,119 +29,143 @@ class GameLogicModelBuilderSemantics(ModelBuilderSemantics):
             t for t in globals().values()
             if type(t) is type and issubclass(t, ModelBase)
         ] + (types or [])
-        super(GameLogicModelBuilderSemantics, self).__init__(context=context, types=types)
+        super().__init__(context=context, types=types)
 
 
+@dataclass(eq=False)
 class VariableNode(ModelBase):
-    name = None
-    type = None
+    name: Any = None
+    type: Any = None
 
 
+@dataclass(eq=False)
 class SignatureNode(ModelBase):
-    name = None
-    types = None
+    name: Any = None
+    types: Any = None
 
 
+@dataclass(eq=False)
 class PropositionNode(ModelBase):
-    arguments = None
-    name = None
+    arguments: Any = None
+    name: Any = None
 
 
+@dataclass(eq=False)
 class ActionPreconditionNode(ModelBase):
-    condition = None
-    preserve = None
+    condition: Any = None
+    preserve: Any = None
 
 
+@dataclass(eq=False)
 class ActionNode(ModelBase):
-    name = None
-    postconditions = None
-    preconditions = None
+    name: Any = None
+    postconditions: Any = None
+    preconditions: Any = None
 
 
+@dataclass(eq=False)
 class PlaceholderNode(ModelBase):
-    name = None
-    type = None
+    name: Any = None
+    type: Any = None
 
 
+@dataclass(eq=False)
 class PredicateNode(ModelBase):
-    name = None
-    parameters = None
+    name: Any = None
+    parameters: Any = None
 
 
+@dataclass(eq=False)
 class RulePreconditionNode(ModelBase):
-    condition = None
-    preserve = None
+    condition: Any = None
+    preserve: Any = None
 
 
+@dataclass(eq=False)
 class RuleNode(ModelBase):
-    name = None
-    postconditions = None
-    preconditions = None
+    name: Any = None
+    postconditions: Any = None
+    preconditions: Any = None
 
 
+@dataclass(eq=False)
 class AliasNode(ModelBase):
-    lhs = None
-    rhs = None
+    lhs: Any = None
+    rhs: Any = None
 
 
+@dataclass(eq=False)
 class ReverseRuleNode(ModelBase):
-    lhs = None
-    rhs = None
+    lhs: Any = None
+    rhs: Any = None
 
 
+@dataclass(eq=False)
 class PredicatesNode(ModelBase):
-    predicates = None
+    predicates: Any = None
 
 
+@dataclass(eq=False)
 class RulesNode(ModelBase):
-    rules = None
+    rules: Any = None
 
 
+@dataclass(eq=False)
 class ReverseRulesNode(ModelBase):
-    reverse_rules = None
+    reverse_rules: Any = None
 
 
+@dataclass(eq=False)
 class ConstraintsNode(ModelBase):
-    constraints = None
+    constraints: Any = None
 
 
+@dataclass(eq=False)
 class Inform7TypeNode(ModelBase):
-    definition = None
-    kind = None
+    definition: Any = None
+    kind: Any = None
 
 
+@dataclass(eq=False)
 class Inform7PredicateNode(ModelBase):
-    predicate = None
-    source = None
+    predicate: Any = None
+    source: Any = None
 
 
+@dataclass(eq=False)
 class Inform7PredicatesNode(ModelBase):
-    predicates = None
+    predicates: Any = None
 
 
+@dataclass(eq=False)
 class Inform7CommandNode(ModelBase):
-    command = None
-    event = None
-    rule = None
+    command: Any = None
+    event: Any = None
+    rule: Any = None
 
 
+@dataclass(eq=False)
 class Inform7CommandsNode(ModelBase):
-    commands = None
+    commands: Any = None
 
 
+@dataclass(eq=False)
 class Inform7CodeNode(ModelBase):
-    code = None
+    code: Any = None
 
 
+@dataclass(eq=False)
 class Inform7Node(ModelBase):
-    parts = None
+    parts: Any = None
 
 
+@dataclass(eq=False)
 class TypeNode(ModelBase):
-    name = None
-    parts = None
-    supertypes = None
+    name: Any = None
+    parts: Any = None
+    supertypes: Any = None
 
 
+@dataclass(eq=False)
 class DocumentNode(ModelBase):
-    types = None
+    types: Any = None
