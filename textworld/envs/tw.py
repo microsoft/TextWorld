@@ -21,13 +21,13 @@ class TextWorldEnv(textworld.Environment):
     Environment for playing games by TextWorld.
     """
 
-    def __init__(self, infos: Optional[EnvInfos] = None) -> None:
+    def __init__(self, request_infos: Optional[EnvInfos] = None) -> None:
         """
         Arguments:
-            infos: Information to be included in the game state. By
-                   default, only the game's narrative is included.
+            request_infos: Information to be included in the game state. By
+                           default, only the game's narrative is included.
         """
-        super().__init__(infos)
+        super().__init__(request_infos)
         self._gamefile = None
         self._game = None
         self._inform7 = None
@@ -62,12 +62,12 @@ class TextWorldEnv(textworld.Environment):
         self.state["lost"] = self._game_progression.failed
 
         self.state["_winning_policy"] = self._current_winning_policy
-        if self.infos.policy_commands:
+        if self.request_infos.policy_commands:
             self.state["policy_commands"] = []
             if self._game_progression.winning_policy is not None:
                 self.state["policy_commands"] = self._inform7.gen_commands_from_actions(self._current_winning_policy)
 
-        if self.infos.intermediate_reward:
+        if self.request_infos.intermediate_reward:
             self.state["intermediate_reward"] = 0
             if self.state["won"]:
                 # The last action led to winning the game.
@@ -84,12 +84,12 @@ class TextWorldEnv(textworld.Environment):
                 diff = len(self._previous_winning_policy) - len(self._current_winning_policy)
                 self.state["intermediate_reward"] = int(diff > 0) - int(diff < 0)  # Sign function.
 
-        if self.infos.facts:
+        if self.request_infos.facts:
             self.state["facts"] = list(map(self._inform7.get_human_readable_fact, self.state["_facts"]))
 
         self.state["last_action"] = None
         self.state["_last_action"] = self._last_action
-        if self.infos.last_action and self._last_action is not None:
+        if self.request_infos.last_action and self._last_action is not None:
             self.state["last_action"] = self._inform7.get_human_readable_action(self._last_action)
 
         self.state["_valid_actions"] = self._game_progression.valid_actions
@@ -98,7 +98,7 @@ class TextWorldEnv(textworld.Environment):
         # Remove any potential duplicate commands (they would lead to the same result anyway).
         self.state["admissible_commands"] = sorted(set(self.state["_valid_commands"]))
 
-        if self.infos.moves:
+        if self.request_infos.moves:
             self.state["moves"] = self._moves
 
     def reset(self):
@@ -154,7 +154,7 @@ class TextWorldEnv(textworld.Environment):
 
         # Copy core Environment's attributes.
         env.state = self.state.copy()
-        env.infos = self.infos.copy()
+        env.request_infos = self.request_infos.copy()
 
         env._gamefile = self._gamefile
         env._game = self._game  # Reference

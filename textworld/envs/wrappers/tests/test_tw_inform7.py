@@ -34,7 +34,7 @@ class TestInform7Data(unittest.TestCase):
         cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
         cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
-        cls.infos = EnvInfos(
+        cls.request_infos = EnvInfos(
             inventory=True,
             description=True,
             score=True,
@@ -48,10 +48,10 @@ class TestInform7Data(unittest.TestCase):
         shutil.rmtree(cls.tmpdir)
 
     def setUp(self):
-        self.env_z8 = Inform7Data(JerichoEnv(self.infos))
+        self.env_z8 = Inform7Data(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = Inform7Data(GitGlulxEnv(self.infos))
+        self.env_ulx = Inform7Data(GitGlulxEnv(self.request_infos))
         self.env_ulx.load(self.gamefile_ulx)
 
     def tearDown(self):
@@ -160,7 +160,7 @@ class TestInform7Data(unittest.TestCase):
         # Copy before env.reset.
         env = self.env_z8.copy()
         assert env.state == self.env_z8.state
-        assert env.infos == self.env_z8.infos
+        assert env.request_infos == self.env_z8.request_infos
         assert env._tracked_infos == self.env_z8._tracked_infos
         assert env._prev_state == self.env_z8._prev_state
 
@@ -168,7 +168,7 @@ class TestInform7Data(unittest.TestCase):
         self.env_z8.reset()
         env = self.env_z8.copy()
         assert sorted(env.state.items()) == sorted(self.env_z8.state.items())
-        assert env.infos == self.env_z8.infos
+        assert env.request_infos == self.env_z8.request_infos
         assert env._tracked_infos == self.env_z8._tracked_infos
         assert env._prev_state == self.env_z8._prev_state
 
@@ -196,7 +196,7 @@ class TestTWInform7(unittest.TestCase):
         cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
         cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
-        cls.infos = EnvInfos(
+        cls.request_infos = EnvInfos(
             inventory=True,
             description=True,
             score=True,
@@ -210,10 +210,10 @@ class TestTWInform7(unittest.TestCase):
         shutil.rmtree(cls.tmpdir)
 
     def setUp(self):
-        self.env_z8 = TWInform7(JerichoEnv(self.infos))
+        self.env_z8 = TWInform7(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = TWInform7(GitGlulxEnv(self.infos))
+        self.env_ulx = TWInform7(GitGlulxEnv(self.request_infos))
         self.env_ulx.load(self.gamefile_ulx)
 
     def tearDown(self):
@@ -237,7 +237,7 @@ class TestTWInform7(unittest.TestCase):
         # Copy before env.reset.
         env = self.env_z8.copy()
         assert env.state == self.env_z8.state
-        assert env.infos == self.env_z8.infos
+        assert env.request_infos == self.env_z8.request_infos
         assert env._tracked_infos == self.env_z8._tracked_infos
         assert env._prev_state == self.env_z8._prev_state
 
@@ -245,7 +245,7 @@ class TestTWInform7(unittest.TestCase):
         self.env_z8.reset()
         env = self.env_z8.copy()
         assert sorted(env.state.items()) == sorted(self.env_z8.state.items())
-        assert env.infos == self.env_z8.infos
+        assert env.request_infos == self.env_z8.request_infos
         assert env._tracked_infos == self.env_z8._tracked_infos
         assert env._prev_state == self.env_z8._prev_state
 
@@ -291,7 +291,7 @@ class TestGameData(unittest.TestCase):
         cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
         cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
-        cls.infos = EnvInfos(
+        cls.request_infos = EnvInfos(
             max_score=True,
             objective=True,
             win_facts=True,
@@ -303,10 +303,10 @@ class TestGameData(unittest.TestCase):
         shutil.rmtree(cls.tmpdir)
 
     def setUp(self):
-        self.env_z8 = GameData(JerichoEnv(self.infos))
+        self.env_z8 = GameData(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = GameData(GitGlulxEnv(self.infos))
+        self.env_ulx = GameData(GitGlulxEnv(self.request_infos))
         self.env_ulx.load(self.gamefile_ulx)
 
     def tearDown(self):
@@ -385,7 +385,7 @@ class TestStateTracking(unittest.TestCase):
         cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
         cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
-        cls.infos = EnvInfos(
+        cls.request_infos = EnvInfos(
             facts=True,
             policy_commands=True,
             admissible_commands=True,
@@ -397,10 +397,10 @@ class TestStateTracking(unittest.TestCase):
         shutil.rmtree(cls.tmpdir)
 
     def setUp(self):
-        self.env_z8 = StateTracking(JerichoEnv(self.infos))
+        self.env_z8 = StateTracking(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = StateTracking(GitGlulxEnv(self.infos))
+        self.env_ulx = StateTracking(GitGlulxEnv(self.request_infos))
         self.env_ulx.load(self.gamefile_ulx)
 
     def tearDown(self):

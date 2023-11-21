@@ -724,7 +724,7 @@ class GameMaker:
     def set_walkthrough(self, commands: List[str]):
         with make_temp_directory() as tmpdir:
             game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
-            env = textworld.start(game_file, infos=EnvInfos(last_action=True, intermediate_reward=True))
+            env = textworld.start(game_file, request_infos=EnvInfos(last_action=True, intermediate_reward=True))
             state = env.reset()
 
             events = {event: event.copy() for quest in self.quests for event in quest.win_events}

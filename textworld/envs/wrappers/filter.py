@@ -33,10 +33,10 @@ class Filter(Wrapper):
     """
 
     def _get_requested_infos(self, game_state: GameState):
-        infos = {attr: getattr(game_state, attr) for attr in self.infos.basics}
+        infos = {attr: getattr(game_state, attr) for attr in self.request_infos.basics}
 
-        if self.infos.extras:
-            for attr in self.infos.extras:
+        if self.request_infos.extras:
+            for attr in self.request_infos.extras:
                 key = "extra.{}".format(attr)
                 infos[key] = game_state.get(key)
 
@@ -57,5 +57,5 @@ class Filter(Wrapper):
     def copy(self) -> "Filter":
         env = Filter()
         env._wrapped_env = self._wrapped_env.copy()
-        env.infos = self.infos
+        env.request_infos = self.request_infos
         return env
