@@ -8,9 +8,7 @@ from typing import Optional, Tuple, List
 from textworld.core import EnvInfos, Environment, Agent
 from textworld.generator.game import Game, GameOptions
 
-from textworld.envs import GitGlulxEnv
-from textworld.envs import JerichoEnv
-from textworld.envs import TextWorldEnv
+import textworld.envs
 from textworld.envs import TWInform7
 
 from textworld.agents import HumanAgent
@@ -41,23 +39,10 @@ def start(path: str, request_infos: Optional[EnvInfos] = None,
         raise IOError(msg)
 
     # Guess the backend from the extension.
-    backend = "zmachine"
-    if path.endswith(".ulx"):
-        backend = "glulx"
-    elif path.endswith(".json"):
-        backend = "json"
+    Env = textworld.envs._guess_backend(path)
+    env = Env(request_infos)
 
-    if backend == "zmachine":
-        env = JerichoEnv(request_infos)
-    elif backend == "glulx":
-        env = GitGlulxEnv(request_infos)
-    elif backend == "json":
-        env = TextWorldEnv(request_infos)
-    else:
-        msg = "Unsupported backend: {}".format(backend)
-        raise ValueError(msg)
-
-    if TWInform7.compatible(path) and backend != "json":
+    if TWInform7.compatible(path):
         wrappers = [TWInform7] + list(wrappers)
 
     # Apply all wrappers
