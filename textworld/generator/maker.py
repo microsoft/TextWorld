@@ -23,7 +23,6 @@ from textworld.logic import State, Variable, Proposition, Action
 from textworld.generator.game import GameOptions
 from textworld.generator.game import Game, World, Quest, Event, EntityInfo
 from textworld.generator.graph_networks import DIRECTIONS
-from textworld.render import visualize
 from textworld.envs.wrappers import Recorder
 
 
@@ -857,7 +856,7 @@ class GameMaker:
         :param filename: filename for screenshot
         """
         game = self.build(validate=False)
-        return visualize(game, interactive=interactive)
+        return textworld.render.visualize(game, interactive=interactive)
 
     def import_graph(self, G: nx.Graph) -> List[WorldRoom]:
         """ Convert Graph object to a list of `Proposition`.

@@ -50,7 +50,7 @@ def main():
 
     agent.reset(env)
     if args.viewer is not None:
-        from textworld.envs.wrappers import HtmlViewer
+        from textworld.envs.wrappers.viewer import HtmlViewer
         env = HtmlViewer(env, port=args.viewer)
 
     if args.mode == "human" or args.very_verbose:
