@@ -6,9 +6,10 @@ import re
 import os
 import shutil
 import warnings
-import importlib
 import subprocess
 import textwrap
+
+import importlib.resources
 from os.path import join as pjoin
 from typing import Iterable, Optional, List
 
