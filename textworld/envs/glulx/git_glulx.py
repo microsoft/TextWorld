@@ -6,10 +6,11 @@
 import sys
 import textwrap
 import subprocess
-import importlib
+
+import importlib.resources
+from typing import Union
 from os.path import join as pjoin
 
-from typing import Union
 
 from glk import ffi, lib
 from io import StringIO
