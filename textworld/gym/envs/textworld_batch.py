@@ -49,8 +49,7 @@ class TextworldBatchGymEnv(gym.Env):
                 Paths of every game composing the pool (`*.ulx|*.z[1-8]|*.json`).
             request_infos:
                 For customizing the information returned by this environment
-                (see
-                :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+                (see :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
                 for the list of available information).
 
                 .. warning:: Only supported for TextWorld games (i.e., that have a corresponding `*.json` file).

@@ -13,7 +13,7 @@ class Agent:
 
         Requested information will be included within the `infos` dictionary
         passed to `Agent.act()`. To request specific information, create a
-        :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+        :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
         and set its attributes to `True` accordingly.
 
         In addition to the standard information, certain games may have specific
