@@ -245,3 +245,33 @@ class TestGymIntegration(unittest.TestCase):
 
             assert all(dones)
             assert all(score == 1 for score in scores)
+
+    def test_registering_game_with_custom_wrapper(self):
+
+        class DummyWrapper(textworld.core.Wrapper):
+
+            def step(self, command):
+                state, score, done = super().step(command)
+                state.feedback = "DUMMY: " + state.feedback
+                state.inventory = "DUMMY: " + state.inventory
+                return state, score, done
+
+        env_options = EnvInfos(inventory=True, extras=["walkthrough"])
+
+        env_id = textworld.gym.register_game(
+            self.gamefile1,
+            env_options,
+            name="test-custom-wrapper",
+            wrappers=[DummyWrapper]
+        )
+        env = gym.make(env_id)
+        obs, infos = env.reset()
+
+        for cmd in infos.get("extra.walkthrough"):
+            obs, _, _, infos = env.step(cmd)
+
+            # Check that the wrapper was applied when calling env.step.
+            assert obs.startswith("DUMMY: ")
+            assert infos["inventory"].startswith("DUMMY: ")
+
+        env.close()
