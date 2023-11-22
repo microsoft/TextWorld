@@ -14,7 +14,7 @@ class Filter(Wrapper):
     Requested information will be included within the `infos` dictionary
     returned by `Filter.reset()` and `Filter.step(...)`. To request
     specific information, create a
-    :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+    :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
     and set the appropriate attributes to `True`. Then, instantiate a `Filter`
     wrapper with the `EnvInfos` object.
 

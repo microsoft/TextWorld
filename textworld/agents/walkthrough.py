@@ -16,6 +16,7 @@ class WalkthroughAgent(Agent):
         self.commands = commands
 
     def reset(self, env):
+        env.request_infos.extras.append("walkthrough")
         env.display_command_during_render = True
         if self.commands is not None:
             self._commands = iter(self.commands)

@@ -12,6 +12,7 @@ import gym
 from gym.utils import colorize
 from gym.spaces import Space
 
+import textworld
 from textworld import EnvInfos
 from textworld.envs.wrappers import Filter, GenericEnvironment, Limit
 from textworld.envs.batch import AsyncBatchEnv, SyncBatchEnv
@@ -21,12 +22,14 @@ from textworld.gym.envs.utils import shuffled_cycle
 from functools import partial
 
 
-def _make_env(request_infos, max_episode_steps=None):
+def _make_env(request_infos, max_episode_steps=None, wrappers=[]):
     env = GenericEnvironment(request_infos)
     if max_episode_steps:
         env = Limit(env, max_episode_steps=max_episode_steps)
 
-    env = Filter(env)
+    for wrapper in wrappers + [Filter]:
+        env = wrapper(env)
+
     return env
 
 
@@ -41,7 +44,8 @@ class TextworldBatchGymEnv(gym.Env):
                  auto_reset: bool = False,
                  max_episode_steps: Optional[int] = None,
                  action_space: Optional[gym.Space] = None,
-                 observation_space: Optional[gym.Space] = None) -> None:
+                 observation_space: Optional[gym.Space] = None,
+                 wrappers: List[textworld.core.Wrapper] = []) -> None:
         """ Environment for playing text-based games in batch.
 
         Arguments:
@@ -49,8 +53,7 @@ class TextworldBatchGymEnv(gym.Env):
                 Paths of every game composing the pool (`*.ulx|*.z[1-8]|*.json`).
             request_infos:
                 For customizing the information returned by this environment
-                (see
-                :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+                (see :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
                 for the list of available information).
 
                 .. warning:: Only supported for TextWorld games (i.e., that have a corresponding `*.json` file).
@@ -83,7 +86,7 @@ class TextworldBatchGymEnv(gym.Env):
         self.request_infos = request_infos or EnvInfos()
         self.seed(1234)
 
-        env_fns = [partial(_make_env, self.request_infos, max_episode_steps) for _ in range(self.batch_size)]
+        env_fns = [partial(_make_env, self.request_infos, max_episode_steps, wrappers) for _ in range(self.batch_size)]
         BatchEnvType = AsyncBatchEnv if self.batch_size > 1 and asynchronous else SyncBatchEnv
         self.batch_env = BatchEnvType(env_fns, auto_reset)
 

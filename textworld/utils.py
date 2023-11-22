@@ -85,6 +85,10 @@ def str2bool(v):
     return str(v).lower() in ("yes", "true", "t", "1")
 
 
+def check_flag(flag: str, default: bool = False):
+    return str2bool(os.environ.get(flag, default))
+
+
 def maybe_mkdir(dirpath):
     """ Create all parent folders if needed. """
     try:
@@ -102,7 +106,7 @@ def make_temp_directory(suffix='', prefix='tw_', dir=None):
     try:
         yield os.path.join(temp_dir, "")  # So path ends with '/'.
     finally:
-        if not str2bool(os.environ.get("TEXTWORLD_DEBUG", False)):
+        if not check_flag("TEXTWORLD_DEBUG"):
             shutil.rmtree(temp_dir)
 
 

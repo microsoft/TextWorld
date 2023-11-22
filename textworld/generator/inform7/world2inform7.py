@@ -15,7 +15,7 @@ from typing import Iterable, Optional, List
 
 import numpy as np
 
-from textworld.utils import make_temp_directory, str2bool, chunk
+from textworld.utils import make_temp_directory, check_flag, chunk
 
 from textworld.generator.game import Game
 from textworld.generator.world import WorldRoom, WorldEntity
@@ -1061,7 +1061,7 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
 
         i6_options = "-"
         # i6_options += "k"  # Debug file, maybe useful to extract vocab?
-        if str2bool(os.environ.get("TEXTWORLD_I6_DEBUG", False)):
+        if check_flag("TEXTWORLD_I6_DEBUG"):
             i6_options += "D"  # Debug mode, enables Inform7 testing commands.
 
         i6_options += "E2wS"

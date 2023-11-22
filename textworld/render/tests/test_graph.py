@@ -1,9 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
-import os
 import textworld
-from textworld.utils import str2bool
+from textworld.utils import check_flag
 
 from textworld.render import show_graph
 
@@ -25,7 +24,7 @@ def test_show_graph():
     game = _make_game()
 
     renderer = None
-    if str2bool(os.environ.get("TEXTWORLD_DEBUG", False)):
+    if check_flag("TEXTWORLD_DEBUG"):
         renderer = "browser"
 
     show_graph(game.world.facts, renderer=renderer)

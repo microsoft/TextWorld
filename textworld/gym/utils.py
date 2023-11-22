@@ -24,7 +24,7 @@ def register_games(gamefiles: List[str],
         request_infos:
             For customizing the information returned by this environment
             (see
-            :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+            :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
             for the list of available information).
 
             .. warning:: Only supported for TextWorld games (i.e., with a corresponding `*.json` file).
@@ -123,7 +123,7 @@ def register_game(gamefile: str,
             Path for the TextWorld game (`*.ulx|*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
-            (see :py:class:`textworld.EnvInfos <textworld.envs.wrappers.filter.EnvInfos>`
+            (see :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`
             for the list of available information).
 
             .. warning:: Only supported for TextWorld games (i.e., with a corresponding `*.json` file).
