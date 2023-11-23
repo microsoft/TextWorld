@@ -73,7 +73,7 @@ class GameLogicParser(Parser):
 
     @tatsumasu()
     def _name_(self):  # noqa
-        self._pattern('\\w+')
+        self._pattern('[\\w/-]+')
 
     @tatsumasu()
     def _phName_(self):  # noqa
@@ -81,7 +81,7 @@ class GameLogicParser(Parser):
 
     @tatsumasu()
     def _predName_(self):  # noqa
-        self._pattern('[\\w/]+')
+        self._pattern('!?[\\w/]+')
 
     @tatsumasu()
     def _ruleName_(self):  # noqa
@@ -295,8 +295,8 @@ class GameLogicParser(Parser):
                 self._signature_()
             self._error(
                 'expecting one of: '
-                '<alias> <predName> <predicate>'
-                '<signature> [\\w/]+'
+                '!?[\\w/]+ <alias> <predName> <predicate>'
+                '<signature>'
             )
 
     @tatsumasu('ReverseRuleNode')
@@ -595,6 +595,17 @@ class GameLogicParser(Parser):
         )
 
     @tatsumasu()
+    def _conjunctiveQuery_(self):  # noqa
+
+        def sep0():
+            self._token('&')
+
+        def block0():
+            self._predicate_()
+        self._positive_gather(block0, sep0)
+        self._check_eof()
+
+    @tatsumasu()
     def _onlyVariable_(self):  # noqa
         self._variable_()
         self.name_last_node('@')
@@ -747,6 +758,9 @@ class GameLogicSemantics:
         return ast
 
     def document(self, ast):  # noqa
+        return ast
+
+    def conjunctiveQuery(self, ast):  # noqa
         return ast
 
     def onlyVariable(self, ast):  # noqa

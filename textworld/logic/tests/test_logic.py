@@ -53,6 +53,17 @@ def test_logic_parsing():
     with pytest.raises(ValueError):
         Rule.parse("take :: $at(P, r) & $in(c, r) & in(o: k, c) -> in(o, I)")
 
+    query = Rule("query", [at_r, link, unlocked], [])
+    assert Rule.parse_conjunctive_query("at(P, r) & link(r, d, r') & unlocked(d)") == query
+
+    # Test negative prepositions and predicates.
+    not_cooked_egg = Proposition("not_cooked", [egg])
+    assert Proposition.parse("!cooked(egg: f)") == not_cooked_egg == cooked_egg.negate()
+
+    locked = Predicate("locked", [d])
+    not_locked = Predicate("not_locked", [d])
+    assert Predicate.parse("!locked(d)") == not_locked == locked.negate()
+
 
 def test_logic_parsing_eos():
     with pytest.raises(ParseError):
@@ -186,7 +197,6 @@ def test_match():
     assert rule.match(action) == mapping
 
     # Order shouldn't matter
-
     action = Action.parse("go :: $link(r1: r, d, r2: r) & $free(r1: r, r2: r)"
                           "      & $free(r2: r, r1: r) & at(P, r1: r) -> at(P, r2: r)")
     assert rule.match(action) == mapping

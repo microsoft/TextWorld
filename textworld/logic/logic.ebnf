@@ -8,11 +8,11 @@ str = ?'"[^"]*"' ;
 
 strBlock = ?'"""(?:.|\n)*?"""' ;
 
-name = ?"\w+" ;
+name = ?"[\w/-]+" ;
 
 phName = ?"[\w']+" ;
 
-predName = ?"[\w/]+" ;
+predName = ?"!?[\w/]+" ;
 
 ruleName = ?"[\w/]+" ;
 
@@ -91,6 +91,7 @@ type::TypeNode = "type" name:name [":" supertypes:",".{name}+] "{" parts:{typePa
 
 document::DocumentNode = types:{type}* $ ;
 
+conjunctiveQuery = "&".{predicate}+ $ ;
 
 onlyVariable = @:variable $ ;
 onlySignature = @:signature $ ;
