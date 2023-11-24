@@ -121,7 +121,11 @@ class _ModelConverter(NodeWalker):
         return Signature(node.name, node.types)
 
     def walk_PropositionNode(self, node):
-        return Proposition(node.name, self.walk(node.arguments))
+        prop = Proposition(node.name.lstrip("!"), self.walk(node.arguments))
+        if node.name.startswith("!"):
+            return prop.negate()
+
+        return prop
 
     def walk_ActionNode(self, node):
         return self._walk_action_ish(node, Action)
@@ -130,7 +134,11 @@ class _ModelConverter(NodeWalker):
         return self._walk_variable_ish(node, Placeholder)
 
     def walk_PredicateNode(self, node):
-        return Predicate(node.name, self.walk(node.parameters))
+        pred = Predicate(node.name.lstrip("!"), self.walk(node.parameters))
+        if node.name.startswith("!"):
+            return pred.negate()
+
+        return pred
 
     def walk_RuleNode(self, node):
         return self._walk_action_ish(node, Rule)
@@ -604,7 +612,7 @@ PropositionTracker = memento_factory(
     lambda cls, args, kwargs: (
         cls,
         kwargs.get("name", args[0] if len(args) >= 1 else None),
-        tuple(v.name for v in kwargs.get("arguments", args[1] if len(args) == 2 else []))
+        tuple((v.name, v.type) for v in kwargs.get("arguments", args[1] if len(args) == 2 else []))
     )
 )
 
@@ -692,6 +700,16 @@ class Proposition(with_metaclass(PropositionTracker, object)):
         name = data["name"]
         args = [Variable.deserialize(arg) for arg in data["arguments"]]
         return cls(name, args)
+
+    def negate(self) -> "Proposition":
+        if self.is_negation:
+            return Proposition(self.name.split("not_", 1)[1], self.arguments)
+
+        return Proposition("not_" + self.name, self.arguments)
+
+    @property
+    def is_negation(self) -> bool:
+        return self.name.startswith("not_")
 
 
 @total_ordering
@@ -900,6 +918,16 @@ class Predicate:
         else:
             return {ph: var for ph, var in zip(self.parameters, proposition.arguments)}
 
+    def negate(self) -> "Predicate":
+        if self.is_negation:
+            return Predicate(self.name.split("not_", 1)[1], self.parameters)
+
+        return Predicate("not_" + self.name, self.parameters)
+
+    @property
+    def is_negation(self) -> bool:
+        return self.name.startswith("not_")
+
 
 class Alias:
     """
@@ -947,6 +975,8 @@ class Action:
         """
 
         self.name = name
+        self.mapping = {}
+        self.feedback_rule = None
         self.command_template = None
         self.reverse_name = None
         self.reverse_command_template = None
@@ -1086,6 +1116,7 @@ class Rule:
         """
 
         self.name = name
+        self.feedback_rule = None
         self.command_template = None
         self.reverse_rule = None
         self._cache = {}
@@ -1096,6 +1127,20 @@ class Rule:
         self._post_set = frozenset(self.postconditions)
 
         self.placeholders = tuple(uniquify(ph for pred in self.all_predicates for ph in pred.parameters))
+
+    @property
+    def added(self) -> Collection[Predicate]:
+        """
+        All the new predicates being introduced by this rule.
+        """
+        return self._post_set - self._pre_set
+
+    @property
+    def removed(self) -> Collection[Predicate]:
+        """
+        All the old predicates being removed by this rule.
+        """
+        return self._pre_set - self._post_set
 
     @property
     def all_predicates(self) -> Iterable[Predicate]:
@@ -1140,6 +1185,22 @@ class Rule:
             The string to parse, in the form `name :: [$]predicate [& [$]predicate]* -> predicate [& predicate]*`.
         """
         return _parse_and_convert(expr, rule_name="onlyRule")
+
+    @classmethod
+    def parse_conjunctive_query(cls, expr: str) -> "Rule":
+        """
+        Parse a conjunctive query expression framed as a rule.
+
+        A conjunctive query is similar to a Rule's precondition,
+        but it doesn't allow carry-over predicate (i.e., starting with a $).
+
+        Parameters
+        ----------
+        expr :
+            The string to parse, in the form `name :: predicate [& predicate]*`.
+        """
+        preconditions = _parse_and_convert(expr, rule_name="conjunctiveQuery")
+        return Rule("query", preconditions, [])
 
     def serialize(self) -> Mapping:
         return {
@@ -1199,8 +1260,9 @@ class Rule:
         pre_inst = [pred.instantiate(mapping) for pred in self.preconditions]
         post_inst = [pred.instantiate(mapping) for pred in self.postconditions]
         action = Action(self.name, pre_inst, post_inst)
-
+        action.mapping = mapping
         action.command_template = self._make_command_template(mapping)
+        action.feedback_rule = self.feedback_rule
         if self.reverse_rule:
             action.reverse_name = self.reverse_rule.name
             action.reverse_command_template = self.reverse_rule._make_command_template(mapping)
@@ -1815,7 +1877,7 @@ class State:
         types = [self._logic.types.get(t) for t in pred.signature.types]
         for subtypes in self._logic.types.multi_subtypes(types):
             signature = Signature(pred.signature.name, [t.name for t in subtypes])
-            for prop in self.facts_with_signature(signature):
+            for prop in sorted(self.facts_with_signature(signature)):
                 for ph, var in zip(pred.parameters, prop.arguments):
                     existing = mapping.get(ph)
                     if existing is None:
