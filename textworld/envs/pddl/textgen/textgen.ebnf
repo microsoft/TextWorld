@@ -1,0 +1,29 @@
+@@grammar :: CSG
+
+@@whitespace :: ?"[\t]+"
+
+@@eol_comments :: ?"^(//.*|\s*)\n?"
+
+start = symbols ;
+
+tag = ?"[\w()/!<>\-\s,.]+" ;
+
+given = ?"[^;|{}\n\[\]#]+" ;
+
+statement = ?"[^|\[\]{}\n<>]+" ;
+
+Literal = ?'[^;|"<>\[\]#{}]*' ;
+
+terminalSymbol::TerminalSymbol = ('"' literal:Literal '"' | ~literal:Literal);
+
+nonterminalSymbol::NonterminalSymbol = "#" symbol:tag "#" ;
+
+evalSymbol::EvalSymbol = statement:statement ;
+
+conditionalSymbol::ConditionalSymbol = "{" expression:(nonterminalSymbol | evalSymbol) [?"\s*\|\s*" given:given] "}" ;
+
+listSymbol::ListSymbol = "[" symbol:conditionalSymbol "]" ;
+
+Symbol = listSymbol | conditionalSymbol | nonterminalSymbol | terminalSymbol;
+
+symbols = {Symbol}+ ;

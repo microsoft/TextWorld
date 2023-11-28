@@ -26,3 +26,6 @@ plotly>=4.0.0
 pydot>=1.2.4
 psutil
 matplotlib
+
+# For using PddlEnv (needed for ALFWorld)
+fast-downward-textworld
