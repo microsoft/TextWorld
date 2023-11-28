@@ -2,154 +2,166 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.6.0] - 2023-11-28
+### Breaking
+- Rename `Environment.infos` to `Environment.request_infos` [[#325](https://github.com/microsoft/TextWorld/pull/325)]
+- Use importlib.resources instead of pkg_resources (not supported by Python 3.8) [[#329](https://github.com/microsoft/TextWorld/pull/329), [#332](https://github.com/microsoft/]TextWorld/pull/332)]
+
+### Added
+- Add support for Python 3.10, 3.11 and 3.12 [[#328](https://github.com/microsoft/TextWorld/pull/328)]
+- `GenericEnvironment` will detect which environment to load based on the game's file extension [[#330](https://github.com/microsoft/TextWorld/pull/330)]
+- Support providing custom TextWorld wrappers when registring games. [[#333](https://github.com/microsoft/TextWorld/pull/333)]
+- Support negating propositions and predicates. Support creating rule from conjunctive query expression. [[#334](https://github.com/microsoft/TextWorld/pull/334)]
+- Add PDDL support needed for ALFWorld [[#336](https://github.com/microsoft/TextWorld/pull/336)]
+
+### Changed
+- Switch to pytest instead of nosetest [[#327](https://github.com/microsoft/TextWorld/pull/327)]
+- Avoid loading viewers unless it is really needed [[#331](https://github.com/microsoft/TextWorld/pull/331)]
+
 ## [1.5.3] - 2023-05-04
 ### Fixed
-- Fix MacOS setup [311](https://github.com/microsoft/TextWorld/pull/311)
-- Fix jquery security issue [309](https://github.com/microsoft/TextWorld/pull/309)
+- Fix MacOS setup [[#311](https://github.com/microsoft/TextWorld/pull/311)]
+- Fix jquery security issue [[#309](https://github.com/microsoft/TextWorld/pull/309)]
 
 ## [1.5.2] - 2022-09-16
 ### Fixed
-- Fix security issue [301](https://github.com/microsoft/TextWorld/pull/301)
-- Fix requirements and Inform7 links [303](https://github.com/microsoft/TextWorld/pull/303)
-- Fix gym version [305](https://github.com/microsoft/TextWorld/pull/305)
-- Fix documentation [306](https://github.com/microsoft/TextWorld/pull/306)
-- Rename main branch and references to it [307](https://github.com/microsoft/TextWorld/pull/307)
-
-## [1.5.2] - 2022-09-16
-### Fixed
-
-- Use functools.partial instead of lambda functions. It's more multiprocessing friendly. [294](https://github.com/microsoft/TextWorld/pull/294)
-- Wait for visualization server to be ready before connecting with Selenium. [294](https://github.com/microsoft/TextWorld/pull/294)
-- Use constants' type as their name instead of `None`. [293](https://github.com/microsoft/TextWorld/pull/293)
+- Fix security issue [[#301](https://github.com/microsoft/TextWorld/pull/301)]
+- Fix requirements and Inform7 links [[#303](https://github.com/microsoft/TextWorld/pull/303)]
+- Fix gym version [[#305](https://github.com/microsoft/TextWorld/pull/305)]
+- Fix documentation [[#306](https://github.com/microsoft/TextWorld/pull/306)]
+- Rename main branch and references to it [[#307](https://github.com/microsoft/TextWorld/pull/307)]
+- Use functools.partial instead of lambda functions. It's more multiprocessing friendly. [[#294](https://github.com/microsoft/TextWorld/pull/294)]
+- Wait for visualization server to be ready before connecting with Selenium. [[#294](https://github.com/microsoft/TextWorld/pull/294)]
+- Use constants' type as their name instead of `None`. [[#293](https://github.com/microsoft/TextWorld/pull/293)]
 
 ## Removed
 
-- Remove MacOS 10.14 CI. [294](https://github.com/microsoft/TextWorld/pull/294)
+- Remove MacOS 10.14 CI. [[#294](https://github.com/microsoft/TextWorld/pull/294)]
 
 ## [1.5.1] - 2022-01-09
 
 ### Added
 
-- Allow to provide list of seeds in `AsyncBatchEnv` and `SyncBatchEnv`. [290](https://github.com/microsoft/TextWorld/pull/290)
+- Allow to provide list of seeds in `AsyncBatchEnv` and `SyncBatchEnv`. [[#290](https://github.com/microsoft/TextWorld/pull/290)]
 
 ### Fixed
 
-- Typo in `TextworldBatchGymEnv.reset`: `self.ob` instead of `self.obs`. [291](https://github.com/microsoft/TextWorld/pull/291)
+- Typo in `TextworldBatchGymEnv.reset`: `self.ob` instead of `self.obs`. [[#291](https://github.com/microsoft/TextWorld/pull/291)]
 
 ## [1.5.0] - 2021-12-01
 
 ### Added
 
-- Add optional and repeatable quests. [288](https://github.com/microsoft/TextWorld/pull/288)
+- Add optional and repeatable quests. [[#288](https://github.com/microsoft/TextWorld/pull/288)]
 
 ## [1.4.5] - 2021-10-29
 
 ### Fixed
 
-- Update notebooks. [285](https://github.com/microsoft/TextWorld/pull/285)
-- Fix Azure pipelines. [283](https://github.com/microsoft/TextWorld/pull/283)
-- Extract description and inventory from Jericho. [278](https://github.com/microsoft/TextWorld/pull/278)
+- Update notebooks. [[#285](https://github.com/microsoft/TextWorld/pull/285)]
+- Fix Azure pipelines. [[#283](https://github.com/microsoft/TextWorld/pull/283)]
+- Extract description and inventory from Jericho. [[#278](https://github.com/microsoft/TextWorld/pull/278)]
 
 ## [1.4.4] - 2021-09-02
 
 ### Added
 
-- Add win_facts and fail_facts to EnvInfos. [274](https://github.com/microsoft/TextWorld/pull/274)
+- Add win_facts and fail_facts to EnvInfos. [[#274](https://github.com/microsoft/TextWorld/pull/274)]
 
 ## [1.4.3] - 2021-06-17
 
 ### Added
 
-- List available challenges when tw-make is called with no argument. [267](https://github.com/microsoft/TextWorld/pull/267)
+- List available challenges when tw-make is called with no argument. [[#267](https://github.com/microsoft/TextWorld/pull/267)]
 
 ### Fixed
 
-- Type inheritance for command templates in `tw-extract commands ...` was not properly handled. [269](https://github.com/microsoft/TextWorld/pull/269)
+- Type inheritance for command templates in `tw-extract commands ...` was not properly handled. [[#269](https://github.com/microsoft/TextWorld/pull/269)]
 
 ## [1.4.2] - 2021-05-11
 
 ### Added
 
-- Use `--hint` to display expert policy when playing a game with `tw-play`. [265](https://github.com/microsoft/TextWorld/pull/265)
-- Support policy_commands for tw-cooking games with no `--drop`. [261](https://github.com/microsoft/TextWorld/pull/261)
+- Use `--hint` to display expert policy when playing a game with `tw-play`. [[#265](https://github.com/microsoft/TextWorld/pull/265)]
+- Support policy_commands for tw-cooking games with no `--drop`. [[#261](https://github.com/microsoft/TextWorld/pull/261)]
 
 ### Fixed
 
-- `JerichoEnv._reset` wasn't set properly in `JerichoEnv.copy()`. [263](https://github.com/microsoft/TextWorld/pull/263)
-- Use policy induced by the event dependency tree as `EventProgression`'s winning policy. [263](https://github.com/microsoft/TextWorld/pull/263)
+- `JerichoEnv._reset` wasn't set properly in `JerichoEnv.copy()`. [[#263](https://github.com/microsoft/TextWorld/pull/263)]
+- Use policy induced by the event dependency tree as `EventProgression`'s winning policy. [[#263](https://github.com/microsoft/TextWorld/pull/263)]
 
 ## [1.4.1] - 2021-05-06
 
 ### Fixed
 
-- `tw-cooking` games with `--recipe > 1` couldn't be solved using admissible commands. [259](https://github.com/microsoft/TextWorld/pull/259)
+- `tw-cooking` games with `--recipe > 1` couldn't be solved using admissible commands. [[#259](https://github.com/microsoft/TextWorld/pull/259)]
 
 ## [1.4.0] - 2020-11-13
 
 ### Added
 
-- Add `TextWorldEnv` that support loading .json gamefile directly. [255](https://github.com/microsoft/TextWorld/pull/255)
-- Add `tw-view`, a script to visualize game's initial state as a graph. [255](https://github.com/microsoft/TextWorld/pull/255)
+- Add `TextWorldEnv` that support loading .json gamefile directly. [[#255](https://github.com/microsoft/TextWorld/pull/255)]
+- Add `tw-view`, a script to visualize game's initial state as a graph. [[#255](https://github.com/microsoft/TextWorld/pull/255)]
 
 ### Fixed
 
-- `tw-make` was not using the right file format when saving the game. [255](https://github.com/microsoft/TextWorld/pull/255)
+- `tw-make` was not using the right file format when saving the game. [[#255](https://github.com/microsoft/TextWorld/pull/255)]
 
 ## [1.3.3] - 2020-11-10
 
 ### Fixed
 
-- Understand room's names as their room's id in the Inform7 code. [253](https://github.com/microsoft/TextWorld/pull/253)
-- Make Inform7 events detection case-insensitive. [253](https://github.com/microsoft/TextWorld/pull/253)
+- Understand room's names as their room's id in the Inform7 code. [[#253](https://github.com/microsoft/TextWorld/pull/253)]
+- Make Inform7 events detection case-insensitive. [[#253](https://github.com/microsoft/TextWorld/pull/253)]
 
 ## Removed
 
-- Remove Python 3.5 CI since it has now reached end-of-life. [253](https://github.com/microsoft/TextWorld/pull/253)
+- Remove Python 3.5 CI since it has now reached end-of-life. [[#253](https://github.com/microsoft/TextWorld/pull/253)]
 
 ## [1.3.2] - 2020-06-01
 
 ### Fixed
 
-- Prevent overwriting the name of matching entities (e.g. container-key). [#237](https://github.com/microsoft/TextWorld/pull/237)
+- Prevent overwriting the name of matching entities (e.g. container-key). [[#237](https://github.com/microsoft/TextWorld/pull/237)]
 
 ## [1.3.1] - 2020-04-07
 
 ### Fixed
 
-- Use Inform7 interim version for MacOS. [#231](https://github.com/microsoft/TextWorld/pull/231)
+- Use Inform7 interim version for MacOS. [[#231](https://github.com/microsoft/TextWorld/pull/231)]
 
 ## [1.3.0] - 2020-03-19
 
 ### Breaking
 
-- In `tw-make`, can't change grammar options when generating games for TextWorld challenges. [#216](https://github.com/microsoft/TextWorld/pull/216)
-- `GameMaker.add_random_quest` -> `GameMaker.generate_random_quests`. [#222](https://github.com/microsoft/TextWorld/pull/222)
-- `GameMaker.add_distractors` -> `GameMaker.generate_distractors`. [#222](https://github.com/microsoft/TextWorld/pull/222)
+- In `tw-make`, can't change grammar options when generating games for TextWorld challenges. [[#216](https://github.com/microsoft/TextWorld/pull/216)]
+- `GameMaker.add_random_quest` -> `GameMaker.generate_random_quests`. [[#222](https://github.com/microsoft/TextWorld/pull/222)]
+- `GameMaker.add_distractors` -> `GameMaker.generate_distractors`. [[#222](https://github.com/microsoft/TextWorld/pull/222)]
 
 ### Removed
 
-- Theme "basic1" (use "basic" instead). [#219](https://github.com/microsoft/TextWorld/pull/219)
+- Theme "basic1" (use "basic" instead). [[#219](https://github.com/microsoft/TextWorld/pull/219)]
 
 ### Added
 
-- Add documentation for `tw-play`, `tw-make`, and `tw-extract`. [#227](https://github.com/microsoft/TextWorld/pull/227)
-- Add `feedback` field to `EnvInfos`. [#226](https://github.com/microsoft/TextWorld/pull/226)
-- Add `walkthrough` property to `Game` objects. [#225](https://github.com/microsoft/TextWorld/pull/225)
-- Add `walkthroughs` subcommand to `tw-extract`. [#223](https://github.com/microsoft/TextWorld/pull/223)
-- Add `commands` subcommand to `tw-extract`. [#223](https://github.com/microsoft/TextWorld/pull/223)
-- Docker image for TextWorld: [marccote19/textworld](https://hub.docker.com/r/marccote19/textworld). [#222](https://github.com/microsoft/TextWorld/pull/222)
-- Add `requirements-full.txt` which contains all Python dependencies for TextWorld. [#222](https://github.com/microsoft/TextWorld/pull/222)
-- Use `TEXTWORLD_DEBUG=1` to print Inform7 events detected by TextWorld when playing a game. [#217](https://github.com/microsoft/TextWorld/pull/217)
-- Add `ChainingOptions.allowed_types` which is complementary to `ChainingOptions.restricted_types`. [#219](https://github.com/microsoft/TextWorld/pull/219)
-- Speed up quest generation when `ChainingOptions.create_variables==True` by fixing `r` to corresponding value in `at(P, r)`. [#219](https://github.com/microsoft/TextWorld/pull/219)
+- Add documentation for `tw-play`, `tw-make`, and `tw-extract`. [[#227](https://github.com/microsoft/TextWorld/pull/227)]
+- Add `feedback` field to `EnvInfos`. [[#226](https://github.com/microsoft/TextWorld/pull/226)]
+- Add `walkthrough` property to `Game` objects. [[#225](https://github.com/microsoft/TextWorld/pull/225)]
+- Add `walkthroughs` subcommand to `tw-extract`. [[#223](https://github.com/microsoft/TextWorld/pull/223)]
+- Add `commands` subcommand to `tw-extract`. [[#223](https://github.com/microsoft/TextWorld/pull/223)]
+- Docker image for TextWorld: [marccote19/textworld](https://hub.docker.com/r/marccote19/textworld). [[#222](https://github.com/microsoft/TextWorld/pull/222)]
+- Add `requirements-full.txt` which contains all Python dependencies for TextWorld. [[#222](https://github.com/microsoft/TextWorld/pull/222)]
+- Use `TEXTWORLD_DEBUG=1` to print Inform7 events detected by TextWorld when playing a game. [[#217](https://github.com/microsoft/TextWorld/pull/217)]
+- Add `ChainingOptions.allowed_types` which is complementary to `ChainingOptions.restricted_types`. [[#219](https://github.com/microsoft/TextWorld/pull/219)]
+- Speed up quest generation when `ChainingOptions.create_variables==True` by fixing `r` to corresponding value in `at(P, r)`. [[#219](https://github.com/microsoft/TextWorld/pull/219)]
 
 ### Fixed
 
-- Updated games shipped with the notebooks. [#225](https://github.com/microsoft/TextWorld/pull/225)
-- Calling `GameOptions.seeds`, without setting a seed first, will return random seeds. [#222](https://github.com/microsoft/TextWorld/pull/222)
-- Challenges shipped with TextWorld now contain a snapshot of the KnowledgeBase to improve reproducibility. [#216](https://github.com/microsoft/TextWorld/pull/216)
-- Delete socket files created by `mlglk` on garbage collection. [#215](https://github.com/microsoft/TextWorld/pull/215)
-- Issues related to tw-treasure_hunter challenge (#85, #164).
+- Updated games shipped with the notebooks. [[#225](https://github.com/microsoft/TextWorld/pull/225)]
+- Calling `GameOptions.seeds`, without setting a seed first, will return random seeds. [[#222](https://github.com/microsoft/TextWorld/pull/222)]
+- Challenges shipped with TextWorld now contain a snapshot of the KnowledgeBase to improve reproducibility. [[#216](https://github.com/microsoft/TextWorld/pull/216)]
+- Delete socket files created by `mlglk` on garbage collection. [[#215](https://github.com/microsoft/TextWorld/pull/215)]
+- Issues related to tw-treasure_hunter challenge [[#85](https://github.com/microsoft/TextWorld/issues/85), [#164](https://github.com/microsoft/TextWorld/issues/164)]
 
 ## [1.2.0] - 2020-02-12
 
@@ -192,7 +204,7 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 ### Fixed
 
-- Packaging issues that prevented installation from source on macOS (#121)
+- Packaging issues that prevented installation from source on macOS [[#121](https://github.com/microsoft/TextWorld/issues/121)]
 - Version numbers in documentation
 
 ## [1.1.0] - 2019-02-07
@@ -230,7 +242,21 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 
 - Initial release.
 
-[Unreleased]: https://github.com/Microsoft/TextWorld/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/Microsoft/TextWorld/compare/1.6.0...HEAD
+[1.6.0]: https://github.com/Microsoft/TextWorld/compare/1.5.4...1.6.0
+[1.5.3]: https://github.com/Microsoft/TextWorld/compare/1.5.0...1.5.3
+[1.5.0]: https://github.com/Microsoft/TextWorld/compare/1.4.4...1.5.0
+[1.4.4]: https://github.com/Microsoft/TextWorld/compare/1.4.3...1.4.4
+[1.4.3]: https://github.com/Microsoft/TextWorld/compare/1.4.2...1.4.3
+[1.4.2]: https://github.com/Microsoft/TextWorld/compare/1.4.1...1.4.2
+[1.4.1]: https://github.com/Microsoft/TextWorld/compare/1.4.0...1.4.1
+[1.4.0]: https://github.com/Microsoft/TextWorld/compare/1.3.3...1.4.0
+[1.3.3]: https://github.com/Microsoft/TextWorld/compare/1.3.2...1.3.3
+[1.3.2]: https://github.com/Microsoft/TextWorld/compare/1.3.1...1.3.2
+[1.3.1]: https://github.com/Microsoft/TextWorld/compare/1.3.0...1.3.1
+[1.3.0]: https://github.com/Microsoft/TextWorld/compare/1.2.0...1.3.0
+[1.2.0]: https://github.com/Microsoft/TextWorld/compare/1.1.1...1.2.0
+[1.1.1]: https://github.com/Microsoft/TextWorld/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/Microsoft/TextWorld/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/Microsoft/TextWorld/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/Microsoft/TextWorld/tree/1.0.0
