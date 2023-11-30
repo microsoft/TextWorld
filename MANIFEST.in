@@ -17,6 +17,9 @@ include textworld/generator/data/text_grammars/*.twg
 recursive-include textworld/challenges/ *.twl
 recursive-include textworld/challenges/ *.twg
 
+include textworld/envs/pddl/logic/*.ebnf
+include textworld/envs/pddl/textgen/*.ebnf
+
 recursive-include textworld/render/tmpl *
 
 recursive-include textworld/thirdparty/glulx *
