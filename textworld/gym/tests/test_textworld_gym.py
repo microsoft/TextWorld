@@ -5,7 +5,6 @@ import tempfile
 import unittest
 from os.path import join as pjoin
 
-import gym
 import pytest
 
 import textworld
@@ -52,7 +51,7 @@ class TestGymIntegration(unittest.TestCase):
                                extras=["walkthrough"])
 
         env_id = textworld.gym.register_game(self.gamefile1, env_options, name="test-single")
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
         obs, infos = env.reset()
         assert len(infos) == len(env_options)
 
@@ -75,7 +74,7 @@ class TestGymIntegration(unittest.TestCase):
             env_options = EnvInfos(extras=["walkthrough"])
 
             env_id = textworld.gym.register_game(gamefile, env_options, name="test-zmachine")
-            env = gym.make(env_id)
+            env = textworld.gym.make(env_id)
             obs, infos = env.reset()
             assert len(infos) == len(env_options)
 
@@ -94,7 +93,7 @@ class TestGymIntegration(unittest.TestCase):
 
         env_id = textworld.gym.register_games([self.gamefile1, self.gamefile2],
                                               env_options, name="test-multi")
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
         env.seed(2)  # Make game2 starts on the first reset call.
 
         obs, infos = env.reset()
@@ -130,7 +129,7 @@ class TestGymIntegration(unittest.TestCase):
                                               batch_size=batch_size,
                                               name="test-batch",
                                               asynchronous=False)
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
 
         obs, infos = env.reset()
         assert len(obs) == batch_size
@@ -139,7 +138,7 @@ class TestGymIntegration(unittest.TestCase):
         for values in infos.values():
             assert len(values) == batch_size
 
-        for cmds in infos.get("extra.walkthrough"):
+        for cmds in zip(*infos.get("extra.walkthrough")):
             obs, scores, dones, infos = env.step(cmds)
 
         env.close()
@@ -157,7 +156,7 @@ class TestGymIntegration(unittest.TestCase):
                                               batch_size=batch_size,
                                               name="test-batch-parallel",
                                               asynchronous=True)
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
 
         obs, infos = env.reset()
         assert len(obs) == batch_size
@@ -166,7 +165,7 @@ class TestGymIntegration(unittest.TestCase):
         for values in infos.values():
             assert len(values) == batch_size
 
-        for cmds in infos.get("extra.walkthrough"):
+        for cmds in zip(*infos.get("extra.walkthrough")):
             obs, scores, dones, infos = env.step(cmds)
 
         env.close()
@@ -187,7 +186,7 @@ class TestGymIntegration(unittest.TestCase):
                                               name="test-auto-reset",
                                               asynchronous=True,
                                               auto_reset=True)
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
 
         init_obs, init_infos = env.reset()
         dones = [False] * batch_size
@@ -231,7 +230,7 @@ class TestGymIntegration(unittest.TestCase):
                                               asynchronous=True)
 
         for _ in range(3):
-            env = gym.make(env_id)
+            env = textworld.gym.make(env_id)
 
             obs, infos = env.reset()
             assert len(obs) == batch_size
@@ -240,7 +239,7 @@ class TestGymIntegration(unittest.TestCase):
             for values in infos.values():
                 assert len(values) == batch_size
 
-            for cmds in infos.get("extra.walkthrough"):
+            for cmds in zip(*infos.get("extra.walkthrough")):
                 obs, scores, dones, infos = env.step(cmds)
 
             assert all(dones)
@@ -264,7 +263,7 @@ class TestGymIntegration(unittest.TestCase):
             name="test-custom-wrapper",
             wrappers=[DummyWrapper]
         )
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
         obs, infos = env.reset()
 
         for cmd in infos.get("extra.walkthrough"):

@@ -4,21 +4,16 @@
 
 from typing import List, Optional, Dict, Any, Tuple
 
-import gym
-
 from textworld import EnvInfos
 from textworld.gym.envs.textworld_batch import TextworldBatchGymEnv
 
 
 class TextworldGymEnv(TextworldBatchGymEnv):
-    metadata = {'render.modes': ['human', 'ansi', 'text']}
 
     def __init__(self,
                  gamefiles: List[str],
                  request_infos: Optional[EnvInfos] = None,
                  max_episode_steps: Optional[int] = None,
-                 action_space: Optional[gym.Space] = None,
-                 observation_space: Optional[gym.Space] = None,
                  **kwargs) -> None:
         """ Environment for playing text-based games.
 
@@ -33,18 +28,10 @@ class TextworldGymEnv(TextworldBatchGymEnv):
                 .. warning:: Only supported for TextWorld games (i.e., that have a corresponding `*.json` file).
             max_episode_steps:
                 Number of steps allocated to play each game. Once exhausted, the game is done.
-            action_space:
-                The action space be used with OpenAI baselines.
-                (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
-            observation_space:
-                The observation space be used with OpenAI baselines
-                (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
         """
         super().__init__(gamefiles=gamefiles,
                          request_infos=request_infos,
                          max_episode_steps=max_episode_steps,
-                         action_space=action_space,
-                         observation_space=observation_space,
                          **kwargs)
 
     def reset(self) -> Tuple[str, Dict[str, Any]]:

@@ -75,12 +75,11 @@ def show_graph(facts: Iterable[Proposition],
     >>> options = textworld.GameOptions()
     >>> options.seeds = 1234
     >>> game_file, game = textworld.make(options)
-    >>> import gym
     >>> import textworld.gym
     >>> from textworld import EnvInfos
     >>> request_infos = EnvInfos(facts=True)
     >>> env_id = textworld.gym.register_game(game_file, request_infos)
-    >>> env = gym.make(env_id)
+    >>> env = textworld.gym.make(env_id)
     >>> _, infos = env.reset()
     >>> textworld.render.show_graph(infos["facts"])
 
