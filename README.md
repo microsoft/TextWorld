@@ -85,19 +85,18 @@ To visualize the game state while playing, use the `--viewer [port]` option.
 
 A new browser tab should open and track your progress in the game.
 
-### Playing a game (Python + [Gym](https://github.com/openai/gym))
+### Playing a game (Python + [Gym](https://github.com/openai/gym)-like API)
 
-Here's how you can interact with a text-based game from within Python using OpenAI's Gym framework.
+Here's how you can interact with a text-based game from within Python using a Gym-like API.
 
 ```python
-import gym
 import textworld.gym
 
-# Register a text-based game as a new Gym's environment.
+# Register a text-based game as a new environment.
 env_id = textworld.gym.register_game("tw_games/custom_game.z8",
                                      max_episode_steps=50)
 
-env = gym.make(env_id)  # Start the environment.
+env = textworld.gym.make(env_id)  # Start the environment.
 
 obs, infos = env.reset()  # Start new episode.
 env.render()
@@ -113,7 +112,7 @@ env.close()
 print("moves: {}; score: {}".format(moves, score))
 ```
 
-> **Note:** To play text-based games without Gym, see [Playing text-based games with TextWorld.ipynb](notebooks/Playing%20text-based%20games%20with%20TextWorld.ipynb)
+> **Note:** To play text-based games without a Gym-like API, see [Playing text-based games with TextWorld.ipynb](notebooks/Playing%20text-based%20games%20with%20TextWorld.ipynb)
 
 ## Documentation
 

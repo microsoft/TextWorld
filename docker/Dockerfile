@@ -19,8 +19,7 @@ RUN apt-get install -qy \
 
 RUN pip install jupyter
 
-RUN git clone --single-branch --branch stable https://github.com/microsoft/TextWorld.git /TextWorld
-RUN pip install -r /TextWorld/requirements-full.txt
+RUN git clone --single-branch --branch main https://github.com/microsoft/TextWorld.git /TextWorld
 RUN pip install /TextWorld[vis]
 
 # Environment variables
