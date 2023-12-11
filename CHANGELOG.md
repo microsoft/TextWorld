@@ -6,6 +6,7 @@ This changelog follows the following convention [https://keepachangelog.com/en/1
 ### Breaking
 - Rename `Environment.infos` to `Environment.request_infos` [[#325](https://github.com/microsoft/TextWorld/pull/325)]
 - Use importlib.resources instead of pkg_resources (not supported by Python 3.8) [[#329](https://github.com/microsoft/TextWorld/pull/329), [#332](https://github.com/microsoft/]TextWorld/pull/332)]
+- Remove dependency on `gym`, use `textworld.gym as gym` instead. [[#341](https://github.com/microsoft/TextWorld/pull/341)]
 
 ### Added
 - Add support for Python 3.10, 3.11 and 3.12 [[#328](https://github.com/microsoft/TextWorld/pull/328)]
