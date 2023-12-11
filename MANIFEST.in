@@ -31,5 +31,6 @@ recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Internal *
 recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Interpreters *
 
 global-exclude *.o *.a
+global-exclude */__pycache__/*
 
 prune build

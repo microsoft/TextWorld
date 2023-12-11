@@ -7,7 +7,7 @@ from os.path import join as pjoin
 
 import numpy as np
 
-import gym
+import textworld.gym
 
 import textworld
 from textworld import g_rng
@@ -92,7 +92,7 @@ def benchmark(gamefile, args):
 def benchmark_gym(gamefile, args):
     infos = textworld.EnvInfos(admissible_commands=True)
     env_id = textworld.gym.register_games([gamefile] * args.batch_size, infos, args.batch_size)
-    env = gym.make(env_id)
+    env = textworld.gym.make(env_id)
     print("Using {}".format(env.__class__.__name__))
 
     rng = np.random.RandomState(args.seed)

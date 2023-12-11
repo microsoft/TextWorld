@@ -8,9 +8,7 @@ from io import StringIO
 from typing import List, Optional, Dict, Any, Tuple, Union
 
 import numpy as np
-import gym
-from gym.utils import colorize
-from gym.spaces import Space
+from termcolor import colored
 
 import textworld
 from textworld import EnvInfos
@@ -33,8 +31,7 @@ def _make_env(request_infos, max_episode_steps=None, wrappers=[]):
     return env
 
 
-class TextworldBatchGymEnv(gym.Env):
-    metadata = {'render.modes': ['human', 'ansi', 'text']}
+class TextworldBatchGymEnv:
 
     def __init__(self,
                  gamefiles: List[str],
@@ -43,8 +40,6 @@ class TextworldBatchGymEnv(gym.Env):
                  asynchronous: bool = True,
                  auto_reset: bool = False,
                  max_episode_steps: Optional[int] = None,
-                 action_space: Optional[gym.Space] = None,
-                 observation_space: Optional[gym.Space] = None,
                  wrappers: List[textworld.core.Wrapper] = []) -> None:
         """ Environment for playing text-based games in batch.
 
@@ -74,12 +69,6 @@ class TextworldBatchGymEnv(gym.Env):
                 Otherwise, once a game is done, subsequent calls to `env.step` won't have any effects.
             max_episode_steps:
                 Number of steps allocated to play each game. Once exhausted, the game is done.
-            action_space:
-                The action space be used with OpenAI baselines.
-                (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
-            observation_space:
-                The observation space be used with OpenAI baselines
-                (see :py:class:`textworld.gym.spaces.Word <textworld.gym.spaces.text_spaces.Word>`).
         """
         self.gamefiles = gamefiles
         self.batch_size = batch_size
@@ -89,9 +78,6 @@ class TextworldBatchGymEnv(gym.Env):
         env_fns = [partial(_make_env, self.request_infos, max_episode_steps, wrappers) for _ in range(self.batch_size)]
         BatchEnvType = AsyncBatchEnv if self.batch_size > 1 and asynchronous else SyncBatchEnv
         self.batch_env = BatchEnvType(env_fns, auto_reset)
-
-        self.action_space = action_space or Space()
-        self.observation_space = observation_space or Space()
 
     def seed(self, seed: Optional[int] = None) -> List[int]:
         """ Set the seed for this environment's random generator(s).
@@ -200,7 +186,7 @@ class TextworldBatchGymEnv(gym.Env):
             if last_command is not None:
                 command = "> " + last_command
                 if mode in ["ansi", "human"]:
-                    command = colorize(command, "yellow", highlight=False)
+                    command = colored(command, "yellow")
 
                 msg = command + "\n" + msg
 

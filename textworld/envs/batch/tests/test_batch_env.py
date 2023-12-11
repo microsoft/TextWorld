@@ -1,7 +1,5 @@
 from functools import partial
 
-import gym
-
 import textworld
 import textworld.gym
 from textworld import EnvInfos
@@ -32,7 +30,7 @@ def test_batch_env():
                                               name="test-auto-reset",
                                               asynchronous=True,
                                               auto_reset=True)
-        env = gym.make(env_id)
+        env = textworld.gym.make(env_id)
         env.reset()
         # env.close()
         del env
