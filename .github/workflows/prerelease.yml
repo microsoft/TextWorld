@@ -20,9 +20,6 @@ jobs:
         
       - name: Build source distribution
         run: python -m build --sdist
-            
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
       
       - uses: actions/upload-artifact@v3
         with:
