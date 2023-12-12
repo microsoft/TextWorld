@@ -26,6 +26,7 @@ jobs:
         run: python -m build
       - uses: actions/upload-artifact@v2
         with:
+          name: dist
           path: dist/*
           if-no-files-found: error
 
@@ -44,4 +45,5 @@ jobs:
       - name: Publish packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          verbose: true
           packages_dir: dist/
