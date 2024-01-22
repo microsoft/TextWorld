@@ -167,3 +167,12 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## License
+
+[TextWorld](https://github.com/microsoft/TextWorld) - MIT License
+[Inform7](https://github.com/ganelson/inform) - Artistic License 2.0
+[Jericho](https://github.com/microsoft/jericho) - GNU General Public License (GPL) v2.0
+[Fast Downward](https://github.com/MarcCote/downward) - GNU General Public License (GPL) v3.0
+[Git](https://github.com/DavidKinder/Git) - MIT License
+[cheakglk](https://github.com/erkyrath/cheapglk) - MIT License
