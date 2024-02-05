@@ -75,7 +75,7 @@ setup(
         'pddl': open('requirements-pddl.txt').readlines(),
         'full': open('requirements-full.txt').readlines(),
     },
-    classifiers = [
+    classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Information Technology",

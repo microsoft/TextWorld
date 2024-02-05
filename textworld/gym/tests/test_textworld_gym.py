@@ -138,6 +138,14 @@ class TestGymIntegration(unittest.TestCase):
         for values in infos.values():
             assert len(values) == batch_size
 
+        # Sending single command should raise assertion.
+        with pytest.raises(AssertionError):
+            obs, scores, dones, infos = env.step("wait")
+
+        # Sending not engough commands should raise assertion.
+        with pytest.raises(AssertionError):
+            obs, scores, dones, infos = env.step(["wait"] * (batch_size - 1))
+
         for cmds in zip(*infos.get("extra.walkthrough")):
             obs, scores, dones, infos = env.step(cmds)
 
@@ -164,6 +172,14 @@ class TestGymIntegration(unittest.TestCase):
         assert len(infos) == len(env_options)
         for values in infos.values():
             assert len(values) == batch_size
+
+        # Sending single command should raise assertion.
+        with pytest.raises(AssertionError):
+            obs, scores, dones, infos = env.step("wait")
+
+        # Sending not engough commands should raise assertion.
+        with pytest.raises(AssertionError):
+            obs, scores, dones, infos = env.step(["wait"] * (batch_size - 1))
 
         for cmds in zip(*infos.get("extra.walkthrough")):
             obs, scores, dones, infos = env.step(cmds)

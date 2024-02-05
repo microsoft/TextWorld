@@ -144,6 +144,8 @@ class TextworldBatchGymEnv:
             * dones: whether each game in the batch is finished or not;
             * infos: additional information as requested for each game in the batch.
         """
+        assert isinstance(commands, (list, tuple)), "Expected a list of commands."
+
         self.last_commands = commands
         self.obs, scores, dones, infos = self.batch_env.step(self.last_commands)
         return self.obs, scores, dones, infos

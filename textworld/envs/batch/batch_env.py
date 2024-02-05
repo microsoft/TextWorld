@@ -156,8 +156,10 @@ class AsyncBatchEnv(Environment):
             done: Whether the game is over or not.
             infos: Information requested when creating the environments.
         """
-        results = []
+        assert isinstance(actions, (list, tuple)), "Expected a list of actions."
+        assert len(actions) == len(self.envs), "Expected one action per environment."
 
+        results = []
         for i, (env, action) in enumerate(zip(self.envs, actions)):
             if self.last[i] is not None and self.last[i][2]:  # Game has ended on the last step.
                 obs, reward, done, infos = self.last[i]  # Copy last state over.
@@ -252,6 +254,9 @@ class SyncBatchEnv(Environment):
             done: Whether the game is over or not.
             infos: Information requested when creating the environments.
         """
+        assert isinstance(actions, (list, tuple)), "Expected a list of actions."
+        assert len(actions) == len(self.envs), "Expected one action per environment."
+
         results = []
         for i, (env, action) in enumerate(zip(self.envs, actions)):
             if self.last[i] is not None and self.last[i][2]:  # Game has ended on the last step.
