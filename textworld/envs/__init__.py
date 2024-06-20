@@ -15,6 +15,8 @@ def _guess_backend(path):
         return GitGlulxEnv
     elif re.search(r"\.z[1-8]", path):
         return JerichoEnv
+    elif path.endswith(".json"):
+        return TextWorldEnv
     elif path.endswith(".tw-pddl"):
         return PddlEnv
 
