@@ -595,8 +595,15 @@ class Game:
         for name, type in self.objects_names_and_types:
             type2names[f'{{{type}}}'].append(name)
 
-        commands = [re.sub(r"{.*?}", "{}", template).format(*mappings)
+        templates = [re.sub(r"{.*?}", "{{{}}}", template).format(*mappings)
                     for template in self.command_templates
+                    for mappings in product(*[[arg.strip('{}')] + self.kb.types.descendants(arg.strip('{}'))
+                                              for arg in re.findall(r"{.*?}", template)])]
+
+        templates = sorted(set(templates))
+
+        commands = [re.sub(r"{.*?}", "{}", template).format(*mappings)
+                    for template in templates
                     for mappings in product(*[type2names[arg] for arg in re.findall(r"{.*?}", template)])]
         return commands
 
