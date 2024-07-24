@@ -414,7 +414,7 @@ ENTITIES = {
         "names": ["oven"],
         "adjs": ["conventional"],
         "locations": ["kitchen"],
-        "properties": [],
+        "properties": ["closed"],
         "desc": ["Useful for roasting things."],
     },
 
