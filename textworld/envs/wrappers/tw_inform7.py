@@ -104,7 +104,11 @@ class TWInform7(textworld.core.Wrapper):
     @classmethod
     def compatible(cls, path: str) -> bool:
         """ Check if path point to a TW Inform7 compatible game. """
-        return os.path.isfile(os.path.splitext(path)[0] + ".json")
+        basepath, ext = os.path.splitext(path)
+        if ext not in [".z8", ".ulx"]:
+            return False
+
+        return os.path.isfile(basepath + ".json")
 
     def copy(self) -> "TWInform7":
         """ Returns a copy this wrapper. """
@@ -362,6 +366,9 @@ class GameData(textworld.core.Wrapper):
         self.state["command_templates"] = self._game.command_templates
         self.state["verbs"] = self._game.verbs
         self.state["entities"] = self._game.entity_names
+        self.state["typed_entities"] = self._game.objects_names_and_types
+        self.state["possible_commands"] = self._game.possible_commands
+        self.state["possible_admissible_commands"] = self._game.possible_admissible_commands
         self.state["objective"] = self._game.objective
         self.state["max_score"] = self._game.max_score
 

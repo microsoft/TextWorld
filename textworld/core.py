@@ -25,9 +25,10 @@ class EnvInfos:
                  'game',
                  'won', 'lost',
                  'score', 'moves', 'max_score', 'objective',
-                 'entities', 'verbs', 'command_templates',
-                 'admissible_commands', 'intermediate_reward',
-                 'policy_commands',
+                 'entities', 'typed_entities', 'verbs', 'command_templates',
+                 'admissible_commands', 'possible_admissible_commands',
+                 'possible_commands',
+                 'intermediate_reward', 'policy_commands',
                  'extras']
 
     def __init__(self, **kwargs):
@@ -71,6 +72,12 @@ class EnvInfos:
         #: bool: All commands relevant to the current state.
         #:       This information changes from one step to another.
         self.admissible_commands = kwargs.get("admissible_commands", False)
+        #: bool: All possible commands regardless of the current state.
+        #:       This information *doesn't* change from one step to another.
+        self.possible_admissible_commands = kwargs.get("possible_admissible_commands", False)
+        #: bool: All possible commands regardless of the current state and the arguments type.
+        #:       This information *doesn't* change from one step to another.
+        self.possible_commands = kwargs.get("possible_commands", False)
         #: bool: Sequence of commands leading to a winning state.
         #:       This information changes from one step to another.
         self.policy_commands = kwargs.get("policy_commands", False)
@@ -92,6 +99,9 @@ class EnvInfos:
         #: bool: Names of all entities in the game.
         #:       This information *doesn't* change from one step to another.
         self.entities = kwargs.get("entities", False)
+        #: bool: Names of all entities in the game and their type.
+        #:       This information *doesn't* change from one step to another.
+        self.typed_entities = kwargs.get("typed_entities", False)
         #: bool: Verbs understood by the the game.
         #:       This information *doesn't* change from one step to another.
         self.verbs = kwargs.get("verbs", False)
