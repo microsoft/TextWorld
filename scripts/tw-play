@@ -19,6 +19,8 @@ def build_parser():
                         choices=["random", "human", "random-cmd", "walkthrough"],
                         help="Select an agent to play the game: %(choices)s."
                              " Default: %(default)s.")
+    parser.add_argument("--seed", type=int, metavar="SEED",
+                        help="Random seed for the game.")
     parser.add_argument("--max-steps", type=int, default=0, metavar="STEPS",
                         help="Limit maximum number of steps.")
     parser.add_argument("--viewer", metavar="PORT", type=int, nargs="?", const=6070,
@@ -38,6 +40,7 @@ def main():
         args.verbose = args.very_verbose
 
     env = textworld.start(args.game)
+    env.seed(args.seed)
 
     if args.mode == "random":
         agent = textworld.agents.NaiveAgent()
