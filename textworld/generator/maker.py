@@ -14,7 +14,6 @@ import textworld
 
 from textworld.core import EnvInfos
 from textworld.utils import make_temp_directory
-
 from textworld.generator import Grammar
 from textworld.generator.graph_networks import direction
 from textworld.generator.data import KnowledgeBase
@@ -855,6 +854,8 @@ class GameMaker:
         :param save_screenshot: ONLY FOR WHEN interactive == False. Save screenshot in temp directory.
         :param filename: filename for screenshot
         """
+        import textworld.render
+
         game = self.build(validate=False)
         return textworld.render.visualize(game, interactive=interactive)
 
