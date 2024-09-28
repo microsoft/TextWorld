@@ -2,13 +2,15 @@
 # Licensed under the MIT license.
 
 
+import re
 import copy
 import json
 import textwrap
 
 from typing import List, Dict, Optional, Mapping, Any, Iterable, Union, Tuple
-from collections import OrderedDict
-from functools import partial
+from collections import OrderedDict, defaultdict
+from functools import cached_property, partial
+from itertools import product
 
 import numpy as np
 from numpy.random import RandomState
@@ -535,7 +537,7 @@ class Game:
 
         return sum(quest.reward for quest in self.quests if not quest.optional or quest.reward > 0)
 
-    @property
+    @cached_property
     def command_templates(self) -> List[str]:
         """ All command templates understood in this game. """
         return sorted(set(cmd for cmd in self.kb.inform7_commands.values()))
@@ -544,12 +546,12 @@ class Game:
     def directions_names(self) -> List[str]:
         return DIRECTIONS
 
-    @property
+    @cached_property
     def objects_types(self) -> List[str]:
         """ All types of objects in this game. """
         return sorted(self.kb.types.types)
 
-    @property
+    @cached_property
     def objects_names(self) -> List[str]:
         """ The names of all relevant objects in this game. """
         def _filter_unnamed_and_room_entities(e):
@@ -558,11 +560,11 @@ class Game:
         entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
         return [info.name for info in entities_infos]
 
-    @property
+    @cached_property
     def entity_names(self) -> List[str]:
         return self.objects_names + self.directions_names
 
-    @property
+    @cached_property
     def objects_names_and_types(self) -> List[str]:
         """ The names of all non-player objects along with their type in this game. """
         def _filter_unnamed_and_room_entities(e):
@@ -571,11 +573,39 @@ class Game:
         entities_infos = filter(_filter_unnamed_and_room_entities, self.infos.values())
         return [(info.name, info.type) for info in entities_infos]
 
-    @property
+    @cached_property
     def verbs(self) -> List[str]:
         """ Verbs that should be recognized in this game. """
         # Retrieve commands templates for every rule.
         return sorted(set(cmd.split()[0] for cmd in self.command_templates))
+
+    @cached_property
+    def possible_commands(self) -> List[str]:
+        """ All possible commands when ignoring their arguments' type. """
+        action_templates = set(re.sub(r"{.*?}", "{}", a) for a in self.command_templates)
+        possible_commands = [template.format(*mapping)
+                             for template in action_templates
+                             for mapping in product(self.objects_names, repeat=template.count("{}"))]
+        return sorted(possible_commands)
+
+    @cached_property
+    def possible_admissible_commands(self) -> List[str]:
+        """ Superset of the admissible commands irrespective of the current state. """
+        type2names = defaultdict(list)
+        for name, type in self.objects_names_and_types:
+            type2names[f'{{{type}}}'].append(name)
+
+        templates = [re.sub(r"{.*?}", "{{{}}}", template).format(*mappings)
+                     for template in self.command_templates
+                     for mappings in product(*[[arg.strip('{}')] + self.kb.types.descendants(arg.strip('{}'))
+                                               for arg in re.findall(r"{.*?}", template)])]
+
+        templates = sorted(set(templates))
+        commands = [re.sub(r"{.*?}", "{}", template).format(*mappings)
+                    for template in templates
+                    for mappings in product(*[type2names[arg] for arg in re.findall(r"{.*?}", template)])]
+
+        return sorted(commands)
 
     @property
     def objective(self) -> str:
