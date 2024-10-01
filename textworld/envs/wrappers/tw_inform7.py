@@ -156,7 +156,8 @@ class Inform7Data(textworld.core.Wrapper):
     def _track_info(self, info):
         extra_infos, _ = _detect_extra_infos(self._send('tw-extra-infos {}'.format(info)))
         self._tracked_infos.append(info)
-        self.state.update(extra_infos)
+        # Update the state with the new information. Avoid overwriting existing information if new value is None.
+        self.state.update({k: v for k, v in extra_infos.items() if k not in self.state or v is not None})
 
     def reset(self):
         self._tracked_infos = []
