@@ -55,10 +55,10 @@ if [ "${machine}" == 'Mac' ] && [ -e inform7-6M62 ]; then
     current_dir="$(pwd)"
     cd /Volumes/Inform/Inform.app/Contents/MacOS
     mkdir -p "$current_dir/inform7-6M62/share/inform7/Compilers/"
-    mkdir -p "$current_dir/inform7-6M62/share/inform7/Interpreters/"
-    cp cBlorb inform6 Inform intest ni "$current_dir/inform7-6M62/share/inform7/Compilers/"
-    cp ./git* "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-git"
-    cp ./glulxe* "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-glulxe"
+    # mkdir -p "$current_dir/inform7-6M62/share/inform7/Interpreters/"
+    cp inform6 ni "$current_dir/inform7-6M62/share/inform7/Compilers/"
+    # cp ./git* "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-git"
+    # cp ./glulxe* "$current_dir/inform7-6M62/share/inform7/Interpreters/dumb-glulxe"
 
     cd "$current_dir"
 

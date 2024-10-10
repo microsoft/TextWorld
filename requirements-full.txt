@@ -20,7 +20,7 @@ selenium>=3.12.0,<4.3
 greenlet>=0.4.13
 gevent>=1.3.5
 pillow>=5.1.0
-plotly>=4.0.0
+plotly>=4.0.0,<6.0.0
 pydot>=1.2.4
 psutil
 matplotlib

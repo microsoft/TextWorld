@@ -25,10 +25,9 @@ recursive-include textworld/render/tmpl *
 recursive-include textworld/thirdparty/glulx *
 
 recursive-include textworld/thirdparty/inform7 *
-recursive-include textworld/thirdparty/inform7-6M62/bin *
-recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Compilers *
+include textworld/thirdparty/inform7-6M62/share/inform7/Compilers/inform6
+include textworld/thirdparty/inform7-6M62/share/inform7/Compilers/ni
 recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Internal *
-recursive-include textworld/thirdparty/inform7-6M62/share/inform7/Interpreters *
 
 global-exclude *.o *.a
 global-exclude */__pycache__/*

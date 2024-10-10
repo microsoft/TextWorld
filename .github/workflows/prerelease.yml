@@ -6,7 +6,7 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
+    name: Build wheel for cp${{ matrix.cp }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
@@ -15,83 +15,104 @@ jobs:
         include:
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
-            python: 39
+            python: '3.9'
+            cp: '39'
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
-            python: 310
+            python: '3.10'
+            cp: '310'
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
-            python: 311
+            python: '3.11'
+            cp: '311'
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
-            python: 312
+            python: '3.12'
+            cp: '312'
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # MacOS x86_64
-          - os: macos-12
-            python: 39
+          - os: macos-13
+            python: '3.9'
+            cp: '39'
             platform_id: macosx_x86_64
-          - os: macos-12
-            python: 310
-            platform_id: macosx_x86_64
-          - os: macos-12
-            python: 311
-            platform_id: macosx_x86_64
-          - os: macos-12
-            python: 312
+          # - os: macos-13
+          #   python: '3.10'
+          #   cp: '310'
+          #   platform_id: macosx_x86_64
+          # - os: macos-13
+          #   python: '3.11'
+          #   cp: '311'
+          #   platform_id: macosx_x86_64
+          - os: macos-13
+            python: '3.12'
+            cp: '312'
             platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-14
-            python: 39
+            python: '3.9'
+            cp: '39'
             platform_id: macosx_arm64
+          # - os: macos-14
+          #   python: '3.10'
+          #   cp: '310'
+          #   platform_id: macosx_arm64
+          # - os: macos-14
+          #   python: '3.11'
+          #   cp: '311'
+          #   platform_id: macosx_arm64
           - os: macos-14
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-14
-            python: 311
-            platform_id: macosx_arm64
-          - os: macos-14
-            python: 312
+            python: '3.12'
+            cp: '312'
             platform_id: macosx_arm64
 
     steps:
       - name: Checkout TextWorld
         uses: actions/checkout@v4
 
-      - name: Use Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies on macos
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          brew install glkclient
-          brew install glkview
-          brew install zoomview
-
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel
-
-      - name: Build and test wheels
+      - name: Build Wheel
+        uses: pypa/cibuildwheel@v2.22.0
         env:
-          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_BUILD: cp${{ matrix.cp }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_BUILD_VERBOSITY: 1
           # MACOSX_DEPLOYMENT_TARGET: "10.13"
+        with:
+          output-dir: wheelhouse
 
-        run: python -m cibuildwheel --output-dir wheelhouse
+      - name: Install dependencies (Linux)
+        run: sudo apt update && sudo apt install -y --no-install-recommends graphviz
+        if: startsWith(matrix.os, 'ubuntu')
+
+      - name: Install dependencies (MacOS)
+        run: brew install graphviz
+        if: startsWith(matrix.os, 'macos')
+
+      - name: Use Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install TextWorld from the wheel
+        run: |
+            python -m pip install --upgrade pip
+            pip install pytest
+            pip install `ls wheelhouse/*.whl`[full]
+
+      - name: Run tests
+        run: |
+            pytest --durations=10 tests/ textworld/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
+          name: tw-wheels-cp${{ matrix.cp }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
           if-no-files-found: error
 
@@ -140,29 +161,5 @@ jobs:
           merge-multiple: true
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-
-  test:
-    needs: release
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python: ['3.9', '3.10', '3.11', '3.12']
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
-      - name: Install dependencies
-        run: |
-            python -m pip install --upgrade pip
-            pip install pytest pytest-azurepipelines pytest-cov
-            pip install --pre textworld[full]
-      - name: Run tests
-        run: |
-            pytest --durations=10 --junitxml=junit/test-results.xml --cov=textworld --cov-report=xml --cov-report=html tests/ textworld/
-      - uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: junit/test-results.xml
+          skip-existing: true
