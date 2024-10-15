@@ -142,3 +142,4 @@ class JerichoEnv(textworld.Environment):
 
 # By default disable the warning about unsupported games.
 warnings.simplefilter("ignore", jericho.UnsupportedGameWarning)
+warnings.simplefilter("ignore", jericho.TruncatedInputActionWarning)
