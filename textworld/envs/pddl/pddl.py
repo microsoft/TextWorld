@@ -57,6 +57,7 @@ class PddlEnv(textworld.Environment):
             self._game_file = None
 
         self._game_data = data
+        self.walkthrough = data.get("walkthrough", None)
         self._logic = pddl_logic.GameLogic(domain=self._game_data["pddl_domain"], grammar=self._game_data["grammar"])
         self._pddl_state = pddl_logic.PddlState(self.downward_lib, self._game_data["pddl_problem"], self._logic)
         self._entity_infos = self._get_entity_infos()
@@ -127,7 +128,7 @@ class PddlEnv(textworld.Environment):
         self._gather_infos()
 
         if "walkthrough" in self.request_infos.extras:
-            self.state["extra.walkthrough"] = self._pddl_state.replan(self._entity_infos)
+            self.state["extra.walkthrough"] = self.walkthrough or self._pddl_state.replan(self._entity_infos)
 
         return self.state
 
@@ -162,6 +163,10 @@ class PddlEnv(textworld.Environment):
 
         self.state.raw = self.state.feedback
         self._gather_infos()
+
+        if "walkthrough" in self.request_infos.extras:
+            self.state["extra.walkthrough"] = self.prev_state["extra.walkthrough"]
+
         self.state["score"] = 1 if self.state["won"] else 0
         self.state["done"] = self.state["won"] or self.state["lost"]
         return self.state, self.state["score"], self.state["done"]
