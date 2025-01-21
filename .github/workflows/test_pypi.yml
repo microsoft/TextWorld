@@ -1,0 +1,43 @@
+name: "Test from PyPi"
+
+on:
+  workflow_dispatch:
+  # Schedule a workflow to run at 00:00 (UTC) on the first of every month
+  schedule:
+    - cron: "0 0 1 * *"
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14]
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies (Linux)
+        run: sudo apt update && sudo apt install -y --no-install-recommends graphviz
+        if: startsWith(matrix.os, 'ubuntu')
+
+      - name: Install dependencies (MacOS)
+        run: brew install graphviz
+        if: startsWith(matrix.os, 'macos')
+
+      - name: Install TextWorld
+        run: |
+            python -m pip install --upgrade pip
+            pip install pytest pytest-azurepipelines pytest-cov
+            pip install --pre textworld[full]
+      - name: Run tests
+        run: |
+            pytest --durations=10 --junitxml=junit/test-results.xml --cov=textworld --cov-report=xml --cov-report=html tests/ textworld/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: junit/test-results.xml
