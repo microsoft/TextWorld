@@ -8,4 +8,4 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "textworld"
 dynamic = ["version", "optional-dependencies", "dependencies", "readme"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
