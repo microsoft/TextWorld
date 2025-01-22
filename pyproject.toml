@@ -7,5 +7,32 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "textworld"
-dynamic = ["version", "optional-dependencies", "dependencies", "readme"]
+description = "Microsoft Textworld - A Text-based Learning Environment."
+authors = [
+  { name = "Marc-Alexandre Côté" },
+  { name = "Microsoft Textworld", email = "textworld@microsoft.com" },
+]
+readme = "README.md"
 requires-python = ">=3.9"
+dynamic = ["version", "optional-dependencies", "dependencies"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Life",
+]
+
+license = {file = "LICENSE.txt"}
+
+[project.urls]
+Homepage = "https://github.com/microsoft/TextWorld"
+Issues = "https://github.com/microsoft/TextWorld/issues"
