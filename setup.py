@@ -41,7 +41,6 @@ class CustomBuildPy(build_py):
 setup(
     name='textworld',
     version=open(os.path.join("textworld", "version.py")).readlines()[0].split("=")[-1].strip("' \n"),
-    author='Microsoft Textworld',
     cmdclass={
         'build_py': CustomBuildPy,
         'install': CustomInstall,
@@ -57,10 +56,7 @@ setup(
         "scripts/tw-extract",
         "scripts/tw-view",
     ],
-    license='',
     zip_safe=False,
-    url="https://github.com/microsoft/TextWorld",
-    description="Microsoft Textworld - A Text-based Learning Environment.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     cffi_modules=["glk_build.py:ffibuilder"],
@@ -74,19 +70,5 @@ setup(
         'vis': open('requirements-vis.txt').readlines(),
         'pddl': open('requirements-pddl.txt').readlines(),
         'full': open('requirements-full.txt').readlines(),
-    },
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Information Technology",
-        "License :: OSI Approved :: MIT License",
-        "Natural Language :: English",
-        "Operating System :: MacOS",
-        "Operating System :: POSIX",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Topic :: Scientific/Engineering :: Artificial Life",
-    ]
+    }
 )
