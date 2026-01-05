@@ -12,7 +12,7 @@ from textworld.generator.inform7 import Inform7Game
 
 
 DEFAULT_OBSERVATION = """
-[To get text observation use the '.z8' or '.ulx' files instead of the '.json' one.]
+[To get text observation use the '.z8' file instead of the '.json' one.]
 """
 
 

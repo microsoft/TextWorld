@@ -15,7 +15,7 @@ def test_batch_env():
         options = textworld.GameOptions()
         options.path = tmpdir
         options.seeds = 1234
-        options.file_ext = ".ulx"
+        options.file_ext = ".z8"
         game_file1, game1 = textworld.make(options)
         options.seeds = 4321
         options.file_ext = ".z8"

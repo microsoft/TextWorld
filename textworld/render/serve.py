@@ -202,7 +202,7 @@ class VisualizationService:
         """
         Propogate state update to server.
         We use a multiprocessing.Pipe to pass state into flask process.
-        :param game_state: Glulx game state.
+        :param game_state: game state.
         :param command: previous command
         """
         state_dict = textworld.render.load_state_from_game_state(game_state)

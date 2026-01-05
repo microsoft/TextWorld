@@ -34,7 +34,7 @@ def generate_never_ending_game(args):
         game.quests = []
 
     game_name = "neverending"
-    path = pjoin(args.output, game_name + ".ulx")
+    path = pjoin(args.output, game_name + ".z8")
     options = textworld.GameOptions()
     options.path = path
     options.force_recompile = True

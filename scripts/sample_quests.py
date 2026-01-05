@@ -62,7 +62,7 @@ def main():
     args = parse_args()
 
     # Load game for which to sample quests for.
-    game = Game.load(args.game.replace(".ulx", ".json"))
+    game = Game.load(args.game.replace(".z8", ".json"))
 
     options = ChainingOptions()
     options.backward = False

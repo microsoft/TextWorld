@@ -59,8 +59,6 @@ setup(
     zip_safe=False,
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    cffi_modules=["glk_build.py:ffibuilder"],
-    setup_requires=['cffi>=1.0.0'],
     install_requires=open('requirements.txt').readlines(),
     test_suite='pytest',
     tests_require=[

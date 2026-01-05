@@ -105,7 +105,7 @@ class TWInform7(textworld.core.Wrapper):
     def compatible(cls, path: str) -> bool:
         """ Check if path point to a TW Inform7 compatible game. """
         basepath, ext = os.path.splitext(path)
-        if ext not in [".z8", ".ulx"]:
+        if ext not in [".z8"]:
             return False
 
         return os.path.isfile(basepath + ".json")

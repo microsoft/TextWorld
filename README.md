@@ -77,7 +77,7 @@ To play a game, one can use the `tw-play` script. For instance, the command to p
 
     tw-play tw_games/custom_game.z8
 
-> **Note:** Only Z-machine's games (*.z1 through *.z8) and Glulx's games (*.ulx) are supported.
+> **Note:** Only Z-machine's games (*.z1 through *.z8) are supported.
 
 To visualize the game state while playing, use the `--viewer [port]` option.
 
@@ -175,4 +175,3 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 - [Jericho](https://github.com/microsoft/jericho) - GNU General Public License (GPL) v2.0
 - [Fast Downward](https://github.com/MarcCote/downward) - GNU General Public License (GPL) v3.0
 - [Git](https://github.com/DavidKinder/Git) - MIT License
-- [cheakglk](https://github.com/erkyrath/cheapglk) - MIT License
