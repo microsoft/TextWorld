@@ -4,11 +4,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Setup Python 3.7
-      uses: actions/setup-python@master
+    - uses: actions/checkout@v5
+    - name: Setup Python
+      uses: actions/setup-python@v5
       with:
-        version: 3.7
+        python-version: '3.12'
     - name: flake8
       run: |
         pip install flake8

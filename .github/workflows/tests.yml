@@ -35,4 +35,4 @@ jobs:
             pip install -e .[dev]
       - name: Run tests
         run: |
-            pytest --cov=textworld --cov-report=term-missing --fail-under=85 tests/ textworld/
+            pytest -n 16 --cov=textworld --cov-report=term-missing --cov-fail-under=85 tests/ textworld/
