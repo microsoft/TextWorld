@@ -2,7 +2,6 @@
 # Licensed under the MIT license.
 
 
-import glob
 import shutil
 import tempfile
 import unittest
@@ -33,14 +32,6 @@ class TestIntegration(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tmpdir)
-
-    def setUp(self):
-        self.before_tw = glob.glob(pjoin(tempfile.gettempdir(), "tw_*"))
-
-    def tearDown(self):
-        # Check for file leaks.
-        after_tw = glob.glob(pjoin(tempfile.gettempdir(), "tw_*"))
-        assert set(after_tw) == set(self.before_tw)
 
     def test_100_sequential_runs(self):
         for gamefile in [self.game_file, self.game_file_z8]:

@@ -31,7 +31,7 @@ class TestInform7Data(unittest.TestCase):
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             inventory=True,
             description=True,
@@ -185,7 +185,7 @@ class TestTWInform7(unittest.TestCase):
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             inventory=True,
             description=True,
@@ -270,7 +270,7 @@ class TestGameData(unittest.TestCase):
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             max_score=True,
             objective=True,
@@ -356,7 +356,7 @@ class TestStateTracking(unittest.TestCase):
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             facts=True,
             policy_commands=True,
