@@ -135,7 +135,10 @@ class Inform7Data(textworld.core.Wrapper):
 
         for info in ["score", "moves"]:
             if self.state[info] is not None and type(self.state[info]) is not int:
-                self.state[info] = int(self.state[info].strip())
+                try:
+                    self.state[info] = int(self.state[info].strip())
+                except:
+                    self.state[info] = int(self.state[info].strip().split("\n")[0])
 
         self.state["won"] = '*** The End ***' in self.state["feedback"]
         self.state["lost"] = '*** You lost! ***' in self.state["feedback"]
