@@ -16,6 +16,7 @@ build/*
 gen_games*/
 experiments*/
 /textworld/thirdparty/inform7-6M62
+/textworld/thirdparty/frotz
 gameinfo.dbg
 textworld_data/
 Inform/
@@ -26,3 +27,5 @@ tmp/*
 /wheelhouse
 docs/build
 docs/src
+*.code-workspace
+.coverage
