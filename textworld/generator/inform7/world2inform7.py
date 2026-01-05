@@ -1012,6 +1012,7 @@ def generate_inform7_source(game: Game, seed: int = 1234, use_i7_description: bo
 def compile_inform7_game(source: str, output: str, verbose: bool = False) -> None:
     with make_temp_directory(prefix="tmp_inform") as project_folder:
         filename, ext = os.path.splitext(output)
+        assert ext in [".z8"], f"Output file `{output}` must have a .z8 extension."
         story_filename = filename + ".ni"
 
         # Save story file.

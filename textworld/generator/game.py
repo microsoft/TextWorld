@@ -1109,12 +1109,12 @@ class GameOptions:
         quest_depth (int):
             Number of actions that need to be performed to solve a subquest.
         path (str):
-            Path of the compiled game (.ulx or .z8). Also, the source (.ni)
+            Path of the compiled game (.z8). Also, the source (.ni)
             and metadata (.json) files will be saved along with it.
         force_recompile (bool):
             If `True`, recompile game even if it already exists.
         file_ext (str):
-            Type of the generated game file. Either .z8 (Z-Machine) or .ulx (Glulx).
+            Type of the generated game file. Either .z8 (Z-Machine).
             If `path` already has an extension, this is ignored.
         chaining (ChainingOptions):
             For customizing the quest generation (see
@@ -1136,7 +1136,7 @@ class GameOptions:
         self.nb_rooms = 1
         self.nb_objects = 1
         self.force_recompile = False
-        self.file_ext = ".ulx"
+        self.file_ext = ".z8"
         self.path = "./tw_games/"
 
     @property
