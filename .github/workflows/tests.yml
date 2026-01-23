@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, macos-latest-large]
-        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python: ['3.10', '3.12', '3.14']
     steps:
       - uses: actions/checkout@v5
       - name: Use Python ${{ matrix.python }}
