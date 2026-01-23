@@ -3,3 +3,4 @@ recommonmark
 sphinx_autodoc_typehints
 sphinx-argparse
 sphinx-rtd-theme
+textworld
