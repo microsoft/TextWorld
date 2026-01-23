@@ -3,4 +3,8 @@ recommonmark
 sphinx_autodoc_typehints
 sphinx-argparse
 sphinx-rtd-theme
-textworld
+numpy>=1.14.5
+tqdm>=4.17.1
+cffi>=1.0.0
+networkx>=2
+more_itertools
