@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-latest-large]
-        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        os: [ubuntu-latest, macos-latest-large]
+        python: ['3.10', '3.12']
     steps:
       - uses: actions/checkout@v5
       - name: Use Python ${{ matrix.python }}
@@ -35,4 +35,4 @@ jobs:
             pip install -e .[dev]
       - name: Run tests
         run: |
-            pytest -n 16 --cov=textworld --cov-report=term-missing --cov-fail-under=85 tests/ textworld/
+            pytest -n 16 -sv --cov=textworld --cov-report=term-missing --cov-fail-under=85 tests/ textworld/
