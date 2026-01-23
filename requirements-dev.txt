@@ -26,3 +26,10 @@ matplotlib
 
 # For using PddlEnv (needed for ALFWorld)
 fast-downward-textworld
+
+# For testing
+pytest
+pytest-asyncio
+pytest-cov
+pytest-xdist
+pytest-timeout

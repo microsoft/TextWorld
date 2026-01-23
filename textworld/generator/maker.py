@@ -604,7 +604,7 @@ class GameMaker:
         """
 
         with make_temp_directory() as tmpdir:
-            game_file = self.compile(pjoin(tmpdir, "test_game.ulx"))
+            game_file = self.compile(pjoin(tmpdir, "test_game.z8"))
 
             agent = textworld.agents.HumanAgent(autocompletion=True)
             if walkthrough:
@@ -621,7 +621,7 @@ class GameMaker:
             The resulting quest.
         """
         with make_temp_directory() as tmpdir:
-            game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
+            game_file = self.compile(pjoin(tmpdir, "record_quest.z8"))
             recorder = Recorder()
             agent = textworld.agents.HumanAgent(autocompletion=True)
             textworld.play(game_file, agent=agent, wrappers=[recorder])
@@ -649,7 +649,7 @@ class GameMaker:
         """
         with make_temp_directory() as tmpdir:
             try:
-                game_file = self.compile(pjoin(tmpdir, "record_quest.ulx"))
+                game_file = self.compile(pjoin(tmpdir, "record_quest.z8"))
                 recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
                 textworld.play(game_file, agent=agent, wrappers=[recorder], silent=True)
@@ -693,7 +693,7 @@ class GameMaker:
         """
         with make_temp_directory() as tmpdir:
             try:
-                game_file = self.compile(pjoin(tmpdir, "record_event.ulx"))
+                game_file = self.compile(pjoin(tmpdir, "record_event.z8"))
                 recorder = Recorder()
                 agent = textworld.agents.WalkthroughAgent(commands)
                 textworld.play(game_file, agent=agent, wrappers=[recorder], silent=True)
@@ -721,7 +721,7 @@ class GameMaker:
 
     def set_walkthrough(self, commands: List[str]):
         with make_temp_directory() as tmpdir:
-            game_file = self.compile(pjoin(tmpdir, "set_walkthrough.ulx"))
+            game_file = self.compile(pjoin(tmpdir, "set_walkthrough.z8"))
             env = textworld.start(game_file, request_infos=EnvInfos(last_action=True, intermediate_reward=True))
             state = env.reset()
 

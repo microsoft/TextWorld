@@ -29,7 +29,7 @@ if __name__ == "__main__":
     game_logger = GameLogger()
     for game_filename in args.games:
         try:
-            game = Game.load(game_filename.replace(".ulx", ".json"))
+            game = Game.load(game_filename.replace(".z8", ".json"))
         except Exception as e:
             print("Cannot load {}.".format(game))
             if args.verbose:

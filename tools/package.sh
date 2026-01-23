@@ -19,8 +19,6 @@ fi
 #rm -rf textworld/thirdparty/I7* textworld/thirdparty/inform7-6M62
 mkdir -p /tmp/tw_release_bkp
 mv textworld/thirdparty/I7* textworld/thirdparty/inform7-6M62 /tmp/tw_release_bkp/
-make -C textworld/thirdparty/glulx/Git-Glulx clean
-make -C textworld/thirdparty/glulx/cheapglk clean
 rm -rf build *.egg-info
 
 # Check if we are doing a prerelease.
@@ -43,4 +41,3 @@ echo -e "\e[33mpython -m twine upload dist/textworld-`sed -r "s/[^']*'(.*)'/\1/"
 if [[ ! -z $TEXTWORLD_PRERELEASE ]]; then
     mv /tmp/tw_release_bkp/version.py textworld/
 fi
-

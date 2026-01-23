@@ -1,7 +1,6 @@
 [build-system]
 requires = [
     "setuptools >= 61.0",
-    "cffi >= 1.0.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -36,3 +35,8 @@ license = {file = "LICENSE.txt"}
 [project.urls]
 Homepage = "https://github.com/microsoft/TextWorld"
 Issues = "https://github.com/microsoft/TextWorld/issues"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::jericho.UnsupportedGameWarning",
+]

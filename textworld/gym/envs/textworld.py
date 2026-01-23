@@ -19,7 +19,7 @@ class TextworldGymEnv(TextworldBatchGymEnv):
 
         Arguments:
             gamefiles:
-                Paths of every game composing the pool (`*.ulx|*.z[1-8]`).
+                Paths of every game composing the pool (`*.z[1-8]`).
             request_infos:
                 For customizing the information returned by this environment
                 (see :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`

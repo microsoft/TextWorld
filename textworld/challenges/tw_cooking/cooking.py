@@ -1013,7 +1013,7 @@ def make(settings: Mapping[str, str], options: Optional[GameOptions] = None) -> 
             _place_one_distractor(same_suffix_list, ingredient)
 
     # Add distractors foods. The amount is drawn from N(nb_ingredients, 3).
-    nb_distractors = abs(int(rng_objects.randn(1) * 3 + nb_ingredients))
+    nb_distractors = abs(int(rng_objects.randn(1).item() * 3 + nb_ingredients))
     distractors = place_random_foods(M, nb_distractors, rng_objects, allowed_foods)
 
     # If recipe_seed is positive, a new recipe is sampled.

@@ -2,6 +2,10 @@
 
 This changelog follows the following convention [https://keepachangelog.com/en/1.0.0/](https://keepachangelog.com/en/1.0.0/).
 
+## [1.7.0] - 2026-01-23
+### Breaking
+- Remove support for Glulx games. TextWorld now only supports Inform7 games compiled to Z-Machine format. [[#371](https://github.com/microsoft/TextWorld/pull/371)]
+
 ## [1.6.0] - 2023-11-28
 ### Breaking
 - Rename `Environment.infos` to `Environment.request_infos` [[#325](https://github.com/microsoft/TextWorld/pull/325)]

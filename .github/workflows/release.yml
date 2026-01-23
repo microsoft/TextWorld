@@ -2,10 +2,6 @@ name: Build and upload to PyPI
 
 on:
   workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - main
   release:
     types:
       - published
@@ -21,11 +17,6 @@ jobs:
         include:
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
-            python: '3.9'
-            cp: '39'
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
             python: '3.10'
             cp: '310'
             platform_id: manylinux_x86_64
@@ -38,48 +29,66 @@ jobs:
           - os: ubuntu-latest
             python: '3.12'
             cp: '312'
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: '3.13'
+            cp: '313'
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: '3.14'
+            cp: '314'
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # MacOS x86_64
-          - os: macos-13
-            python: '3.9'
-            cp: '39'
-            platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-latest-large
             python: '3.10'
             cp: '310'
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-latest-large
             python: '3.11'
             cp: '311'
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-latest-large
             python: '3.12'
             cp: '312'
+            platform_id: macosx_x86_64
+          - os: macos-latest-large
+            python: '3.13'
+            cp: '313'
+            platform_id: macosx_x86_64
+          - os: macos-latest-large
+            python: '3.14'
+            cp: '314'
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          - os: macos-14
-            python: '3.9'
-            cp: '39'
-            platform_id: macosx_arm64
-          - os: macos-14
+          - os: macos-latest
             python: '3.10'
             cp: '310'
             platform_id: macosx_arm64
-          - os: macos-14
+          - os: macos-latest
             python: '3.11'
             cp: '311'
             platform_id: macosx_arm64
-          - os: macos-14
+          - os: macos-latest
             python: '3.12'
             cp: '312'
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: '3.13'
+            cp: '313'
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: '3.14'
+            cp: '314'
             platform_id: macosx_arm64
 
     steps:
       - name: Checkout TextWorld
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Wheel
         uses: pypa/cibuildwheel@v2.22.0
@@ -127,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

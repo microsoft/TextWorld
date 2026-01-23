@@ -1,10 +1,10 @@
-name: "Test from PyPi"
+name: "Run tests and coverage"
 
 on:
-  workflow_dispatch:
-  # Schedule a workflow to run at 00:00 (UTC) on the first of every month
-  schedule:
-    - cron: "0 0 1 * *"
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-large]
-        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        os: [ubuntu-latest, macos-latest-large]
+        python: ['3.10', '3.12']
     steps:
       - uses: actions/checkout@v5
       - name: Use Python ${{ matrix.python }}
@@ -29,11 +29,10 @@ jobs:
         run: brew install graphviz
         if: startsWith(matrix.os, 'macos')
 
-      - name: Install TextWorld
+      - name: Install TextWorld from source
         run: |
             python -m pip install --upgrade pip
-            pip install pytest
-            pip install --pre textworld[full]
+            pip install -e .[dev]
       - name: Run tests
         run: |
-            pytest tests/ textworld/
+            pytest -n 16 -sv --cov=textworld --cov-report=term-missing --cov-fail-under=85 tests/ textworld/

@@ -9,7 +9,5 @@ textworld.envs
 .. toctree::
 
     textworld.envs.tw
-    textworld.envs.glulx
     textworld.envs.wrappers
     textworld.envs.zmachine
-

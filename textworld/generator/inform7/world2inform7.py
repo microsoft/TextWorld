@@ -1012,6 +1012,7 @@ def generate_inform7_source(game: Game, seed: int = 1234, use_i7_description: bo
 def compile_inform7_game(source: str, output: str, verbose: bool = False) -> None:
     with make_temp_directory(prefix="tmp_inform") as project_folder:
         filename, ext = os.path.splitext(output)
+        assert ext in [".z8"], f"Output file `{output}` must have a .z8 extension."
         story_filename = filename + ".ni"
 
         # Save story file.
@@ -1049,7 +1050,7 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
             msg += "\n-== ni =-\nFAIL: {}\n{}========\n".format(exc.returncode, exc.output.decode())
             msg += "*** Usually this means a compilation error.\n"
             if ext == ".z8":
-                msg += "*** Maybe the game is too big for a .z8 file. Try using .ulx instead.\n"
+                msg += "*** Maybe the game is too big for a .z8 file.\n"
             msg += "*** See {} for more information.\n".format(story_filename)
             raise CouldNotCompileGameError(msg)
         else:
@@ -1065,7 +1066,7 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
             i6_options += "D"  # Debug mode, enables Inform7 testing commands.
 
         i6_options += "E2wS"
-        i6_options += "G" if ext == ".ulx" else "v8"
+        i6_options += "v8"
         i6_options += "F0"  # Use extra memory rather than temporary files.
         cmd = [i6, i6_options, i6_input_filename, output]
 
@@ -1079,7 +1080,7 @@ def compile_inform7_game(source: str, output: str, verbose: bool = False) -> Non
             msg += "\n-= i6 =-\nFAIL: {}\n{}========\n".format(exc.returncode, exc.output.decode())
             msg += "*** Usually this means a compilation error.\n"
             if ext == ".z8":
-                msg += "*** Maybe the game is too big for a .z8 file. Try using .ulx instead.\n"
+                msg += "*** Maybe the game is too big for a .z8 file.\n"
             msg += "*** See {} for more information.\n".format(story_filename)
             raise CouldNotCompileGameError(msg)
         else:

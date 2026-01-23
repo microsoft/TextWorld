@@ -5,6 +5,7 @@
 import itertools
 
 import numpy as np
+from os.path import join as pjoin
 
 import textworld
 from textworld import g_rng
@@ -454,7 +455,7 @@ def test_take_all_and_variants():
     game = M.build()
     game_name = "test_take_all_and_variants"
     with make_temp_directory(prefix=game_name) as tmpdir:
-        game_file = _compile_game(game, path=tmpdir)
+        game_file = _compile_game(game, path=pjoin(tmpdir, "tw-game.z8"))
         env = textworld.start(game_file)
         env.reset()
 

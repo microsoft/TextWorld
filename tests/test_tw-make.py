@@ -16,7 +16,7 @@ from textworld.utils import make_temp_directory
 def test_making_a_custom_game():
     with make_temp_directory(prefix="test_tw-make") as tmpdir:
         output_folder = pjoin(tmpdir, "gen_games")
-        game_file = pjoin(output_folder, "game_1234.ulx")
+        game_file = pjoin(output_folder, "game_1234.z8")
         command = ["tw-make", "custom", "--seed", "1234", "--output", game_file, "--silent"]
         assert check_call(command) == 0
 
@@ -76,7 +76,7 @@ def test_making_challenge_game():
         for challenge in textworld.challenges.CHALLENGES:
             for i, params in enumerate(settings[challenge]):
                 output_folder = pjoin(tmpdir, "gen_games")
-                game_file = pjoin(output_folder, challenge + "_{}".format(i) + ".ulx")
+                game_file = pjoin(output_folder, challenge + "_{}".format(i) + ".z8")
                 command = ["tw-make", challenge, "--seed", "1234", "--output", game_file, "--silent"] + params
                 assert check_call(command) == 0
 
@@ -92,7 +92,7 @@ def test_making_a_game_using_basic_theme():
     for i in range(10):  # Try a few different games.
         with make_temp_directory(prefix="test_tw-make") as tmpdir:
             output_folder = pjoin(tmpdir, "gen_games")
-            game_file = pjoin(output_folder, "game_1234.ulx")
+            game_file = pjoin(output_folder, "game_1234.z8")
             command = ["tw-make", "custom", "--theme", "basic", "--seed", str(i), "--output", game_file, "--silent"]
             assert check_call(command) == 0
 
@@ -142,7 +142,7 @@ def test_third_party():
         NB_LOCATIONS = 3
 
         output_folder = pjoin(tmpdir, "gen_games")
-        game_file = pjoin(output_folder, "game_1234.ulx")
+        game_file = pjoin(output_folder, "game_1234.z8")
         command = ["tw-make", "--third-party", challenge_py, "my-challenge", "--seed", "1234",
                    "--output", game_file, "--silent"]
         try:
@@ -155,5 +155,5 @@ def test_third_party():
         command += ["--nb-locations", str(NB_LOCATIONS)]
         assert check_call(command) == 0
 
-        game = textworld.Game.load(game_file.replace(".ulx", ".json"))
+        game = textworld.Game.load(game_file.replace(".z8", ".json"))
         assert len(game.world.rooms) == NB_LOCATIONS

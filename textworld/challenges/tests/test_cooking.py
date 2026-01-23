@@ -23,7 +23,6 @@ def test_making_cooking_games():
         "recipe": nb_ingredients,
         "take": 3,
         "open": True,
-        "open": True,
         "cook": True,
         "cut": False,
         "drop": False,

@@ -8,7 +8,7 @@ from textworld.utils import make_temp_directory
 
 
 def test_playing_a_game():
-    for ext in [".ulx", ".z8"]:
+    for ext in [".z8"]:
         with make_temp_directory(prefix="test_tw-play") as tmpdir:
             options = textworld.GameOptions()
             options.file_ext = ext
