@@ -12,7 +12,7 @@ import textworld.agents
 
 
 def build_parser():
-    description = "Play a TextWorld game (.z8 or .ulx)."
+    description = "Play a TextWorld game (.z8 or .json)."
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("game")
     parser.add_argument("--mode", default="human", metavar="MODE",

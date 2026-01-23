@@ -68,6 +68,8 @@ def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> 
         * ...
 
         and where the quest length is set according to ((level - 1) % 100 + 1).
+
+        .. warning:: Due to the removal of Glulx support in TextWorld 1.7, games are limited to a maximum of 100 rooms.
     """
     options = options or GameOptions()
 
@@ -85,6 +87,11 @@ def make(settings: Mapping[str, Any], options: Optional[GameOptions] = None) -> 
     options.quest_length = (level - 1) % 100 + 1
     options.nb_rooms = (n_distractors + 1) * options.quest_length
     distractor_mode = "random" if n_distractors > 2 else "simple"
+    if options.nb_rooms > 100:
+        msg = ("With the removal of Glulx support in TextWorld 1.7,"
+               " games with more than 100 rooms are not supported.")
+        raise ValueError(msg)
+
     return make_game(distractor_mode, options)
 
 

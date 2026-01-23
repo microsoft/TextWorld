@@ -2,7 +2,6 @@
 # Licensed under the MIT license.
 import re
 
-from textworld.envs.glulx.git_glulx import GitGlulxEnv
 from textworld.envs.zmachine.jericho import JerichoEnv
 from textworld.envs.tw import TextWorldEnv
 from textworld.envs.wrappers.tw_inform7 import TWInform7
@@ -12,7 +11,8 @@ from textworld.envs.pddl import PddlEnv
 def _guess_backend(path):
     # Guess the backend from the extension.
     if path.endswith(".ulx"):
-        return GitGlulxEnv
+        msg = "Glulx games are not supported anymore. Use TextWorld version < 1.7.0 to play Glulx games."
+        raise NotImplementedError(msg)
     elif re.search(r"\.z[1-8]", path):
         return JerichoEnv
     elif path.endswith(".json"):

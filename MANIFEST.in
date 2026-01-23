@@ -7,9 +7,6 @@ include CONTRIBUTING.md
 include License.md
 include setup.sh
 
-include glk_build.py
-recursive-include src *
-
 include textworld/logic/*.ebnf
 include textworld/textgen/*.ebnf
 include textworld/generator/data/logic/*.twl
@@ -21,8 +18,6 @@ include textworld/envs/pddl/logic/*.ebnf
 include textworld/envs/pddl/textgen/*.ebnf
 
 recursive-include textworld/render/tmpl *
-
-recursive-include textworld/thirdparty/glulx *
 
 recursive-include textworld/thirdparty/inform7 *
 include textworld/thirdparty/inform7-6M62/share/inform7/Compilers/inform6

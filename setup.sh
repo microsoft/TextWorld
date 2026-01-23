@@ -62,16 +62,3 @@ if [ "${machine}" == 'Mac' ] && [ -e inform7-6M62 ]; then
     echo "Unmounting Inform for Mac"
     hdiutil detach /Volumes/Inform/
 fi
-
-
-# Install modified fork of Glulx and build it - we have this one locally
-(
-    echo "Installing cheapglk"
-    cd glulx/cheapglk
-    make -B
-)
-(
-    echo "Installing git-glulx-ml"
-    cd glulx/Git-Glulx
-    make -B
-)

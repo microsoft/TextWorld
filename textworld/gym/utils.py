@@ -43,7 +43,7 @@ def register_games(gamefiles: List[str],
 
     Arguments:
         gamefiles:
-            Paths for the TextWorld games (`*.ulx|*.z[1-8]`).
+            Paths for the TextWorld games (`*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
             (see
@@ -133,7 +133,7 @@ def register_game(gamefile: str,
 
     Arguments:
         gamefile:
-            Path for the TextWorld game (`*.ulx|*.z[1-8]`).
+            Path for the TextWorld game (`*.z[1-8]`).
         request_infos:
             For customizing the information returned by this environment
             (see :py:class:`textworld.EnvInfos <textworld.core.EnvInfos>`

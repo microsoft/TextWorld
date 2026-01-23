@@ -1,5 +1,4 @@
 import os
-import glob
 import shutil
 import tempfile
 import unittest
@@ -33,17 +32,6 @@ class TestGymIntegration(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tmpdir)
-
-    def setUp(self):
-        self.before_tw = glob.glob(pjoin(tempfile.gettempdir(), "tw_*"))
-        self.before_mlglk = glob.glob(pjoin(tempfile.gettempdir(), "mlglk_*"))
-
-    def tearDown(self):
-        # Check for file leaks.
-        after_tw = glob.glob(pjoin(tempfile.gettempdir(), "tw_*"))
-        after_mlglk = glob.glob(pjoin(tempfile.gettempdir(), "mlglk_*"))
-        assert set(after_tw) == set(self.before_tw)
-        assert set(after_mlglk) == set(self.before_mlglk)
 
     def test_register_game(self):
         env_options = EnvInfos(inventory=True, description=True,

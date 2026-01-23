@@ -12,7 +12,7 @@ SCRIPTS_PATH = os.path.abspath(pjoin(__file__, "..", "..", "scripts"))
 
 def test_sample_quests():
     with make_temp_directory(prefix="test_sample_quests") as tmpdir:
-        game_file = pjoin(tmpdir, "game.ulx")
+        game_file = pjoin(tmpdir, "game.z8")
         command = ["tw-make", "custom", "--seed", "20181004", "--output", game_file]
         check_output(command).decode()
 

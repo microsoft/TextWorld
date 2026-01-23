@@ -35,7 +35,7 @@ def build_parser():
     vocab_parser = subparsers.add_parser("vocab", parents=[general_parser],
                                          help='Extract vocabulary.')
     vocab_parser.add_argument("games", metavar="game", nargs="*",
-                              help="List of TextWorld games (.ulx|.z8|.json).")
+                              help="List of TextWorld games (.z8|.json).")
     vocab_parser.add_argument("--output", default="vocab.txt",
                               help="Output file containing all words (.txt). Default: %(default)s")
     vocab_parser.add_argument("--theme",
@@ -44,21 +44,21 @@ def build_parser():
     entities_parser = subparsers.add_parser("entities", parents=[general_parser],
                                             help='Extract entity names.')
     entities_parser.add_argument("games", metavar="game", nargs="+",
-                                 help="List of TextWorld games (.ulx|.z8|.json).")
+                                 help="List of TextWorld games (.z8|.json).")
     entities_parser.add_argument("--output", default="entities.txt",
                                  help="Output file containing all entity names (.txt). Default: %(default)s")
 
     walkthrough_parser = subparsers.add_parser("walkthroughs", parents=[general_parser],
                                                help='Extract walkthroughs.')
     walkthrough_parser.add_argument("games", metavar="game", nargs="+",
-                                    help="List of TextWorld games (.ulx|.json).")
+                                    help="List of TextWorld games (.z8|.json).")
     walkthrough_parser.add_argument("--output", default="walkthroughs.txt",
                                     help="Output file containing all walkthroughs (.txt). Default: %(default)s")
 
     commands_parser = subparsers.add_parser("commands", parents=[general_parser],
                                             help='Extract all possible commands.')
     commands_parser.add_argument("games", metavar="game", nargs="+",
-                                 help="List of TextWorld games (.ulx|.json).")
+                                 help="List of TextWorld games (.z8|.json).")
     commands_parser.add_argument("--output", default="commands.txt",
                                  help="Output file containing all commands (.txt). Default: %(default)s")
 

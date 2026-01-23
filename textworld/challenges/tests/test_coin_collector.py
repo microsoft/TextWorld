@@ -22,6 +22,11 @@ def test_making_coin_collector():
         options.seeds = 1234
 
         settings = {"level": level}
+        if expected[level]["nb_rooms"] > 100:
+            with pytest.raises(ValueError):
+                coin_collector.make(settings, options)
+            continue
+
         game = coin_collector.make(settings, options)
         assert len(game.quests[0].commands) == expected[level]["quest_length"]
         assert len(game.world.rooms) == expected[level]["nb_rooms"]

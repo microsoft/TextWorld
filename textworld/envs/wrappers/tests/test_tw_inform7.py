@@ -14,7 +14,7 @@ from textworld import g_rng
 from textworld import testing
 
 from textworld import EnvInfos
-from textworld.envs import JerichoEnv, GitGlulxEnv
+from textworld.envs import JerichoEnv
 from textworld.envs.wrappers.tw_inform7 import TWInform7
 from textworld.envs.wrappers.tw_inform7 import GameData, Inform7Data
 from textworld.envs.wrappers.tw_inform7 import StateTracking
@@ -30,10 +30,8 @@ class TestInform7Data(unittest.TestCase):
         g_rng.set_seed(201809)
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
-        cls.options.path = pjoin(cls.tmpdir, "tw-game.ulx")
-        cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             inventory=True,
             description=True,
@@ -51,15 +49,11 @@ class TestInform7Data(unittest.TestCase):
         self.env_z8 = Inform7Data(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = Inform7Data(GitGlulxEnv(self.request_infos))
-        self.env_ulx.load(self.gamefile_ulx)
-
     def tearDown(self):
         self.env_z8.close()
-        self.env_ulx.close()
 
     def test_description(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             game_state, _, _ = env.step("look")
@@ -78,7 +72,7 @@ class TestInform7Data(unittest.TestCase):
             assert game_state.description != ""
 
     def test_inventory(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             assert "carrot" in initial_state.inventory
@@ -100,7 +94,7 @@ class TestInform7Data(unittest.TestCase):
             assert game_state.inventory != ""  # Game has ended
 
     def test_score(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             assert initial_state.score == 0
@@ -115,7 +109,7 @@ class TestInform7Data(unittest.TestCase):
             assert game_state.score == 3
 
     def test_moves(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             assert initial_state.moves == 0
@@ -130,7 +124,7 @@ class TestInform7Data(unittest.TestCase):
             assert game_state.moves == 3
 
     def test_won(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             assert not initial_state.won
@@ -144,7 +138,7 @@ class TestInform7Data(unittest.TestCase):
             assert done
 
     def test_lost(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             assert not initial_state.lost
@@ -155,8 +149,6 @@ class TestInform7Data(unittest.TestCase):
             assert game_state.lost
 
     def test_copy(self):
-        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
-
         # Copy before env.reset.
         env = self.env_z8.copy()
         assert env.state == self.env_z8.state
@@ -192,10 +184,8 @@ class TestTWInform7(unittest.TestCase):
         g_rng.set_seed(201809)
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
-        cls.options.path = pjoin(cls.tmpdir, "tw-game.ulx")
-        cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             inventory=True,
             description=True,
@@ -213,27 +203,19 @@ class TestTWInform7(unittest.TestCase):
         self.env_z8 = TWInform7(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = TWInform7(GitGlulxEnv(self.request_infos))
-        self.env_ulx.load(self.gamefile_ulx)
-
     def tearDown(self):
         self.env_z8.close()
-        self.env_ulx.close()
 
     def test_compatible(self):
-        assert TWInform7.compatible(self.gamefile_ulx)
         assert TWInform7.compatible(self.gamefile_z8)
 
-        # To be compatible, a game needs the .json alongside its z8/ulx file.
+        # To be compatible, a game needs the .json alongside its .z8 file.
         gamefile_json = self.gamefile_z8.replace(".z8", ".json")
         shutil.move(gamefile_json, gamefile_json + ".bkp")
-        assert not TWInform7.compatible(self.gamefile_ulx)
         assert not TWInform7.compatible(self.gamefile_z8)
         shutil.move(gamefile_json + ".bkp", gamefile_json)
 
     def test_copy(self):
-        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
-
         # Copy before env.reset.
         env = self.env_z8.copy()
         assert env.state == self.env_z8.state
@@ -264,7 +246,7 @@ class TestTWInform7(unittest.TestCase):
     def test_no_quest_game(self):
         game_name = "tw-no_quest_game"
         with make_temp_directory(prefix=game_name) as tmpdir:
-            for ext, env_class in [(".ulx", GitGlulxEnv), (".z8", JerichoEnv)]:
+            for ext, env_class in [(".z8", JerichoEnv)]:
                 options = textworld.GameOptions()
                 options.path = pjoin(tmpdir, game_name + ext)
 
@@ -287,10 +269,8 @@ class TestGameData(unittest.TestCase):
         g_rng.set_seed(201809)
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
-        cls.options.path = pjoin(cls.tmpdir, "tw-game.ulx")
-        cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             max_score=True,
             objective=True,
@@ -306,27 +286,23 @@ class TestGameData(unittest.TestCase):
         self.env_z8 = GameData(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = GameData(GitGlulxEnv(self.request_infos))
-        self.env_ulx.load(self.gamefile_ulx)
-
     def tearDown(self):
         self.env_z8.close()
-        self.env_ulx.close()
 
     def test_max_score(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
             assert initial_state.max_score == 3
 
     def test_objective(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
             assert initial_state.objective.strip() in initial_state.feedback
             game_state, _, _ = env.step("goal")
             assert game_state.feedback.strip() == initial_state.objective
 
     def test_win_facts(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
             assert len(initial_state.win_facts) == len(self.game.quests)
             for i, quest in enumerate(self.game.quests):
@@ -338,7 +314,7 @@ class TestGameData(unittest.TestCase):
             assert game_state.win_facts == initial_state.win_facts
 
     def test_fail_facts(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
             assert len(initial_state.fail_facts) == len(self.game.quests)
             for i, quest in enumerate(self.game.quests):
@@ -351,7 +327,7 @@ class TestGameData(unittest.TestCase):
 
     def test_missing_game_infos_file(self):
         with make_temp_directory() as tmpdir:
-            for ext, env_class in [(".ulx", GitGlulxEnv), (".z8", JerichoEnv)]:
+            for ext, env_class in [(".z8", JerichoEnv)]:
                 gamefile = pjoin(tmpdir, "tmp" + ext)
                 with open(gamefile, "w"):
                     pass  # Empty file
@@ -360,8 +336,6 @@ class TestGameData(unittest.TestCase):
                 npt.assert_raises(MissingGameInfosError, env.load, gamefile)
 
     def test_copy(self):
-        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
-
         # Copy before env.reset.
         env = self.env_z8.copy()
         assert env._gamefile == self.env_z8._gamefile
@@ -381,10 +355,8 @@ class TestStateTracking(unittest.TestCase):
         g_rng.set_seed(201809)
         cls.tmpdir = tempfile.mkdtemp()
         cls.options = textworld.GameOptions()
-        cls.options.path = pjoin(cls.tmpdir, "tw-game.ulx")
-        cls.game, cls.gamefile_ulx = testing.build_and_compile_game(cls.options)
         cls.options.path = pjoin(cls.tmpdir, "tw-game.z8")
-        cls.gamefile_z8 = textworld.generator.compile_game(cls.game, cls.options)
+        cls.game, cls.gamefile_z8 = testing.build_and_compile_game(cls.options)
         cls.request_infos = EnvInfos(
             facts=True,
             policy_commands=True,
@@ -400,15 +372,11 @@ class TestStateTracking(unittest.TestCase):
         self.env_z8 = StateTracking(JerichoEnv(self.request_infos))
         self.env_z8.load(self.gamefile_z8)
 
-        self.env_ulx = StateTracking(GitGlulxEnv(self.request_infos))
-        self.env_ulx.load(self.gamefile_ulx)
-
     def tearDown(self):
         self.env_z8.close()
-        self.env_ulx.close()
 
     def test_intermediate_reward(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
 
             assert initial_state.intermediate_reward == 0
@@ -431,7 +399,7 @@ class TestStateTracking(unittest.TestCase):
             assert game_state.intermediate_reward == 1
 
     def test_policy_commands(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             initial_state = env.reset()
             walkthrough = tuple(self.game.metadata["walkthrough"])
 
@@ -474,7 +442,7 @@ class TestStateTracking(unittest.TestCase):
             assert len(game_state.policy_commands) == 0
 
     def test_admissible_commands(self):
-        for env in [self.env_ulx, self.env_z8]:
+        for env in [self.env_z8]:
             game_state = env.reset()
             # Make sure examine, look and inventory are in the admissible commands.
             assert "examine carrot" in game_state.admissible_commands
@@ -493,7 +461,7 @@ class TestStateTracking(unittest.TestCase):
 
     def test_missing_game_infos_file(self):
         with make_temp_directory() as tmpdir:
-            for ext, env_class in [(".ulx", GitGlulxEnv), (".z8", JerichoEnv)]:
+            for ext, env_class in [(".z8", JerichoEnv)]:
                 gamefile = pjoin(tmpdir, "tmp" + ext)
                 with open(gamefile, "w"):
                     pass  # Empty file
@@ -502,8 +470,6 @@ class TestStateTracking(unittest.TestCase):
                 npt.assert_raises(MissingGameInfosError, env.load, gamefile)
 
     def test_copy(self):
-        npt.assert_raises(NotImplementedError, self.env_ulx.copy)
-
         # Copy before env.reset.
         env = self.env_z8.copy()
         assert env._gamefile == self.env_z8._gamefile
