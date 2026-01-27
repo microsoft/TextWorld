@@ -28,12 +28,6 @@ jobs:
             cp: '312'
             platform_id: macosx_x86_64
 
-          # MacOS arm64
-          - os: macos-latest
-            python: '3.12'
-            cp: '312'
-            platform_id: macosx_arm64
-
     steps:
       - name: Checkout TextWorld
         uses: actions/checkout@v5
@@ -45,11 +39,11 @@ jobs:
           CIBW_ARCHS: native  # avoid building extra archs unintentionally
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_BUILD_VERBOSITY: 1
-
-          # Retag to py3-none-<platform>
-          CIBW_REPAIR_WHEEL_COMMAND: "python tools/retag_wheel_py3-none.py {wheel}"
         with:
           output-dir: wheelhouse
+
+      - name: Retag wheels to py3-none-<platform>
+        run: python tools/retag_wheel_py3-none.py wheelhouse
 
       - name: Install dependencies (Linux)
         run: sudo apt update && sudo apt install -y --no-install-recommends graphviz
@@ -127,3 +121,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+          verbose: true

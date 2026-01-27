@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-large]
-        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        os: [ubuntu-latest, macos-latest-large, macos-latest]
+        python: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v5
       - name: Use Python ${{ matrix.python }}
@@ -32,8 +32,7 @@ jobs:
       - name: Install TextWorld
         run: |
             python -m pip install --upgrade pip
-            pip install pytest
-            pip install --pre textworld[full]
+            pip install textworld[dev]
       - name: Run tests
         run: |
-            pytest tests/ textworld/
+            pytest -n 16 -sv tests/ textworld/
