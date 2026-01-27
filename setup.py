@@ -11,6 +11,16 @@ from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 from setuptools.command.build_py import build_py
+from setuptools.dist import Distribution
+
+
+class BinaryDistribution(Distribution):
+    """
+    Force wheel to be marked as non-pure (platform-specific) even though we
+    don't compile extension modules, because we bundle OS-specific binaries.
+    """
+    def has_ext_modules(self):
+        return True
 
 
 def _pre_install(dir):
@@ -41,6 +51,7 @@ class CustomBuildPy(build_py):
 setup(
     name='textworld',
     version=open(os.path.join("textworld", "version.py")).readlines()[0].split("=")[-1].strip("' \n"),
+    distclass=BinaryDistribution,
     cmdclass={
         'build_py': CustomBuildPy,
         'install': CustomInstall,
