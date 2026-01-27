@@ -36,4 +36,4 @@ jobs:
             pip install --pre textworld[full]
       - name: Run tests
         run: |
-            pytest tests/ textworld/
+            pytest -n 16 -sv tests/ textworld/
