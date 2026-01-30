@@ -1,8 +1,11 @@
 name: "Test from PyPi"
 
 on:
+  workflow_run:
+    workflows: ["Build and upload to PyPI"]
+    types:
+      - completed
   workflow_dispatch:
-  # Schedule a workflow to run at 00:00 (UTC) on the first of every month
   schedule:
     - cron: "0 0 1 * *"
 
