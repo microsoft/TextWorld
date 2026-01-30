@@ -38,4 +38,4 @@ jobs:
             pip install textworld[dev]
       - name: Run tests
         run: |
-            pytest -n 16 -sv tests/ textworld/
+            pytest -n 1 -sv tests/ textworld/
