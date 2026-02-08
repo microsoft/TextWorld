@@ -457,7 +457,8 @@ class Game:
                 mapping = {k: info.name for k, info in self._infos.items()}
                 commands = [a.format_command(mapping) for a in policy]
                 self.metadata["walkthrough"] = commands
-                self.objective = describe_event(Event(policy), self, self.grammar)
+                if self._objective is None:
+                    self.objective = describe_event(Event(policy), self, self.grammar)
 
     def save(self, filename: str) -> None:
         """ Saves the serialized data of this game to a file. """
