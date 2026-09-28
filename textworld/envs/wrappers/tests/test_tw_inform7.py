@@ -108,6 +108,16 @@ class TestInform7Data(unittest.TestCase):
             game_state, _, _ = env.step("close chest")
             assert game_state.score == 3
 
+    def test_multiple_commands(self):
+        # Multiple commands on one line (e.g. "go east. go west.") must
+        # not crash: the Inform7 interpreter prints one set of extra-info
+        # tags per command, so the reported state must come from the last
+        # command.
+        for env in [self.env_z8]:
+            env.reset()
+            game_state, _, _ = env.step("go east. go west.")
+            assert game_state.moves == 2
+
     def test_moves(self):
         for env in [self.env_z8]:
             initial_state = env.reset()
