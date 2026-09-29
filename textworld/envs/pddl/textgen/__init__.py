@@ -93,8 +93,7 @@ class EvalSymbol(Symbol):
 
     def derive(self, context=None):
         context = context or self.context
-        locals().update(context["variables"])
-        value = eval(self.expression)
+        value = eval(self.expression, None, context["variables"])
         return [TerminalSymbol(value)]
 
 
