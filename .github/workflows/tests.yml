@@ -33,6 +33,15 @@ jobs:
         run: |
             python -m pip install --upgrade pip
             pip install -e .[dev]
-      - name: Run tests
+      - name: Run tests (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
             pytest -n 16 -sv --cov=textworld --cov-report=term-missing --cov-fail-under=85 tests/ textworld/
+
+      # On MacOS, tests/test_sample_quests.py crashes when run concurrently with
+      # pytest-xdist (native rendering/Graphviz), so it is run serially instead.
+      - name: Run tests (MacOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+            pytest -n 16 -sv --cov=textworld --cov-report= --ignore=tests/test_sample_quests.py tests/ textworld/
+            pytest -sv --cov=textworld --cov-append --cov-report=term-missing --cov-fail-under=85 tests/test_sample_quests.py
