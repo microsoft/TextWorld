@@ -513,13 +513,14 @@ class Inform7Game:
         """)
 
         # Referring to an object by its whole name shouldn't be ambiguous.
+        # The parser lowercases commands, but printed names can contain capitals.
         source += textwrap.dedent("""\
         Does the player mean doing something:
-            if the noun is not nothing and the second noun is nothing and the player's command matches the text printed name of the noun:
+            if the noun is not nothing and the second noun is nothing and (the player's command matches the text printed name of the noun, case insensitively):
                 it is likely;
-            if the noun is nothing and the second noun is not nothing and the player's command matches the text printed name of the second noun:
+            if the noun is nothing and the second noun is not nothing and (the player's command matches the text printed name of the second noun, case insensitively):
                 it is likely;
-            if the noun is not nothing and the second noun is not nothing and the player's command matches the text printed name of the noun and the player's command matches the text printed name of the second noun:
+            if the noun is not nothing and the second noun is not nothing and (the player's command matches the text printed name of the noun, case insensitively) and (the player's command matches the text printed name of the second noun, case insensitively):
                 it is very likely.  [Handle action with two arguments.]
 
         """)  # noqa: E501
