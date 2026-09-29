@@ -5,6 +5,7 @@
 import itertools
 
 import numpy as np
+import pytest
 from os.path import join as pjoin
 
 import textworld
@@ -12,6 +13,7 @@ from textworld import g_rng
 from textworld.utils import make_temp_directory
 
 from textworld.core import EnvInfos
+from textworld.logic import Proposition, Variable
 from textworld.generator.data import KnowledgeBase
 from textworld.generator import World, Quest, Event
 from textworld.generator import compile_game
@@ -23,6 +25,61 @@ def _compile_game(game, path):
     options = textworld.GameOptions()
     options.path = path
     return compile_game(game, options)
+
+
+@pytest.mark.parametrize("item_name, box_name", [
+    ("ruby", "box"), ("Ruby", "box"), ("ruby", "Box"), ("Ruby", "Box"),
+])
+def test_full_names_disambiguate_two_object_commands_regardless_of_case(tmp_path, item_name, box_name):
+    M = textworld.GameMaker()
+    room = M.new_room("room")
+    M.set_player(room)
+    box = M.new(type="c", name=box_name)
+    other_box = M.new(type="c", name="red " + box_name)
+    box.add_property("open")
+    other_box.add_property("open")
+    room.add(box, other_box)
+    item = M.new(type="o", name=item_name)
+    box.add(item)
+    game_file = _compile_game(M.build(), str(tmp_path / "game.z8"))
+
+    env = textworld.start(game_file, EnvInfos(facts=True, moves=True))
+    try:
+        command = "take {} from {}".format(item_name, box_name)
+        for text in (command, command.lower(), command.upper()):
+            env.reset()
+            state, _, _ = env.step(text)
+            assert state.moves == 1, state.feedback
+            assert Proposition("in", [Variable(item_name, "o"), Variable("I", "I")]) in state.facts
+            assert "Which do you mean" not in state.feedback
+    finally:
+        env.close()
+
+
+@pytest.mark.parametrize("box_name", ["box", "Box"])
+def test_full_names_disambiguate_one_object_commands_regardless_of_case(tmp_path, box_name):
+    M = textworld.GameMaker()
+    room = M.new_room("room")
+    M.set_player(room)
+    box = M.new(type="c", name=box_name)
+    other_box = M.new(type="c", name="red " + box_name)
+    box.add_property("closed")
+    other_box.add_property("closed")
+    room.add(box, other_box)
+    game_file = _compile_game(M.build(), str(tmp_path / "game.z8"))
+
+    env = textworld.start(game_file, EnvInfos(facts=True, moves=True))
+    try:
+        command = "open " + box_name
+        for text in (command, command.lower(), command.upper()):
+            env.reset()
+            state, _, _ = env.step(text)
+            assert state.moves == 1, state.feedback
+            assert Proposition("open", [Variable(box_name, "c")]) in state.facts
+            assert Proposition("closed", [Variable("red " + box_name, "c")]) in state.facts
+            assert "Which do you mean" not in state.feedback
+    finally:
+        env.close()
 
 
 def test_quest_winning_condition_go():

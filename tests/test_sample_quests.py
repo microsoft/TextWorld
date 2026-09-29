@@ -2,6 +2,7 @@
 # Licensed under the MIT license.
 
 import os
+import sys
 from os.path import join as pjoin
 from subprocess import check_output
 
@@ -17,7 +18,7 @@ def test_sample_quests():
         check_output(command).decode()
 
         script = pjoin(SCRIPTS_PATH, "sample_quests.py")
-        command = ["python", script, "--nb-quests", "10", "--quest-length", "10",
+        command = [sys.executable, script, "--nb-quests", "10", "--quest-length", "10",
                    "--quest-breadth", "5", "--output", tmpdir, game_file]
         stdout = check_output(command).decode()
         assert len(stdout) > 0

@@ -50,12 +50,12 @@ def _detect_extra_infos(text: str, tracked_infos: Optional[List[str]] = None) ->
         if tag not in AVAILABLE_INFORM7_EXTRA_INFOS:
             raise ValueError("TW game doesn't support tag: {}".format(tag))
 
-        regex = re.compile(r"<{tag}>\n(.*)</{tag}>".format(tag=tag), re.DOTALL)
-        match = re.search(regex, text)
-        if match:
-            _, cleaned_text = _detect_i7_events_debug_tags(match.group(1))
+        regex = re.compile(r"<{tag}>\n(.*?)</{tag}>".format(tag=tag), re.DOTALL)
+        all_matches = regex.findall(text)
+        if all_matches:
+            _, cleaned_text = _detect_i7_events_debug_tags(all_matches[-1])
             matches[tag] = cleaned_text.strip()
-            text = re.sub(regex, "", text)
+            text = regex.sub("", text)
         else:
             matches[tag] = None
 
