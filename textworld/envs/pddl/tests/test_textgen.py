@@ -1,13 +1,16 @@
 import builtins
+import json
 from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
 from textworld.generator.game import EntityInfo
+from textworld.logic import Placeholder, Variable
 from textworld.envs.pddl.logic import GameLogic
 from textworld.envs.pddl.textgen import (
-    ConditionalSymbol, EvalSymbol, ListSymbol, _parse_and_convert,
+    ConditionalSymbol, ContextSensitiveGrammar, CSGExpressionError,
+    EvalSymbol, ListSymbol, _parse_and_convert,
 )
 
 
@@ -100,6 +103,58 @@ def test_attributes_do_not_traverse_arbitrary_objects():
     with pytest.raises(TypeError):
         render("o.name", o=value)
     value.assert_not_called()
+
+
+@pytest.mark.parametrize("expression", [
+    "grammar_sentinel()",
+    "'safe' or grammar_sentinel()",
+    "o.name or o.__class__",
+    "o.name +",
+])
+def test_invalid_expressions_fail_at_construction(expression):
+    with pytest.raises(CSGExpressionError, match="grammar expression"):
+        EvalSymbol(expression)
+
+
+@pytest.mark.parametrize("synonyms, expected", [
+    (None, "apple"),
+    ([], "apple"),
+    (["fruit"], "['fruit']"),
+])
+def test_field_fallback_keeps_list_truthiness(entity, synonyms, expected):
+    entity.synonyms = synonyms
+    assert render("o.synonyms or o.name", o=entity) == expected
+
+
+@pytest.mark.parametrize("count, expected", [
+    (0, "nothing"),
+    (1, "an apple"),
+    (3, "an apple, a pear and a banana"),
+])
+def test_query_lists_keep_entity_bindings_and_context_isolation(count, expected):
+    infos = {}
+    for name, article in (("apple", "an"), ("pear", "a"), ("banana", "a")):
+        info = EntityInfo(name, "object")
+        info.name = name
+        info.indefinite = article
+        infos[name] = info
+    state = Mock()
+    state.all_assignments.return_value = [
+        {Placeholder("o", "object"): Variable(name, "object")}
+        for name in list(infos)[:count]
+    ]
+    context = {
+        "state": state, "facts": [], "variables": {}, "mapping": {}, "entity_infos": infos,
+    }
+    grammar = ContextSensitiveGrammar.parse(json.dumps({
+        "item": [{"rhs": "{o.indefinite + ' ' + o.name}"}],
+        "list_empty": [{"rhs": "nothing"}],
+        "list_separator": [{"rhs": '", "'}],
+        "list_last_separator": [{"rhs": '" and "'}],
+    }))
+    assert grammar.derive("[{#item# | visible(o:object)}]", context) == expected
+    assert context["variables"] == {}
+    assert context["mapping"] == {}
 
 
 def test_bundled_expressions_keep_their_output(entity):

@@ -85,10 +85,42 @@ def query(expression, context):
     return contexts
 
 
+class CSGExpressionError(SyntaxError):
+    """An invalid or unsupported grammar expression."""
+
+
 class EvalSymbol(Symbol):
+    """Entity variables/fields, strings, None, string +, and short-circuit or.
+
+    Expressions have no access to Python globals, calls, or attribute chains.
+    """
+
     def __init__(self, expression: str, context: Dict = {}):
         super().__init__(expression, context)
         self.expression = expression
+        try:
+            self._ast = ast.parse(expression.strip(), mode="eval").body
+        except SyntaxError as exc:
+            raise CSGExpressionError("Invalid grammar expression {!r}: {}".format(expression, exc.msg)) from exc
+        self._validate(self._ast)
+
+    def _validate(self, node):
+        if isinstance(node, ast.Name):
+            return
+        if isinstance(node, ast.Constant) and type(node.value) in (str, type(None)):
+            return
+        if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+                and node.attr in EntityInfo.__slots__):
+            return
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            self._validate(node.left)
+            self._validate(node.right)
+            return
+        if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+            for operand in node.values:
+                self._validate(operand)
+            return
+        raise CSGExpressionError("Unsupported grammar expression: {!r}".format(self.expression))
 
     def __repr__(self):
         return "EvalSymbol('{{{}}}')".format(str(self.expression))
@@ -121,9 +153,9 @@ class EvalSymbol(Symbol):
                     if value:
                         return value
                 return evaluate(node.values[-1])
-            raise SyntaxError("Unsupported grammar expression: {!r}".format(self.expression))
+            raise CSGExpressionError("Unsupported grammar expression: {!r}".format(self.expression))
 
-        value = evaluate(ast.parse(self.expression.strip(), mode="eval").body)
+        value = evaluate(self._ast)
         return [TerminalSymbol(value)]
 
 
@@ -233,17 +265,25 @@ class ContextSensitiveGrammar:
         for k, v in grammar._rules.items():
             self._rules[k].extend(v)
 
+    @staticmethod
+    def validate(text: str):
+        """Validate expressions without deriving text or resolving variables."""
+        _parse_and_convert(text, rule_name="symbols")
+
     @classmethod
     def parse(cls, text: str):
         data = json.loads(text)
 
         grammar = cls()
         for name, rules in data.items():
-            rules = [ProductionRule(lhs=name,
-                                    rhs=_parse_and_convert(rule["rhs"], rule_name="symbols"),
-                                    weight=rule.get("weight", 1),
-                                    condition=rule.get("condition", ""))
-                     for rule in rules]
+            try:
+                rules = [ProductionRule(lhs=name,
+                                        rhs=_parse_and_convert(rule["rhs"], rule_name="symbols"),
+                                        weight=rule.get("weight", 1),
+                                        condition=rule.get("condition", ""))
+                         for rule in rules]
+            except CSGExpressionError as exc:
+                raise CSGExpressionError("In rule {!r}: {}".format(name, exc)) from exc
 
             for rule in rules:
                 grammar.add_rule(rule)

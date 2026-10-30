@@ -1,12 +1,19 @@
 import os
+import builtins
 import json
 import shutil
 import unittest
 import tempfile
 from os.path import join as pjoin
+from unittest.mock import Mock
+
+import pytest
 
 from textworld import EnvInfos
 from textworld.envs import PddlEnv
+from textworld.envs.pddl.logic import GameLogic
+from textworld.envs.pddl import textgen
+from textworld.envs.pddl.textgen import CSGExpressionError
 
 
 DATA_PATH = os.path.abspath(pjoin(__file__, ".."))
@@ -77,3 +84,58 @@ class TestInterface(unittest.TestCase):
 
         game_state = self.env.reset()
         assert game_state.feedback.startswith("-= Welcome to TextWorld, ALFRED! =-")
+
+
+def _grammar_block(rules):
+    return 'grammar :: """' + json.dumps(rules) + '""";'
+
+
+@pytest.mark.parametrize("file_input", [False, True])
+@pytest.mark.parametrize("location", ["intro", "unused", "action_local", "template", "feedback"])
+def test_game_load_rejects_unsafe_expressions(location, file_input, tmp_path, monkeypatch):
+    sentinel = Mock()
+    monkeypatch.setattr(builtins, "grammar_sentinel", sentinel, raising=False)
+    unsafe = "{grammar_sentinel()}"
+    rules = {"intro": [{"rhs": "Welcome"}]}
+    template, feedback, local_grammar = "review {o}", "#intro#", ""
+    if location in ("intro", "unused"):
+        rules[location] = [{"rhs": unsafe, "condition": "never(o:object)"}]
+    elif location == "action_local":
+        local_grammar = _grammar_block({"unused": [{"rhs": unsafe}]})
+    elif location == "template":
+        template = unsafe
+    else:
+        feedback = unsafe
+    grammar = _grammar_block(rules) + (
+        'action Review { template :: "' + template + '"; feedback :: "' + feedback + '"; ' + local_grammar + '}'
+    )
+    with open(pjoin(DATA_PATH, "domain.pddl")) as f:
+        domain = f.read()
+    with open(pjoin(DATA_PATH, "problem.pddl")) as f:
+        problem = f.read()
+    data = {"pddl_domain": domain, "pddl_problem": problem, "grammar": grammar}
+    source = data
+    if file_input:
+        filename = tmp_path / "unsafe.tw-pddl"
+        filename.write_text(json.dumps(data))
+        source = str(filename)
+    env = PddlEnv()
+    try:
+        with pytest.raises(CSGExpressionError, match="grammar_sentinel"):
+            env.load(source)
+    finally:
+        env.close()
+    sentinel.assert_not_called()
+
+
+def test_validation_preserves_action_strings_and_late_bound_queries(monkeypatch):
+    query = Mock(side_effect=AssertionError("Validation must not execute queries"))
+    monkeypatch.setattr(textgen, "query", query)
+    template = "review [{o.name | visible(o:object)}]"
+    feedback = "{o.name or o.id}"
+    grammar = _grammar_block({"intro": [{"rhs": "[{o.name | visible(o:object)}]"}]})
+    grammar += 'action Review { template :: "' + template + '"; feedback :: "' + feedback + '"; }'
+    logic = GameLogic("", grammar)
+    assert logic.actions["review"].template == template
+    assert logic.actions["review"].feedback_rule == feedback
+    query.assert_not_called()

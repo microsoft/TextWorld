@@ -12,7 +12,7 @@ import textworld.logic.model
 from textworld.utils import check_flag
 from textworld.logic import Proposition, Variable, Placeholder
 
-from textworld.envs.pddl.textgen import ContextSensitiveGrammar
+from textworld.envs.pddl.textgen import ContextSensitiveGrammar, CSGExpressionError
 from textworld.envs.pddl.logic.model import PddlLogicModelBuilderSemantics
 from textworld.envs.pddl.logic.parser import PddlLogicParser
 
@@ -47,6 +47,11 @@ class _ModelConverter(NodeWalker):
             pddl=self._unescape_block(node.pddl.code) if node.pddl else "",
             grammar=self._unescape_block(node.grammar.code) if node.grammar else "{}"
         )
+        for field in ("template", "feedback_rule"):
+            try:
+                ContextSensitiveGrammar.validate(getattr(action, field))
+            except CSGExpressionError as exc:
+                raise CSGExpressionError("In action {!r} {}: {}".format(action.name, field, exc)) from exc
 
         return action
 
