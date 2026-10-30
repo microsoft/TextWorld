@@ -1,3 +1,4 @@
+import ast
 import json
 from copy import deepcopy
 from collections import defaultdict
@@ -7,6 +8,7 @@ from typing import List, Dict
 
 from textworld.utils import check_flag
 from textworld.logic import Rule
+from textworld.generator.game import EntityInfo
 from textworld.envs.pddl.textgen.model import CSGModelBuilderSemantics
 from textworld.envs.pddl.textgen.parser import CSGParser
 
@@ -83,18 +85,77 @@ def query(expression, context):
     return contexts
 
 
+class CSGExpressionError(SyntaxError):
+    """An invalid or unsupported grammar expression."""
+
+
 class EvalSymbol(Symbol):
+    """Entity variables/fields, strings, None, string +, and short-circuit or.
+
+    Expressions have no access to Python globals, calls, or attribute chains.
+    """
+
     def __init__(self, expression: str, context: Dict = {}):
         super().__init__(expression, context)
         self.expression = expression
+        try:
+            self._ast = ast.parse(expression.strip(), mode="eval").body
+        except SyntaxError as exc:
+            raise CSGExpressionError("Invalid grammar expression {!r}: {}".format(expression, exc.msg)) from exc
+        self._validate(self._ast)
+
+    def _validate(self, node):
+        if isinstance(node, ast.Name):
+            return
+        if isinstance(node, ast.Constant) and type(node.value) in (str, type(None)):
+            return
+        if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+                and node.attr in EntityInfo.__slots__):
+            return
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            self._validate(node.left)
+            self._validate(node.right)
+            return
+        if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+            for operand in node.values:
+                self._validate(operand)
+            return
+        raise CSGExpressionError("Unsupported grammar expression: {!r}".format(self.expression))
 
     def __repr__(self):
         return "EvalSymbol('{{{}}}')".format(str(self.expression))
 
     def derive(self, context=None):
         context = context or self.context
-        locals().update(context["variables"])
-        value = eval(self.expression)
+
+        def evaluate(node):
+            if isinstance(node, ast.Name):
+                try:
+                    return context["variables"][node.id]
+                except KeyError:
+                    raise NameError("name {!r} is not defined".format(node.id)) from None
+            if isinstance(node, ast.Constant) and type(node.value) in (str, type(None)):
+                return node.value
+            if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+                    and node.attr in EntityInfo.__slots__):
+                entity = evaluate(node.value)
+                if type(entity) is not EntityInfo:
+                    raise TypeError("Grammar attributes require an EntityInfo")
+                return getattr(entity, node.attr)
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+                left, right = evaluate(node.left), evaluate(node.right)
+                if type(left) is not str or type(right) is not str:
+                    raise TypeError("Grammar concatenation requires strings")
+                return left + right
+            if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+                for operand in node.values[:-1]:
+                    value = evaluate(operand)
+                    if value:
+                        return value
+                return evaluate(node.values[-1])
+            raise CSGExpressionError("Unsupported grammar expression: {!r}".format(self.expression))
+
+        value = evaluate(self._ast)
         return [TerminalSymbol(value)]
 
 
@@ -204,17 +265,25 @@ class ContextSensitiveGrammar:
         for k, v in grammar._rules.items():
             self._rules[k].extend(v)
 
+    @staticmethod
+    def validate(text: str):
+        """Validate expressions without deriving text or resolving variables."""
+        _parse_and_convert(text, rule_name="symbols")
+
     @classmethod
     def parse(cls, text: str):
         data = json.loads(text)
 
         grammar = cls()
         for name, rules in data.items():
-            rules = [ProductionRule(lhs=name,
-                                    rhs=_parse_and_convert(rule["rhs"], rule_name="symbols"),
-                                    weight=rule.get("weight", 1),
-                                    condition=rule.get("condition", ""))
-                     for rule in rules]
+            try:
+                rules = [ProductionRule(lhs=name,
+                                        rhs=_parse_and_convert(rule["rhs"], rule_name="symbols"),
+                                        weight=rule.get("weight", 1),
+                                        condition=rule.get("condition", ""))
+                         for rule in rules]
+            except CSGExpressionError as exc:
+                raise CSGExpressionError("In rule {!r}: {}".format(name, exc)) from exc
 
             for rule in rules:
                 grammar.add_rule(rule)
