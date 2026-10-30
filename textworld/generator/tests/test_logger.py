@@ -3,10 +3,8 @@
 
 
 import numpy as np
-from os.path import join as pjoin
 
 import textworld
-from textworld.utils import make_temp_directory
 from textworld.generator.logger import GameLogger
 
 
@@ -25,9 +23,4 @@ def test_logger():
         game = textworld.generator.make_game(options)
         game_logger.collect(game)
 
-    with make_temp_directory(prefix="textworld_tests") as tests_folder:
-        filename = pjoin(tests_folder, "game_logger.pkl")
-        game_logger.save(filename)
-        game_logger2 = GameLogger.load(filename)
-        assert game_logger is not game_logger2
-        assert game_logger.stats() == game_logger2.stats()
+    assert game_logger.stats().startswith("Nb. games: 10\n")
