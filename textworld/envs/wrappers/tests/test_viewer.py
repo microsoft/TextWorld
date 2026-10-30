@@ -4,6 +4,7 @@
 
 import textworld
 
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.support.ui import WebDriverWait
 
 from textworld.utils import make_temp_directory
@@ -49,7 +50,7 @@ def test_html_viewer(monkeypatch):
     driver = None
     try:
         driver = get_webdriver()
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 10, ignored_exceptions=(StaleElementReferenceException,))
 
         driver.get("http://127.0.0.1:{}".format(env.port))
         nodes = driver.find_elements_by_class_name("node")
