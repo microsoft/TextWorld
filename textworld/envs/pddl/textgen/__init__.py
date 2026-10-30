@@ -1,3 +1,4 @@
+import ast
 import json
 from copy import deepcopy
 from collections import defaultdict
@@ -7,6 +8,7 @@ from typing import List, Dict
 
 from textworld.utils import check_flag
 from textworld.logic import Rule
+from textworld.generator.game import EntityInfo
 from textworld.envs.pddl.textgen.model import CSGModelBuilderSemantics
 from textworld.envs.pddl.textgen.parser import CSGParser
 
@@ -93,8 +95,35 @@ class EvalSymbol(Symbol):
 
     def derive(self, context=None):
         context = context or self.context
-        locals().update(context["variables"])
-        value = eval(self.expression)
+
+        def evaluate(node):
+            if isinstance(node, ast.Name):
+                try:
+                    return context["variables"][node.id]
+                except KeyError:
+                    raise NameError("name {!r} is not defined".format(node.id)) from None
+            if isinstance(node, ast.Constant) and type(node.value) in (str, type(None)):
+                return node.value
+            if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+                    and node.attr in EntityInfo.__slots__):
+                entity = evaluate(node.value)
+                if type(entity) is not EntityInfo:
+                    raise TypeError("Grammar attributes require an EntityInfo")
+                return getattr(entity, node.attr)
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+                left, right = evaluate(node.left), evaluate(node.right)
+                if type(left) is not str or type(right) is not str:
+                    raise TypeError("Grammar concatenation requires strings")
+                return left + right
+            if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+                for operand in node.values[:-1]:
+                    value = evaluate(operand)
+                    if value:
+                        return value
+                return evaluate(node.values[-1])
+            raise SyntaxError("Unsupported grammar expression: {!r}".format(self.expression))
+
+        value = evaluate(ast.parse(self.expression.strip(), mode="eval").body)
         return [TerminalSymbol(value)]
 
 
