@@ -2,7 +2,6 @@
 # Licensed under the MIT license.
 
 
-import pickle
 import textwrap
 from collections import defaultdict
 
@@ -210,12 +209,3 @@ class GameLogger:
         self.dist_inventory_size = merge_bincout(self.dist_inventory_size, other.dist_inventory_size)
         self.quests |= other.quests
         self.objects |= other.objects
-
-    def save(self, filename):
-        with open(filename, 'wb') as f:
-            pickle.dump(self, f, protocol=2)
-
-    @staticmethod
-    def load(filename):
-        with open(filename, 'rb') as f:
-            return pickle.load(f)
