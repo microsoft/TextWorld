@@ -1,4 +1,4 @@
-let state = $.parseJSON(document.currentScript.getAttribute('state').replace(/&quot;/g, '"'));
+let state = $.parseJSON(document.currentScript.getAttribute('state'));
 let template_path = document.currentScript.getAttribute('template_path');
 
 const evtSrc = new EventSource("/subscribe");
@@ -507,7 +507,7 @@ const Graph = (function(window, d3, rerendered) {
     function render() {
         $('.history').html(state.history);
         if (state.history == "") {
-            $('.history').html('<p class="objective-text">' + state.objective + '</p>');
+            $('.history').append($('<p class="objective-text">').text(state.objective));
         }
         if (state.command != "") {
             $("#command-scroll-div").scrollTop($("#command-scroll-div")[0].scrollHeight);

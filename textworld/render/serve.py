@@ -7,6 +7,7 @@ Creates server for streamed game state
 """
 import os
 import json
+import html
 import logging
 import textwrap
 from os.path import join as pjoin
@@ -140,7 +141,8 @@ class VisualizationService:
         self.command = None
         self._process = None
         state_dict = textworld.render.load_state_from_game_state(game_state)
-        self._history = '<p class="objective-text">{}</p>'.format(game_state.objective.strip().replace("\n", "<br/>"))
+        self._history = '<p class="objective-text">{}</p>'.format(
+            html.escape(game_state.objective.strip()).replace("\n", "<br/>"))
 
         banner = textwrap.dedent(r"""
              ________  __       __
@@ -155,7 +157,7 @@ class VisualizationService:
         """)  # noqa: W605
 
         feedback = game_state.feedback.split(game_state.objective, 1)[-1]
-        initial_description = banner.replace(" ", "&nbsp;") + feedback
+        initial_description = banner.replace(" ", "&nbsp;") + html.escape(feedback)
         self._history += '<p class="feedback-text">{}</p>'.format(initial_description.strip().replace("\n", "<br/>"))
         state_dict["history"] = self._history
         state_dict["command"] = ""
@@ -206,8 +208,9 @@ class VisualizationService:
         :param command: previous command
         """
         state_dict = textworld.render.load_state_from_game_state(game_state)
-        self._history += '<p class="command-text">> {}</p>'.format(command)
-        self._history += '<p class="feedback-text">{}</p>'.format(game_state.feedback.strip().replace("\n", "<br/>"))
+        self._history += '<p class="command-text">> {}</p>'.format(html.escape(command))
+        self._history += '<p class="feedback-text">{}</p>'.format(
+            html.escape(game_state.feedback.strip()).replace("\n", "<br/>"))
         state_dict["command"] = command
         state_dict["history"] = self._history
         self.parent_conn.send(state_dict)
