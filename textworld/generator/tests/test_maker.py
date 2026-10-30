@@ -198,6 +198,32 @@ def test_manually_defined_objective():
         assert state["objective"] == "There's nothing much to do in here."
 
 
+def test_manually_defined_objective_with_quests():
+    # Regression test for https://github.com/microsoft/TextWorld/issues/373
+    # When a game has quests, change_grammar() was unconditionally overwriting
+    # the objective with auto-generated text from describe_event().
+    M = GameMaker()
+
+    R1 = M.new_room("bedroom")
+    M.set_player(R1)
+
+    key = M.new(type="k", name="key", desc="This is a skeleton key.")
+    R1.add(key)
+
+    M.set_quest_from_commands(["take key"])
+
+    game = M.build()
+    game.objective = "Find a valuable object."
+
+    with make_temp_directory(prefix="test_manually_defined_objective_with_quests") as tmpdir:
+        game_file = M.compile(tmpdir)
+
+        env = textworld.start(game_file, request_infos=textworld.EnvInfos(objective=True))
+        state = env.reset()
+        assert state["objective"] == "Find a valuable object.", \
+            f"Expected custom objective, got: {state['objective']}"
+
+
 if __name__ == "__main__":
     # test_making_a_small_game(play_the_game=True)
     test_record_quest_from_commands(play_the_game=True)
