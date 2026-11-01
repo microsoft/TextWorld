@@ -29,6 +29,9 @@ jobs:
         run: brew install graphviz
         if: startsWith(matrix.os, 'macos')
 
+      - name: Install Inform 7
+        run: ./setup.sh
+
       - name: Install TextWorld from source
         run: |
             python -m pip install --upgrade pip
