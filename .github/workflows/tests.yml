@@ -22,7 +22,12 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install dependencies (Linux)
-        run: sudo apt update && sudo apt install -y --no-install-recommends graphviz
+        run: |
+            sudo apt update && sudo apt install -y --no-install-recommends graphviz
+            # Ubuntu 26.04 splits the fdp layout engine into a separate package.
+            if apt-cache show libgvplugin-neato-layout8 >/dev/null 2>&1; then
+              sudo apt install -y --no-install-recommends libgvplugin-neato-layout8
+            fi
         if: startsWith(matrix.os, 'ubuntu')
 
       - name: Install dependencies (MacOS)
